@@ -625,7 +625,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
             type=as.integer(gdi.type),dVkk=as.double(rep(0,nSp^2)))
 
-   ## BUG: dVkk appears to be incorrect!!
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
    #rV <- rV # transform before return   
    ## derivatives of coefs w.r.t. sps etc...
@@ -646,12 +645,13 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
      Hi <- chol2inv(chol(crossprod(x,w*x)+St))
      if (is.null(nei)) nei <- list(i=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-     if (is.null(nei$i)) if (length(nei$m)==nobs) nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-     eta.cv <- rep(0.0,length(nei$m))
-     deta.cv <- if (deriv) matrix(0.0,length(nei$m),ntot) else matrix(0.0,1,ntot)
+     if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+     eta.cv <- rep(0.0,length(nei$i))
+     deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
      ## BUG?? Scale parameter - if there is one then derivs are needed, added to end of deriv array...
      w1 <- -dd$Deta/(2*scale); w2 <- dd$Deta2/(2*scale); dth <- dd$Detath/(2*scale)
-     cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
+     cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
      mu.cv <- linkinv(eta.cv)
      ls <- family$ls(y,weights,theta,scale)
      dev <- sum(dev.resids(y, mu.cv, weights,theta))
@@ -883,8 +883,8 @@ efsudr <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NU
 } ## efsudr
 
 
-gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
-                     control=gam.control(),Mp=-1,start=NULL,gamma=1){
+gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreType="REML",
+                     control=gam.control(),Mp=-1,start=NULL,gamma=1,nei=NULL){
 ## NOTE: offset handling - needs to be passed to ll code
 ## fit models by general penalized likelihood method, 
 ## given doubly extended family in family. lsp is log smoothing parameters
@@ -914,14 +914,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## the stability reparameterization + log|S|_+ and derivs... 
     rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
     x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-    #x <- Sl.repa(rp$rp,x,r=-1)
     Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty
-    #Eb <- Sl.repa(rp$rp,Eb,r=-1)
     St <- crossprod(rp$E) ## total penalty matrix
     E <- rp$E ## root total penalty
     attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be further scaled   
     if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
-    #if (!is.null(start)) start  <- Sl.repa(rp$rp,start,l=1) ## re-para start
     ## NOTE: it can be that other attributes need re-parameterization here
     ##       this should be done in 'family$initialize' - see mvn for an example. 
 
@@ -1089,7 +1086,6 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       Hp <- -ll$lbb+St
       ## convergence test...
       ok <- (iter==control$maxit || max(abs(grad)) < control$epsilon*abs(ll0))
-        # (abs(ll1-ll0) < control$epsilon*abs(ll0) && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) 
       if (ok) { ## appears to have converged
         if (indefinite) { ## not a well defined maximum
           if (perturbed==5) stop("indefinite penalized likelihood in gam.fit5 ")
@@ -1140,7 +1136,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
         } else { ## not indefinite really converged
           converged <- TRUE
-          #break - don't break until L and D made to match final Hp
+          # ... don't break until L and D made to match final Hp
         }
       } else ll0 <- ll1 ## step ok but not converged yet
     } else { ## step failed.
@@ -1172,7 +1168,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   } else fcoef <- coef
 
   dVkk <- d1l <- d2l <- d1bSb <- d2bSb <- d1b <- d2b <- d1ldetH <- d2ldetH <- d1b <- d2b <- NULL
-
+  ncv <- scoreType=="NCV"
   if (deriv>0) {  ## Implicit differentiation for derivs...
 
     m <- nSp
@@ -1192,7 +1188,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## Now call the family again to get first derivative of Hessian w.r.t
     ## smoothing parameters, in list d1H...
 
-    ll <- llf(y,x,coef,weights,family,offset=offset,deriv=3,d1b=d1b)
+    ll <- if (ncv) llf(y,x,coef,weights,family,offset=offset,deriv=3,d1b=d1b,ncv=TRUE) else
+                   llf(y,x,coef,weights,family,offset=offset,deriv=3,d1b=d1b)
     # d1l <- colSums(ll$lb*d1b) # cancels
     
 
@@ -1225,69 +1222,91 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     } ## if (deriv > 1)
   } ## if (deriv > 0)
 
-  ## Compute the derivatives of log|H+S|... 
-  if (deriv > 0) {
-    d1ldetH <- rep(0,m)
-    d1Hp <- list()
-    for (i in 1:m) {
-      A <- -ll$d1H[[i]] + Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop]
-      d1Hp[[i]] <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,,drop=FALSE])  
-      d1ldetH[i] <- sum(diag(d1Hp[[i]]))
+  if (scoreType=="NCV") {
+    REML <- REML1 <- REML2 <- NULL
+    if (deriv==0) ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1,d1b=d1b,ncv=TRUE) ## otherwise l1, l2 not returned
+    ncv <- family$ncv ## helps debugging!
+    deriv1 <- if (deriv==0) 0 else 1
+    ## create nei if null
+    if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+    if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+    if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    ## complete dH
+    if (deriv>0) {
+      for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
     }
-  } ## if (deriv > 0)
-
-  if (deriv > 1) {
-    d2ldetH <- matrix(0,m,m)
-    k <- 0
-    for (i in 1:m) for (j in i:m) {
-      k <- k + 1
-      d2ldetH[i,j] <- -sum(d1Hp[[i]]*t(d1Hp[[j]])) - llr$trHid2H[k] 
-      if (i==j) { ## need to add term relating to smoothing penalty
-        A <- Sl.mult(rp$Sl,diag(q),i,full=TRUE)[!bdrop,!bdrop]
-        bind <- rowSums(abs(A))!=0 ## row/cols of non-zero block
-        A <- A[,bind,drop=FALSE] ## drop the zero columns  
-        A <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,,drop=FALSE])
-        d2ldetH[i,j] <- d2ldetH[i,j] + sum(diag(A[bind,,drop=FALSE]))
-      } else d2ldetH[j,i] <- d2ldetH[i,j]
-    }
-  } ## if (deriv > 1)
-
-  ## Compute derivs of b'Sb...
-
-  if (deriv>0) {
-    Skb <- Sl.termMult(rp$Sl,fcoef,full=TRUE)
-    d1bSb <- rep(0,m)
-    for (i in 1:m) { 
-      Skb[[i]] <- Skb[[i]][!bdrop]
-      d1bSb[i] <- sum(coef*Skb[[i]])
-    }
-  }
- 
-  if (deriv>1) {
-    d2bSb <- matrix(0,m,m)
-    for (i in 1:m) {
-      Sd1b <- St%*%d1b[,i] 
-      for (j in i:m) {
-         d2bSb[j,i] <- d2bSb[i,j] <- 2*sum( 
-         d1b[,i]*Skb[[j]] + d1b[,j]*Skb[[i]] + d1b[,j]*Sd1b)
+    ## get H (Hp?) and Hi
+    Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
+    ret <- ncv(x,y,weights,nei,coef,family,ll,t(Hp/D)/D,Hi,offset,ll$d1H,d1b,deriv1)
+    NCV <- ret$NCV
+    NCV1 <- ret$NCV1
+  } else { ## REML required
+    NCV <- NCV1 <- NULL
+    ## Compute the derivatives of log|H+S|... 
+    if (deriv > 0) {
+      d1ldetH <- rep(0,m)
+      d1Hp <- list()
+      for (i in 1:m) {
+        A <- -ll$d1H[[i]] + Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop]
+        d1Hp[[i]] <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,,drop=FALSE])  
+        d1ldetH[i] <- sum(diag(d1Hp[[i]]))
       }
-      d2bSb[i,i] <-  d2bSb[i,i] + sum(coef*Skb[[i]]) 
+    } ## if (deriv > 0)
+
+    if (deriv > 1) {
+      d2ldetH <- matrix(0,m,m)
+      k <- 0
+      for (i in 1:m) for (j in i:m) {
+        k <- k + 1
+        d2ldetH[i,j] <- -sum(d1Hp[[i]]*t(d1Hp[[j]])) - llr$trHid2H[k] 
+        if (i==j) { ## need to add term relating to smoothing penalty
+          A <- Sl.mult(rp$Sl,diag(q),i,full=TRUE)[!bdrop,!bdrop]
+          bind <- rowSums(abs(A))!=0 ## row/cols of non-zero block
+          A <- A[,bind,drop=FALSE] ## drop the zero columns  
+          A <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,,drop=FALSE])
+          d2ldetH[i,j] <- d2ldetH[i,j] + sum(diag(A[bind,,drop=FALSE]))
+        } else d2ldetH[j,i] <- d2ldetH[i,j]
+      }
+    } ## if (deriv > 1)
+
+    ## Compute derivs of b'Sb...
+
+    if (deriv>0) {
+      Skb <- Sl.termMult(rp$Sl,fcoef,full=TRUE)
+      d1bSb <- rep(0,m)
+      for (i in 1:m) { 
+        Skb[[i]] <- Skb[[i]][!bdrop]
+        d1bSb[i] <- sum(coef*Skb[[i]])
+      }
     }
-  }
-
-  ## get grad and Hessian of REML score...
-  REML <- -as.numeric((ll$l - drop(t(coef)%*%St%*%coef)/2)/gamma + rp$ldetS/2  - ldetHp/2  +
-           Mp*(log(2*pi)/2)-log(gamma)/2)
  
-  REML1 <- if (deriv<1) NULL else -as.numeric( # d1l # cancels
-                                   - d1bSb/(2*gamma) + rp$ldet1/2  - d1ldetH/2 ) 
+    if (deriv>1) {
+      d2bSb <- matrix(0,m,m)
+      for (i in 1:m) {
+        Sd1b <- St%*%d1b[,i] 
+        for (j in i:m) {
+          d2bSb[j,i] <- d2bSb[i,j] <- 2*sum( 
+          d1b[,i]*Skb[[j]] + d1b[,j]*Skb[[i]] + d1b[,j]*Sd1b)
+        }
+        d2bSb[i,i] <-  d2bSb[i,i] + sum(coef*Skb[[i]]) 
+      }
+    }
 
+    ## get grad and Hessian of REML score...
+    REML <- -as.numeric((ll$l - drop(t(coef)%*%St%*%coef)/2)/gamma + rp$ldetS/2  - ldetHp/2  +
+             Mp*(log(2*pi)/2)-log(gamma)/2)
+ 
+    REML1 <- if (deriv<1) NULL else -as.numeric( # d1l # cancels
+                                   - d1bSb/(2*gamma) + rp$ldet1/2  - d1ldetH/2 ) 
+    REML2 <- if (deriv<2) NULL else -( (d2l - d2bSb/2)/gamma + rp$ldet2/2  - d2ldetH/2 ) 
+  } ## REML computations
+  
   if (control$trace) {
     cat("\niter =",iter,"  ll =",ll$l,"  REML =",REML,"  bSb =",t(coef)%*%St%*%coef/2,"\n")
     cat("log|S| =",rp$ldetS,"  log|H+S| =",ldetHp,"  n.drop =",length(drop),"\n")
     if (!is.null(REML1)) cat("REML1 =",REML1,"\n")
   }
-  REML2 <- if (deriv<2) NULL else -( (d2l - d2bSb/2)/gamma + rp$ldet2/2  - d2ldetH/2 ) 
+  
 
   ## Get possibly multiple linear predictors
   lpi <- attr(x,"lpi")
@@ -1319,7 +1338,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ret <- list(coefficients=coef,family=family,y=y,prior.weights=weights,
        fitted.values=fitted.values, linear.predictors=linear.predictors,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
-       REML= REML,REML1= REML1,REML2=REML2,
+       REML= REML,REML1= REML1,REML2=REML2,NCV=NCV,NCV1=NCV1,
        rank=rank,aic = -2*ll$l, ## 2*edf needs to be added
        ##deviance = -2*ll$l,
        l= ll$l,## l1 =d1l,l2 =d2l,

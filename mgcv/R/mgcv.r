@@ -1632,8 +1632,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
-    
-       method <- "REML" ## any method you like as long as it's REML
+       if (!(method%in%c("REML","NCV"))||optimizer=="efs") method <- "REML"
+       if (method=="NCV"&&is.null(G$family$ncv)) {
+         warning("family lacks a Neighbourhood Cross Validation method")
+         method <- "REML"
+       }	 
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
       
        G$X <- Sl.initial.repara(G$Sl,G$X,both.sides=FALSE) ## re-parameterize accordingly

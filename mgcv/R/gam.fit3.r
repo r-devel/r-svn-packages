@@ -106,13 +106,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     if (inherits(family,"extended.family")) { ## then actually gam.fit4/5 is needed
       if (inherits(family,"general.family")) {
         return(gam.fit5(x,y,sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
-                        family=family,control=control,Mp=Mp,start=start,gamma=gamma))
+                        family=family,scoreType=scoreType,control=control,Mp=Mp,start=start,gamma=gamma,nei=nei))
       } else
       return(gam.fit4(x, y, sp, Eb,UrS=UrS,
             weights = weights, start = start, etastart = etastart, 
             mustart = mustart, offset = offset,U1=U1, Mp=Mp, family = family, 
             control = control, deriv=deriv,gamma=gamma,
-            scale=scale,scoreType=scoreType,null.coef=null.coef,...))
+            scale=scale,scoreType=scoreType,null.coef=null.coef,nei=nei,...))
     }
 
     if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE 
@@ -668,14 +668,15 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   ## BUGS: prior weights are missing!! 
 	   Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
 	   ww <- w1 <- rep(0,nobs)
-	   ww[good] <- (yg - mug)*mevg/var.mug
+	   ww[good] <- weg*(yg - mug)*mevg/var.mug
 	   w1[good] <- w
-	   if (is.null(nei)) nei <- list(i=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-	   if (is.null(nei$i)) if (length(nei$m)==nobs) nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-	   eta.cv <- rep(0.0,length(nei$m))
-	   deta.cv <- if (deriv) matrix(0.0,length(nei$m),length(rS)) else matrix(0.0,1,length(rS))
+	   if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+	   if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+	   if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+	   eta.cv <- rep(0.0,length(nei$i))
+	   deta.cv <- if (deriv) matrix(0.0,length(nei$i),length(rS)) else matrix(0.0,1,length(rS))
 	   dum <- matrix(1.0,1,1);
-	   cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
+	   cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
 	 
 	   mu.cv <- linkinv(eta.cv)
 	   NCV <- sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) ## the NCV score - simply LOOCV if nei(i) = i for all i
@@ -685,7 +686,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     var.mug <- variance(mu.cv)
              mevg <- mu.eta(eta.cv)
 	     mug <- mu.cv
-	     ww1 <- (y[nei$i]-mug)*mevg/var.mug
+	     ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	     ww1[!is.finite(ww1)] <- 0
 	     NCV1 <- -2 * colSums(ww1*deta.cv)
            } ## if deriv
@@ -1150,10 +1151,11 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
    plot(b$db.drho,fd.db,pch=".")
    for (i in 1:ncol(fd.db)) points(b$db.drho[,i],fd.db[,i],pch=19,cex=.3,col=i)
 
+  
    cat("\n\n The objective...\n")
    cat("diter    ");print(diter)
-   cat("grad    ");print(grad0)
-   cat("fd.grad ");print(fd.grad)
+   cat("grad    ");print(as.numeric(grad0))
+   cat("fd.grad ");print(as.numeric(fd.grad))
    if (deriv==2) {
      fd.hess <- .5*(fd.hess + t(fd.hess))
      cat("hess\n");print(hess)
@@ -1781,6 +1783,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;
   initial$scale.est <- b$scale.est
+
+  if (reml) score.scale <- 1 + abs(initial$score) 
+            else score.scale <- abs(initial$scale.est) + abs(initial$score)   
+  
   start0 <- coef(b)
   mustart0 <- fitted(b)
   rm(b)
@@ -1893,7 +1899,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
         # fdH[[j]] <- (ba$H - bb$H)/eps
          fdb.dr[,j] <- (ba$coefficients - bb$coefficients)/eps
-	 if (!is.null(bb$NCV)) fd.eta[,j] <- (attr(ba$NCV,"eta.cv")-attr(bb$NCV,"eta.cv"))/eps
+	 if (!is.null(bb$NCV)) fd.eta[,j] <- as.numeric(attr(ba$NCV,"eta.cv")-attr(bb$NCV,"eta.cv"))/eps
        }
      } 
      ### end of derivative testing. BFGS code resumes...

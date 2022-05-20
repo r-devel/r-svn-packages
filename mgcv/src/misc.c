@@ -760,7 +760,7 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,do
 */
 
 int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork) {
-/* Basic pre-conditioned conjuagate gradient solver for Ax = b where A is n by n 
+/* Basic pre-conditioned conjugate gradient solver for Ax = b where A is n by n 
    and Mi is the pre-conditioner. tol is the convergence tolerance. On exit x is 
    the approximate solution, and the return value is the number of iterations used.
    cgwork is an n*5 vector. 
@@ -789,6 +789,7 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
   for (k=0;k<200;k++) {  
     F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,p,&one,&c2,z1,&one FCONE FCONE); /* z1 = Ap */
     for (rz=0.0,pAp=0.0,i=0;i<n;i++) {rz += r[i]*z[i];pAp += p[i] * z1[i];} /*r'z & p'Ap*/
+    if (pAp==0.0) {k=-k;break;} /* failed, A possibly not +ve def */
     alpha = rz/pAp;
     for (rmax=0.0,i=0;i<n;i++) {
       x[i] += alpha * p[i];
@@ -798,6 +799,7 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
     if (rmax < tol*bmax) break;
     F77_CALL(dgemv)(&ntrans,&n,&n,&c1,Mi,&n,r1,&one,&c2,z1,&one FCONE FCONE); /* z1 = Mi r1 */
     for (r1z1=0.0,i=0;i<n;i++) r1z1 += r1[i] * z1[i];
+    if (rz==0.0) {k=-k;break;} /* failed, A possibly not +ve def */
     beta = r1z1/rz;
     for (i=0;i<n;i++) p[i] = z1[i] + beta * p[i];
     dum = z1; z1 = z; z = dum;
@@ -807,15 +809,16 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
 } /* CG */
 
 
-SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DLET,SEXP DERIV) {
+SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DLET,SEXP DERIV) {
 /* Neighbourhood cross validation function.
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
            deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
    Input: X - n by p model matrix. Hi inverse penalized Hessian. H penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
           w2 - -X'diag(w2)X is Hessian of log likelihood to within a scale parameter. db - db[i,j] is dbeta_i/d rho_j where rho_j is a log s.p. or 
           possibly other parameter. dw - dw[i,j] is dw2[i]/drho_j. rS[[i]] %*% t(rS[[i]]) is ith smoothing penalty matrix. 
-          k[m[i-1]:(m[i])] index the neighbours of the ind[i]th point (including ind[i],usually), 
-          m[-1]=0 by convention. beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
+          k[m[i-1]:(m[i])] index the points in the ith neighbourhood. m[-1]=0 by convention. 
+          Similarly ind[mi[i-1]:mi[i]] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
+          beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
           for no derivative calculations, deriv!=0 otherwise. 
          
    Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
@@ -826,15 +829,16 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
                LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
  */
   SEXP S,kr;
-  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj,nm,*ind,nth;
+  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj,nm,*ind,nth,*mi,io,io0,no;
   double *X,*g,*g1,*gp,*p1,*Hp,*Hi,*Xi,xx,*xip,*xip0,z,*Hd,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,
     *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*cgwork,*dlet;
   char trans = 'T',ntrans = 'N';
   M = PROTECT(coerceVector(M,INTSXP));
+  MI = PROTECT(coerceVector(MI,INTSXP));
   IND = PROTECT(coerceVector(IND,INTSXP));
   K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
   deriv = asInteger(DERIV);
-  m = INTEGER(M); k = INTEGER(K);ind = INTEGER(IND);
+  mi = INTEGER(MI);m = INTEGER(M); k = INTEGER(K);ind = INTEGER(IND);
   nsp = length(rS);
   nth = ncols(DETA)-nsp; /* how many non-sp parameters are there - first cols of db and dw relate to these */
   sp = REAL(SP);
@@ -842,12 +846,13 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   X = REAL(x);beta = REAL(BETA);
   Hi=REAL(hi);eta = REAL(ETA);deta = REAL(DETA);
   p = ncols(x); n = nrows(x);p2=p*p;
+  no = length(IND); /* number of output lp values */
   nm = length(M); /* number of elements in cross validated eta - need not be n*/
   Hp = (double *)CALLOC((size_t) p2,sizeof(double));
   g = (double *)CALLOC((size_t) 3*p,sizeof(double));
   g1 = g + p;dg = g1 + p;
   d = (double *)CALLOC((size_t) 2*p,sizeof(double)); /* perturbation to beta on dropping y_i and its neighbours */
-  cgwork = (double *)CALLOC((size_t) n*5,sizeof(double));
+  cgwork = (double *)CALLOC((size_t) p*5,sizeof(double));
   d1 = d + p;
   /* need to know largest neighbourhood */
   maxn = ii = 0;
@@ -881,10 +886,10 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     } 
   }
   FREE(dwX);
-  for (ii=0,i=0;i<nm;i++) { /* loop over obs, k[ii] is start of neighbourhood of i */
+  for (io=ii=0,i=0;i<nm;i++) { /* loop over neighbourhoods, k[ii] is start of neighbourhood of i */
     p1 = g + p; /* fill accumulated g vector */
     ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
-    i0=ii; /* record of start needed in deriv calc */
+    i0=ii;io0=i0; /* record of start needed in deriv calc */
     for (xip0=xip=Xi,gp=g,xp=X,wxp=wXi;gp<p1;gp++,xp += n,xip += maxn,wxp += maxn) {
       xx = xp[ki]; /* X[k[ii],j] */
       *gp = w1ki * xx; /* g gradient of log lik */
@@ -916,13 +921,14 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
        y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
        dx and dy are increments of x and y indices.  */
     xx = 0.0;
-    //   Rprintf("\n%d ",i);
     F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE FCONE); /* initial step Hi g */
     kk=CG(Hp,Hi,g,d,p,1e-13,cgwork); /* d is approx change in beta caused by dropping y_i and its neighbours */
     if (kk>error) error=kk;
-    /* now create the linear predictor for the ith point */
-    for (xx=0.0,xip=X+ind[i],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-d[j]);  
-    eta[i] = xx; /* neighbourhood cross validated eta */
+    /* now create the linear predictors for target points */
+    for (;io<mi[i];io++) {
+      for (xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-d[j]);  
+      eta[io] = xx; /* neighbourhood cross validated eta */
+    }  
     /* now the derivatives */
     if (deriv) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
 	//	Rprintf(".");	
@@ -947,8 +953,10 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,dg,&one,&xx,d1,&one FCONE FCONE); /* initial step Hi dg */
       kk=CG(Hp,Hi,dg,d1,p,1e-13,cgwork); /* d1 is deriv wrt rho_l of approx change in beta caused by dropping the y_i and its neighbours */
       if (kk>error) error=kk;
-      for (xx=0.0,xip=X+ind[i],dbp=db+p*l,j=0;j<p;j++,xip += n) xx += *xip * (dbp[j]-d1[j]);  
-      deta[i+l*nm] = xx;
+      for (io=io0;io<mi[i];io++) {
+        for (xx=0.0,xip=X+ind[io],dbp=db+p*l,j=0;j<p;j++,xip += n) xx += *xip * (dbp[j]-d1[j]);  
+        deta[io+l*no] = xx;
+      }	
     }
   }  
   FREE(Hp);FREE(Hd);
@@ -957,6 +965,182 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   if (deriv) FREE(dH);
   PROTECT(kr=allocVector(INTSXP,1));
   INTEGER(kr)[0] = error; /* max CG iterations used */
-  UNPROTECT(4);
+  UNPROTECT(5);
   return(kr);
 } /* ncv */
+
+static inline int i2f(int i,int j,int K) { /* note *static* inline to avoid external image and potential link failure */
+  /* see i3f - same idea for 2 indices */  
+  int ii;
+  if (i>j) { ii=j;j=i;i=ii;}
+  ii = (i*(2*K-i+1))/2 + j-i;
+  return(ii);
+} /* i2f */
+
+static inline int i3f(int i,int j,int k,int K) {
+/* Suppose we fill an array... 
+   for (m=i=0;i<K;i++) for (j=i;j<K;j++) for (k=j;k<K;k++,m++) a[m] = whatever
+   ... the idea being that the same 'whatever' is stored for all permutations 
+   (i,j,k), (j,k,i) etc. e.g. indices (0,2,3), (3,2,0), (2,0,3) etc all 
+   result in the same stored quantity. We might then want to compute the 
+   m for any such permutation of indices. This does it. 
+   Note that all indices start at 0 here.
+*/
+  int ii;
+  while (!(k>=j&&j>=i)) {
+    if (i>j) {ii=j;j=i;i=ii;}
+    if (j>k) {ii=j;j=k;k=ii;}
+  }  
+  ii = (i*(3*K*(K+1)+(i-1)*(i-3*K-2)))/6 + ((j-i)*(2*K+1-i-j))/2+k-j;
+  return(ii);
+} /* i3f */  
+
+SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
+	   SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV) {
+/* This computes the NCV for GAMLSS families. X[,jj[[i]]] is the model matrix for the ith linear predictor.
+   H is the penalized Hessian, and Hi its inverse (or an approximation to it since its used as a pre-conditioner).
+   dH[[i]] is the derivarive of H w.r.t. log(sp[i]); k[m[i-1]:(m[i])] index the neighbours of the ind[i]th point 
+   (including ind[i],usually), m[-1]=0 by convention. beta - model coefficients. 
+   lj contains jth derivatives of the likelihood w.r.t. the lp for each datum.
+   deta and dbeta are matrices with derivaives of the lp's and coefs in their cols. deta has the lps stacked in each 
+   column. 
+   The perturbed etas will be returned in etacv: if nm is the length of ind,then eta[q*nm+i] is the ith element of 
+   qth perturbed linear predictor.
+   The derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
+   deriv of qth lp w.r.t. lth log sp. 
+   BUG? Offset handling!!
+*/
+  double *X,*H,*Hi,*l1,*l2,*l3,*beta,*g,*Hp,xx,z,*d,*d1,*cgwork,*eta,*deta,v,*db,*dbp,*detacv,*dh;
+  int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,iter1=0,iter=0,deriv,*mi,io,io0,no;
+  SEXP JJp,kr,DH;
+  char trans = 'T',ntrans = 'N';
+  p = length(BETA);p2 = p*p;
+  n = nrows(x);deriv = asInteger(DERIV);
+  M = PROTECT(coerceVector(M,INTSXP));
+  MI = PROTECT(coerceVector(MI,INTSXP));
+  IND = PROTECT(coerceVector(IND,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  mi = INTEGER(MI); m = INTEGER(M); k = INTEGER(K);ind = INTEGER(IND);
+  l1 = REAL(L1);l2=REAL(L2);
+  nm = length(M);nlp = length(JJ);nsp = length(dH);no=length(IND);
+  eta = REAL(ETACV);H=REAL(h);Hi = REAL(hi);
+  beta = REAL(BETA);
+
+  if (deriv) {
+    l3=REAL(L3);deta=REAL(DETA);detacv=REAL(DETACV);db = REAL(DB);
+  }  
+  /* unpack the jj indices to here in order to avoid repeated list lookups withn loop */
+  jj = (int **)CALLOC((size_t) nlp,sizeof(int *));
+  plp = (int *)CALLOC((size_t) nlp,sizeof(int));
+  for (l=0;l<nlp;l++) {
+    JJp = VECTOR_ELT(JJ, l);JJp = PROTECT(coerceVector(JJp,INTSXP)); /* see R extensions 5.9.1 Handling the effects of garbage collection */
+    plp[l] = length(JJp); jj[l] = INTEGER(JJp); /* jj[l][1:plp[l]] indexes cols of X for this lp */
+    jjl=jj[l];for (i=0;i<plp[l];i++) jjl[i]--; /* 5.9.3 Details of R types. In fact coerceVector creates new vector only if type needs to change. */
+  }  
+  X = REAL(x);
+  g = (double *)CALLOC((size_t) 3*p,sizeof(double)); /* gradient change */
+  d = g+p; /* change in beta */
+  d1 = d + p; /* deriv of above */
+  cgwork = (double *)CALLOC((size_t) p*5,sizeof(double));
+  Hp = (double *)CALLOC((size_t) p2,sizeof(double)); /* perturbed Hessian */
+  for (io=ii=0,i=0;i<nm;i++) { /* loop over obs, k[ii] is start of neighbourhood of i */
+    i0=ii;io0=io; /* record start of neigbourhood record */
+    /* start with the change in gradient term */
+    for (l=0;l<p;l++) g[l] = 0.0; /* have to clear first as multiple lps may be added */
+    for (l=0;l<p2;l++) Hp[l] = H[l]; /* Hessian before dropping of neighbours */
+    for (;ii<m[i];ii++) { /* loop over neighbours */
+      ki=k[ii]; /* neighbour index */
+      for (l2i=l=0;l<nlp;l++) { /* loop over linear predictors */
+        jjl = jj[l];ln=l*n;
+        for (j=0;j<plp[l];j++) g[jjl[j]] += X[n*jjl[j]+ki] * l1[ln+ki]; /* accumulate grad change */
+	for (q=l;q<nlp;q++,l2i++) { /* Hessian block loop X[,jj[l]]' %*% l2*X[,jj[q]] */
+	  jjq = jj[q];ln = l2i*n;
+	  for (r=0;r<plp[q];r++) { /* NOTE: substantial optimization possible here once checked */
+	    for (j=0;j<plp[l];j++) {
+	      /* H is penalized *negative* Hessian, so dropped part needs to be *added* */
+	      xx = X[jjl[j]*n+ki]*X[jjq[r]*n+ki]*l2[ln+ki]; 
+              Hp[jjl[j]+jjq[r]*p] += xx;
+	      if (q>l) Hp[jjl[j]*p+jjq[r]] += xx;
+	    }
+	  }  
+	}  
+      } /* lp loop */
+    } /* neighbour loop */
+    /* now fill in Hp lower half - could probably be avoided with suitable BLAS calls */
+    //   for (j=0;j<p;j++) for (q=j;q<p;q++) Hp[q+j*p]=Hp[j+q*p];
+    xx = 0.0;z=1.0;
+    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE FCONE); /* initial step Hi g */
+    kk=CG(Hp,Hi,g,d,p,1e-13,cgwork); /* d is approx change in beta caused by dropping y_i and its neighbours */
+    if (kk<0) {
+      Rprintf("npd! ");kk = -kk;
+    }   
+	
+    if (iter < kk) iter=kk;
+    /* now create the linear predictors for the ith point */
+    for (;io<mi[i];io++)
+    for (l=0;l<nlp;l++) {
+      ln = no*l;jjl = jj[l];
+      for (xx=0.0,j=0;j<plp[l];j++) {
+	  q = jjl[j];
+	  xx += X[n*q+ind[io]] * (beta[q]-d[q]); 
+      }
+      eta[ln+io] = xx;	
+    }
+    if (deriv) { /* get the derivatives of the linear predictors */
+      for (l=0;l<nsp;l++) {
+	ln = l*nlp;
+	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
+	xx=0.0;z=1.0;
+        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+	//for (j=0;j<p;j++) dg[j] = 0.0; /* clear deriv of g before accumulation - NOT needed - straight into g! */
+        for (i1=i0;i1<m[i];i1++) { /* neighbour loop */
+	  ki=k[i1]; /* current neighbour of interest */
+	  for (j=0;j<nlp;j++) for (q=0;q<nlp;q++) { /* have to do both triangles to avoid full matrix */
+	    v = l3[i3f(j,q,0,nlp)*n+ki]*deta[ln*n+ki];
+	    for (r=1;r<nlp;r++) v += l3[i3f(j,q,r,nlp)*n+ki]*deta[(ln+r)*n+ki];
+	    jjl=jj[j];jjq=jj[q];
+	    for (xx=0.0,kk=0;kk<plp[q];kk++) xx += X[ki+n*jjq[kk]]*d[jjq[kk]]; 
+            xx *= v;
+	    for (kk=0;kk<plp[j];kk++) g[jjl[kk]] -= X[ki+n*jjl[kk]]*xx;
+	    /* now work on deriv of grad */
+	    for (xx=0.0,kk=0;kk<plp[q];kk++) xx += X[ki+n*jjq[kk]]*db[jjq[kk]+p*l];
+	    xx *= l2[ki+i2f(j,q,nlp)*n];
+	    for (kk=0;kk<plp[j];kk++) g[jjl[kk]] += X[ki+n*jjl[kk]]*xx;
+	  }  
+	} /* neighbour loop */
+	/* at this point g contains deriv of perturned Hessian w.r.t. log sp l multiplied by
+           the change in beta vector, d. Now the derivative of grad vect w.r.t. log(sp[l])
+           is also required */
+	xx=0.0;z=1.0;
+	F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d1,&one FCONE FCONE); /* initial step Hi d */
+        kk=CG(Hp,Hi,g,d1,p,1e-13,cgwork); /* d1 is deriv wrt rho_l of approx change in beta caused by dropping the y_i and its neighbours */
+	
+	if (kk<0) {
+          Rprintf("npdg! ");kk = -kk;
+	}   
+	
+	if (iter1 < kk) iter1 = kk;
+	for (io=io0;io<mi[i];io++)
+        for (q=0;q<nlp;q++) {
+	  jjq=jj[q];dbp = db + p*l;
+	  for (xx=0.0,j=0;j<plp[q];j++) {
+	      kk = jjq[j];
+	      xx += X[ind[io]+kk*n] * (dbp[kk]-d1[kk]);
+	  }  
+          detacv[io + q*no +l*(no*nlp)] = xx;  
+        }	  
+      } /* l loop - smoothing parameters */	
+    }  
+  } /* main obs loop */
+  for (l=0;l<nlp;l++) {
+    /* iff coerceVector did not have to create a new vector then subtracting 1 from index will have changed original object in R, so need to 
+       guard against that by adding one back on again */
+    jjl=jj[l];for (i=0;i<plp[l];i++) jjl[i]++; 
+  }  
+  FREE(jj);FREE(plp);FREE(g);FREE(Hp);FREE(cgwork);
+  PROTECT(kr=allocVector(INTSXP,2));
+  INTEGER(kr)[0] = iter; /* max CG iterations used */
+  INTEGER(kr)[1] = iter1; /* max CG iterations used for derivs*/
+  UNPROTECT(5+nlp);
+  return(kr);
+} /* ncvls */  
