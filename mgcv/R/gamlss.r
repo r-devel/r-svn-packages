@@ -108,7 +108,7 @@ trind.generator <- function(K=2,ifunc=FALSE,reverse=FALSE) {
   list(i2=i2,i3=i3,i4=i4,i2r=i2r,i3r=i3r,i4r=i4r)
 } ## trind.generator
 
-gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
 ## computes the neighbourhood cross validation score and its derivative for a
 ## gamlss model. llf is what was returned by family$ll when ncv info requested.
 ## If derivs not required then ll must be called with deriv >=1, otherwise deriv >= 3.
@@ -139,13 +139,19 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NU
   eta.cv <- matrix(0,nm,nlp)
 
   deta.cv <- if (deriv) matrix(0,nm*nlp,nsp) else 0.0
-  cg.iter <- .Call(C_ncvls,X,jj,H,Hi,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
+  if (is.null(R)) {
+    cg.iter <- .Call(C_ncvls,X,jj,H,Hi,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
                    deta,db,deriv)
+  } else {
+    cg.iter <- .Call(C_Rncvls,X,jj,R,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
+                   deta,db,deriv,.Machine$double.eps)
+    if (cg.iter>0) {warning("non positive definite update ");cat(cg.iter)}		   
+  }
   if (!is.null(offset)) {
     for (i in 1:ncol(eta.cv)) if (i <= length(offset)&&!is.null(offset[[i]])) eta.cv[,i] <- eta.cv[,i] + offset[[i]][nei$i]
   }
   ## ll must be set up to return l1..l3 as derivs w.r.t. linear predictors if ncv=TRUE
-  qapprox <- TRUE
+  qapprox <- FALSE
   ncv1 <- NULL
   if (qapprox) { ## quadratic approximate version
     ncv <-  -llf$l - sum(llf$l1[nei$i,]*(eta.cv-eta[nei$i,]))
@@ -186,7 +192,7 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NU
   }
   attr(ncv,"eta.cv") <- eta.cv
   if (deriv) attr(ncv,"deta.cv") <- deta.cv
-  return(list(NCV=ncv,NCV1=ncv1))
+  return(list(NCV=ncv,NCV1=ncv1,error=cg.iter))
 } ## gamlss.ncv
 
 gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL,i4=NULL,deriv=0) {
@@ -605,8 +611,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     object$null.deviance <- sum(((object$y-mean(object$y))*object$fitted[,2])^2)
   })
 
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
@@ -911,10 +917,10 @@ multinom <- function(K=1) {
     multinom$gamma <- log(multinom$gamma/sum(multinom$gamma))
     object$null.deviance <- -2*sum(multinom$gamma[object$y+1])
   })
-
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
-  } ## ncv
+  
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
+  } ## ncv  
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
   ## Function defining the logistic multimomial model log lik. 
@@ -1483,10 +1489,11 @@ ziplss <-  function(link=list("identity","identity")) {
     object$null.deviance <- 2*(sum(ls(object$y)) - lnull)
    
   }) ## postproc
-
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
+  
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
+
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
   ## function defining the gamlss ZIP model log lik. 
@@ -1678,9 +1685,9 @@ gevlss <- function(link=list("identity","identity","logit")) {
     object$null.deviance <- NA
     
   })
-
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
+  
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
@@ -2390,10 +2397,11 @@ gammals <- function(link=list("identity","log"),b=-7) {
     object$null.deviance <- sum(((object$y-.my)/.my-log(object$y/.my))*exp(-object$fitted.values[,2]))*2
   })
 
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
+ 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
   ## function defining the gamlss gamma model log lik. 
   ## deriv: 0 - eval
@@ -2721,9 +2729,10 @@ gumbls <- function(link=list("identity","log"),b=-7) {
     object$null.deviance <- NA
   })
 
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
+
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
   ## function defining the gamlss gamma model log lik. 
@@ -3035,9 +3044,10 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
     rsd
   } ## residuals
 
-  ncv <- function(X,y,wt,nei,beta,family,llf,H,Hi,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
-    gamlss.ncv(X,y,wt,nei,beta,family,llf,H,Hi,offset,dH,db,deriv)
-  } ## ncv
+  ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=NULL,dH=NULL,db=NULL,deriv=FALSE) {
+    gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
+  } ## ncv  
+
 
   ll <- function(y, X, coef, wt, family, offset = NULL, deriv=0, d1b=0, d2b=0, Hp=NULL, rank=0, fh=NULL, D=NULL,
                  eta=NULL,ncv=FALSE) {

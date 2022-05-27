@@ -1850,11 +1850,11 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps) {
    Givens rotations are of form [c,-s] where c = cos(theta), s = sin(theta). 
                                 [s,c]
 
-   Currently does not check that result of down date is positive definite. 
- 
    Assumes R upper triangular, and that it is OK to use first two columns 
    below diagonal as temporary strorage for Givens rotations (the storage is 
    needed to ensure algorithm is column oriented). 
+
+   For downdate returns a negative value in R[1] (R[1,0]) if not +ve definite.
 */ 
   double c0,s0,*c,*s,z,*x,z0,*c1;
   int j,j1,n1;

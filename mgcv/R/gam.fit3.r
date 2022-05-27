@@ -665,8 +665,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   ## requires that neighbours are supplied in nei (if NULL) each point is its own
 	   ## neighbour recovering LOOCV. nei$k[nei$m[i-1]+1):nei$m[i]] are the indices of
 	   ## neighbours of point i, where nei$m[0]=0 by convention.
-	   ## BUGS: prior weights are missing!! 
-	   Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
+	 
 	   ww <- w1 <- rep(0,nobs)
 	   ww[good] <- weg*(yg - mug)*mevg/var.mug
 	   w1[good] <- w
@@ -676,12 +675,19 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   eta.cv <- rep(0.0,length(nei$i))
 	   deta.cv <- if (deriv) matrix(0.0,length(nei$i),length(rS)) else matrix(0.0,1,length(rS))
 	   dum <- matrix(1.0,1,1);
-	   cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
-	 
+	   R <- try(chol(crossprod(x,w1*x)+St),silent=TRUE)
+	   if (inherits(R,"try-error")) { ## use CG approach...
+	     Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
+             cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
+           } else { ## use Cholesky update approach
+	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv,.Machine$double.eps);
+	     if (pdef.fails) warning("some NCV updates not positive definite")
+	   }   
 	   mu.cv <- linkinv(eta.cv)
-	   NCV <- sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) ## the NCV score - simply LOOCV if nei(i) = i for all i
+	   NCV <- 2*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - dev ## the NCV score - simply LOOCV if nei(i) = i for all i
 	   attr(NCV,"eta.cv") <- eta.cv
            if (deriv) {
+	     dev1 <- -2*colSums(ww*(x%*%db.drho)) 
 	     attr(NCV,"deta.cv") <- deta.cv
 	     var.mug <- variance(mu.cv)
              mevg <- mu.eta(eta.cv)
@@ -689,6 +695,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	     ww1[!is.finite(ww1)] <- 0
 	     NCV1 <- -2 * colSums(ww1*deta.cv)
+	     NCV1 <- 2*NCV1 - dev1
            } ## if deriv
 	} else { ## GCV/GACV etc ....
 
@@ -2084,6 +2091,8 @@ gam2derivative <- function(lsp,args,...)
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective gradient
 { reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  sname <- if (reml) "REML" else args$scoreType
+  sname1 <- paste(sname,"1",sep=""); 
   if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
@@ -2091,13 +2100,7 @@ gam2derivative <- function(lsp,args,...)
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,...)
-  if (reml) {
-          ret <- b$REML1 
-  } else if (args$scoreType=="GACV") {
-          ret <- b$GACV1
-  } else if (args$scoreType=="UBRE") {
-          ret <- b$UBRE1
-  } else { ret <- b$GCV1}
+  ret <- b[[sname1]]
   if (!is.null(args$L)) ret <- t(args$L)%*%ret
   ret
 } ## gam2derivative
@@ -2108,6 +2111,7 @@ gam2objective <- function(lsp,args,...)
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective
 { reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  sname <- if (reml) "REML" else args$scoreType
   if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
@@ -2115,13 +2119,7 @@ gam2objective <- function(lsp,args,...)
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,start=args$start,...)
-  if (reml) {
-          ret <- b$REML 
-  } else if (args$scoreType=="GACV") {
-          ret <- b$GACV
-  } else if (args$scoreType=="UBRE") {
-          ret <- b$UBRE
-  } else { ret <- b$GCV}
+  ret <- b[[sname]]
   attr(ret,"full.fit") <- b
   ret
 } ## gam2objective
@@ -2134,6 +2132,8 @@ gam4objective <- function(lsp,args,...)
 ## args is a list containing the arguments for gam.fit3
 ## For use as nlm() objective
 { reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  sname <- if (reml) "REML" else args$scoreType
+  sname1 <- paste(sname,"1",sep=""); 
   if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
@@ -2141,14 +2141,8 @@ gam4objective <- function(lsp,args,...)
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      null.coef=args$null.coef,Sl=args$Sl,start=args$start,...)
-  
-  if (reml) {
-          ret <- b$REML;at <- b$REML1
-  } else if (args$scoreType=="GACV") {
-          ret <- b$GACV;at <- b$GACV1
-  } else if (args$scoreType=="UBRE") {
-          ret <- b$UBRE;at <- b$UBRE1
-  } else { ret <- b$GCV;at <- b$GCV1}  
+  ret <- b[[sname]]
+  at <- b[[snames1]]
 
   attr(ret,"full.fit") <- b
 

@@ -32,7 +32,9 @@ R_CallMethodDef CallMethods[] = {
   {"isa1p",(DL_FUNC)&isa1p,3},
   {"mrow_sum",(DL_FUNC)&mrow_sum,3},
   {"ncv",(DL_FUNC)&ncv,17},
+  {"Rncv",(DL_FUNC)&Rncv,18},
   {"ncvls",(DL_FUNC)&ncvls,18},
+  {"Rncvls",(DL_FUNC)&Rncvls,18},
   {NULL, NULL, 0}
 };
 

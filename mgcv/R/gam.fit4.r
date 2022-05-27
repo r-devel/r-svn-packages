@@ -642,16 +642,23 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    if (scoreType=="NCV") {
      ## NOTE: slightly more efficient to compute H here and pass to C_ncv along with explicit inverse for preconditioning.
      ##       Should explicit inversion fail, fall back on tcrossprod(rV).
-     Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
-     Hi <- chol2inv(chol(crossprod(x,w*x)+St))
-     if (is.null(nei)) nei <- list(i=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+     #Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
+     #Hi <- chol2inv(chol(crossprod(x,w*x)+St))
+     if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
      if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
      if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
      eta.cv <- rep(0.0,length(nei$i))
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
-     ## BUG?? Scale parameter - if there is one then derivs are needed, added to end of deriv array...
      w1 <- -dd$Deta/(2*scale); w2 <- dd$Deta2/(2*scale); dth <- dd$Detath/(2*scale)
-     cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
+     R <- try(chol(crossprod(x,w*x)+St),silent=TRUE)
+     if (inherits(R,"try-error")) { ## use CG approach...
+	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
+        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv);
+     } else { ## use Cholesky update approach
+	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv,.Machine$double.eps);
+	if (pdef.fails) warning("some NCV updates not positive definite")
+     }   
+     #cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
      mu.cv <- linkinv(eta.cv)
      ls <- family$ls(y,weights,theta,scale)
      dev <- sum(dev.resids(y, mu.cv, weights,theta))
@@ -1235,9 +1242,18 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     if (deriv>0) {
       for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
     }
-    ## get H (Hp?) and Hi
-    Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
-    ret <- ncv(x,y,weights,nei,coef,family,ll,t(Hp/D)/D,Hi,offset,ll$d1H,d1b,deriv1)
+    overlap <- attr(attr(x,"lpi"),"overlap") ## is there overlap in dependence of lp's on beta?
+    ## NOTE: this needs updating. chol of raw Hp is a bad idea, and really all the
+    ##       computations should be done with diagonal pre-conditioning. This is easy,
+    ##       but should test code without this first!
+    if (!overlap) R1 <- try(chol(t(Hp/D)/D),silent=TRUE) 
+    if (overlap||inherits(R1,"try-error")) {
+      ## get H (Hp?) and Hi
+      Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
+      ret <- ncv(x,y,weights,nei,coef,family,ll,H=t(Hp/D)/D,Hi=Hi,offset=offset,dH=ll$d1H,db=d1b,deriv=deriv1)
+    } else { ## cholesky version
+      ret <- ncv(x,y,weights,nei,coef,family,ll,R=R1,offset=offset,dH=ll$d1H,db=d1b,deriv=deriv1)
+    }
     NCV <- ret$NCV
     NCV1 <- ret$NCV1
   } else { ## REML required

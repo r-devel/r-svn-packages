@@ -1632,7 +1632,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
-       if (!(method%in%c("REML","NCV"))||optimizer=="efs") method <- "REML"
+       if (!(method%in%c("REML","NCV"))||optimizer[1]=="efs") method <- "REML"
        if (method=="NCV"&&is.null(G$family$ncv)) {
          warning("family lacks a Neighbourhood Cross Validation method")
          method <- "REML"
