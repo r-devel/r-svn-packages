@@ -759,6 +759,84 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,do
    
 */
 
+
+void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work) {
+/* solves (R'R - uu')x=b where u is p by m and (R'R-uu') need not be positive definite. 
+   Use R as pre-conditioner. R'x0* = b, we solve (I - u*u*') x* = R^{-T}b
+   where x = R^{-1}x* and u* = R^{-T}u. R is upper triangular.   
+
+   work is p * (m+7) + m
+
+   Note that m is over-written with number of iterations on output.
+*/
+  int one=1,i,j;
+  double *v,*z,xx,zz,*u1,*dum,beta1,beta2,eta,epsilon,sig0,sig1,sig2,gamma0,gamma1,gamma2,
+    *v1,*v2,alpha,delta,rho1,rho2,rho3,maxb,*w,*w1,*w2;
+  char ntrans = 'N',trans='T',uplo='U',diag='N',side='L';
+  u1 = work; work += *p * *m;
+  v = work;work += *p;
+  v1 = work;work += *p;
+  v2 = work;work += *p;
+  w = work;work += *p;
+  w1 = work;work += *p;
+  w2 = work;work += *p;
+  z = work;work += *p;
+  dum = work; work += *m;
+  for (maxb=0.0,i=0;i<*p;i++) {
+    xx = x[i] = b[i];maxb += xx*xx; 
+  }
+  maxb = sqrt(maxb);
+  F77_CALL(dtrsv)(&uplo,&trans,&diag,p,R,p,x,&one FCONE FCONE); /* Solve R'x0* = b */
+  xx = 1.0;
+  for (i=0;i < *p * *m;i++) u1[i] = u[i];
+  F77_CALL(dtrsm)(&side,&uplo,&trans,&diag,p,m,&xx,R,p,u1,p); /* Solve R'u1 = u */
+  /* x currently contains R^{-T}b, form v = x - (I-u1u1')x = u1u1'x */
+  zz = 0.0;
+  F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,x,&one,&zz,dum,&one); /* dum = u1'x */
+  F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,v1,&one); /* v1 = u1u1'x */
+  for (beta1=0.0,i=0;i<*p;i++) { xx=v1[i]; beta1 += xx*xx;}
+  epsilon = eta = beta1 = sqrt(beta1); /* beta1 = \\v1\\ */
+  gamma0 = gamma1 = 1.0;sig0 = sig1 = 0.0;
+  for (i=0;i < *p * 2;i++) w[i] = 0.0;
+  for (i=0;i < *p ;i++) v[i] = 0.0;
+  for (j=0;j<200;j++) {
+    for (i=0;i<*p;i++) { v1[i] /= beta1;z[i]=v1[i];}
+    xx = 1.0; zz = 0.0;
+    F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,v1,&one,&zz,dum,&one); /* dum = u1'v1 */
+    zz = 1.0; xx = -1.0;
+    F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,z,&one); /* z = (I-u1u1')v1 */
+    for (alpha=0.0,i=0;i<*p;i++) alpha += v1[i]*z[i];  /* alpha = v1'z = v1'(I-u1u1')v1 */
+    for (beta2=0.0,i=0;i<*p;i++) {
+      xx = v2[i] = z[i] - alpha * v1[i] - beta1 * v[i];
+      beta2 += xx*xx;
+    }
+    delta = gamma1 * alpha - gamma0 * sig1 * beta1;
+    rho1 = sqrt(delta*delta+beta2);
+    beta2 = sqrt(beta2); /* beta_2 = ||v2|| */
+    rho2 = sig1 * alpha + gamma0 * gamma1 * beta1;
+    rho3 = sig0*beta1;
+    gamma2 = delta/rho1;
+    sig2 = beta2/rho1;
+    xx = gamma2*eta;
+    for (i=0;i<*p;i++) {
+      w2[i] = (v1[i] - rho3*w[i] - rho2*w1[i])/rho1;
+      x[i] += xx * w2[i];  
+    }
+    epsilon *= fabs(sig2);
+    if (epsilon<maxb*1e-10) break;
+    eta *= -sig2;
+    for (i=0;i<*p;i++) {
+      v[i] = v1[i];v1[i] = v2[i];
+      w[i] = w1[i];w1[i] = w2[i];
+    }
+    sig0 = sig1; sig1 = sig2; beta1 = beta2;
+    gamma0 = gamma1; gamma1 = gamma2;
+  }
+  F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE); /* Solve R'x = x* */
+  *m=j;
+  //return(j);
+} /* minres */
+
 int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork) {
 /* Basic pre-conditioned conjugate gradient solver for Ax = b where A is n by n 
    and Mi is the pre-conditioner. tol is the convergence tolerance. On exit x is 

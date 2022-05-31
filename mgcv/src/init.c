@@ -100,6 +100,7 @@ R_CMethodDef CEntries[] = {
     {"mgcv_pqr",(DL_FUNC)&mgcv_pqr,6},
     {"getRpqr",(DL_FUNC)&getRpqr,6},
     {"mgcv_pqrqy",(DL_FUNC)&mgcv_pqrqy,8},
+    {"minres",(DL_FUNC)&minres,7},
     {NULL, NULL, 0}
 };
 

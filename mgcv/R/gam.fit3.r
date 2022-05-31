@@ -684,10 +684,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     if (pdef.fails) warning("some NCV updates not positive definite")
 	   }   
 	   mu.cv <- linkinv(eta.cv)
-	   NCV <- 2*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - dev ## the NCV score - simply LOOCV if nei(i) = i for all i
+	   NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*dev ## the NCV score - simply LOOCV if nei(i) = i for all i
 	   attr(NCV,"eta.cv") <- eta.cv
            if (deriv) {
-	     dev1 <- -2*colSums(ww*(x%*%db.drho)) 
+	     dev1 <- if (gamma==1) 0 else -2*colSums(ww*(x%*%db.drho)) 
 	     attr(NCV,"deta.cv") <- deta.cv
 	     var.mug <- variance(mu.cv)
              mevg <- mu.eta(eta.cv)
@@ -695,7 +695,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	     ww1[!is.finite(ww1)] <- 0
 	     NCV1 <- -2 * colSums(ww1*deta.cv)
-	     NCV1 <- 2*NCV1 - dev1
+	     NCV1 <- gamma*NCV1 - (gamma-1)*dev1
            } ## if deriv
 	} else { ## GCV/GACV etc ....
 

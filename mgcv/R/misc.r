@@ -808,3 +808,14 @@ AddBVB <- function(A,Bt,VBt) {
   A
 } ## AddBVB
 
+minres <- function(R,u,b) {
+## routine to solve (R'R-uu')x = b using minres algorithm.
+## set.seed(0);n <- 100;p <- 20;X <- matrix(runif(n*p)-.5,n,p);R <- chol(crossprod(X));b <- runif(p);k <- 1;
+## solve(crossprod(X[-k,]),b);mgcv:::minres(R,t(X[k,]),b)
+  x <- b; p <- length(b);
+  m <- if (is.matrix(u)) ncol(u) else 1
+  work <- rep(0,p*(m+7)+m)
+  oo <- .C(C_minres,R=as.double(R), u=as.double(u),b=as.double(b), x=as.double(x), p=as.integer(p),m=as.integer(m),work=as.double(work))
+  cat("\n niter : ",oo$m,"\n")
+  oo$x
+}
