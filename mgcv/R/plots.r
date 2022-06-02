@@ -287,7 +287,7 @@ gam.check <- function(b, old.style=FALSE,
     plot(fv, napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
 
-    gamm <- !(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML")) ## gamm `gam' object
+    gamm <- !(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML","NCV")) ## gamm `gam' object
 
     #if (is.null(.Platform$GUI) || .Platform$GUI != "RStudio") par(old.par)
     #   return(invisible())

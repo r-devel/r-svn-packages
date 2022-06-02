@@ -661,19 +661,26 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      #cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
      mu.cv <- linkinv(eta.cv)
      ls <- family$ls(y,weights,theta,scale)
-     dev <- sum(dev.resids(y, mu.cv, weights,theta))
-     NCV <- dev/(2*scale) - ls$ls
+     dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
+     NCV <- dev.cv/(2*scale) - ls$ls
+     DEV <- dev/(2*scale) - ls$ls
+     if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
      attr(NCV,"eta.cv") <- eta.cv
      if (deriv) {
        attr(NCV,"deta.cv") <- deta.cv
        dd.cv <- dDeta(y,mu.cv,weights,theta,family,1) 
        NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
+       if (gamma!=1) DEV1 <- colSums(dd$Deta*(x%*%db.drho))/(2*scale)
        nt <- length(theta)
-       if (nt>0) NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
-       ## BUG: what about the scale parameter??
-       if (!scale.known) { ## deal with scale parameter derivative
-         NCV1 <- c(NCV1,-dev/(2*scale^2) - ls$lsth1[1+nt])
+       if (nt>0) {
+          NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
+	  if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))) - ls$lsth1[1:nt]
        }
+       if (!scale.known) { ## deal with scale parameter derivative
+         NCV1 <- c(NCV1,-dev.cv/(2*scale^2) - ls$lsth1[1+nt])
+	 if (gamma!=1) DEV1 <- c(DEV1,-dev/(2*scale^2) - ls$lsth1[1+nt])
+       }
+       if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
      }
    } else {
     
@@ -1246,7 +1253,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ## NOTE: this needs updating. chol of raw Hp is a bad idea, and really all the
     ##       computations should be done with diagonal pre-conditioning. This is easy,
     ##       but should test code without this first!
-    if (!overlap) R1 <- try(chol(t(Hp/D)/D),silent=TRUE) 
+    if (!overlap) R1 <- try(chol(t(Hp/D)/D),silent=TRUE)
+    ll$gamma <- gamma
     if (overlap||inherits(R1,"try-error")) {
       ## get H (Hp?) and Hi
       Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D

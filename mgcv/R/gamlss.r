@@ -179,15 +179,20 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
       }
     } 
   } else { ## exact
+    gamma <- llf$gamma
     ll <- family$ll(y[nei$i],X,beta,wt[ind],family,offset,deriv=1,db,eta=eta.cv,ncv=TRUE)
-    ncv <- -ll$l  
+    ncv <- -ll$l
+    dev <- -llf$l
+    ncv <- gamma*ncv - (gamma-1)*dev
     if (deriv) {
-      ncv1 <- rep(0,nsp)
+      dev1 <- ncv1 <- rep(0,nsp)
       ind <- 1:nm
       for (i in 1:nlp) {
         ncv1 <- ncv1 - colSums(ll$l1[,i]*deta.cv[ind,])
+        if (gamma!=1) dev1 <- dev1 - colSums(llf$l1[,i]*deta[ind,])
         ind <- ind + nm
       }
+      ncv1 <- gamma*ncv1 - (gamma-1)*dev1
     } 
   }
   attr(ncv,"eta.cv") <- eta.cv

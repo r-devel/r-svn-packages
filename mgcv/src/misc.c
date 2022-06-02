@@ -759,6 +759,26 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,do
    
 */
 
+void minres0(double *R, double *u,double *b, double *x, int *p,int *m) {
+/* Brute force alternative to minres for testing purposes */ 
+  double *A,xx,zz,*work,workq;
+  int p2,j,one=1,*ipiv,lwork=-1;
+  char ntrans = 'N',trans='T',uplo='U',diag='N',side='L';
+  p2 = *p * *p;
+  A = (double *)CALLOC((size_t) p2,sizeof(double));
+  ipiv = (int *)CALLOC((size_t) *p,sizeof(int));
+  for (j=0;j<p2;j++) A[j] = R[j];
+  xx=1.0;
+  F77_CALL(dtrmm)(&side,&uplo,&trans,&diag,p,p,&xx,R,p,A,p FCONE FCONE); /* A = R'R */
+  zz = -1.0;
+  F77_CALL(dsyrk)(&uplo,&ntrans,p,m,&zz,u,p,&xx,A,p FCONE FCONE); /* A = R'R - uu' */
+  for (j=0;j<*p;j++) x[j] = b[j];
+  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,&workq,&lwork,&j FCONE FCONE);
+  lwork=floor(workq);if (lwork<workq) lwork++;
+  work = (double *)CALLOC((size_t) lwork,sizeof(double));
+  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,work,&lwork,&j FCONE FCONE);
+  FREE(A);FREE(ipiv);FREE(work);
+}
 
 void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work) {
 /* solves (R'R - uu')x=b where u is p by m and (R'R-uu') need not be positive definite. 
@@ -771,7 +791,7 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
 */
   int one=1,i,j;
   double *v,*z,xx,zz,*u1,*dum,beta1,beta2,eta,epsilon,sig0,sig1,sig2,gamma0,gamma1,gamma2,
-    *v1,*v2,alpha,delta,rho1,rho2,rho3,maxb,*w,*w1,*w2;
+    *v1,*v2,alpha,delta,rho1,rho2,rho3,maxb,*w,*w1,*w2,*pp;
   char ntrans = 'N',trans='T',uplo='U',diag='N',side='L';
   u1 = work; work += *p * *m;
   v = work;work += *p;
@@ -797,8 +817,7 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
   for (beta1=0.0,i=0;i<*p;i++) { xx=v1[i]; beta1 += xx*xx;}
   epsilon = eta = beta1 = sqrt(beta1); /* beta1 = \\v1\\ */
   gamma0 = gamma1 = 1.0;sig0 = sig1 = 0.0;
-  for (i=0;i < *p * 2;i++) w[i] = 0.0;
-  for (i=0;i < *p ;i++) v[i] = 0.0;
+  for (i=0;i < *p ;i++) v[i] = w1[i] = w[i] = 0.0;
   for (j=0;j<200;j++) {
     for (i=0;i<*p;i++) { v1[i] /= beta1;z[i]=v1[i];}
     xx = 1.0; zz = 0.0;
@@ -825,16 +844,17 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
     epsilon *= fabs(sig2);
     if (epsilon<maxb*1e-10) break;
     eta *= -sig2;
-    for (i=0;i<*p;i++) {
-      v[i] = v1[i];v1[i] = v2[i];
-      w[i] = w1[i];w1[i] = w2[i];
-    }
+    //    for (i=0;i<*p;i++) {
+    //  v[i] = v1[i];v1[i] = v2[i];
+    //  w[i] = w1[i];w1[i] = w2[i];
+    //}
+    pp = v; v = v1; v1 = v2; v2 = pp;
+    pp = w; w = w1; w1 = w2; w2 = pp;
     sig0 = sig1; sig1 = sig2; beta1 = beta2;
     gamma0 = gamma1; gamma1 = gamma2;
   }
   F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE); /* Solve R'x = x* */
   *m=j;
-  //return(j);
 } /* minres */
 
 int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork) {
@@ -1072,8 +1092,8 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
                LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
  */
   SEXP S,kr;
-  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef;
-  double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,
+  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0;
+  double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work,
     *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
@@ -1104,8 +1124,9 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   Xi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* holds sub-matrix removed for this neighbourhood */
   wXi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* equivalent pre-multiplied by diag(w2) */
   dwXi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* equivalent pre-multiplied by d diag(w2)/d rho_j */
-  R0 = (double *)CALLOC((size_t) p2,sizeof(double));
+  R0 = (double *)CALLOC((size_t) p2,sizeof(double));Rb = (double *)CALLOC((size_t) p2,sizeof(double));
   dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
+  ddbuf = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* buffer for downdates that spoil +ve def */ 
   /* create Hessian X'diag(w2)X + S_lambda... Not needed */
   // for (xip0 = X,xip=dwX,q=0;q<p;q++) for (wp=w2,wp1=wp+n;wp<wp1;wp++,xip++,xip0++) *xip = *xip0 * *wp;
   xx=1.0;z=0.0;
@@ -1132,8 +1153,9 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     p1 = g + p; /* fill accumulated g vector */
     ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
     i0=ii;io0=io; /* record of start needed in deriv calc */
-    for (j=0;j<p2;j++) R0[j] = R[j]; /* copy Cholesky factor*/
+    for (p0=R0,p3=R,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* copy Cholesky factor*/
     alpha = sqrt(fabs(w2ki));
+    nddbuf=0; /* counter for number of updates to store as they cause loss of definiteness */
     for (dp=d,xip0=xip=Xi,gp=g,xp=X,wxp=wXi;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) { /* first element of neighbourhood */
       xx = xp[ki]; /* X[k[ii],j] */
       *gp = w1ki * xx; /* g gradient of log lik */
@@ -1143,7 +1165,12 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     }
     if (alpha<0) j=1; else j=0; /* update or downdate ? */
     chol_up(R0,d,&p,&j,&eps);
-    if (R0[1]< -0.5) pdef=0; else pdef=1; /* is update positive definite? */
+    if (R0[1]< -0.5) { /* is update positive definite? */
+      pdef=0;R0[1]=0.0; 
+      for (p0=R0,p3=R,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* restore factor to state before update attempt */
+      for (p0=ddbuf+p*nddbuf,p3=d,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
+      nddbuf++;
+    } else pdef=1;
     q=1; /* count rows of Xi */
     for (xip0++,ii++;ii<m[i];ii++,xip0++,q++) { /* accumulate rest of g and Xi for rest of neighbourhood*/ 
       ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];alpha = sqrt(fabs(w2ki));
@@ -1154,11 +1181,19 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
 	*wxp = xx*w2ki;
 	*dp = xx*alpha;
       }
-      if (alpha<0) j=1; else j=0; /* update or downdate ? */
-      if (pdef) {
-	chol_up(R0,d,&p,&j,&eps);
-	if (R0[1]< -0.5) pdef=0;  /* is update positive definite? */
-      }	
+      if (alpha<0) {
+	j=1; /* update */
+      } else {/* downdate */
+        for (p0=Rb,p3=R0,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* backup state of R0 before attempting downdate */
+        j=0;
+      }
+      chol_up(R0,d,&p,&j,&eps);
+      if (R0[1]< -0.5) { /* is update positive definite? */
+	pdef=0;R0[1] = 0.0;
+	for (p0=R0,p3=Rb,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* restore factor to state before update attempt */
+        for (p0=ddbuf+p*nddbuf,p3=d,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
+        nddbuf++;
+      } 	
     }  
      /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
          int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
@@ -1170,14 +1205,21 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
        trans='T' to transpose A, 'N' not to. A is m by n. Forms y = a*A'x + b*y, or
        y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
        dx and dy are increments of x and y indices.  */
-    for (j=0;j<p;j++) d[j] = g[j];
-    if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */  
+    
+    if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
+      for (j=0;j<p;j++) d[j] = g[j];
       F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE);
       F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE);
-    } else {  /* fallback solve R'R d= g */
+    } else {  /* fallback solve (R0'R0 - uu') d= g via minres iteration, u, the skipped downdates are in ddbuf*/
+      if (!nwork) {
+	nwork =  p*(maxn+7)+maxn;
+        work = (double *)CALLOC((size_t) nwork,sizeof(double));
+      }
+      j = nddbuf; /* modified to number of iterations on exit */
+      minres(R0,ddbuf,g,d,&p,&j,work);
       error++; /* count the number of non +ve def cases */
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d,&one FCONE FCONE);
+      //F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d,&one FCONE FCONE);
+      //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d,&one FCONE FCONE);
     }
     for (;io<mi[i];io++) {
       for (xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-d[j]);  
@@ -1203,13 +1245,15 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
       F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
       for (j=0;j<p;j++) dg[j] += g1[j] - g[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
-      for (j=0;j<p;j++) d1[j] = dg[j];
-      if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */  
+      if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
+	for (j=0;j<p;j++) d1[j] = dg[j];
         F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
         F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
-      } else {  /* fallback solve R'R d= g */
-        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d1,&one FCONE FCONE);
-        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d1,&one FCONE FCONE);
+      } else {  /* fallback solve (R0'R0 + uu') d= g where u are skipped downdates in ddbuf */
+	j = nddbuf;
+	minres(R0,ddbuf,dg,d1,&p,&j,work);
+        //F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d1,&one FCONE FCONE);
+        //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d1,&one FCONE FCONE);
       }
       for (io=io0;io<mi[i];io++) {
         for (xx=0.0,xip=X+ind[io],dbp=db+p*l,j=0;j<p;j++,xip += n) xx += *xip * (dbp[j]-d1[j]);  
@@ -1217,10 +1261,11 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       }	
     }
   }  
-  FREE(R0);
+  FREE(R0);FREE(ddbuf);FREE(Rb);
   FREE(g);FREE(d);//FREE(cgwork);
   FREE(Xi);FREE(wXi);FREE(dwXi);
   if (deriv) FREE(dH);
+  if (nwork) FREE(work);
   PROTECT(kr=allocVector(INTSXP,1));
   INTEGER(kr)[0] = error; /* max CG iterations used */
   UNPROTECT(5);
@@ -1272,7 +1317,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
   double *X,*H,*Hi,*l1,*l2,*l3,*beta,*g,*Hp,xx,z,*d,*d1,*cgwork,*eta,*deta,v,*db,*dbp,*detacv,*dh;
   int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,iter1=0,iter=0,deriv,*mi,io,io0,no;
   SEXP JJp,kr,DH;
-  char trans = 'T',ntrans = 'N';
+  char ntrans = 'N';
   p = length(BETA);p2 = p*p;
   n = nrows(x);deriv = asInteger(DERIV);
   M = PROTECT(coerceVector(M,INTSXP));
@@ -1420,8 +1465,9 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
    The derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
    deriv of qth lp w.r.t. lth log sp. 
 */
-  double *X,*R,*l1,*l2,*l3,*beta,*g,*R0,xx,z,*d,*d1,*eta,*deta,v,*db,*dbp,*detacv,*dh,*b,alpha,alpha0,eps;
-  int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,error=0,deriv,*mi,io,io0,no,pdef=1;
+  double *X,*R,*l1,*l2,*l3,*beta,*g,*R0,xx,z,*d,*d1,*eta,*deta,v,*db,*dbp,*detacv,*dh,*b,alpha,alpha0,eps,*Rb,*ddbuf,*p0,*p3,*work;
+  int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,error=0,deriv,nddbuf,
+    *mi,io,io0,no,pdef=1,maxn,buffer_size=0,nwork=0;
   SEXP JJp,kr,DH;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   p = length(BETA);p2 = p*p;
@@ -1446,19 +1492,28 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
     JJp = VECTOR_ELT(JJ, l);JJp = PROTECT(coerceVector(JJp,INTSXP)); /* see R extensions 5.9.1 Handling the effects of garbage collection */
     plp[l] = length(JJp); jj[l] = INTEGER(JJp); /* jj[l][1:plp[l]] indexes cols of X for this lp */
     jjl=jj[l];for (i=0;i<plp[l];i++) jjl[i]--; /* 5.9.3 Details of R types. In fact coerceVector creates new vector only if type needs to change. */
-  }  
+  }
+  /* need to know largest neighbourhood to create storage buffer for problematic updates*/
+  maxn = ii = 0;
+  for (j=0;j<nm;j++) {
+    i = m[j]; if (i-ii>maxn) maxn = i-ii; ii = i;
+  }
+  
+  
   X = REAL(x);
   g = (double *)CALLOC((size_t) 3*p+nlp,sizeof(double)); /* gradient change */
   d = g+p; /* change in beta */
   d1 = d + p; /* deriv of above */
   b = d1 + p; /* multipliers on spurious leading diagonal blocks */
   R0 = (double *)CALLOC((size_t) p2,sizeof(double)); /* chol factor of perturbed Hessian */
-  for (io=ii=0,i=0;i<nm;i++) { /* loop over obs, k[ii] is start of neighbourhood of i */
+  Rb = (double *)CALLOC((size_t) p2,sizeof(double)); /* back up of chol factor of perturbed Hessian, in case of downdate failures */
+  for (io=ii=0,i=0;i<nm;i++) { /* loop over folds, k[ii] is start of neighbourhood of i */
     i0=ii;io0=io; /* record start of neigbourhood record */
     /* start with the change in gradient term */
     for (l=0;l<p;l++) g[l] = 0.0; /* have to clear first as multiple lps may be added */
     for (l=0;l<p2;l++) R0[l] = R[l]; /* Hessian Chol Factor before dropping of neighbours */
     pdef=1; /* positive definiteness status of R0  */
+    nddbuf = 0; /* number of skipped down-dates */
     for (;ii<m[i];ii++) { /* loop over neighbours */
       ki=k[ii]; /* neighbour index */
       for (j=0;j<nlp;j++) b[j] = 0.0;
@@ -1474,31 +1529,53 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
 	  for (j=0;j<plp[q];j++) d[jjq[j]] =  X[jjq[j]*n+ki]*alpha;
 	  /* Now record multipliers on spuriously generated leading diagonal blocks... */
 	  b[l] += 1.0;b[q] += alpha*alpha;
-          if (pdef) chol_up(R0,d,&p,&one,&eps);/* add correction */
+          chol_up(R0,d,&p,&one,&eps);/* add correction */
 	}  /* lp loop q */
 	/* now update the lth leading diagonal block, removing the nuisance block already formed */
 	alpha = alpha0 - b[l];
 	xx = sqrt(fabs(alpha));for (j=0;j<p;j++) d[j] = 0.0;
 	for (j=0;j<plp[l];j++) d[jjl[j]] =  xx*X[jjl[j]*n+ki];
-	if (pdef) {
-	  if (alpha>0) j=1; else j=0; /* add or subtract correction */
-	  chol_up(R0,d,&p,&j,&eps);
-	  if (R0[1]< -0.5) pdef=0; /* is update positive definite? */
-        }
+	
+	if (alpha>0) { /* add or subtract correction */
+	  j=1;
+	} else { /* subtract */
+	  for (p0=Rb,p3=R0,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* backup state of R0 before attempting downdate */
+	  j=0; 
+	}
+	chol_up(R0,d,&p,&j,&eps);
+	if (R0[1] < -0.5) { /* did update fail to be positive definite? */
+	  pdef=0;R0[1] = 0.0;
+	  if (!buffer_size) { /* need to create buffer for skipped down-dates */
+	    buffer_size = p*maxn*nlp;
+            ddbuf = (double *)CALLOC((size_t) buffer_size,sizeof(double));
+	  }
+	  for (p0=Rb,p3=R0,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p3[q] = p0[q]; /* restore to state before update attempt */
+	  for (p0=ddbuf+p*nddbuf,p3=d,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
+          nddbuf++;
+        } 
       } /* lp loop l */
     } /* neighbour loop */
-    for (j=0;j<p;j++) d[j] = g[j];
-    if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */  
+    
+    if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
+      for (j=0;j<p;j++) d[j] = g[j];
       F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE);
       F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE);
-    } else {  /* fallback solve R'R d= g */
-      error++; /* count the number of non +ve def cases */
-      Rprintf(" ii=%d\n",ii);
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d,&one FCONE FCONE);
+    } else {  /* fallback solve (R0'R0 - uu') d= g where u is stored in ddbuf */
+      error++; /* count the number of non +ve def cases */ 
+      if (!nwork) {
+     	nwork =  p*(maxn*nlp+7)+maxn;
+        work = (double *)CALLOC((size_t) nwork,sizeof(double));
+      }
+      j = nddbuf; /* modified to number of iterations on exit */
+      minres(R0,ddbuf,g,d,&p,&j,work);
+      //j = nddbuf; /* modified to number of iterations on exit */
+      //minres0(R0,ddbuf,g,d,&p,&j); /* brute force debug check */
+      Rprintf(" fold=%d iter=%d updates=%d\n",i,j,nddbuf);
+      //  F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d,&one FCONE FCONE);
+      //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d,&one FCONE FCONE);
     }
 	
-    /* now create the linear predictors for the ith point */
+    /* now create the linear predictors for the ith fold */
     for (;io<mi[i];io++)
     for (l=0;l<nlp;l++) {
       ln = no*l;jjl = jj[l];
@@ -1529,16 +1606,20 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
 	    for (kk=0;kk<plp[j];kk++) g[jjl[kk]] += X[ki+n*jjl[kk]]*xx;
 	  }  
 	} /* neighbour loop */
-	/* at this point g contains deriv of perturned Hessian w.r.t. log sp l multiplied by
+	/* at this point g contains deriv of perturbed Hessian w.r.t. log sp l multiplied by
            the change in beta vector, d. Now the derivative of grad vect w.r.t. log(sp[l])
            is also required */
-        for (j=0;j<p;j++) d1[j] = g[j];
-        if (pdef) { /* solve for R0'R0 d1 = g1 */  
+        if (pdef) { /* solve for R0'R0 d1 = g1 */
+	  for (j=0;j<p;j++) d1[j] = g[j];
           F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
           F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
-        } else {  /* fallback solve R'R d1 = g1 */
-          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d1,&one FCONE FCONE);
-          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d1,&one FCONE FCONE);
+        } else {  /* fallback solve (R0'R0 -uu')d1 = g1 where u stored in ddbuf*/
+          j = nddbuf;
+	  minres(R0,ddbuf,g,d1,&p,&j,work);
+	  //minres0(R0,ddbuf,g,d1,&p,&j);
+	  Rprintf(" %d",j);
+          //F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d1,&one FCONE FCONE);
+          //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d1,&one FCONE FCONE);
         }
 	
 	for (io=io0;io<mi[i];io++)
@@ -1559,6 +1640,9 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
     jjl=jj[l];for (i=0;i<plp[l];i++) jjl[i]++; 
   }  
   FREE(jj);FREE(plp);FREE(g);FREE(R0);
+  FREE(Rb);
+  if (buffer_size) FREE(ddbuf);
+  if (nwork) FREE(work);
   PROTECT(kr=allocVector(INTSXP,1));
   INTEGER(kr)[0] = error; /* number of Hessians not positive def */
   UNPROTECT(5+nlp);
