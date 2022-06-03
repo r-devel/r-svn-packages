@@ -151,45 +151,46 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
     for (i in 1:ncol(eta.cv)) if (i <= length(offset)&&!is.null(offset[[i]])) eta.cv[,i] <- eta.cv[,i] + offset[[i]][nei$i]
   }
   ## ll must be set up to return l1..l3 as derivs w.r.t. linear predictors if ncv=TRUE
-  qapprox <- FALSE
+  qapprox <- TRUE
   ncv1 <- NULL
+  gamma <- llf$gamma
+  dev <- if (gamma!=1||qapprox) -family$ll(y[nei$i],X,beta,wt[ind],family,offset,deriv=0,db,eta=eta[nei$i],ncv=TRUE)$l else 0 
   if (qapprox) { ## quadratic approximate version
-    ncv <-  -llf$l - sum(llf$l1[nei$i,]*(eta.cv-eta[nei$i,]))
+    ncv <-  dev - gamma*sum(llf$l1[nei$i,]*(eta.cv-eta[nei$i,]))
     k <- 0
     for (i in 1:nlp) for (j in i:nlp) {
       k <- k  + 1
-      ncv <- ncv - (1+(i!=j))*sum(llf$l2[nei$i,k]*(eta.cv[,i]-eta[nei$i,i])*(eta.cv[,j]-eta[nei$i,j])) ## symmetric term
+      ncv <- ncv - 0.5*gamma*(1+(i!=j))*sum(llf$l2[nei$i,k]*(eta.cv[,i]-eta[nei$i,i])*(eta.cv[,j]-eta[nei$i,j])) ## symmetric term
     }
     if (deriv) {
-      ncv1 <- -colSums(as.numeric(llf$l1[nei$i,])*deta.cv) 
+      ncv1 <- -colSums(as.numeric(llf$l1[nei$i,])*(deta.cv*gamma+(1-gamma)*deta)) 
       kk <- 0;jj <- 0
       for (j in 1:nlp) for (k in j:nlp) {
         kk <- kk  + 1
-	ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*(deta.cv[1:nm+(k-1)*nm,]*(eta.cv[,j]-eta[nei$i,j]) + 
-	                   (eta.cv[,k]-eta[nei$i,k])*(deta.cv[1:nm+(j-1)*nm,] - deta[nei$i+(j-1)*n,])))
+	ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*((deta[1:nm+(k-1)*nm,] + deta.cv[1:nm+(k-1)*nm,])*(eta.cv[,j]-eta[nei$i,j]) + 
+	                   (eta.cv[,k]-eta[nei$i,k])*(deta.cv[1:nm+(j-1)*nm,] - deta[nei$i+(j-1)*n,])))*gamma*.5
 
-        if (j!=k) ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*(deta.cv[1:nm+(j-1)*nm,]*(eta.cv[,k]-eta[nei$i,k]) + 
-	                   (eta.cv[,j]-eta[nei$i,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$i+(k-1)*n,])))		  
+        if (j!=k) ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*((deta[1:nm+(j-1)*nm,] + deta.cv[1:nm+(j-1)*nm,])*(eta.cv[,k]-eta[nei$i,k]) + 
+	                   (eta.cv[,j]-eta[nei$i,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$i+(k-1)*n,])))*gamma*.5		  
         for (l in k:nlp) {
           jj <- jj + 1
-	  ncv1 <- ncv1 - (1+(j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(l-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,j]-eta[nei$i,j]))
-	  if (l!=k) ncv1 <- ncv1 - (1+(l!=j&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(k-1)*n,]*(eta.cv[,l]-eta[nei$i,l])*(eta.cv[,j]-eta[nei$i,j]))
-	  if (l!=j) ncv1 <- ncv1 - (1+(l!=k&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(j-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,l]-eta[nei$i,l]))
+	  ncv1 <- ncv1 - (1+(j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(l-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,j]-eta[nei$i,j]))*gamma*.5
+	  if (l!=k) ncv1 <- ncv1 - (1+(l!=j&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(k-1)*n,]*(eta.cv[,l]-eta[nei$i,l])*(eta.cv[,j]-eta[nei$i,j]))*gamma*.5
+	  if (l!=j) ncv1 <- ncv1 - (1+(l!=k&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(j-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,l]-eta[nei$i,l]))*gamma*.5
         }
       }
     } 
-  } else { ## exact
-    gamma <- llf$gamma
+  } else { ## exact  
     ll <- family$ll(y[nei$i],X,beta,wt[ind],family,offset,deriv=1,db,eta=eta.cv,ncv=TRUE)
     ncv <- -ll$l
-    dev <- -llf$l
+    
     ncv <- gamma*ncv - (gamma-1)*dev
     if (deriv) {
       dev1 <- ncv1 <- rep(0,nsp)
       ind <- 1:nm
       for (i in 1:nlp) {
         ncv1 <- ncv1 - colSums(ll$l1[,i]*deta.cv[ind,])
-        if (gamma!=1) dev1 <- dev1 - colSums(llf$l1[,i]*deta[ind,])
+        if (gamma!=1) dev1 <- dev1 - colSums((llf$l1[,i]*deta[ind,])[nei$i,,drop=FALSE])
         ind <- ind + nm
       }
       ncv1 <- gamma*ncv1 - (gamma-1)*dev1

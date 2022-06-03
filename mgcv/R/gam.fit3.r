@@ -469,7 +469,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
        
         wdr <- dev.resids(y, mu, weights)
         dev <- sum(wdr) 
-        wdr <- sign(y-mu)*sqrt(pmax(wdr,0)) ## used below in scale estimation 
+        #wdr <- sign(y-mu)*sqrt(pmax(wdr,0)) ## used below in scale estimation 
   
         ## Now call the derivative calculation scheme. This requires the
         ## following inputs:
@@ -682,21 +682,35 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            } else { ## use Cholesky update approach
 	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv,.Machine$double.eps);
 	     if (pdef.fails) warning("some NCV updates not positive definite")
-	   }   
-	   mu.cv <- linkinv(eta.cv)
-	   NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*dev ## the NCV score - simply LOOCV if nei(i) = i for all i
+	   }
+           qapprox <- FALSE
+	   if (qapprox) {
+             NCV <- sum(wdr[nei$i]) + gamma*sum(-2*ww[nei$i]*(eta.cv-eta[nei$i]) + w1[nei$i]*(eta.cv-eta[nei$i])^2)
+             if (deriv) {
+	       deta <- x%*%db.drho
+	       alpha1 <- if (fisher) 0 else -(V1-g2) + (y-mu)*(V2-V1^2+g3-g2^2)/alpha
+	       w3 <- w1/g1*(alpha1 - V1 - 2 * g2)
+               NCV1 <- colSums(-2*ww[nei$i]*((1-gamma)*deta[nei$i,] + gamma*deta.cv) + 2*gamma*w1[nei$i]*(deta.cv*(eta.cv-eta[nei$i])) +
+	                gamma*w3[nei$i]* deta[nei$i,]*(eta.cv-eta[nei$i])^2)
+             }
+           } else { ## exact version
+ 
+     	     mu.cv <- linkinv(eta.cv)
+	     NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*sum(wdr[nei$i]) ## the NCV score - simply LOOCV if nei(i) = i for all i
+	   
+             if (deriv) {
+	       dev1 <- if (gamma==1) 0 else -2*colSums((ww*(x%*%db.drho))[nei$i,,drop=FALSE]) 
+	       var.mug <- variance(mu.cv)
+               mevg <- mu.eta(eta.cv)
+	       mug <- mu.cv
+	       ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
+	       ww1[!is.finite(ww1)] <- 0
+	       NCV1 <- -2 * colSums(ww1*deta.cv)
+	       NCV1 <- gamma*NCV1 - (gamma-1)*dev1
+             } ## if deriv
+	   }  
 	   attr(NCV,"eta.cv") <- eta.cv
-           if (deriv) {
-	     dev1 <- if (gamma==1) 0 else -2*colSums(ww*(x%*%db.drho)) 
-	     attr(NCV,"deta.cv") <- deta.cv
-	     var.mug <- variance(mu.cv)
-             mevg <- mu.eta(eta.cv)
-	     mug <- mu.cv
-	     ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
-	     ww1[!is.finite(ww1)] <- 0
-	     NCV1 <- -2 * colSums(ww1*deta.cv)
-	     NCV1 <- gamma*NCV1 - (gamma-1)*dev1
-           } ## if deriv
+	   if (deriv) attr(NCV,"deta.cv") <- deta.cv
 	} else { ## GCV/GACV etc ....
 
            P <- oo$P

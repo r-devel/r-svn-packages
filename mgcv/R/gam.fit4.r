@@ -649,7 +649,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
      eta.cv <- rep(0.0,length(nei$i))
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
-     w1 <- -dd$Deta/(2*scale); w2 <- dd$Deta2/(2*scale); dth <- dd$Detath/(2*scale)
+     w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2
      R <- try(chol(crossprod(x,w*x)+St),silent=TRUE)
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
@@ -658,30 +658,51 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv,.Machine$double.eps);
 	if (pdef.fails) warning("some NCV updates not positive definite")
      }   
-     #cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
      mu.cv <- linkinv(eta.cv)
      ls <- family$ls(y,weights,theta,scale)
-     dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
-     NCV <- dev.cv/(2*scale) - ls$ls
-     DEV <- dev/(2*scale) - ls$ls
-     if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
+     qapprox <- TRUE;nt <- length(theta)
+     dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
+     ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
+     if (qapprox) { ## quadratic approximation to NCV
+       qdev <- dev0 + gamma*sum(dd$Deta[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2)
+       NCV <- qdev/(2*scale) - ls0$ls
+       if (deriv) {
+         deta <- x %*% db.drho
+         NCV1 <- (colSums(dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv)) +
+	 gamma*colSums(dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i])) +
+	 0.5*gamma*colSums(dd$Deta3[nei$i]*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
+	 if (nt>0) { ## deal with direct dependence on the theta parameters
+           NCV1[1:nt] <- NCV1[1:nt]- ls0$lsth1[1:nt] +
+	      if (nt==1) (sum(dd$Dth[nei$i]) + gamma*sum(dd$Detath[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2))/(2*scale)
+	      else (colSums(dd$Dth[nei$i,]) + gamma*colSums(dd$Detath[nei$i,]*(eta.cv-eta[nei$i])) + 0.5*gamma*colSums(dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2))/(2*scale)
+         }
+	 if (!scale.known) {
+           NCV1 <- c(NCV1,-qdev/(2*scale) - ls0$lsth1[1+nt])
+         }
+       }
+       
+     } else { ## exact NCV
+       dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
+       NCV <- dev.cv/(2*scale) - ls$ls
+       DEV <- dev0/(2*scale) - ls$ls ## BUG: should be over nei$i - derivs too
+       if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
+       if (deriv) {
+         dd.cv <- dDeta(y,mu.cv,weights,theta,family,1) 
+         NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
+         if (gamma!=1) DEV1 <- colSums((dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE])/(2*scale)
+         if (nt>0) {
+           NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
+	   if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE]) - ls0$lsth1[1:nt]
+         }
+         if (!scale.known) { ## deal with log scale parameter derivative
+           NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls$lsth1[1+nt])
+	   if (gamma!=1) DEV1 <- c(DEV1,-dev0/(2*scale) - ls0$lsth1[1+nt])
+         }
+         if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
+       }
+     } ## exact NCV
      attr(NCV,"eta.cv") <- eta.cv
-     if (deriv) {
-       attr(NCV,"deta.cv") <- deta.cv
-       dd.cv <- dDeta(y,mu.cv,weights,theta,family,1) 
-       NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
-       if (gamma!=1) DEV1 <- colSums(dd$Deta*(x%*%db.drho))/(2*scale)
-       nt <- length(theta)
-       if (nt>0) {
-          NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
-	  if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))) - ls$lsth1[1:nt]
-       }
-       if (!scale.known) { ## deal with scale parameter derivative
-         NCV1 <- c(NCV1,-dev.cv/(2*scale^2) - ls$lsth1[1+nt])
-	 if (gamma!=1) DEV1 <- c(DEV1,-dev/(2*scale^2) - ls$lsth1[1+nt])
-       }
-       if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
-     }
+     if (deriv) attr(NCV,"deta.cv") <- deta.cv
    } else {
     
      D2 <- matrix(oo$D2,ntot,ntot); ldet2 <- matrix(oo$ldet2,ntot,ntot)
