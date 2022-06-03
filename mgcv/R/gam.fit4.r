@@ -659,7 +659,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	if (pdef.fails) warning("some NCV updates not positive definite")
      }   
      mu.cv <- linkinv(eta.cv)
-     ls <- family$ls(y,weights,theta,scale)
+     #ls <- family$ls(y,weights,theta,scale)
      qapprox <- TRUE;nt <- length(theta)
      dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
@@ -683,19 +683,19 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        
      } else { ## exact NCV
        dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
-       NCV <- dev.cv/(2*scale) - ls$ls
-       DEV <- dev0/(2*scale) - ls$ls ## BUG: should be over nei$i - derivs too
+       NCV <- dev.cv/(2*scale) - ls0$ls
+       DEV <- dev0/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
        if (deriv) {
-         dd.cv <- dDeta(y,mu.cv,weights,theta,family,1) 
+         dd.cv <- dDeta(y[nei$i],mu.cv,weights[nei$i],theta,family,1) 
          NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
          if (gamma!=1) DEV1 <- colSums((dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE])/(2*scale)
          if (nt>0) {
-           NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
+           NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls0$lsth1[1:nt]
 	   if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE]) - ls0$lsth1[1:nt]
          }
          if (!scale.known) { ## deal with log scale parameter derivative
-           NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls$lsth1[1+nt])
+           NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls0$lsth1[1+nt])
 	   if (gamma!=1) DEV1 <- c(DEV1,-dev0/(2*scale) - ls0$lsth1[1+nt])
          }
          if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
