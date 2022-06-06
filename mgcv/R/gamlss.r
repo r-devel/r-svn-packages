@@ -151,10 +151,9 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
     for (i in 1:ncol(eta.cv)) if (i <= length(offset)&&!is.null(offset[[i]])) eta.cv[,i] <- eta.cv[,i] + offset[[i]][nei$i]
   }
   ## ll must be set up to return l1..l3 as derivs w.r.t. linear predictors if ncv=TRUE
-  qapprox <- TRUE
   ncv1 <- NULL
-  gamma <- llf$gamma
-  dev <- if (gamma!=1||qapprox) -family$ll(y[nei$i],X,beta,wt[ind],family,offset,deriv=0,db,eta=eta[nei$i],ncv=TRUE)$l else 0 
+  gamma <- llf$gamma;qapprox <- family$qapprox
+  dev <- if (gamma!=1||qapprox) -sum(family$ll(y,X,beta,wt,family,offset,deriv=0,db,eta=eta,ncv=TRUE)$l0[nei$i]) else 0 
   if (qapprox) { ## quadratic approximate version
     ncv <-  dev - gamma*sum(llf$l1[nei$i,]*(eta.cv-eta[nei$i,]))
     k <- 0
@@ -174,24 +173,28 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
 	                   (eta.cv[,j]-eta[nei$i,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$i+(k-1)*n,])))*gamma*.5		  
         for (l in k:nlp) {
           jj <- jj + 1
-	  ncv1 <- ncv1 - (1+(j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(l-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,j]-eta[nei$i,j]))*gamma*.5
-	  if (l!=k) ncv1 <- ncv1 - (1+(l!=j&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(k-1)*n,]*(eta.cv[,l]-eta[nei$i,l])*(eta.cv[,j]-eta[nei$i,j]))*gamma*.5
-	  if (l!=j) ncv1 <- ncv1 - (1+(l!=k&&j!=k)) * colSums(llf$l3[nei$i,jj]*deta[nei$i+(j-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,l]-eta[nei$i,l]))*gamma*.5
+	  ncv1 <- ncv1 - (1+(j!=k)) * gamma*.5 * colSums(
+   	          llf$l3[nei$i,jj]*deta[nei$i+(l-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,j]-eta[nei$i,j]))
+	  if (l!=k) ncv1 <- ncv1 - (1+(l!=j&&j!=k)) * gamma * .5 * colSums(
+	          llf$l3[nei$i,jj]*deta[nei$i+(k-1)*n,]*(eta.cv[,l]-eta[nei$i,l])*(eta.cv[,j]-eta[nei$i,j]))
+	  if (l!=j) ncv1 <- ncv1 - (1+(l!=k&&j!=k)) * gamma * .5 * colSums(
+	          llf$l3[nei$i,jj]*deta[nei$i+(j-1)*n,]*(eta.cv[,k]-eta[nei$i,k])*(eta.cv[,l]-eta[nei$i,l]))
         }
       }
     } 
-  } else { ## exact  
-    ll <- family$ll(y[nei$i],X,beta,wt[ind],family,offset,deriv=1,db,eta=eta.cv,ncv=TRUE)
+  } else { ## exact
+    offi <- offset
+    if (!is.null(offset)) for (i in 1:length(offset)) if (!is.null(offset[[i]])) offi[[i]] <- offset[[i]][nei$i]
+    ll <- family$ll(y[nei$i],X[nei$i,],beta,wt[nei$i],family,offi,deriv=1,db,eta=eta.cv,ncv=TRUE)
     ncv <- -ll$l
-    
     ncv <- gamma*ncv - (gamma-1)*dev
     if (deriv) {
       dev1 <- ncv1 <- rep(0,nsp)
-      ind <- 1:nm
+      ind <- 1:nm; iin <- 1:n
       for (i in 1:nlp) {
         ncv1 <- ncv1 - colSums(ll$l1[,i]*deta.cv[ind,])
-        if (gamma!=1) dev1 <- dev1 - colSums((llf$l1[,i]*deta[ind,])[nei$i,,drop=FALSE])
-        ind <- ind + nm
+        if (gamma!=1) dev1 <- dev1 - colSums((llf$l1[,i]*deta[iin,])[nei$i,,drop=FALSE])
+        ind <- ind + nm; iin <- iin + n
       }
       ncv1 <- gamma*ncv1 - (gamma-1)*dev1
     } 
@@ -649,7 +652,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     l1 <- matrix(0,n,2)
     ymu <- y-mu;ymu2 <- ymu^2;tau2 <- tau^2
  
-    l <- sum(-.5 * ymu2 * tau2 - .5 * log(2*pi) + log(tau))
+    l0 <- -.5 * ymu2 * tau2 - .5 * log(2*pi) + log(tau)
+    l <- sum(l0)
 
     if (deriv>0) {
 
@@ -707,7 +711,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gaulss
 
   initialize <- expression({
@@ -1651,6 +1655,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
     stats[[i]]$d3link <- fam$d3link
     stats[[i]]$d4link <- fam$d4link
   }
+  
   if (link[[3]]=="logit") { ## shifted logit link to confine xi to (-1,.5)
     ## Smith '85 Biometrika shows that -1 limit needed for MLE consistency
     ## but would need -0.5 for normality...
@@ -1755,8 +1760,8 @@ gevlss <- function(link=list("identity","identity","logit")) {
     log.aa1 <- log1p(aa0) ## added
     aa1 <- aa0 + 1 # (xi*(y-mu))/exp1^rho+1;
     aa2 <- 1/xi;
-    l  <-  sum((-aa2*(1+xi)*log.aa1)-1/aa1^aa2-rho);
-    #if (length(ind)>0) cat(aa0[ind]," l = ",l,"\n")
+    l0  <- (-aa2*(1+xi)*log.aa1)-1/aa1^aa2-rho;
+    l <- sum(l0)
 
     if (deriv>0) {
       ## first derivatives m, r, x...
@@ -1974,7 +1979,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gevlss
 
   initialize <- expression({
@@ -2085,7 +2090,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
     ls=1, ## signals that ls not needed here
     rd=rd,
     available.derivs = 2, ## can use full Newton here
-    discrete.ok = TRUE
+    discrete.ok = TRUE,qapprox=TRUE
     ),class = c("general.family","extended.family","family"))
 } ## end gevlss
 
@@ -2216,7 +2221,8 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
    
     ld <- ldTweedie(y,mu=mu,p=NA,phi=NA,rho=rho,theta=theta,a=a,b=b,all.derivs=TRUE)
     ## m, t, r ; mm, mt, mr, tt, tr, rr
-    l <- sum(ld[,1])
+    l0 <- ld[,1]
+    l <- sum(l0)
     l1 <- cbind(ld[,7],ld[,4],ld[,2])
     l2 <- cbind(ld[,8],ld[,9],ld[,10],ld[,5],ld[,6],ld[,3])
 
@@ -2241,7 +2247,7 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
                       d1b=d1b,d2b=d2b,deriv=0,fh=fh,D=D) 
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l; ret$l0 <- l0; ret
   } ## end ll twlss
 
   initialize <- expression({
@@ -2439,7 +2445,8 @@ gammals <- function(link=list("identity","log"),b=-7) {
     etlymt <- eth*(logy-mu-th)
     n <- length(y)
 
-    l  <-  sum(etlymt-logy-ethmuy-lgamma(eth)) ## l
+    l0  <-  etlymt-logy-ethmuy-lgamma(eth) ## l
+    l <- sum(l0)
 
     if (deriv>0) {
       l1 <- matrix(0,n,2)
@@ -2504,7 +2511,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gammals
 
   initialize <- expression({
@@ -2767,7 +2774,10 @@ gumbls <- function(link=list("identity","log"),b=-7) {
     eb <- exp(-beta)
     z <- (y-mu)*eb
     ez <- exp(-z)
-    l <- sum(-beta - z - ez)
+    
+    l0 <- -beta - z - ez
+    l <- sum(l0)
+    
     n <- length(y)
      
     if (deriv>0) {
@@ -2831,7 +2841,7 @@ gumbls <- function(link=list("identity","log"),b=-7) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l;ret$l0 <- l0; ret
   } ## end ll gumbls
 
   initialize <- expression({
@@ -3136,8 +3146,9 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
     CC <- cosh( dTasMe )
     SS <- sinh( dTasMe )
     
-    l <- sum( - tau - 0.5*log(2*pi) + log(CC) - 0.5*.log1pexp(2*log(abs(z))) - 0.5*SS^2 - phiPen*phi^2 ) 
-  
+    l0 <-  - tau - 0.5*log(2*pi) + log(CC) - 0.5*.log1pexp(2*log(abs(z))) - 0.5*SS^2 - phiPen*phi^2 
+    l <- sum(l0)
+    
     if (deriv>0) {
       
       zsd <- z*sig*del
@@ -3600,7 +3611,7 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }
     } else ret <- list()
-    ret$l <- l; ret
+    ret$l <- l;ret$l0 <- l0; ret
   } ## end ll
   
   initialize <- expression({

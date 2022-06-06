@@ -683,12 +683,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv,.Machine$double.eps);
 	     if (pdef.fails) warning("some NCV updates not positive definite")
 	   }
-           qapprox <- FALSE
-	   if (qapprox) {
+	   if (family$qapprox) {
              NCV <- sum(wdr[nei$i]) + gamma*sum(-2*ww[nei$i]*(eta.cv-eta[nei$i]) + w1[nei$i]*(eta.cv-eta[nei$i])^2)
              if (deriv) {
 	       deta <- x%*%db.drho
-	       alpha1 <- if (fisher) 0 else -(V1-g2) + (y-mu)*(V2-V1^2+g3-g2^2)/alpha
+	       alpha1 <- if (fisher) 0 else (-(V1+g2) + (y-mu)*(V2-V1^2+g3-g2^2))/alpha
 	       w3 <- w1/g1*(alpha1 - V1 - 2 * g2)
                NCV1 <- colSums(-2*ww[nei$i]*((1-gamma)*deta[nei$i,] + gamma*deta.cv) + 2*gamma*w1[nei$i]*(deta.cv*(eta.cv-eta[nei$i])) +
 	                gamma*w3[nei$i]* deta[nei$i,]*(eta.cv-eta[nei$i])^2)

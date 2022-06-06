@@ -1184,13 +1184,13 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       if (alpha<0) {
 	j=1; /* update */
       } else {/* downdate */
-        for (p0=Rb,p3=R0,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* backup state of R0 before attempting downdate */
+        for (p0=Rb,p3=R0,j=0;j<p;j++,p0+=p,p3+=p) for (l=0;l<=j;l++) p0[l] = p3[l]; /* backup state of R0 before attempting downdate */
         j=0;
       }
       chol_up(R0,d,&p,&j,&eps);
       if (R0[1]< -0.5) { /* is update positive definite? */
 	pdef=0;R0[1] = 0.0;
-	for (p0=R0,p3=Rb,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* restore factor to state before update attempt */
+	for (p0=R0,p3=Rb,j=0;j<p;j++,p0+=p,p3+=p) for (l=0;l<=j;l++) p0[l] = p3[l]; /* restore factor to state before update attempt */
         for (p0=ddbuf+p*nddbuf,p3=d,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
         nddbuf++;
       } 	
@@ -1231,11 +1231,11 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       for (xx=0.0,xip=Xi,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
       for (dgp=dg,xip=wXi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
       jj = i0;
-      if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
+      if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
       for (jj++,j=1;j<q;j++,jj++) { /* loop over remaining neighbours */
         for (xx=0.0,xip=Xi+j,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
         for (dgp=dg,xip=wXi+j,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp -= *xip * xx;
-	if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
+	if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
       }
       /* Now subtract dH/drho_j d */
       /* First create diag(dw[,l])Xi */

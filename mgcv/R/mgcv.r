@@ -1478,11 +1478,6 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   if (optimizer[2]%in%c("nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
 
-#  if (optimizer[1]=="efs" && !inherits(family,"general.family")) {
-#    warning("Extended Fellner Schall only implemented for general families")
-#    optimizer <- c("outer","newton")
-#  }
-
   if (length(lsp)==0) { ## no sp estimation to do -- run a fit instead
     optimizer[2] <- "no.sps" ## will cause gam2objective to be called, below
   }
@@ -1627,7 +1622,12 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,...) {
 ## Do gam estimation and smoothness selection...
-  
+
+  if (method %in% c("QNCV","NCV")) {
+    optimizer <- c("outer","bfgs")
+    if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
+  }  
+
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
     if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
@@ -1656,8 +1656,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML","NCV")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
-
-  if (method=="NCV") optimizer <- c("outer","bfgs")
 
   if (method%in%c("REML","P-REML","ML","P-ML")) {
     if (optimizer[1]=="perf") {
@@ -1845,7 +1843,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (!inherits(G$family,"extended.family")&&G$intercept&&any(G$offset!=0)) object$null.deviance <-
          glm(object$y~offset(G$offset),family=object$family,weights=object$prior.weights)$deviance
 
-  object$method <- criterion
+  object$method <- if (method=="NCV"&&G$family$qapprox) "QNCV" else criterion
 
   object$smooth<-G$smooth
 

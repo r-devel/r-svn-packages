@@ -659,11 +659,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	if (pdef.fails) warning("some NCV updates not positive definite")
      }   
      mu.cv <- linkinv(eta.cv)
-     #ls <- family$ls(y,weights,theta,scale)
-     qapprox <- TRUE;nt <- length(theta)
+     nt <- length(theta)
      dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
-     if (qapprox) { ## quadratic approximation to NCV
+     if (family$qapprox) { ## quadratic approximation to NCV
        qdev <- dev0 + gamma*sum(dd$Deta[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2)
        NCV <- qdev/(2*scale) - ls0$ls
        if (deriv) {
@@ -1075,7 +1074,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     khalf <- 0;fac <- 2
 
     ## with ll1 < ll0 in place of ll1 <= ll0 in next line than we can repeatedly accept
-    ## miniscule steps that do not actually improve anything. 
+    ## miniscule steps that do not actually improve anything.
+    llold <- ll ## avoid losing lbb slot on stp failure
     while ((!is.finite(ll1)||ll1 <= ll0) && khalf < 25) { ## step halve until it succeeds...
       step <- step/fac;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
@@ -1175,6 +1175,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
         }
       } else ll0 <- ll1 ## step ok but not converged yet
     } else { ## step failed.
+      ll <- llold ## restore old ll with lbb slot
       if (is.null(drop)) bdrop <- rep(FALSE,q)
       if (iconv && iter==1) { ## OK to fail on first step if apparently converged to start with
         converged <- TRUE     ## Note: important to check if improvement possible even if apparently
@@ -1275,13 +1276,16 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ##       computations should be done with diagonal pre-conditioning. This is easy,
     ##       but should test code without this first!
     if (!overlap) R1 <- try(chol(t(Hp/D)/D),silent=TRUE)
-    ll$gamma <- gamma
+    ll$gamma <- gamma;
+    ## note: use of quadratic approx to NCV signalled by family$qapprox
     if (overlap||inherits(R1,"try-error")) {
       ## get H (Hp?) and Hi
       Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
-      ret <- ncv(x,y,weights,nei,coef,family,ll,H=t(Hp/D)/D,Hi=Hi,offset=offset,dH=ll$d1H,db=d1b,deriv=deriv1)
+      ret <- ncv(x,y,weights,nei,coef,family,ll,H=t(Hp/D)/D,Hi=Hi,offset=offset,dH=ll$d1H,
+                 db=d1b,deriv=deriv1)
     } else { ## cholesky version
-      ret <- ncv(x,y,weights,nei,coef,family,ll,R=R1,offset=offset,dH=ll$d1H,db=d1b,deriv=deriv1)
+      ret <- ncv(x,y,weights,nei,coef,family,ll,R=R1,offset=offset,dH=ll$d1H,db=d1b,
+                 deriv=deriv1)
     }
     NCV <- ret$NCV
     NCV1 <- ret$NCV1
