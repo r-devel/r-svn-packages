@@ -670,7 +670,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          deta <- x %*% db.drho
          NCV1 <- (colSums(dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv)) +
 	 gamma*colSums(dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i])) +
-	 0.5*gamma*colSums(dd$Deta3[nei$i]*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
+	 0.5*gamma*colSums(as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
 	 if (nt>0) { ## deal with direct dependence on the theta parameters
            NCV1[1:nt] <- NCV1[1:nt]- ls0$lsth1[1:nt] +
 	      if (nt==1) (sum(dd$Dth[nei$i]) + gamma*sum(dd$Detath[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2))/(2*scale)
