@@ -137,15 +137,14 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
   ## end debug
   nm <- length(nei$i)
   eta.cv <- matrix(0,nm,nlp)
-
+  
   deta.cv <- if (deriv) matrix(0,nm*nlp,nsp) else 0.0
   if (is.null(R)) {
     cg.iter <- .Call(C_ncvls,X,jj,H,Hi,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
-                   deta,db,deriv)
+                   deta,db,deriv)		   
   } else {
     cg.iter <- .Call(C_Rncvls,X,jj,R,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
                    deta,db,deriv,.Machine$double.eps)
-    if (cg.iter>0) {warning("non positive definite update ");cat(cg.iter)}		   
   }
   if (!is.null(offset)) {
     for (i in 1:ncol(eta.cv)) if (i <= length(offset)&&!is.null(offset[[i]])) eta.cv[,i] <- eta.cv[,i] + offset[[i]][nei$i]
@@ -328,7 +327,7 @@ gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL
 } # gamlss.etamu
 
 
-gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=NULL,D=NULL) {
+gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=NULL,D=NULL,sandwich=FALSE) {
 ## X[,jj[[i]]] is the ith model matrix.
 ## lj contains jth derivatives of the likelihood for each datum,
 ## columns are w.r.t. different combinations of parameters.
@@ -363,6 +362,11 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   
   ## the Hessian...
   lbb <- if (sparse) Matrix(0,p,p) else matrix(0,p,p)
+  if (sandwich) { ## reset l2 so that Hessian becomes 'filling' for sandwich estimate
+    if (deriv>0) warning("sandwich requested with higher derivatives")
+    k <- 0;
+    for (i in 1:K) for (j in i:K) { k <- k + 1;l2[,k] <- l1[,i]*l1[,j] }
+  }
   for (i in 1:K) for (j in i:K) {
     ## A <- t(X[,jj[[i]],drop=FALSE])%*%(l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
     mi2 <- if (ifunc) i2(i,j) else i2[i,j] 
@@ -624,7 +628,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## function defining the gamlss Gaussian model log lik. 
   ## N(mu,sigma^2) parameterized in terms of mu and log(sigma)
   ## deriv: 0 - eval
@@ -706,7 +710,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }
@@ -714,6 +718,11 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gaulss
 
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
+  
   initialize <- expression({
   ## idea is to regress g(y) on model matrix for mean, and then 
   ## to regress the corresponding log absolute residuals on 
@@ -791,7 +800,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
   } ## rd
 
 
-  structure(list(family="gaulss",ll=ll,link=paste(link),ncv=ncv,nlp=2,
+  structure(list(family="gaulss",ll=ll,link=paste(link),ncv=ncv,nlp=2,sandwich=sandwich,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats,rd=rd, ## link information list
@@ -932,7 +941,7 @@ multinom <- function(K=1) {
     gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## Function defining the logistic multimomial model log lik. 
   ## Assumption is that coding runs from 0..K, with 0 class having no l.p.
   ## ... this matches binary log reg case... 
@@ -1032,11 +1041,16 @@ multinom <- function(K=1) {
     if (deriv) {
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,l1,l2,tri$i2,l3=l3,i3=tri$i3,l4=l4,i4=tri$i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) { ret$l1=l1; ret$l2=l2; ret$l3=l3 }		      
     } else ret <- list()
     ret$l <- l; ret
   } ## end ll multinom
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   rd <- function(mu,wt,scale) {
     ## simulate data given fitted linear predictor matrix in mu 
@@ -1093,7 +1107,7 @@ multinom <- function(K=1) {
   }) ## initialize multinom
 
   structure(list(family="multinom",ll=ll,link=NULL,#paste(link),
-    nlp=round(K),rd=rd,ncv=ncv,
+    nlp=round(K),rd=rd,ncv=ncv,sandwich=sandwich,
     tri = trind.generator(K), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,predict=predict,
     linfo = stats, ## link information list
@@ -1505,7 +1519,7 @@ ziplss <-  function(link=list("identity","identity")) {
   } ## ncv  
 
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## function defining the gamlss ZIP model log lik. 
   ## First l.p. defines Poisson mean, given presence (lambda)
   ## Second l.p. defines probability of presence (p)
@@ -1560,13 +1574,18 @@ ziplss <-  function(link=list("identity","identity")) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
     ret$l <- sum(zl$l); ret
   } ## end ll for ZIP
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   initialize <- expression({ ## for ZIP
   ## Idea is to regress binarized y on model matrix for p. 
@@ -1617,7 +1636,7 @@ ziplss <-  function(link=list("identity","identity")) {
       }
   }) ## initialize ziplss
 
-  structure(list(family="ziplss",ll=ll,link=paste(link),nlp=2,ncv=ncv,
+  structure(list(family="ziplss",ll=ll,link=paste(link),nlp=2,ncv=ncv,sandwich=sandwich,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,rd=rd,predict=predict,
     linfo = stats, ## link information list
@@ -1701,7 +1720,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
     gamlss.ncv(X,y,wt,nei,beta,family,llf,H=H,Hi=Hi,R=R,offset=offset,dH=dH,db=db,deriv=deriv)
   } ## ncv  
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## function defining the gamlss GEV model log lik. 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
@@ -1974,13 +1993,18 @@ gevlss <- function(link=list("identity","identity","logit")) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
     ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gevlss
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   initialize <- expression({
   ## start out with xi close to zero. If xi==0 then
@@ -2082,7 +2106,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
     Fi.gev(runif(nrow(mu)),mu[,1],exp(mu[,2]),mu[,3])
   } ## gevlss rd
 
-  structure(list(family="gevlss",ll=ll,link=paste(link),nlp=3,ncv=ncv,
+  structure(list(family="gevlss",ll=ll,link=paste(link),nlp=3,ncv=ncv,sandwich=sandwich,
     tri = trind.generator(3), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
@@ -2202,7 +2226,7 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
     object$null.deviance <- sum(pmax(2 * (object$y * tw.theta - tw.kappa) * object$prior.weights/exp(object$fitted.values[,3]),0))
   })
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,sandwich=FALSE) {
   ## function defining the gamlss Tweedie model log lik. 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
@@ -2245,10 +2269,15 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=0,fh=fh,D=D) 
+                      d1b=d1b,d2b=d2b,deriv=0,fh=fh,D=D,sandwich=sandwich) 
     } else ret <- list()
     ret$l <- l; ret$l0 <- l0; ret
   } ## end ll twlss
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   initialize <- expression({
    ## idea is to regress g(y) on model matrix for mean, and then 
@@ -2293,7 +2322,7 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
 
   environment(ll) <- environment(residuals) <- env
 
-  structure(list(family="twlss",ll=ll,link=paste(link),nlp=3,
+  structure(list(family="twlss",ll=ll,link=paste(link),nlp=3,sandwich=sandwich,
     tri = trind.generator(3), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
@@ -2414,7 +2443,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
   } ## ncv  
 
  
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## function defining the gamlss gamma model log lik. 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
@@ -2506,13 +2535,18 @@ gammals <- function(link=list("identity","log"),b=-7) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
     ret$l <- l; ret$l0 <- l0; ret
   } ## end ll gammals
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   initialize <- expression({
   ## regress X[,[jj[[1]]] on log(y) then X[,jj[[2]]] on log abs
@@ -2630,7 +2664,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
     list(fit=gamma)
   } ## gammals predict
 
-  structure(list(family="gammals",ll=ll,link=paste(link),nlp=2,ncv=ncv,
+  structure(list(family="gammals",ll=ll,link=paste(link),nlp=2,ncv=ncv,sandwich=sandwich,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats,rd=rd,predict=predict, ## link information list
@@ -2747,7 +2781,7 @@ gumbls <- function(link=list("identity","log"),b=-7) {
   } ## ncv  
 
 
-  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL,ncv=FALSE,sandwich=FALSE) {
   ## function defining the gamlss gamma model log lik. 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
@@ -2836,13 +2870,18 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
-                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D)
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich)
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }		      
     } else ret <- list()
     ret$l <- l;ret$l0 <- l0; ret
   } ## end ll gumbls
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
 
   initialize <- expression({
   ## regress X[,[jj[[1]]] on y then X[,jj[[2]]] on
@@ -2965,7 +3004,7 @@ gumbls <- function(link=list("identity","log"),b=-7) {
     list(fit=gamma)
   } ## gumbls predict
 
-  structure(list(family="gumbls",ll=ll,link=paste(link),nlp=2,ncv=ncv,
+  structure(list(family="gumbls",ll=ll,link=paste(link),nlp=2,ncv=ncv,sandwich=sandwich,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats,rd=rd,predict=predict, ## link information list
@@ -3066,7 +3105,7 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
 
 
   ll <- function(y, X, coef, wt, family, offset = NULL, deriv=0, d1b=0, d2b=0, Hp=NULL, rank=0, fh=NULL, D=NULL,
-                 eta=NULL,ncv=FALSE) {
+                 eta=NULL,ncv=FALSE,sandwich=FALSE) {
     ## function defining the shash model log lik. 
     ## deriv: 0 - eval
     ##        1 - grad and Hess
@@ -3606,14 +3645,19 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
       
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,de$l1,de$l2,I2,l3=de$l3,i3=I3,l4=de$l4,i4=I4,
-                       d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D) 
+                       d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D,sandwich=sandwich) 
       if (ncv) {
         ret$l1 <- de$l1; ret$l2 = de$l2; ret$l3 = de$l3
       }
     } else ret <- list()
     ret$l <- l;ret$l0 <- l0; ret
   } ## end ll
-  
+
+  sandwich <- function(y,X,coef,wt,family,offset=NULL) {
+  ## compute filling for sandwich estimate of cov matrix
+    ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
+  }
+
   initialize <- expression({
     ## idea is to regress g(y) on model matrix for mean, and then 
     ## to regress the corresponding log absolute residuals on 
@@ -3707,7 +3751,7 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
   }
   
   
-  structure(list(family="shash",ll=ll, link=paste(link), nlp=npar,ncv=ncv,
+  structure(list(family="shash",ll=ll, link=paste(link), nlp=npar,ncv=ncv,sandwich=sandwich,
                  tri = trind.generator(npar), ## symmetric indices for accessing derivative arrays
                  initialize=initialize,
                  #postproc=postproc,

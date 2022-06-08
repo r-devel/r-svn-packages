@@ -4143,12 +4143,36 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
 } ## end of gam.vcomp
 
 
-vcov.gam <- function(object, freq = FALSE, dispersion = NULL,unconditional=FALSE, ...)
+gam.sandwich <- function(b,freq=FALSE) {
+## computes sandwich estimator of variance
+  B2 <- if (freq) 0 else b$Vp - b$Ve ## Bayes squared bias estimate
+  X <- model.matrix(b)
+  m <- nrow(X); m <- m/(m-sum(b$edf))
+  if (inherits(b$family,"extended.family")) {
+    if (inherits(b$family,"general.family")) {
+       if (is.null(b$family$sandwich)) stop("no sandwich estimate available for this model")
+       Vs <- m*b$Vp%*%b$family$sandwich(b$y,X,b$coefficients,b$prior.weights,b$family,offset=attr(X,"offset"))%*%b$Vp + B2
+    } else {
+      dd <- dDeta(b$y,b$fitted.values,b$prior.weights,b$family$getTheta(),b$family,deriv=0)
+      Vs <- m*b$Vp%*%crossprod(0.5/b$sig2*dd$Deta*X)%*%b$Vp + B2 
+    }
+  } else { ## exponential family
+    mu <- b$fitted.values
+    w <- b$family$mu.eta(b$linear.predictors)*(b$y - mu)/(b$sig2*b$family$variance(mu))
+    Vs <- m*b$Vp%*%crossprod(w*X)%*%b$Vp + B2
+  }
+  Vs
+} ## gam.sandwich
+
+
+vcov.gam <- function(object, sandwich=FALSE, freq = FALSE, dispersion = NULL,unconditional=FALSE, ...)
 ## supplied by Henric Nilsson <henric.nilsson@statisticon.se> 
-{ if (freq)
-    vc <- object$Ve
-  else { 
-    vc <- if (unconditional&&!is.null(object$Vc)) object$Vc else object$Vp
+{ if (sandwich) vc <- gam.sandwich(object,freq) else { 
+    if (freq)
+      vc <- object$Ve
+    else { 
+      vc <- if (unconditional&&!is.null(object$Vc)) object$Vc else object$Vp
+    }
   }
   if (!is.null(dispersion))
     vc <- dispersion * vc / object$sig2

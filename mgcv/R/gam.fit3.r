@@ -679,9 +679,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   if (inherits(R,"try-error")) { ## use CG approach...
 	     Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
              cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
+	     warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
            } else { ## use Cholesky update approach
 	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv,.Machine$double.eps);
-	     if (pdef.fails) warning("some NCV updates not positive definite")
+	     if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
 	   }
 	   if (family$qapprox) {
              NCV <- sum(wdr[nei$i]) + gamma*sum(-2*ww[nei$i]*(eta.cv-eta[nei$i]) + w1[nei$i]*(eta.cv-eta[nei$i])^2)

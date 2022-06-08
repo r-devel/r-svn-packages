@@ -654,9 +654,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
         cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv);
+	warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
      } else { ## use Cholesky update approach
 	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv,.Machine$double.eps);
-	if (pdef.fails) warning("some NCV updates not positive definite")
+	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
      }   
      mu.cv <- linkinv(eta.cv)
      nt <- length(theta)
@@ -1283,9 +1284,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
       ret <- ncv(x,y,weights,nei,coef,family,ll,H=t(Hp/D)/D,Hi=Hi,offset=offset,dH=ll$d1H,
                  db=d1b,deriv=deriv1)
+      warn[[length(warn)+1]] <- "NCV update positive definite check not possible"
     } else { ## cholesky version
       ret <- ncv(x,y,weights,nei,coef,family,ll,R=R1,offset=offset,dH=ll$d1H,db=d1b,
                  deriv=deriv1)
+      if (ret$error>0) warn[[length(warn)+1]] <- "some NCV updates not positive definite" 		 
     }
     NCV <- ret$NCV
     NCV1 <- ret$NCV1

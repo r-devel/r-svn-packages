@@ -1093,7 +1093,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
  */
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0;
-  double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work,
+  double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
     *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
@@ -1568,20 +1568,16 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
       }
       j = nddbuf; /* modified to number of iterations on exit */
       minres(R0,ddbuf,g,d,&p,&j,work);
-      //j = nddbuf; /* modified to number of iterations on exit */
-      //minres0(R0,ddbuf,g,d,&p,&j); /* brute force debug check */
-      Rprintf(" fold=%d iter=%d updates=%d\n",i,j,nddbuf);
-      //  F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d,&one FCONE FCONE);
-      //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d,&one FCONE FCONE);
+      //Rprintf(" fold=%d iter=%d updates=%d\n",i,j,nddbuf);
     }
 	
     /* now create the linear predictors for the ith fold */
     for (;io<mi[i];io++)
     for (l=0;l<nlp;l++) {
-      ln = no*l;jjl = jj[l];
+      ln = no*l;jjl = jj[l];i1=ind[io];
       for (xx=0.0,j=0;j<plp[l];j++) {
 	  q = jjl[j];
-	  xx += X[n*q+ind[io]] * (beta[q]-d[q]); 
+	  xx += X[n*q+i1] * (beta[q]-d[q]); 
       }
       eta[ln+io] = xx;	
     }
@@ -1616,10 +1612,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
         } else {  /* fallback solve (R0'R0 -uu')d1 = g1 where u stored in ddbuf*/
           j = nddbuf;
 	  minres(R0,ddbuf,g,d1,&p,&j,work);
-	  //minres0(R0,ddbuf,g,d1,&p,&j);
-	  Rprintf(" %d",j);
-          //F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R,&p,d1,&one FCONE FCONE);
-          //F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R,&p,d1,&one FCONE FCONE);
+	  //Rprintf(" %d",j);
         }
 	
 	for (io=io0;io<mi[i];io++)
