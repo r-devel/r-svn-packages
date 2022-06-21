@@ -1464,7 +1464,7 @@ formula.gam <- function(x, ...)
 
 
 
-gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,...)
+gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,nei=NULL,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
 # P-IRLS scheme iterated to convergence for each trial set of smoothing
 # parameters.
@@ -1490,7 +1490,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,start=start,...)
+            gamma=gamma,start=start,nei=nei,...)
     lsp<-um$estimate
     object<-attr(full.score(lsp,G,family,control,gamma=gamma,...),"full.gam.object")
     object$gcv.ubre <- um$minimum
@@ -1522,13 +1522,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,start=start,
-                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...) else
+                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,start=start,
                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,
-		edge.correct=control$edge.correct,...)                
+		edge.correct=control$edge.correct,,nei=nei,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
@@ -1541,7 +1541,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
-             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef,n.true=G$n.true,Sl=G$Sl,start=start)
+             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef,n.true=G$n.true,Sl=G$Sl,start=start,nei=nei)
   
     if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
@@ -1573,12 +1573,25 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$control <- control
   object$method <- method
   if (inherits(family,"general.family")) {
-    mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$lsp0,G$S,G$off)
+    mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$lsp0,G$S,G$off,gamma)
     ## object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-  } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object)
+  } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object,gamma)
 
   object[names(mv)] <- mv
 
+  if (!is.null(nei)&&criterion!="NCV") {
+    if (!is.null(nei$QNCV)&&nei$GNCV) family$qapprox <- TRUE
+    if (is.null(family$qapprox)) family$qapprox <- FALSE
+    lsp <- if (is.null(G$L)) log(object$sp) + G$lsp0 else G$L%*%log(object$sp)+G$lsp0
+    if (object$scale.estimated && criterion %in% c("REML","ML","EFS")) lsp <- lsp[-length(lsp)] ## drop log scale estimate
+    if (is.null(nei$gamma)) nei$gamma <- 1 ## a major application of this NCV is to select gamma - so it must not itself change with gamma!
+    b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
+                 offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
+                 control=control,gamma=nei$gamma, 
+		 scale=scale,printWarn=FALSE,start=start,scoreType="NCV",null.coef=G$null.coef,
+                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei,...)
+    object$NCV <- as.numeric(b$NCV)		 
+  }
   ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
   #if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
@@ -1620,7 +1633,7 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
   list(null.coef=null.coef,null.scale=null.scale)
 }
 
-estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,...) {
+estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,nei=NULL,...) {
 ## Do gam estimation and smoothness selection...
 
   if (method %in% c("QNCV","NCV")) {
@@ -1656,14 +1669,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML","NCV")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
-
-  if (method%in%c("REML","P-REML","ML","P-ML")) {
-    if (optimizer[1]=="perf") {
-      warning("Reset optimizer to outer/newton") 
-      optimizer <- c("outer","newton")
-    }
-    reml <- TRUE
-  } else reml <- FALSE ## experimental insert
+ 
+  reml <- method%in%c("REML","P-REML","ML","P-ML","NCV")
+  if ((reml||!is.null(nei)) && optimizer[1]=="perf") {
+    warning("Reset optimizer to outer/newton") 
+    optimizer <- c("outer","newton")
+  } 
+  
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
   G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purposes 
   G$U1 <- cbind(Ssp$Y,Ssp$Z) ## eigen space basis
@@ -1676,7 +1688,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
 
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp"||method=="NCV") ## && length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp"||method=="NCV"||!is.null(nei)) ## && length(G$S)>0 && sum(G$sp<0)!=0
 
   ## sort out exact sp selection criterion to use
 
@@ -1827,7 +1839,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
                         family=G$family,control=control,criterion=criterion,method=method,
-                        optimizer=optimizer,scale=scale,gamma=gamma,G=G,start=start,...)
+                        optimizer=optimizer,scale=scale,gamma=gamma,G=G,start=start,nei=nei,...)
     
     if (scale.as.sp)  object$sp <- 
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array
@@ -1945,7 +1957,8 @@ variable.summary <- function(pf,dl,n) {
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 method="GCV.Cp",optimizer=c("outer","newton"),control=list(),#gam.control(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
-                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,discrete=FALSE,...) {
+                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,
+		nei=NULL,discrete=FALSE,...) {
 ## Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 ## interpreted to figure out which bits relate to smooth terms and which to parametric terms.
 ## Basic steps:
@@ -1975,7 +1988,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     cl <- match.call() # call needed in gam object for update to work
     mf <- match.call(expand.dots=FALSE)
     mf$formula <- gp$fake.formula 
-    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
+    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <- mf$nei <-
                  mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$discrete <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
@@ -2090,7 +2103,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   G$conv.tol <- control$mgcv.tol      # tolerence for mgcv
   G$max.half <- control$mgcv.half # max step halving in Newton update mgcv
 
-  object <- estimate.gam(G,method,optimizer,control,in.out,scale,gamma,...)
+  object <- estimate.gam(G,method,optimizer,control,in.out,scale,gamma,nei=nei,...)
 
   
   if (!is.null(G$L)) { 

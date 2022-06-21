@@ -1235,7 +1235,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       for (jj++,j=1;j<q;j++,jj++) { /* loop over remaining neighbours */
         for (xx=0.0,xip=Xi+j,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
         for (dgp=dg,xip=wXi+j,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp -= *xip * xx;
-	if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
+	if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg,xip=Xi+j,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
       }
       /* Now subtract dH/drho_j d */
       /* First create diag(dw[,l])Xi */

@@ -649,7 +649,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
      eta.cv <- rep(0.0,length(nei$i))
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
-     w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2
+     w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2 ## !?
      R <- try(chol(crossprod(x,w*x)+St),silent=TRUE)
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
@@ -1506,7 +1506,7 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
   fit
 } ## efsud
 
-gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
+gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off,gamma) {
 ## object is object returned by gam.fit5, Sl is penalty object, L maps working sp
 ## vector to full sp vector 
 ## Computes:
@@ -1526,6 +1526,10 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   ipiv <- piv <- attr(object$L,"pivot")
   ipiv[piv] <- 1:p
   ##  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
+
+  ## Bayes cov matrix with learning rate 1/gamma...
+  Vl <- if (gamma==1) NULL else chol2inv(chol(-object$lbb/gamma+object$St))
+  
 
   ## need to pre-condition lbb before testing rank...
   lbb <- object$D*t(object$D*lbb)
@@ -1648,7 +1652,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   edf2 <- if (edge.correct) rowSums(Vc1*crossprod(R)) else rowSums(Vc*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
-  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,#F=F,
+  list(Vc=Vc,Vp=Vb,Ve=Ve,Vl=Vl,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,#F=F,
        R=R,db.drho=db.drho)
 } ## gam.fit5.post.proc
 

@@ -922,7 +922,7 @@ Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
   vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
 } ## Vb.corr
 
-gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
+gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
 ## get edf array and covariance matrices after a gam fit. 
 ## X is original model matrix, L the mapping from working to full sp
   scale <- if (object$scale.estimated) object$scale.est else object$scale
@@ -942,8 +942,19 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
   ## get QR factor R of WX - more efficient to do this
   ## in gdi_1 really, but that means making QR of augmented 
   ## a two stage thing, so not clear cut...
-  qrx <- pqr(sqrt(object$weights)*X,object$control$nthreads)
+  WX <- sqrt(object$weights)*X
+  qrx <- pqr(WX,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
+  if (gamma!=1) { ## compute Vp assuming gamma is inverse learning rate
+    H <- crossprod(WX)/gamma
+    lsp <- lsp0 + if (is.null(L)) log(object$sp) else L %*% log(object$sp)
+    sp <- exp(lsp)
+    if (length(S)) for (i in 1:length(S)) {
+      ii <- 1:nrow(S[[i]]) + off[i] - 1
+      H[ii,ii] <- H[ii,ii] + sp[i] * S[[i]]
+    }
+    Vl <- chol2inv(chol(H))*scale
+  } else Vl <- NULL
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     hess <- object$outer.info$hess
     edge.correct <- if (is.null(attr(hess,"edge.correct"))) FALSE else TRUE
@@ -1019,7 +1030,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
     }
     ## END EXPERIMENTAL
   } else V.sp <- edf2 <- Vc <- NULL
-  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+  list(Vc=Vc,Vp=Vb,Ve=Ve,Vl=Vl,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
 
 
@@ -1072,7 +1083,7 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
       start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
-      null.coef=null.coef,Sl=Sl,...)
+      null.coef=null.coef,Sl=Sl,nei=nei,...)
 
    P0 <- b$P;fd.P1 <- P10 <- b$P1;  if (deriv==2) fd.P2 <- P2 <- b$P2 
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
@@ -1096,14 +1107,14 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
       start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
-      null.coef=null.coef,Sl=Sl,...)
+      null.coef=null.coef,Sl=Sl,nei=nei,...)
       
      sp1 <- sp;sp1[i] <- sp[i]-eps/2
      bb<-gam.fit3(x=x, y=y, sp=sp1, Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
       start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
-     null.coef=null.coef,Sl=Sl,...)
+     null.coef=null.coef,Sl=Sl,nei=nei,...)
      diter[i] <- bf$iter - bb$iter ## check iteration count same 
      if (i<=ncol(fd.db)) fd.db[,i] <- (bf$coefficients - bb$coefficients)/eps
 
@@ -1225,7 +1236,7 @@ rti <- function(r,r1) {
 simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),Sl=Sl,...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),Sl=Sl,nei=NULL,...)
 ## function with same argument list as `newton' and `bfgs' which simply fits
 ## the model given the supplied smoothing parameters...
 { reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
@@ -1243,7 +1254,7 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
+     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,nei=nei,...)
 
   if (!is.null(b$warn)&&length(b$warn)>0) for (i in 1:length(b$warn)) warning(b$warn[[i]])
   score <- b[[sname]]
@@ -1257,7 +1268,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra,
-                   dev.extra=0,n.true=-1,Sl=NULL,edge.correct=FALSE,...)
+                   dev.extra=0,n.true=-1,Sl=NULL,edge.correct=FALSE,nei=NULL,...)
 ## Newton optimizer for GAM reml/gcv/aic optimization that can cope with an 
 ## indefinite Hessian. Main enhancements are: 
 ## i) always perturbs the Hessian to +ve definite if indefinite 
@@ -1327,7 +1338,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
      mustart=mustart,scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-     dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+     dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
   mustart <- b$fitted.values
   etastart <- b$linear.predictors
@@ -1370,7 +1381,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=trial.der,
          control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
          mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)  
+         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)  
      }
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
@@ -1452,7 +1463,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=as.numeric(pdef)*2,
          control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
          mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)    
+         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)    
 
     ## get the change predicted for this step according to the quadratic model
     pred.change <- sum(grad*Nstep) + 0.5*t(Nstep) %*% hess %*% Nstep
@@ -1497,7 +1508,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 	             family = family,weights=weights,deriv=0,control=control,gamma=gamma,
 		     scale=scale,printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
 		     null.coef=null.coef,pearson.extra=pearson.extra,dev.extra=dev.extra,
-		     n.true=n.true,Sl=Sl,...)
+		     n.true=n.true,Sl=Sl,nei=nei,...)
         pred.change <- sum(grad*step) + 0.5*t(step) %*% hess %*% step ## Taylor prediction of change 
         score1 <- b1[[sname]]
 
@@ -1511,7 +1522,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                  control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
                  mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
             mustart <- b$fitted.values 
             etastart <- b$linear.predictors
             start <- b$coefficients
@@ -1558,7 +1569,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
               control=control,gamma=gamma,scale=scale,
               printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
               null.coef=null.coef,pearson.extra=pearson.extra,
-              dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+              dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 	pred.change <- sum(grad*step) + 0.5*t(step) %*% hess %*% step ## Taylor prediction of change 
         score3 <- b1[[sname]]
       
@@ -1587,7 +1598,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                  control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
                  mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
       mustart <- b$fitted.values 
       etastart <- b$linear.predictors
       start <- b$coefficients
@@ -1649,7 +1660,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
               control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
               mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-              pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+              pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
         }
       }
     } ## if length(flat) 
@@ -1657,7 +1668,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                  control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
                  mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
   
     score1 <- b1[[sname]];grad1 <- b1[[sname1]];hess1 <- b1[[sname2]] 
            
@@ -1688,7 +1699,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=3,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra=0,
-                   dev.extra=0,n.true=-1,Sl=NULL,...)
+                   dev.extra=0,n.true=-1,Sl=NULL,nei=NULL,...)
 
 ## BFGS optimizer to estimate smoothing parameters of models fitted by
 ## gam.fit3....
@@ -1721,7 +1732,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=lo$start,
            mustart=lo$mustart,scoreType=scoreType,null.coef=null.coef,
-           pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+           pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
       trial$mustart <- fitted(b)
       trial$scale.est <- b$scale.est ## previously dev, but this differs from newton
@@ -1738,7 +1749,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
            control=control,gamma=gamma,scale=scale,printWarn=FALSE,
            start=trial$start,mustart=trial$mustart,
            scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-           dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+           dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
         trial$grad <- t(L)%*%b[[sname1]];
       
@@ -1781,7 +1792,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                control=control,gamma=gamma,scale=scale,printWarn=FALSE,
                start=start,mustart=mustart,
                scoreType=scoreType,null.coef=null.coef,
-               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
   initial <- list(alpha = 0,mustart=b$fitted.values,start=coef(b))
   score <- b[[sname]];grad <- t(L)%*%b[[sname1]];
@@ -1821,7 +1832,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                control=control,gamma=gamma,scale=scale,printWarn=FALSE,
                start=start0,mustart=mustart0,
                scoreType=scoreType,null.coef=null.coef,
-               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...) 
+               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...) 
      grad1 <- t(L)%*%b[[sname1]];
 
      B[i,] <- (grad1-grad)/feps 
@@ -1887,7 +1898,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
-                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
      
      ### Derivative testing code. Not usually called and not part of BFGS...
      ok <- check.derivs
@@ -1904,7 +1915,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
-                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
        #fdH <- bb$dH
        fdb.dr <- bb$db.drho*0
        if (!is.null(bb$NCV)) {
@@ -1917,7 +1928,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
-                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
         # fdH[[j]] <- (ba$H - bb$H)/eps
          fdb.dr[,j] <- (ba$coefficients - bb$coefficients)/eps
 	 if (!is.null(bb$NCV)) fd.eta[,j] <- as.numeric(attr(ba$NCV,"eta.cv")-attr(bb$NCV,"eta.cv"))/eps
@@ -1952,7 +1963,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
                       start=trial$start,mustart=trial$mustart,
                       scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-                      dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                      dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
         trial$grad <- t(L)%*%b[[sname1]];
        
         trial$dscore <- sum(trial$grad*step)
@@ -2041,7 +2052,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
                       start=trial$start,mustart=trial$mustart,
                       scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-                      dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                      dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
           trial$score <- b[[sname]]
           trial$grad <- t(L)%*%b[[sname1]];
 
@@ -2081,7 +2092,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                 control=control,gamma=gamma,scale=scale,printWarn=FALSE,
                 start=trial$start,mustart=trial$mustart,
                 scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-                dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+                dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
   score <- b[[sname]];grad <- t(L)%*%b[[sname1]];
 
   b$dVkk <- NULL
@@ -2113,7 +2124,7 @@ gam2derivative <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp,Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,...)
+     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,nei=args$nei,...)
   ret <- b[[sname1]]
   if (!is.null(args$L)) ret <- t(args$L)%*%ret
   ret
@@ -2132,7 +2143,7 @@ gam2objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp,Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,start=args$start,...)
+     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,start=args$start,nei=args$nei,...)
   ret <- b[[sname]]
   attr(ret,"full.fit") <- b
   ret
@@ -2154,7 +2165,7 @@ gam4objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,Sl=args$Sl,start=args$start,...)
+     null.coef=args$null.coef,Sl=args$Sl,start=args$start,nei=args$nei,...)
   ret <- b[[sname]]
   at <- b[[snames1]]
 
