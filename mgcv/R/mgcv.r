@@ -2902,6 +2902,17 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         Xp <- model.matrix(Terms[[i]],object$model)
         mf <- newdata # needed in case of offset, below
       }
+      if (!is.null(terms)||!is.null(exclude)) { ## work out which parts of Xp to zero
+        assign <- attr(Xp,"assign") ## assign[i] is the term to which Xp[,i] relates
+	if (min(assign)==0&&("(Intercept)"%in%exclude||(!is.null(terms)&&!"(Intercept)"%in%terms))) Xp[,which(assign==0)] <- 0
+	tlab <- attr(Terms[[i]],"term.labels")
+	ii <- which(assign%in%which(tlab%in%exclude))
+	if (length(ii)) Xp[,ii] <- 0
+	if (!is.null(terms)) {
+	  ii <- which(assign%in%which(!tlab%in%terms))
+	  if (length(ii)) Xp[,ii] <- 0
+	}   
+      }
       offi <- attr(Terms[[i]],"offset")
       if (is.null(offi)) offs[[i]] <- 0 else { ## extract offset
         offs[[i]] <- mf[[names(attr(Terms[[i]],"dataClasses"))[offi+1]]]

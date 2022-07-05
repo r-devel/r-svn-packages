@@ -694,7 +694,12 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	                gamma*w3[nei$i]* deta[nei$i,]*(eta.cv-eta[nei$i])^2)
              }
            } else { ## exact version
- 
+             if (TRUE) {
+	       ## version that doesn't just drop neighbourhood, but tries equivalent (gamma==2) perturbation beyond dropping
+               eta.cv <- gamma*(eta.cv) - (gamma-1)*eta[nei$i]
+	       if (deriv && gamma!=1) deta.cv <- gamma*(deta.cv) - (gamma-1)*(x%*%db.drho)[nei$i,,drop=FALSE]
+	       gamma <- 1
+             }
      	     mu.cv <- linkinv(eta.cv)
 	     NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*sum(wdr[nei$i]) ## the NCV score - simply LOOCV if nei(i) = i for all i
 	   
@@ -945,16 +950,16 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
   WX <- sqrt(object$weights)*X
   qrx <- pqr(WX,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
-  if (gamma!=1) { ## compute Vp assuming gamma is inverse learning rate
-    H <- crossprod(WX)/gamma
-    lsp <- lsp0 + if (is.null(L)) log(object$sp) else L %*% log(object$sp)
-    sp <- exp(lsp)
-    if (length(S)) for (i in 1:length(S)) {
-      ii <- 1:nrow(S[[i]]) + off[i] - 1
-      H[ii,ii] <- H[ii,ii] + sp[i] * S[[i]]
-    }
-    Vl <- chol2inv(chol(H))*scale
-  } else Vl <- NULL
+#  if (gamma!=1) { ## compute Vp assuming gamma is inverse learning rate - wrong parameterization s.t. Vp*gamma is it!
+#    H <- crossprod(WX)/gamma
+#    lsp <- lsp0 + if (is.null(L)) log(object$sp) else L %*% log(object$sp)
+#    sp <- exp(lsp)
+#    if (length(S)) for (i in 1:length(S)) {
+#      ii <- 1:nrow(S[[i]]) + off[i] - 1
+#      H[ii,ii] <- H[ii,ii] + sp[i] * S[[i]]
+#    }
+#    Vl <- chol2inv(chol(H))*scale
+#  } else Vl <- NULL
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     hess <- object$outer.info$hess
     edge.correct <- if (is.null(attr(hess,"edge.correct"))) FALSE else TRUE
@@ -1030,7 +1035,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
     }
     ## END EXPERIMENTAL
   } else V.sp <- edf2 <- Vc <- NULL
-  list(Vc=Vc,Vp=Vb,Ve=Ve,Vl=Vl,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
 
 
@@ -1074,7 +1079,7 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
             mustart = NULL, offset = rep(0, length(y)),U1,Mp,family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,
-            null.coef=rep(0,ncol(x)),Sl=Sl,...)
+            null.coef=rep(0,ncol(x)),Sl=Sl,nei=nei,...)
 ## FD checking of derivatives: basically a debugging routine
 {  
    if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
@@ -1324,7 +1329,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,start=start,mustart=mustart,
-         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,nei=nei,...)
 
      
   }
@@ -1387,7 +1392,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,etastart=etastart,start=start,
-         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,nei=nei,...)
      if (inherits(family,"general.family")) { ## call gam.fit5 checking
        eps <- 1e-6
        spe <- 1e-3
@@ -1395,7 +1400,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
             weights = weights, start = start,
             offset = offset,Mp=Mp,family = family, 
             control = control,deriv=deriv,eps=eps,spe=spe,
-            Sl=Sl,...) ## ignore codetools warning
+            Sl=Sl,nei=nei,...) ## ignore codetools warning
    
      }
    } ## end of derivative checking
@@ -1909,7 +1914,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,mustart=prev$mustart,start=prev$start,
-         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,nei=nei,...)
        ## deal with fact that deriv might be 0...	 
        bb <- if (deriv==1) b else gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,

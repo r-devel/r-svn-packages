@@ -27,9 +27,22 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized. Also there is no option to use the identical
   discretization to that used in fitting when predicting.
 
-* bam(..., discrete=TRUE) te fixed sp ordering wrong.
 
 1.8-41
+
+* slight change in bgam.fitd to check scale parameter estimate converged when
+  using bam(...,discrete=TRUE), otherwise scale could be wrong for all fixed
+  smoothing parameters.
+
+* predict.gam modified so that 'terms' and 'exclude' control all terms, smooth
+  or parametric, in the same way. Including the "(Intercept)" term.
+
+* Warnings from 'model.matrix' suppressed in 'terms2tensor' called by e.g. 
+  predict.bamd. There is a warning if any extra contrasts are supplied to 
+  model matrix that do not relate to a term in the model (which contradicts 
+  the documentation). Doc vs code bug report also filed. 
+
+* Fix of broken rank deficiency handling in gam.fit5. Thanks to Cesko Voeten.
 
 * trind.generator modified to allow return of index functions in place 
   of index arrays.  

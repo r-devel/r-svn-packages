@@ -866,7 +866,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
       if (!is.finite(dev)) stop("Non-finite deviance")
 
       ## preparation for working model fit is ready, but need to test for convergence first
-      if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+      if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon && (scale>0 || abs(Nstep[n.sp+1])<control$epsilon*(abs(log.phi)+1))) {
           conv <- TRUE
           #coef <- start
           break
@@ -2341,11 +2341,15 @@ terms2tensor <- function(terms,data=NULL,contrasts.arg=NULL,drop.intercept=FALSE
       vn <- varn[as.logical(fac[,i])]
       if (no.int||!identify) {
         fm <- as.formula(paste("~",vn,"-1"))
-        if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg) else model.matrix(fm,data,contrasts.arg)
+	## unfortunately a warning has been introduced in model.matrix that contradicts the documentation and will complain about any
+	## element of contrast.arg that does not match a variable name in the formula. Rather than introduce redundant work around
+	## code it seems better to just suppress the warning...
+        if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg) else suppressWarnings(model.matrix(fm,data,contrasts.arg))
         no.int <- FALSE
       } else {
         fm <- as.formula(paste("~",vn))
-        if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE] else model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE]
+        if (!dummy) X[[k]] <-
+	if (sparse) sparse.model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE] else suppressWarnings(model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE])
       }
       xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
       form[[k]] <- fm; environment(form[[k]]) <- NULL
@@ -2357,10 +2361,11 @@ terms2tensor <- function(terms,data=NULL,contrasts.arg=NULL,drop.intercept=FALSE
         vn <- varn[m[j]]
         if (fac[m[j],i]==2||!identify) { ## no contrast
 	  fm <- as.formula(paste("~",vn,"-1"))
-	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg) else model.matrix(fm,data,contrasts.arg)
+	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg) else suppressWarnings(model.matrix(fm,data,contrasts.arg))
 	} else { ## with contrast
           fm <- as.formula(paste("~",vn))
-	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE] else model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE]
+	  if (!dummy) X[[k]] <-
+	  if (sparse) sparse.model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE] else suppressWarnings(model.matrix(fm,data,contrasts.arg)[,-1,drop=FALSE])
         }
 	xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
 	form[[k]] <- fm; environment(form[[k]]) <- NULL

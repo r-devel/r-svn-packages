@@ -1,7 +1,6 @@
 ## (c) Simon N. Wood (2013-2022). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
-
 dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
 ## What is available directly from the family are derivatives of the 
 ## deviance and link w.r.t. mu. This routine converts these to the
@@ -660,7 +659,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
      }   
      mu.cv <- linkinv(eta.cv)
-     nt <- length(theta)
+     nt <- family$n.theta
+     if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):ncol(db.drho) else 1:ncol(db.drho)
      dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV
@@ -680,7 +680,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
            NCV1 <- c(NCV1,-qdev/(2*scale) - ls0$lsth1[1+nt])
          }
        }
-       
      } else { ## exact NCV
        dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
        NCV <- dev.cv/(2*scale) - ls0$ls
@@ -702,7 +701,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        }
      } ## exact NCV
      attr(NCV,"eta.cv") <- eta.cv
-     if (deriv) attr(NCV,"deta.cv") <- deta.cv
+     if (deriv) {
+       attr(NCV,"deta.cv") <- deta.cv;
+       NCV1 <- NCV1[keep] ## drop derivatives for any fixed theta parameters
+     }  
    } else {
     
      D2 <- matrix(oo$D2,ntot,ntot); ldet2 <- matrix(oo$ldet2,ntot,ntot)
@@ -1167,6 +1169,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
               attr(x,"drop") <- drop ## useful if family has precomputed something from x
               ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
               ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
+	      grad <- ll$lb - St%*%coef
+              Hp <- -ll$lbb+St
             } 
           }
 
@@ -1527,8 +1531,8 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off,gamma) {
   ipiv[piv] <- 1:p
   ##  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
 
-  ## Bayes cov matrix with learning rate 1/gamma...
-  Vl <- if (gamma==1) NULL else chol2inv(chol(-object$lbb/gamma+object$St))
+  ## Bayes cov matrix with learning rate 1/gamma. Wrong - parameterization s.t. Vp*gamma is it
+  #Vl <- if (gamma==1) NULL else chol2inv(chol(-object$lbb/gamma+object$St))
   
 
   ## need to pre-condition lbb before testing rank...
@@ -1652,7 +1656,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off,gamma) {
   edf2 <- if (edge.correct) rowSums(Vc1*crossprod(R)) else rowSums(Vc*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
-  list(Vc=Vc,Vp=Vb,Ve=Ve,Vl=Vl,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,#F=F,
+  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,#F=F,
        R=R,db.drho=db.drho)
 } ## gam.fit5.post.proc
 
@@ -1661,13 +1665,13 @@ deriv.check5 <- function(x, y, sp,
             weights = rep(1, length(y)), start = NULL,
             offset = rep(0, length(y)),Mp,family = gaussian(), 
             control = gam.control(),deriv=2,eps=1e-7,spe=1e-3,
-            Sl,gamma=1,...)
+            Sl,gamma=1,nei=nei,...)
 ## FD checking of derivatives for gam.fit5: a debugging routine
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    ## first obtain the fit corresponding to sp...
    b <- gam.fit5(x=x,y=y,lsp=sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
-        family=family,control=control,Mp=Mp,start=start,gamma=gamma)
+        family=family,control=control,Mp=Mp,start=start,gamma=gamma,nei=nei)
    ## now get the derivatives of the likelihood w.r.t. coefs...
    ll <- family$ll(y=y,X=x,coef=b$coefficients,wt=weights,family=family,
                    deriv=1,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL)
@@ -1699,9 +1703,9 @@ deriv.check5 <- function(x, y, sp,
    for (i in 1:M) { ## the smoothing parameter loop
      sp0 <- sp1 <- sp;sp1[i] <- sp[i] + spe/2;sp0[i] <- sp[i] - spe/2
      b0 <- gam.fit5(x=x,y=y,lsp=sp0,Sl=Sl,weights=weights,offset=offset,deriv=1,
-          family=family,control=control,Mp=Mp,start=start,gamma=gamma)
+          family=family,control=control,Mp=Mp,start=start,gamma=gamma,nei=nei)
      b1 <- gam.fit5(x=x,y=y,lsp=sp1,Sl=Sl,weights=weights,offset=offset,deriv=1,
-          family=family,control=control,Mp=Mp,start=start,gamma=gamma)
+          family=family,control=control,Mp=Mp,start=start,gamma=gamma,nei=nei)
      fd.br[,i] <- (b1$coefficients - b0$coefficients)/spe
      if (!is.null(b$b2)) {
        for (j in i:M) {
