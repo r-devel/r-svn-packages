@@ -19,12 +19,16 @@ USA. */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <R.h>
+
+#ifdef _OPENMP // needs to precede R.h (and mgcv.h)
+#include <omp.h>
+#endif
+
 #include <Rmath.h>
 #include <Rinternals.h>
 #include <Rconfig.h>
 #include "mgcv.h"
-
+#include <R.h>
 
 void minres0(double *R, double *u,double *b, double *x, int *p,int *m) {
 /* Brute force alternative to minres for testing purposes */ 
@@ -111,10 +115,7 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
     epsilon *= fabs(sig2);
     if (epsilon<maxb*1e-10) break;
     eta *= -sig2;
-    //    for (i=0;i<*p;i++) {
-    //  v[i] = v1[i];v1[i] = v2[i];
-    //  w[i] = w1[i];w1[i] = w2[i];
-    //}
+ 
     pp = v; v = v1; v1 = v2; v2 = pp;
     pp = w; w = w1; w1 = w2; w2 = pp;
     sig0 = sig1; sig1 = sig2; beta1 = beta2;
@@ -340,6 +341,208 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
 SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA,
 	  SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS) {
 /* Neighbourhood cross validation function, based on updating the Cholesky factor of the Hessian, rather than CG. 
+   OMP parallel version.
+
+   This is still O(np^2), but has the advantage of detecting any Hessian that is not positive definite. 
+   Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
+           deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
+   Input: X - n by p model matrix. R chol factor of penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
+          w2 - -X'diag(w2)X is Hessian of log likelihood to within a scale parameter. db - db[i,j] is dbeta_i/d rho_j where rho_j is a log s.p. or 
+          possibly other parameter. dw - dw[i,j] is dw2[i]/drho_j. rS[[i]] %*% t(rS[[i]]) is ith smoothing penalty matrix. 
+          k[m[i-1]:(m[i])] index the points in the ith neighbourhood. m[-1]=0 by convention. 
+          Similarly ind[mi[i-1]:mi[i]] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
+          beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
+          for no derivative calculations, deriv!=0 otherwise. 
+         
+   Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
+               beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) a pre-conditioned conjugate gradient 
+               iteration is used to solve for the change in beta caused by the omission. 
+               The gradient of this step w.r.t. to each smoothing parameter can also be obtained, again using CG to avoid O(p^3) cost for each obs.
+               A point can be predicted several times with different omitted neighbourhoods. ind[i] is the point being predicted and eta[i] its prediction.
+               LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
+ */
+  SEXP S,kr;
+  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,nt=2,tid=0,pmaxn;
+  double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
+  char trans = 'T',ntrans = 'N',uplo='U',diag='N';
+  M = PROTECT(coerceVector(M,INTSXP));
+  MI = PROTECT(coerceVector(MI,INTSXP));
+  IND = PROTECT(coerceVector(IND,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  deriv = asInteger(DERIV);
+  mi = INTEGER(MI);m = INTEGER(M); k = INTEGER(K);ind = INTEGER(IND);
+  nsp = length(rS);
+  nth = ncols(DETA)-nsp; /* how many non-sp parameters are there - first cols of db and dw relate to these */
+  sp = REAL(SP);
+  w1=REAL(W1);w2=REAL(W2);
+  X = REAL(x);beta = REAL(BETA);
+  R=REAL(r);eta = REAL(ETA);deta = REAL(DETA);
+  eps = asReal(EPS);
+  p = ncols(x); n = nrows(x);p2=p*p;
+  no = length(IND); /* number of output lp values */
+  nm = length(M); /* number of elements in cross validated eta - need not be n*/
+  g = (double *)CALLOC((size_t) 3*p*nt,sizeof(double));
+  g1 = g + p*nt;dg = g1 + p*nt;
+  d = (double *)CALLOC((size_t) 2*p*nt,sizeof(double)); /* perturbation to beta on dropping y_i and its neighbours */
+  d1 = d + p*nt;
+  /* need to know largest neighbourhood */
+  maxn = ii = 0;
+  for (j=0;j<nm;j++) {
+    i = m[j]; if (i-ii>maxn) maxn = i-ii; ii = i;
+  }
+  pmaxn = p*maxn;
+  #ifdef _OPENMP
+  nt = 2;
+  #else
+  nt = 1;
+  #endif
+  Xi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* holds sub-matrix removed for this neighbourhood */
+  wXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by diag(w2) */
+  dwXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by d diag(w2)/d rho_j */
+  R0 = (double *)CALLOC((size_t) p2*nt,sizeof(double));Rb = (double *)CALLOC((size_t) p2*nt,sizeof(double));
+  dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
+  ddbuf = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* buffer for downdates that spoil +ve def */ 
+  nwork =  p*(maxn+7)+maxn;
+  work = (double *)CALLOC((size_t) nwork*nt,sizeof(double));
+     
+  xx=1.0;z=0.0;
+
+  if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
+    db=REAL(DB);dw=REAL(DW);dlet = REAL(DLET);
+    dH = (double *)CALLOC((size_t) p2*(nsp+nth),sizeof(double));
+    for (j=0;j<nsp+nth;j++) {
+      for (xip0 = X,xip=dwX,q=0;q<p;q++) for (wp=dw+n*j,wp1=wp+n;wp<wp1;wp++,xip++,xip0++) *xip = *xip0 * *wp;    
+      F77_CALL(dgemm)(&trans,&ntrans,&p,&p,&n,&xx,X,&n,dwX,&n,&z,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X */
+      if (j>=nth) { /* it's a smoothing parameter */
+        S = VECTOR_ELT(rS, j-nth); /* Writing R Extensions 5.9.6 */
+        rSj = REAL(S);q = ncols(S);
+        F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j-nth,rSj,&p,rSj,&p,&xx,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X + lambda_j S_j */
+      }
+    } 
+  }
+  FREE(dwX);
+  //io=ii=0;
+  #ifdef _OPENMP
+  /* schedule: static, dynamic or guided - seems hard to do better than guided */
+#pragma omp parallel for schedule(guided) private(i,ii,io,i0,io0,j,jj,l,ki,q,alpha,nddbuf,pdef,xx,z,wxp,xip,xp,xip0,p0,p1,p3,dp,gp,dgp,bp,bp1,wp,dbp,w1ki,w2ki,tid) num_threads(nt)
+  #endif
+  for (i=0;i<nm;i++) { /* loop over neighbourhoods, k[ii] is start of neighbourhood of i */
+    if (!i) io=ii=0;else {io=mi[i-1];ii=m[i-1];} 
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #endif
+    p1 = g + tid*p + p; /* fill accumulated g vector */
+    ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
+    i0=ii;io0=io; /* record of start needed in deriv calc */
+    for (p0=R0+tid*p2,p3=R,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* copy Cholesky factor*/
+    alpha = sqrt(fabs(w2ki));
+    nddbuf=0; /* counter for number of updates to store as they cause loss of definiteness */
+    for (dp=d+tid*p,xip0=xip=Xi+pmaxn*tid,gp=g+tid*p,xp=X,wxp=wXi+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) { /* first element of neighbourhood */
+      xx = xp[ki]; /* X[k[ii],j] */
+      *gp = w1ki * xx; /* g gradient of log lik */
+      *xip = xx; /* Xi matrix holding X[k[i],] */
+      *wxp = xx*w2ki; /* wXi matrix holding w2[k[i]]*X[k[i],] */
+      *dp = xx*alpha;
+    }
+    if (alpha<0) j=1; else j=0; /* update or downdate ? */
+    chol_up(R0+p2*tid,d+tid*p,&p,&j,&eps);
+    if (*(R0+p2*tid+1) < -0.5) { /* is update positive definite? */
+      pdef=0;*(R0+p2*tid+1)=0.0; 
+      for (p0=R0+p2*tid,p3=R,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* restore factor to state before update attempt */
+      for (p0=ddbuf+p*nddbuf+tid*pmaxn,p3=d+tid*p,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
+      nddbuf++;
+    } else pdef=1;
+    q=1; /* count rows of Xi */
+    for (xip0++,ii++;ii<m[i];ii++,xip0++,q++) { /* accumulate rest of g and Xi for rest of neighbourhood*/ 
+      ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];alpha = sqrt(fabs(w2ki));
+      for (dp=d+tid*p,xip=xip0,gp=g+p*tid,xp=X,wxp=wXi+q+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) {
+	xx = xp[ki];
+	*gp += w1ki * xx;
+	*xip = xx;
+	*wxp = xx*w2ki;
+	*dp = xx*alpha;
+      }
+      if (alpha<0) {
+	j=1; /* update */
+      } else {/* downdate */
+        for (p0=Rb+p2*tid,p3=R0+p2*tid,j=0;j<p;j++,p0+=p,p3+=p) for (l=0;l<=j;l++) p0[l] = p3[l]; /* backup state of R0 before attempting downdate */
+        j=0;
+      }
+      chol_up(R0+p2*tid,d+tid*p,&p,&j,&eps);
+      if (*(R0+p2*tid+1)< -0.5) { /* is update positive definite? */
+	pdef=0;R0[1] = 0.0;
+	for (p0=R0+tid*p2,p3=Rb+tid*p2,j=0;j<p;j++,p0+=p,p3+=p) for (l=0;l<=j;l++) p0[l] = p3[l]; /* restore factor to state before update attempt */
+        for (p0=ddbuf+p*nddbuf+pmaxn*tid,p3=d+p*tid,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
+        nddbuf++;
+      } 	
+    }  
+    
+    if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
+      for (p0=d+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j]; /* copy g to d */
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
+    } else {  /* fallback solve (R0'R0 - uu') d= g via minres iteration, u, the skipped downdates are in ddbuf*/
+     
+      j = nddbuf; /* modified to number of iterations on exit */
+      minres(R0+p2*tid,ddbuf+tid*pmaxn,g+p*tid,d+p*tid,&p,&j,work+tid*nwork);
+      error++; /* count the number of non +ve def cases */
+    }
+    for (;io<mi[i];io++) {
+      for (p0=d+tid*p,xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-p0[j]);  
+      eta[io] = xx; /* neighbourhood cross validated eta */
+    }  
+    /* now the derivatives */
+    if (deriv) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
+      /* compute sum_nei(i) dg/drho_l, start with first element of neighbourhood */
+      for (xx=0.0,xip=Xi+tid*pmaxn,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
+      for (dgp=dg+tid*p,xip=wXi+tid*pmaxn,p1=dgp+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
+      jj = i0;
+      if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg+p*tid,xip=Xi+tid*pmaxn,p1=dgp+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
+      for (jj++,j=1;j<q;j++,jj++) { /* loop over remaining neighbours */
+        for (xx=0.0,xip=Xi+j+pmaxn*tid,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
+        for (dgp=dg+tid*p,xip=wXi+j+tid*pmaxn,p1=dgp+p;dgp < p1;dgp++,xip+= maxn) *dgp -= *xip * xx;
+	if (l<nth) for (xx=dlet[l*n+k[jj]],dgp=dg+tid*p,xip=Xi+j+tid*pmaxn,p1=dgp+p;dgp < p1;dgp++,xip+= maxn) *dgp += - *xip * xx;
+      }
+      /* Now subtract dH/drho_j d */
+      /* First create diag(dw[,l])Xi */
+      for (j=0;j<p;j++) for (xip0=Xi+j*maxn+pmaxn*tid,xip=dwXi+j*maxn+tid*pmaxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
+      z=1.0;xx=0.0;
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi+pmaxn*tid,&maxn,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi+pmaxn*tid,&maxn,g+tid*p,&one,&xx,g1+tid*p,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = dH_l d */
+      for (dgp = dg+tid*p,p0=g1+tid*p,p3=g+tid*p,j=0;j<p;j++) dgp[j] += p0[j] - p3[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
+      if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
+	for (p0=d1+tid*p,p3=dg+tid*p,j=0;j<p;j++) p0[j] = p3[j];
+        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
+        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
+      } else {  /* fallback solve (R0'R0 + uu') d= g where u are skipped downdates in ddbuf */
+	j = nddbuf;
+	minres(R0+tid*p2,ddbuf+tid*pmaxn,dg+tid*p,d1+tid*p,&p,&j,work);
+      }
+      for (io=io0;io<mi[i];io++) {
+        for (p0=d1+tid*p,xx=0.0,xip=X+ind[io],dbp=db+p*l,j=0;j<p;j++,xip += n) xx += *xip * (dbp[j]-p0[j]);  
+        deta[io+l*no] = xx;
+      }	
+    }
+  }  
+  FREE(R0);FREE(ddbuf);FREE(Rb);
+  FREE(g);FREE(d);
+  FREE(Xi);FREE(wXi);FREE(dwXi);
+  if (deriv) FREE(dH);
+  if (nwork) FREE(work);
+  PROTECT(kr=allocVector(INTSXP,1));
+  INTEGER(kr)[0] = error; /* max CG iterations used */
+  UNPROTECT(5);
+  return(kr);
+} /* Rncv */
+
+
+SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA,
+	  SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS) {
+/* Neighbourhood cross validation function, based on updating the Cholesky factor of the Hessian, rather than CG. 
+   Original version with not parallel computation.
+
    This is still O(np^2), but has the advantage of detecting any Hessian that is not positive definite. 
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
            deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
@@ -518,7 +721,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   INTEGER(kr)[0] = error; /* max CG iterations used */
   UNPROTECT(5);
   return(kr);
-} /* Rncv */
+} /* Rncv0 */
 
 
 static inline int i2f(int i,int j,int K) { /* note *static* inline to avoid external image and potential link failure */

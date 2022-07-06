@@ -76,7 +76,7 @@ present, and reparameterization needs checking (also for bam).
 
 * newton and bfgs optimizers reset inner loop tolerance to 1e-2 of outer 
   loop tolerance if it is larger than this, to avoid inner loop being too
-  inaccurate for out tolerance.
+  inaccurate for outer tolerance.
 
 * minor R 4.2.0 C compatibility change.
 
