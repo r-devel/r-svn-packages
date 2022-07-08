@@ -362,9 +362,9 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
                LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
  */
   SEXP S,kr;
-  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,nt=2,tid=0,pmaxn;
+  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,*error,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,nt=2,tid=0,pmaxn;
   double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw=NULL,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet=NULL,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));
@@ -393,7 +393,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   }
   pmaxn = p*maxn;
   #ifdef _OPENMP
-  nt = 2;
+  nt = 3;
   #else
   nt = 1;
   #endif
@@ -405,7 +405,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   ddbuf = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* buffer for downdates that spoil +ve def */ 
   nwork =  p*(maxn+7)+maxn;
   work = (double *)CALLOC((size_t) nwork*nt,sizeof(double));
-     
+  error = (int *)CALLOC((size_t) nt,sizeof(int));   
   xx=1.0;z=0.0;
 
   if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
@@ -471,7 +471,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       }
       chol_up(R0+p2*tid,d+tid*p,&p,&j,&eps);
       if (*(R0+p2*tid+1)< -0.5) { /* is update positive definite? */
-	pdef=0;R0[1] = 0.0;
+	pdef=0;*(R0+p2*tid+1) = 0.0;
 	for (p0=R0+tid*p2,p3=Rb+tid*p2,j=0;j<p;j++,p0+=p,p3+=p) for (l=0;l<=j;l++) p0[l] = p3[l]; /* restore factor to state before update attempt */
         for (p0=ddbuf+p*nddbuf+pmaxn*tid,p3=d+p*tid,j=0;j<p;j++) p0[j] = p3[j]; /* store the skipped update */
         nddbuf++;
@@ -486,7 +486,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
      
       j = nddbuf; /* modified to number of iterations on exit */
       minres(R0+p2*tid,ddbuf+tid*pmaxn,g+p*tid,d+p*tid,&p,&j,work+tid*nwork);
-      error++; /* count the number of non +ve def cases */
+      error[tid]++; /* count the number of non +ve def cases */
     }
     for (;io<mi[i];io++) {
       for (p0=d+tid*p,xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-p0[j]);  
@@ -531,8 +531,10 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   FREE(Xi);FREE(wXi);FREE(dwXi);
   if (deriv) FREE(dH);
   if (nwork) FREE(work);
+  for (j=0,i=0;i<nt;i++) j += error[i];
+  FREE(error);
   PROTECT(kr=allocVector(INTSXP,1));
-  INTEGER(kr)[0] = error; /* max CG iterations used */
+  INTEGER(kr)[0] = j; /* max CG iterations used */
   UNPROTECT(5);
   return(kr);
 } /* Rncv */
