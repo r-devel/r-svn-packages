@@ -339,11 +339,12 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
 
 
 SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA,
-	  SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS) {
+	   SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS,SEXP NT) {
 /* Neighbourhood cross validation function, based on updating the Cholesky factor of the Hessian, rather than CG. 
-   OMP parallel version.
-
    This is still O(np^2), but has the advantage of detecting any Hessian that is not positive definite. 
+   
+   OMP parallel version - scaling reasonable, as irreducibly level 2 dominated.
+
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
            deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
    Input: X - n by p model matrix. R chol factor of penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
@@ -364,13 +365,14 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,*error,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,nt=2,tid=0,pmaxn;
   double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw=NULL,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet=NULL,*dp,eps,alpha;
+    *deta,*beta,*dg,*dgp,*dwX=NULL,*wp,*wp1,*db=NULL,*dw=NULL,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet=NULL,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));
   IND = PROTECT(coerceVector(IND,INTSXP));
   K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
   deriv = asInteger(DERIV);
+  nt = asInteger(NT);
   mi = INTEGER(MI);m = INTEGER(M); k = INTEGER(K);ind = INTEGER(IND);
   nsp = length(rS);
   nth = ncols(DETA)-nsp; /* how many non-sp parameters are there - first cols of db and dw relate to these */
@@ -382,6 +384,9 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   p = ncols(x); n = nrows(x);p2=p*p;
   no = length(IND); /* number of output lp values */
   nm = length(M); /* number of elements in cross validated eta - need not be n*/
+  #ifndef _OPENMP
+  nt = 1;
+  #endif
   g = (double *)CALLOC((size_t) 3*p*nt,sizeof(double));
   g1 = g + p*nt;dg = g1 + p*nt;
   d = (double *)CALLOC((size_t) 2*p*nt,sizeof(double)); /* perturbation to beta on dropping y_i and its neighbours */
@@ -392,16 +397,11 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     i = m[j]; if (i-ii>maxn) maxn = i-ii; ii = i;
   }
   pmaxn = p*maxn;
-  #ifdef _OPENMP
-  nt = 3;
-  #else
-  nt = 1;
-  #endif
+ 
   Xi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* holds sub-matrix removed for this neighbourhood */
   wXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by diag(w2) */
   dwXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by d diag(w2)/d rho_j */
   R0 = (double *)CALLOC((size_t) p2*nt,sizeof(double));Rb = (double *)CALLOC((size_t) p2*nt,sizeof(double));
-  dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
   ddbuf = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* buffer for downdates that spoil +ve def */ 
   nwork =  p*(maxn+7)+maxn;
   work = (double *)CALLOC((size_t) nwork*nt,sizeof(double));
@@ -409,6 +409,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   xx=1.0;z=0.0;
 
   if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
+    dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
     db=REAL(DB);dw=REAL(DW);dlet = REAL(DLET);
     dH = (double *)CALLOC((size_t) p2*(nsp+nth),sizeof(double));
     for (j=0;j<nsp+nth;j++) {
@@ -419,10 +420,11 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
         rSj = REAL(S);q = ncols(S);
         F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j-nth,rSj,&p,rSj,&p,&xx,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X + lambda_j S_j */
       }
-    } 
+    }
+    FREE(dwX);
   }
-  FREE(dwX);
-  //io=ii=0;
+  
+ 
   #ifdef _OPENMP
   /* schedule: static, dynamic or guided - seems hard to do better than guided */
 #pragma omp parallel for schedule(guided) private(i,ii,io,i0,io0,j,jj,l,ki,q,alpha,nddbuf,pdef,xx,z,wxp,xip,xp,xip0,p0,p1,p3,dp,gp,dgp,bp,bp1,wp,dbp,w1ki,w2ki,tid) num_threads(nt)
@@ -543,7 +545,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
 SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA,
 	  SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS) {
 /* Neighbourhood cross validation function, based on updating the Cholesky factor of the Hessian, rather than CG. 
-   Original version with not parallel computation.
+   Original version with no parallel computation.
 
    This is still O(np^2), but has the advantage of detecting any Hessian that is not positive definite. 
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit

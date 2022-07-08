@@ -2176,7 +2176,7 @@ print.gam<-function (x,...)
   invisible(x)
 }
 
-gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
+gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
@@ -2194,7 +2194,8 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
 {   scale.est <- match.arg(scale.est,c("fletcher","pearson","deviance"))
     if (!is.logical(edge.correct)&&(!is.numeric(edge.correct)||edge.correct<0)) stop(
         "edge.correct must be logical or a positive number")
-    if (!is.numeric(nthreads) || nthreads <1) stop("nthreads must be a positive integer") 
+    if (!is.numeric(nthreads) || nthreads <1) stop("nthreads must be a positive integer")
+    if (!is.numeric(ncv.threads) || ncv.threads <1) stop("ncv.threads must be a positive integer") 
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 
         stop("value of epsilon must be > 0")
@@ -2235,7 +2236,7 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
     optim$factr <- abs(optim$factr)
     if (efs.tol<=0) efs.tol <- .1
 
-    list(nthreads=round(nthreads),irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
+    list(nthreads=round(nthreads),ncv.threads=round(ncv.threads),irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps,

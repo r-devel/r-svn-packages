@@ -1,4 +1,4 @@
-## R routines for gam fitting with calculation of derivatives w.r.t. sp.s
+# R routines for gam fitting with calculation of derivatives w.r.t. sp.s
 ## (c) Simon Wood 2004-2022
 
 ## These routines are for type 3 gam fitting. The basic idea is that a P-IRLS
@@ -681,7 +681,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
              cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
 	     warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
            } else { ## use Cholesky update approach
-	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv,.Machine$double.eps);
+	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv,
+	                         dum, deriv,.Machine$double.eps,control$ncv.threads);
 	     if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
 	   }
 	   if (family$qapprox) {
