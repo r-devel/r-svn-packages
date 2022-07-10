@@ -1292,7 +1292,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       warn[[length(warn)+1]] <- "NCV update positive definite check not possible"
     } else { ## cholesky version
       ret <- ncv(x,y,weights,nei,coef,family,ll,R=R1,offset=offset,dH=ll$d1H,db=d1b,
-                 deriv=deriv1)
+                 deriv=deriv1,nt=control$ncv.threads)
       if (ret$error>0) warn[[length(warn)+1]] <- "some NCV updates not positive definite" 		 
     }
     NCV <- ret$NCV

@@ -34,7 +34,7 @@ R_CallMethodDef CallMethods[] = {
   {"ncv",(DL_FUNC)&ncv,17},
   {"Rncv",(DL_FUNC)&Rncv,19},
   {"ncvls",(DL_FUNC)&ncvls,18},
-  {"Rncvls",(DL_FUNC)&Rncvls,18},
+  {"Rncvls",(DL_FUNC)&Rncvls,19},
   {NULL, NULL, 0}
 };
 
