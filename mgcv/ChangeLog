@@ -30,6 +30,8 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-41
 
+* vis.gam now deals properly with models with more than one linear predictor.
+
 * slight change in bgam.fitd to check scale parameter estimate converged when
   using bam(...,discrete=TRUE), otherwise scale could be wrong for all fixed
   smoothing parameters.

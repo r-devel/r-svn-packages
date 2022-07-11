@@ -1439,7 +1439,7 @@ exclude.too.far <- function(g1,g2,d1,d2,dist)
 
 
 vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="heat",
-           contour.col=NULL,se=-1,type="link",plot.type="persp",zlim=NULL,nCol=50,...)
+           contour.col=NULL,se=-1,type="link",plot.type="persp",zlim=NULL,nCol=50,lp=1,...)
 # takes a gam object and plots 2D views of it, supply ticktype="detailed" to get proper axis anotation
 # (c) Simon N. Wood 23/2/03
 { fac.seq<-function(fac,n.grid)
@@ -1527,53 +1527,62 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   newd[[view[1]]]<-v1
   newd[[view[2]]]<-v2
   # call predict.gam to get predictions.....
-  if (type=="link") zlab<-paste("linear predictor") ## ignore codetools
-  else if (type=="response") zlab<-type
+  if (type=="link") zlab <- paste("linear predictor") ## ignore codetools
+  else if (type=="response") zlab <- type
   else stop("type must be \"link\" or \"response\"")
   fv <- predict.gam(x,newdata=newd,se.fit=TRUE,type=type)
   z <- fv$fit # store NA free copy now
-  if (too.far>0) # exclude predictions too far from data
-  { ex.tf <- exclude.too.far(v1,v2,x$model[,view[1]],x$model[,view[2]],dist=too.far)
-    fv$se.fit[ex.tf] <- fv$fit[ex.tf]<-NA
+  if (is.matrix(z)) {
+    lp <- min(ncol(z),max(1,round(lp)))
+    z <- z[,lp] ## retain selected linear predictor
+    fv$fit <- fv$fit[,lp]
+    fv$se.fit <- fv$se.fit[,lp]
+  }
+  if (too.far>0) { # exclude predictions too far from data
+    ex.tf <- exclude.too.far(v1,v2,x$model[,view[1]],x$model[,view[2]],dist=too.far)
+    fv$se.fit[ex.tf] <- fv$fit[ex.tf] <- NA
   }
   # produce a continuous scale in place of any factors
-  if (is.factor(m1)) 
-  { m1<-as.numeric(m1);m1<-seq(min(m1)-0.5,max(m1)+0.5,length=n.grid) }
-  if (is.factor(m2)) 
-  { m2<-as.numeric(m2);m2<-seq(min(m1)-0.5,max(m2)+0.5,length=n.grid) }
-  if (se<=0)
-  { old.warn<-options(warn=-1)
-    av<-matrix(c(0.5,0.5,rep(0,n.grid-1)),n.grid,n.grid-1)
+  if (is.factor(m1)) { 
+    m1<-as.numeric(m1);m1<-seq(min(m1)-0.5,max(m1)+0.5,length=n.grid) 
+  }
+  if (is.factor(m2)) { 
+    m2<-as.numeric(m2);m2<-seq(min(m1)-0.5,max(m2)+0.5,length=n.grid) 
+  }
+  if (se<=0) { 
+    old.warn<-options(warn=-1)
+    av <- matrix(c(0.5,0.5,rep(0,n.grid-1)),n.grid,n.grid-1)
     options(old.warn)
     # z is without any exclusion of gridpoints, so that averaging works nicely
     max.z <- max(z,na.rm=TRUE)
     z[is.na(z)] <- max.z*10000 # make sure NA's don't mess it up
-    z<-matrix(z,n.grid,n.grid) # convert to matrix
-    surf.col<-t(av)%*%z%*%av   # average over tiles  
+    z <- matrix(z,n.grid,n.grid) # convert to matrix
+    surf.col <- t(av)%*%z%*%av   # average over tiles  
     surf.col[surf.col>max.z*2] <- NA # restore NA's
     # use only non-NA data to set colour limits
-    if (!is.null(zlim))
-    { if (length(zlim)!=2||zlim[1]>=zlim[2]) stop("Something wrong with zlim")
-      min.z<-zlim[1]
-      max.z<-zlim[2]
-    } else
-    { min.z<-min(fv$fit,na.rm=TRUE)
-      max.z<-max(fv$fit,na.rm=TRUE)
+    if (!is.null(zlim)) { 
+      if (length(zlim)!=2||zlim[1]>=zlim[2]) stop("Something wrong with zlim")
+      min.z <- zlim[1]
+      max.z <- zlim[2]
+    } else { 
+      min.z <- min(fv$fit,na.rm=TRUE)
+      max.z <- max(fv$fit,na.rm=TRUE)
     }
-    surf.col<-surf.col-min.z
-    surf.col<-surf.col/(max.z-min.z)  
-    surf.col<-round(surf.col*nCol)
-    con.col <-1
+    if (min.z==max.z) {min.z <- min.z-1;max.z <- max.z + 1}
+    surf.col <- surf.col-min.z
+    surf.col <- surf.col/(max.z-min.z)  
+    surf.col <- round(surf.col*nCol)
+    con.col <- 1
     if (color=="heat") { pal<-heat.colors(nCol);con.col<-4;}
     else if (color=="topo") { pal<-topo.colors(nCol);con.col<-2;}
     else if (color=="cm") { pal<-cm.colors(nCol);con.col<-1;}
     else if (color=="terrain") { pal<-terrain.colors(nCol);con.col<-2;}
     else if (color=="gray"||color=="bw") {pal <- gray(seq(0.1,0.9,length=nCol));con.col<-1}
     else stop("color scheme not recognised")
-    if (is.null(contour.col)) contour.col<-con.col   # default colour scheme
-    surf.col[surf.col<1]<-1;surf.col[surf.col>nCol]<-nCol # otherwise NA tiles can get e.g. -ve index
-    if (is.na(col)) col<-pal[as.array(surf.col)]
-    z<-matrix(fv$fit,n.grid,n.grid)
+    if (is.null(contour.col)) contour.col <- con.col   # default colour scheme
+    surf.col[surf.col<1] <- 1; surf.col[surf.col>nCol] <- nCol # otherwise NA tiles can get e.g. -ve index
+    if (is.na(col)) col <- pal[as.array(surf.col)]
+    z <- matrix(fv$fit,n.grid,n.grid)
     if (plot.type=="contour")
     { stub <- paste(ifelse("xlab" %in% dnm, "" , ",xlab=view[1]"),
                     ifelse("ylab" %in% dnm, "" , ",ylab=view[2]"),
@@ -1614,14 +1623,14 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
     }
     if (!is.null(zlim)) {
       if (length(zlim)!=2||zlim[1]>=zlim[2]) stop("Something wrong with zlim")
-      min.z<-zlim[1]
-      max.z<-zlim[2]
+      min.z <- zlim[1]
+      max.z <- zlim[2]
     } else {
-      max.z<-max(fv$fit+fv$se.fit*se,na.rm=TRUE)
-      min.z<-min(fv$fit-fv$se.fit*se,na.rm=TRUE)
+      max.z <- max(fv$fit+fv$se.fit*se,na.rm=TRUE)
+      min.z <- min(fv$fit-fv$se.fit*se,na.rm=TRUE)
       zlim<-c(min.z,max.z)
-    }
-    z<-fv$fit-fv$se.fit*se;z<-matrix(z,n.grid,n.grid)
+    } 
+    z <- fv$fit - fv$se.fit*se; z <- matrix(z,n.grid,n.grid)
     if (plot.type=="contour") warning("sorry no option for contouring with errors: try plot.gam")
 
     stub <-  paste(ifelse("xlab" %in% dnm, "" , ",xlab=view[1]"),
@@ -1635,7 +1644,7 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
     eval(parse(text=txt))
 
     par(new=TRUE) # don't clean device
-    z<-fv$fit;z<-matrix(z,n.grid,n.grid)
+    z <- fv$fit; z <- matrix(z,n.grid,n.grid)
 
     txt <- paste("persp(m1,m2,z,col=col,zlim=zlim",
                  ifelse("border" %in% dnm, "" ,",border=\"black\""),
@@ -1643,13 +1652,12 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
     eval(parse(text=txt))
 
     par(new=TRUE) # don't clean device
-    z<-fv$fit+se*fv$se.fit;z<-matrix(z,n.grid,n.grid)
+    z <- fv$fit+se*fv$se.fit; z <- matrix(z,n.grid,n.grid)
     
     txt <- paste("persp(m1,m2,z,col=col,zlim=zlim",
                  ifelse("border" %in% dnm, "" ,",border=hi.col"),
                  stub,sep="")
     eval(parse(text=txt))
-
   }
 } ## vis.gam
 
