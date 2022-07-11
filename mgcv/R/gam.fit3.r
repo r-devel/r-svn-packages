@@ -2173,7 +2173,7 @@ gam4objective <- function(lsp,args,...)
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      null.coef=args$null.coef,Sl=args$Sl,start=args$start,nei=args$nei,...)
   ret <- b[[sname]]
-  at <- b[[snames1]]
+  at <- b[[sname1]]
 
   attr(ret,"full.fit") <- b
 
