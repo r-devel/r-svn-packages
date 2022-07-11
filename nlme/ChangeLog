@@ -1,7 +1,7 @@
 2022-07-05  Brian Ripley
 
 	* man/{gls,lme}: document the prohibition (rather than ignoring)
-	or offset() tersms.
+	on offset() terms.
 
 2022-06-13  Brian Ripley
 
