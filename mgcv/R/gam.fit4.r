@@ -1277,14 +1277,16 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     if (deriv>0) {
       for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
     }
-    overlap <- attr(attr(x,"lpi"),"overlap") ## is there overlap in dependence of lp's on beta?
+    #overlap <- attr(attr(x,"lpi"),"overlap") ## is there overlap in dependence of lp's on beta?
     ## NOTE: this needs updating. chol of raw Hp is a bad idea, and really all the
     ##       computations should be done with diagonal pre-conditioning. This is easy,
     ##       but should test code without this first!
-    if (!overlap) R1 <- try(chol(t(Hp/D)/D),silent=TRUE)
+    #if (!overlap)
+    R1 <- try(chol(t(Hp/D)/D),silent=TRUE)
     ll$gamma <- gamma;
     ## note: use of quadratic approx to NCV signalled by family$qapprox
-    if (overlap||inherits(R1,"try-error")) {
+    #if (overlap||inherits(R1,"try-error"))
+    if (inherits(R1,"try-error")) {
       ## get H (Hp?) and Hi
       Hi <- t(D*chol2inv(L)[ipiv,ipiv])*D
       ret <- ncv(x,y,weights,nei,coef,family,ll,H=t(Hp/D)/D,Hi=Hi,offset=offset,dH=ll$d1H,
