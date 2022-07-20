@@ -1030,7 +1030,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     ##nvars <- ncol(G$X)
     offset <- G$offset
     family <- G$family
-
+    ## extended family may have non-standard y that requires careful subsetting (e.g. cnorm)
+    subsety <- if (is.null(G$family$subsety)) function(y,ind) y[ind] else G$family$subsety
     if (inherits(G$family,"extended.family")) { ## preinitialize extended family
       efam <- TRUE
       pini <- if (is.null(G$family$preinitialize)) NULL else G$family$preinitialize(y,G$family)
@@ -1136,7 +1137,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	  arg[[i]]$variance <- variance
         }
         arg[[i]]$G$w <- G$w[ind];arg[[i]]$G$model <- NULL
-        arg[[i]]$G$y <- G$y[ind]
+        arg[[i]]$G$y <- subsety(G$y,ind) ##G$y[ind]
       }
     } else { ## single thread, requires single indices
       ## construct indices for splitting up model matrix construction... 
@@ -1177,7 +1178,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
              rownames(X) <- NULL
              if (is.null(coef)) eta1 <- eta[ind] else eta[ind] <- eta1 <- drop(X%*%coef) + offset[ind]
              mu <- linkinv(eta1) 
-             y <- G$y[ind] ## G$model[[gp$response]] ## - G$offset[ind]
+             y <- subsety(G$y,ind) #G$y[ind] ## G$model[[gp$response]] ## - G$offset[ind]
              weights <- G$w[ind]
              if (efam) { ## extended family case
                 dd <- dDeta(y,mu,weights,theta=theta,family,0)

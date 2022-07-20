@@ -2,8 +2,8 @@ useDynLib(mgcv, .registration = TRUE, .fixes = "C_")
 
 export("%.%",anova.gam, bam, bam.update,bandchol, betar,
        blas.thread.test, 
-       choldrop,cholup,cox.ph,concurvity, 
-       cSplineDes,dDeta,dmvn,d.mvt,
+       choldrop,cholup,cnorm,cox.ph,concurvity, 
+       cSplineDes,dDeta,dmvn,d.mvt,dpnorm,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,FFdes,
        formXtViX, full.score, formula.gam,fixDependence,fix.family.link,
        fix.family.var, fix.family.ls, fix.family.qf,fix.family.rd,   

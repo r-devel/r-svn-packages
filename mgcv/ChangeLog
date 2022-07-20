@@ -30,6 +30,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-41
 
+** 'cnorm' family added for left, right, interval or un censored Gaussian 
+  data. Useful for log normal Accelerated Failure Time models, Tobit 
+  regression, rounded data etc.
+
 * vis.gam now deals properly with models with more than one linear predictor.
 
 * slight change in bgam.fitd to check scale parameter estimate converged when

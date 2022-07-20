@@ -1,6 +1,21 @@
 ## (c) Simon N. Wood 2011-2019
 ## Many of the following are simple wrappers for C functions
 
+dpnorm <- function(x0,x1) {
+  ## Cancellation avoiding evaluation of pnorm(x1)-pnorm(x0) 
+  ## first avoid 1-1 problems by exchanging and changing sign of double +ve
+  ii <- x1>0&x0>0
+  d <- x0[ii];x0[ii] <- -x1[ii];x1[ii] <- -d
+  ## now deal with points that are so close that cancellation error
+  ## too large - might as well use density times interval width
+  ii <- abs(x1-x0) < sqrt(.Machine$double.eps)*dnorm((x1+x0)/2)
+  p <- x0; d <- x1[ii]-x0[ii]; m <- (x1[ii]+x0[ii])/2
+  p[ii] <- dnorm(m)*d
+  p[!ii] <- pnorm(x1[!ii]) - pnorm(x0[!ii])
+  p
+} ## dpnorm
+
+
 "%.%" <- function(a,b) {
   if (inherits(a,"dgCMatrix")||inherits(b,"dgCMatrix"))
   tensor.prod.model.matrix(list(as(a,"dgCMatrix"),as(b,"dgCMatrix"))) else
