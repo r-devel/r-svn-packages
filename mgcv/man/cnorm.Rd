@@ -6,7 +6,7 @@
 \description{Family for use with \code{\link{gam}} or \code{\link{bam}}, implementing regression for censored
 normal data. If \eqn{y}{y} is the response with mean \eqn{\mu}{m} and standard deviation \eqn{w^{-1/2}\exp(\theta)}{w^{-1/2}exp(theta)},
 then \eqn{w^{1/2}(y-\mu)\exp(-\theta)}{w^{1/2}(y-m)exp(-theta)} follows an \eqn{N(0,1)}{N(0,1)} distribution. That is
-\deqn{y \sim N(\mu,e^{2\theta}w^{-1}).}{y ~ N(m,exp(2 theta)/w).} \eqn{\theta}{theta} is a fixed scalar. Observations may be left, interval or right censored or uncensored.
+\deqn{y \sim N(\mu,e^{2\theta}w^{-1}).}{y ~ N(m,exp(2 theta)/w).} \eqn{\theta}{theta} is a single scalar for all observations. Observations may be left, interval or right censored or uncensored.
 
 Useful for log-normal accelerated failure time (AFT) models, Tobit regression, and crudely rounded data, for example. 
 }
