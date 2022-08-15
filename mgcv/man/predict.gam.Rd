@@ -161,7 +161,7 @@ pred <- predict.gam(b,newd)
 pred0 <- predict(b,newd,exclude="s(x0)") ## prediction excluding a term
 ## ...and the same, but without needing to provide x0 prediction data...
 newd1 <- newd;newd1$x0 <- NULL ## remove x0 from `newd1'
-3pred1 <- predict(b,newd1,exclude="s(x0)",newdata.guaranteed=TRUE)
+pred1 <- predict(b,newd1,exclude="s(x0)",newdata.guaranteed=TRUE)
 
 ## custom perspective plot...
 

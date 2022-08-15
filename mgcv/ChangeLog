@@ -34,6 +34,10 @@ present, and reparameterization needs checking (also for bam).
   data. Useful for log normal Accelerated Failure Time models, Tobit 
   regression, rounded data etc.
 
+* modifications of sparce matrix coercions, to avoid deprecated direct 
+  coercions. as(as(as(a, "dMatrix"), "generalMatrix"), "XsparseMatrix") in
+  place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. 
+
 * vis.gam now deals properly with models with more than one linear predictor.
 
 * slight change in bgam.fitd to check scale parameter estimate converged when

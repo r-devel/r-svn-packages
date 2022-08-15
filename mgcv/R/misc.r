@@ -18,8 +18,12 @@ dpnorm <- function(x0,x1) {
 
 "%.%" <- function(a,b) {
   if (inherits(a,"dgCMatrix")||inherits(b,"dgCMatrix"))
-  tensor.prod.model.matrix(list(as(a,"dgCMatrix"),as(b,"dgCMatrix"))) else
-  tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
+  tensor.prod.model.matrix(list(
+  as(as(as(a, "dMatrix"), "generalMatrix"), "CsparseMatrix"),
+  as(as(as(b, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+  )) else tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
+#  tensor.prod.model.matrix(list(as(a,"dgCMatrix"),as(b,"dgCMatrix"))) else - deprecated
+#  tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
 }
 
 blas.thread.test <- function(n=1000,nt=4) {

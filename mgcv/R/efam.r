@@ -339,7 +339,7 @@ cnorm <- function (theta = NULL, link = "identity") {
     getTheta <- function(trans=FALSE) if (trans) exp(get(".Theta")) else get(".Theta") # get(".Theta")
     putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
 
-    validmu <- if (link=="identity") function(mu) all(is.finite(mu)) else all(mu>0)
+    validmu <- if (link=="identity") function(mu) all(is.finite(mu)) else function(mu) all(mu>0)
 
     dev.resids <- function(y, mu, wt,theta=NULL) { ## cnorm
       if (is.null(theta)) theta <- get(".Theta")
@@ -357,9 +357,9 @@ cnorm <- function (theta = NULL, link = "identity") {
 	         2*log(dpnorm((y0-mu[ii])*exp(-th[ii]),(y1-mu[ii])*exp(-th[ii])))
       }
       ii <- which(yat == -Inf) ## left censored
-      if (length(ii)) d[ii] <- -2*pnorm((y[ii]-mu[ii])*exp(-th[ii]),log=TRUE)
+      if (length(ii)) d[ii] <- -2*pnorm((y[ii]-mu[ii])*exp(-th[ii]),log.p=TRUE)
       ii <- which(yat == Inf) ## right censored
-      if (length(ii)) d[ii] <- -2*pnorm(-(y[ii]-mu[ii])*exp(-th[ii]),log=TRUE)
+      if (length(ii)) d[ii] <- -2*pnorm(-(y[ii]-mu[ii])*exp(-th[ii]),log.p=TRUE)
       d
     } ## dev.resids cnorm 
     
@@ -541,9 +541,9 @@ cnorm <- function (theta = NULL, link = "identity") {
           d[ii] <- - 2*log(dpnorm((y0-mu[ii])*exp(-th[ii]),(y1-mu[ii])*exp(-th[ii])))
         }
         ii <- which(yat == -Inf) ## left censored
-        if (length(ii)) d[ii] <- -2*pnorm((y[ii]-mu[ii])*exp(-th[ii]),log=TRUE)
+        if (length(ii)) d[ii] <- -2*pnorm((y[ii]-mu[ii])*exp(-th[ii]),log.p=TRUE)
         ii <- which(yat == Inf) ## right censored
-        if (length(ii)) d[ii] <- -2*pnorm(-(y[ii]-mu[ii])*exp(-th[ii]),log=TRUE)
+        if (length(ii)) d[ii] <- -2*pnorm(-(y[ii]-mu[ii])*exp(-th[ii]),log.p=TRUE)
  
         sum(d) ## -2*log likelihood
     } ## AIC cnorm
