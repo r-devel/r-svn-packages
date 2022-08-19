@@ -6,7 +6,13 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.4 (2022-08-19, svn r8118)}{
+\section{Changes in version 2.1.4 (2022-08-19, svn r8119)}{
+  \subsection{New Features}{
+    \itemize{
+      \item New \code{medoids()} to compute \code{pam}-consistent medoids,
+      given a clustering (and data).
+    }
+  }
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{help(dissimilarity.object)} % ../man/dissimilarity.object.Rd
