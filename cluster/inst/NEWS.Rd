@@ -6,7 +6,7 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.4 (2022-08-19, svn r8117)}{
+\section{Changes in version 2.1.4 (2022-08-19, svn r8118)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{help(dissimilarity.object)} % ../man/dissimilarity.object.Rd
@@ -15,6 +15,9 @@
       Also, \code{help(daisy)} now extensively documents the different
       options for \code{type = *}, notably \code{"ordratio"} and
       \code{"logratio"}.
+
+      \item \code{pam(x, diss=TRUE)} uses \code{inherits(x, "dissimilarity")} instead
+      of semi-deprecated \code{data.class(x) == "dissimilarity")} to check.
 
       \item Using \code{deparse1()} from \R version 4.0.0 and newer (even
       when \pkg{cluster} is installed into an older versions of R),
