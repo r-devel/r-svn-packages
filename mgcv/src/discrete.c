@@ -1814,8 +1814,8 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
         for (j=0;j<pt[c];j++) { /* loop over columns */
           x0 = XWX + tpsur[r] + (tpsuc[c]+j) * (ptrdiff_t) nxwx; /* jth col of raw block */
 	  x1 = XWX + tpsr[r] + (tpsuc[c]+j) * (ptrdiff_t) nxwx;   /* jth col of constrained block */
-	  for (x=0.0,p0=x0,p1=x0+pt[r],p2=v+voff[r];p0<p1;p0++,p2++) x+= *p0 * *p2; 
-	  for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 * x;
+	  for (x=0.0,p0=x0,p1=x0+pt[r],p2=v+voff[r];p0<p1;p0++,p2++) x+= *p0 * *p2; /* inner product of col and HH vector, v */
+	  for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 * x; /* HH transformed to new col */ 
         }
         pa = pt[r]-1;
       } else {
@@ -1833,7 +1833,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
         for (j=0;j<pa;j++) { /* work down rows */
           x0 = XWX + tpsr[r] + j + tpsuc[c] * (ptrdiff_t) nxwx; /* jth col of raw block */
 	  x1 = XWX + tpsr[r] + j + tpsc[c] * (ptrdiff_t) nxwx;   /* jth col of constrained block */
-	  for (x=0.0,p0=x0,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += nxwx,p1++) x += *p0 * *p1;
+	  for (x=0.0,p0=x0,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += nxwx,p1++) x += *p0 * *p1; /* inner product of row and HH vector, v */
 	  for (p1=v+voff[c]+1,x0+= nxwx;p1<p2;x1 += nxwx,x0+= nxwx,p1++) *x1 = *x0 - *p1 *x;
         }
       } else if (tpsuc[c]!=tpsc[c]) { /* still need to shift cols leftwards */
