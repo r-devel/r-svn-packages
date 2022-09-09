@@ -2116,7 +2116,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
 ## to use for smooths. Only one smoothing parameter for the whole term.
 ## If called from gamm, is set up for efficient computation by nesting
 ## smooth within factor.
-## Unsuitable for tensor products. 
+## Unsuitable for tensor product margins. 
 
   if (!is.null(attr(object,"gamm"))) gamm <- TRUE else ## signals call from gamm
   gamm <- FALSE 
