@@ -3649,6 +3649,23 @@ ExtractData <- function(object,data,knots) {
    return(list(data=dat,knots=knt))
 } ## ExtractData
 
+XZKr <- function(X,m) {
+## postmultiplies X by contrast matrix constructed from Kronecker product
+## of sequence of sum to zero contrasts and a final identity matrix.
+## Returns transpose of result (since sometimes this is actually what's needed)
+## Sum to zero contrasts are rbind(diag(m[i]-1),-1). See Fackler, PL
+## (2019) ACM transactions on Mathematical Software 45(2) Article 22. 
+  p <- ncol(X)/prod(m) ## dimension of final identity matrix
+  n <- nrow(X)
+  for (i in 1:length(m)) {
+    dim(X) <- c(length(X)/m[i],m[i])
+    X <- t(X[,1:(m[i]-1)]-X[,m[i]])
+  }
+  dim(X) <- c(length(X)/p,p)
+  X <- t(X)
+  dim(X) <- c(length(X)/n,n)
+  X ## returns transpose of result
+} ## XZKr
 
 #########################################################################
 ## What follows are the wrapper functions that gam.setup actually
@@ -3981,20 +3998,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
             sml[[i]]$null.space.dim <- max(0,sml[[i]]$null.space.dim - j)
             ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
           } ## end smooth list loop
-        } else { ## full null space created
-        #  if (drop>0) { ## sweep and drop constraints
-        #    qrc <- c(drop,as.numeric(sm$C)[-drop])
-        #    class(qrc) <- "sweepDrop"
-        #    for (i in 1:length(sml)) { ## loop through smooth list
-        #      ## sml[[i]]$X <- sweep(sml[[i]]$X[,-drop],2,qrc[-1])
-        #      sml[[i]]$X <- sml[[i]]$X[,-drop] - 
-        #                    matrix(qrc[-1],nrow(sml[[i]]$X),ncol(sml[[i]]$X)-1,byrow=TRUE)
-        #      if (length(sm$S)>0)
-        #      for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
-        #        sml[[i]]$S[[l]]<-sml[[i]]$S[[l]][-drop,-drop]
-        #      }
-        #    }
-        #  } else 
+        } else { 
           { ## full QR based approach
             qrc<-qr(t(sm$C)) 
             for (i in 1:length(sml)) { ## loop through smooth list
@@ -4024,6 +4028,22 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
          attr(sml[[i]],"nCons") <- 0;
         }
       } ## end else no constraints
+    } else if (length(sm$C)>1) { ## Kronecker product of sum-to-zero contrasts (first element unused to allow index for alternatives)
+      m <- sm$C[-1] ## contrast order
+      for (i in 1:length(sml)) { ## loop through smooth list
+        if (length(sm$S)>0)
+        for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+          sml[[i]]$S[[l]] <- XZKr(XZKr(sml[[i]]$S[[l]],m),m)
+        }
+	p <- ncol(sml[[i]]$X) 
+        sml[[i]]$X <- t(XZKr(sml[[i]]$X,m))
+	total.null.dim <- prod(m-1)*p/prod(m)
+	attr(sml[[i]],"nCons") <- p - prod(m-1)*p/prod(m);
+        attr(sml[[i]],"qrc") <- sm$C
+	sml[[i]]$C <- NULL
+        ## NOTE: assumption here is that constructor returns rank, null.space.dim
+	## and df, post constraint.
+      }	
     } else if (sm$C>0) { ## set to zero constraints
        for (i in 1:length(sml)) { ## loop through smooth list
           if (length(sm$S)>0)
@@ -4232,7 +4252,7 @@ PredictMat <- function(object,data,n=nrow(data))
     if (j>0) { ## there were constraints to absorb - need to untransform
       k<-ncol(X)
       if (inherits(qrc,"qr")) {
-        indi <- attr(object,"indi") ## index of constrained parameters
+        indi <- attr(object,"indi") ## index of constrained parameters (only with QR constraints!)
         if (is.null(indi)) {
           if (sum(is.na(X))) {
             ind <- !is.na(rowSums(X))
@@ -4260,6 +4280,9 @@ PredictMat <- function(object,data,n=nrow(data))
         ## Remainder are constants to be swept out of remaining columns 
         ## Actually better handled first (see above)
         #X <- X[,-qrc[1],drop=FALSE] - matrix(qrc[-1],nrow(X),ncol(X)-1,byrow=TRUE)
+      } else if (length(qrc)>0) { ## Kronecker product of sum-to-zero contrasts
+        m <- qrc[-1]
+	X <- t(XZKr(X,m))
       } else if (qrc>0) { ## simple set to zero constraint
         X <- X[,-qrc,drop=FALSE]
       } else if (qrc<0) { ## params sum to zero
