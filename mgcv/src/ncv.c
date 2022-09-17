@@ -234,7 +234,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj,nm,*ind,nth,*mi,io,io0,no;
   double *X,*g,*g1,*gp,*p1,*Hp,*Hi,*Xi,xx,*xip,*xip0,z,*Hd,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*cgwork,*dlet;
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*cgwork,*dlet=NULL;
   char trans = 'T',ntrans = 'N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));
@@ -622,7 +622,7 @@ SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0;
   double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));
@@ -823,7 +823,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
    deriv of qth lp w.r.t. lth log sp. 
    BUG? Offset handling!!
 */
-  double *X,*H,*Hi,*l1,*l2,*l3,*beta,*g,*Hp,xx,z,*d,*d1,*cgwork,*eta,*deta,v,*db,*dbp,*detacv,*dh;
+  double *X,*H,*Hi,*l1,*l2,*l3=NULL,*beta,*g,*Hp,xx,z,*d,*d1,*cgwork,*eta,*deta,v,*db=NULL,*dbp,*detacv,*dh;
   int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,iter1=0,iter=0,deriv,*mi,io,io0,no;
   SEXP JJp,kr,DH;
   char ntrans = 'N';
@@ -941,7 +941,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
           detacv[io + q*no +l*(no*nlp)] = xx;  
         }	  
       } /* l loop - smoothing parameters */	
-    }  
+    } /* if deriv */  
   } /* main obs loop */
   for (l=0;l<nlp;l++) {
     /* iff coerceVector did not have to create a new vector then subtracting 1 from index will have changed original object in R, so need to 
@@ -974,7 +974,7 @@ SEXP Rncvls0(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
    The derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
    deriv of qth lp w.r.t. lth log sp. 
 */
-  double *X,*R,*l1,*l2,*l3,*beta,*g,*R0,xx,z,*d,*d1,*eta,*deta,v,*db,*dbp,*detacv,*dh,*b,alpha,alpha0,eps,*Rb,*ddbuf,*p0,*p3,*work;
+  double *X,*R,*l1,*l2,*l3=NULL,*beta,*g,*R0,xx,z,*d,*d1,*eta,*deta,v,*db=NULL,*dbp,*detacv,*dh,*b,alpha,alpha0,eps,*Rb,*ddbuf,*p0,*p3,*work;
   int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,error=0,deriv,nddbuf,
     *mi,io,io0,no,pdef=1,maxn,buffer_size=0,nwork=0;
   SEXP JJp,kr,DH;

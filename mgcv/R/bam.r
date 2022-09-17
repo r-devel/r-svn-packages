@@ -2685,6 +2685,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
               if (inherits(qrc,"qr")) {
                 v[[kb]] <- qrc$qr/sqrt(qrc$qraux);v[[kb]][1] <- sqrt(qrc$qraux)
                 qc[kb] <- 1 ## indicate a constraint
+              } else if (length(qrc)>1) { ## Kronecker product of set to zero constraints
+                v[[kb]] <- c(length(qrc)-1,qrc[-1]) ## number of sum-to-zero contrasts, their dimensions, number of constraints
+		qc[kb] <- -1 
               } else { 
                 v[[kb]] <- rep(0,0) ##
                 if (!inherits(qrc,"character")||qrc!="no constraints") warning("unknown tensor constraint type")
@@ -2704,7 +2707,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           }  
 	  #jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para;
 	  if (sb==1&&qc[kb]) {
-            jj <- 1:(np-1) + lp0; lp0 <- lp0 + np - 1
+	    ncon <- if (qc[kb]<0) v[[kb]][length(v[[kb]])] else 1 
+            jj <- 1:(np-ncon) + lp0; lp0 <- lp0 + np - ncon 
 	    ## Hard to think of an application requiring constraint when nsub>1, hence not 
 	    ## worked out yet. Add warning to make sure this is flagged if attempt made
 	    ## to do this in future....

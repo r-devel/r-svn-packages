@@ -3873,11 +3873,16 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       ## if by variable is an ordered factor then first level is taken as a 
       ## reference level, and smooths are only generated for the other levels
       ## this can help to ensure identifiability in complex models. 
-      if (is.ordered(by)&&length(lev)>1) lev <- lev[-1] 
+      if (is.ordered(by)&&length(lev)>1) lev <- lev[-1]
+      #sm$rank[length(sm$S)+1] <- ncol(sm$X) ## TEST CENTERING PENALTY
+      #sm$C <- matrix(0,0,1) ## TEST CENTERING PENALTY
       for (j in 1:length(lev)) {
         sml[[j]] <- sm  ## replicate smooth for each factor level
         by.dum <- as.numeric(lev[j]==by)
         sml[[j]]$X <- by.dum*sm$X   ## multiply model matrix by dummy for level
+
+        #sml[[j]]$S[[length(sm$S)+1]] <- crossprod(sm$X[by.dum==1,]) ## TEST CENTERING PENALTY
+	
         sml[[j]]$by.level <- lev[j] ## store level
         sml[[j]]$label <- paste(sm$label,":",object$by,lev[j],sep="") 
         if (!is.null(offs)) {
@@ -4038,8 +4043,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
 	p <- ncol(sml[[i]]$X) 
         sml[[i]]$X <- t(XZKr(sml[[i]]$X,m))
 	total.null.dim <- prod(m-1)*p/prod(m)
-	attr(sml[[i]],"nCons") <- p - prod(m-1)*p/prod(m);
-        attr(sml[[i]],"qrc") <- sm$C
+	nc <- p - prod(m-1)*p/prod(m)
+	attr(sml[[i]],"nCons") <- nc
+        attr(sml[[i]],"qrc") <- c(sm$C,nc)
 	sml[[i]]$C <- NULL
         ## NOTE: assumption here is that constructor returns rank, null.space.dim
 	## and df, post constraint.
@@ -4281,7 +4287,7 @@ PredictMat <- function(object,data,n=nrow(data))
         ## Actually better handled first (see above)
         #X <- X[,-qrc[1],drop=FALSE] - matrix(qrc[-1],nrow(X),ncol(X)-1,byrow=TRUE)
       } else if (length(qrc)>0) { ## Kronecker product of sum-to-zero contrasts
-        m <- qrc[-1]
+        m <- qrc[-c(1,length(qrc))] ## contrast dimensions - less initial code and final number of constraints
 	X <- t(XZKr(X,m))
       } else if (qrc>0) { ## simple set to zero constraint
         X <- X[,-qrc,drop=FALSE]

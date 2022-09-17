@@ -36,7 +36,8 @@ present, and reparameterization needs checking (also for bam).
 
 * modifications of sparce matrix coercions, to avoid deprecated direct 
   coercions. as(as(as(a, "dMatrix"), "generalMatrix"), "XsparseMatrix") in
-  place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. 
+  place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. Actually this requires
+  Matrix 1.4-2 to work (will be added to dependencies in future). 
 
 * vis.gam now deals properly with models with more than one linear predictor.
 
