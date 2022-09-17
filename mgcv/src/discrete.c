@@ -413,7 +413,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
   //kd = k + (*dt-1) * (ptrdiff_t) *n; /* index vector for final term */
   kd = k + kstart[*dt-1] * (ptrdiff_t) *n;
   /* form work = M B, where vec(B) = beta */
-  if (*qc<=0) { /* no constraint supplied */
+  if (*qc==0) { /* no constraint supplied */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
 		    M,&md,beta,&pd,&dzero,C,&md FCONE FCONE); 
   } else { /* there is a constraint matrix */
