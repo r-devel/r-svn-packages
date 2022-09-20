@@ -4045,7 +4045,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
 	total.null.dim <- prod(m-1)*p/prod(m)
 	nc <- p - prod(m-1)*p/prod(m)
 	attr(sml[[i]],"nCons") <- nc
-        attr(sml[[i]],"qrc") <- c(sm$C,nc)
+        attr(sml[[i]],"qrc") <- c(sm$C,nc) ## unused, dim1, dim2, ..., n.cons
 	sml[[i]]$C <- NULL
         ## NOTE: assumption here is that constructor returns rank, null.space.dim
 	## and df, post constraint.

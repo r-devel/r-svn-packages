@@ -2686,7 +2686,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 v[[kb]] <- qrc$qr/sqrt(qrc$qraux);v[[kb]][1] <- sqrt(qrc$qraux)
                 qc[kb] <- 1 ## indicate a constraint
               } else if (length(qrc)>1) { ## Kronecker product of set to zero constraints
-                v[[kb]] <- c(length(qrc)-1,qrc[-1]) ## number of sum-to-zero contrasts, their dimensions, number of constraints
+	        ## on entry qrc is [unused.index, dim1, dim2,..., total number of constraints]
+                v[[kb]] <- c(length(qrc)-2,qrc[-1]) ## number of sum-to-zero contrasts, their dimensions, number of constraints
 		qc[kb] <- -1 
               } else { 
                 v[[kb]] <- rep(0,0) ##
