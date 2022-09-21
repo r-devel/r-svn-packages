@@ -259,7 +259,7 @@ void Ztb(double *b1,double *b0,double *v,int qc,int di, int p,double *w) {
       mk =  (int) round(v[i+1]);
       pp /= mk;
     } 
-    /* pp is dimension of final identitiy matrix in constraint */
+    /* pp is dimension of final identity matrix in constraint */
     k1 = p;w0 = w;w1 = w+p;
     for (k=0;k<=M;k++) {
       if (k<M) mk = (int) round(v[k+1]); else mk = pp;
