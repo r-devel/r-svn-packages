@@ -188,6 +188,7 @@ void Cdgemv(char *trans, int *m, int *n, double *alpha, double *a, int *lda,
 void Zb(double *b1,double *b0,double *v,int qc, int p,double *w) {
 /* Form b1 = Z b0 where constraint matrix Z has more rows than columns. 
    b1 and b0 must be separate storage.
+   p is dim(b1)
 
 */
   double x,*p0,*p1,*p2,*p3,*w0,*w1,z;
@@ -199,13 +200,13 @@ void Zb(double *b1,double *b0,double *v,int qc, int p,double *w) {
     }  
     for (p0=b1,p2=v;p0<p1;p0++,p2++) *p0 -= *p2 * x; /* (I-vv')(0,b0')' */
   } else if (qc < 0){ /* Z is sequential Kronecker product of M sum-to-zero contrasts and an identity matrix */ 
-    M = (int)round(v[0]); 
+    M = (int)round(v[0]); /* number of sum to zero contrasts making up contrast */
     for (pp=p,k0=1,i=0; i<M;i++) {
-      mk = (int) round(v[i+1]);
+      mk = (int) round(v[i+1]); /* stz contrast dimension */
       k0 *= mk - 1;
       pp /= mk; /* dimension of final I */
     }
-    k0 *= pp;
+    k0 *= pp; /* dim b0 */
     w1 = w+p;w0=w;
     for (k=0;k<=M;k++) {
       if (k<M) mk = (int) round(v[k+1])-1; else {
@@ -226,7 +227,8 @@ void Zb(double *b1,double *b0,double *v,int qc, int p,double *w) {
       if (k<M) k0 += p0m;
       b0 = w1;w1=w0;w0=b0;
     }
-  }  
+    for (i=0;i<p;i++) b1[i] = b0[i];
+  } /* Kronecker stz end */
 } /* Zb */  
 
 void Ztb(double *b1,double *b0,double *v,int qc,int di, int p,double *w) {
