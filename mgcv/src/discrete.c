@@ -185,32 +185,39 @@ void Cdgemv(char *trans, int *m, int *n, double *alpha, double *a, int *lda,
 
 /* constraint application helper functions */
 
-void Zb(double *b1,double *b0,double *v,int qc, int p,double *w) {
+void Zb(double *b1,double *b0,double *v,int *qc, int *p,double *w) {
 /* Form b1 = Z b0 where constraint matrix Z has more rows than columns. 
    b1 and b0 must be separate storage.
    p is dim(b1)
-
+   qc > 0 for simple HH sum to zero constraint.
+   qc < 0 for Kronecker product of sum to zero contrasts.
+   v is either the householder vector, or a vector giving: 
+   [the number of contrasts, the leading dimension of each, the total number of 
+    linear constraints implied]
+   w is work space at least 2p long in the qc<0 case, but unused otherwise.
+      
 */
   double x,*p0,*p1,*p2,*p3,*w0,*w1,z;
   int M,k0,pp,i,j,k,q,mk,p0m;
-  if (qc>0) { 
+  if (*qc>0) { 
     *b1 = 0.0;x=0.0;
-    for (p0 = b1+1,p1=b1+p,p2 = b0,p3=v+1;p0<p1;p0++,p2++,p3++) {
+    for (p0 = b1+1,p1=b1+ *p,p2 = b0,p3=v+1;p0<p1;p0++,p2++,p3++) {
       *p0 = *p2; x += *p0 * *p3; /* v'(0,b0')' */
     }  
     for (p0=b1,p2=v;p0<p1;p0++,p2++) *p0 -= *p2 * x; /* (I-vv')(0,b0')' */
-  } else if (qc < 0){ /* Z is sequential Kronecker product of M sum-to-zero contrasts and an identity matrix */ 
+  } else if (*qc < 0){ /* Z is sequential Kronecker product of M sum-to-zero contrasts and an identity matrix */ 
     M = (int)round(v[0]); /* number of sum to zero contrasts making up contrast */
-    for (pp=p,k0=1,i=0; i<M;i++) {
+    for (pp = *p,k0=1,i=0; i<M;i++) {
       mk = (int) round(v[i+1]); /* stz contrast dimension */
       k0 *= mk - 1;
       pp /= mk; /* dimension of final I */
     }
     k0 *= pp; /* dim b0 */
-    w1 = w+p;w0=w;
+    w1 = w + *p;w0=w;
     for (k=0;k<=M;k++) {
       if (k<M) mk = (int) round(v[k+1])-1; else {
-	mk = pp; w1=b1; 
+	mk = pp;
+	w1=b1; /* final w1 is b1 */ 
       }	
       p0m = k0/mk;q = 0;
       for (i=0;i<p0m;i++) {
@@ -227,11 +234,11 @@ void Zb(double *b1,double *b0,double *v,int qc, int p,double *w) {
       if (k<M) k0 += p0m;
       b0 = w1;w1=w0;w0=b0;
     }
-    for (i=0;i<p;i++) b1[i] = b0[i];
+    //for (i=0;i<p;i++) b1[i] = b0[i]; //- redundant?
   } /* Kronecker stz end */
 } /* Zb */  
 
-void Ztb(double *b1,double *b0,double *v,int qc,int di, int p,double *w) {
+void Ztb(double *b1,double *b0,double *v,int *qc,int *di, int *p,double *w) {
 /* Apply constraint to vector p-vector b0. b1 = Z'b0. b0 and b1 may be spaced 
    within arrays b0 and b1. b0[0:(p-1)*di] and b1[0:(p-k)*di]  are the elements 
    to be operated on (where k-1 is the number of constraints). 
@@ -247,34 +254,34 @@ void Ztb(double *b1,double *b0,double *v,int qc,int di, int p,double *w) {
    and not referenced if qc==1.
 */
   double z,x,*p0,*p1,*p2,*w0,*w1;
-  int k1,M,i,j,q,k,p1m,mk,pp;
-  if (qc>0) { /* signals a rank 1 HH constraint */
-    for (x=0.0,p0=b0,p1=v,p2=v + p;p1<p2;p0 += di,p1++) x += *p0 * *p1; /* b0'v */
-    for (p1=v+1,b0 += di;p1<p2;b0+=di,b1+=di,p1++) *b1 = *b0 - *p1 * x;
-  } else if (qc<0) { /* signals a constraint based on sum to zero contrasts */
+  int k1,M,i,j,q,k,p1m,mk,pp,mk1;
+  if (*qc>0) { /* signals a rank 1 HH constraint */
+    for (x=0.0,p0=b0,p1=v,p2=v + *p;p1<p2;p0 += *di,p1++) x += *p0 * *p1; /* b0'v */
+    for (p1=v+1,b0 += *di;p1<p2;b0 += *di,b1 += *di,p1++) *b1 = *b0 - *p1 * x;
+  } else if (*qc<0) { /* signals a constraint based on sum to zero contrasts */
     /* Z is a Kronecker product of a sequence of sum-to-zero contrasts and an identity matrix */
-    for (p0=w,p1=w+p,p2=b0;p0<p1;p0++,p2+=di) *p0 = *p2; /* copy b0 to w */
+    for (p0=w,p1=w + *p,p2=b0;p0<p1;p0++,p2 += *di) *p0 = *p2; /* copy b0 to w */
     M = (int) round(v[0]); /* number of sum to zero contrasts */
-    for (pp=p,i=0; i<M;i++) {
+    for (pp = *p,i=0; i<M;i++) {
       mk =  (int) round(v[i+1]);
       pp /= mk;
     } 
     /* pp is dimension of final identity matrix in constraint */
-    k1 = p;w0 = w;w1 = w+p;
+    k1 = *p;w0 = w;w1 = w + *p;
     for (k=0;k<=M;k++) {
-      if (k<M) mk = (int) round(v[k+1]); else mk = pp;
+      if (k<M) { mk = (int) round(v[k+1]);mk1 = mk-1;} else mk1=mk = pp;
       p1m = k1/mk;
       q = 0;
       for (i=0;i<p1m;i++) {
         if (k<M) z = w0[i+(mk-1)*p1m]; else z = 0.0;
-	for (j=0;j<mk-1;j++) {
+	for (j=0;j<mk1;j++) {
 	  w1[q] = w0[i+j*p1m] - z; q++;
 	}  
       }
       if (k<M) k1 -= p1m;
       p0 = w0;w0 = w1;w1 = p0;
     }
-    for (p0=w0,p1=w0+k1,p2=b1;p0<p1;p0++,p2+=di) *p2 = *p0; /* copy w0 to b1 */
+    for (p0=w0,p1=w0+k1,p2=b1;p0<p1;p0++,p2 += *di) *p2 = *p0; /* copy w0 to b1 */
   } /* sum-to-zero Kronecker constraints */
 } /* Ztb */  
 
@@ -428,7 +435,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
     //  x += *p0 * *p3; /* v'beta where beta padded with extra zero at start */ 
     //}
     //for (p0=work,p1=p0+j,p2=v;p0<p1;p0++,p2++) *p0 -= *p2 * x; /* (I-vv')(0,beta')' */
-    Zb(work,beta,v,*qc,j,work+j);
+    Zb(work,beta,v,qc,&j,work+j);
     /*F77_CALL(dgemv)(&trans, &j, qc,&done,Q,&j,beta,&one,&dzero,work,&one); old when Q full matrix */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
 		    M,&md,work,&pd,&dzero,C,&md FCONE FCONE);
@@ -852,7 +859,7 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
           //for (x=0.0,p0=Xy0,p1=p0 + pt[i],p2=v+voff[i];p0<p1;p0++,p2++) x += *p0 * *p2; /* x = v'Xy0 */
           //p0=XWy + tps[i];p1 = p0 + pt[i]-1;p2 = v+voff[i] + 1;p3=Xy0+1;
           //for (;p0<p1;p0++,p2++,p3++) *p0 = *p3 - x * *p2; /* (I-vv')Xy0 less first element */
-	  Ztb(XWy+tps[i],Xy0,v+voff[i],qc[i],1,pt[i],work2); // BUG: tps[i] wrong for general constraints - general issue with handling dimensions under general constraint
+	  Ztb(XWy+tps[i],Xy0,v+voff[i],qc+i,&one,pt+i,work2); // BUG: tps[i] wrong for general constraints - general issue with handling dimensions under general constraint
         } else { /* straight copy */
           for (p0=Xy0,p1=p0+pt[i],p2=XWy+tps[i];p0<p1;p0++,p2++) *p2 = *p0;
         }
@@ -1537,7 +1544,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
 */   
-  int *pt, *pd,i,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki;
+  int *pt, *pd,i,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,
+    kk,kb,tid=0,nxwx=0,qi=0,*worki,one=1;
   ptrdiff_t *off,*voff,mmp,q;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
   unsigned long long ht[256];
@@ -1678,7 +1686,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	x1 = XWX + tps[r] + (tpsu[c]+j) * (ptrdiff_t) nxwx;   /* jth col of constrained block */
 	//for (x=0.0,p0=x0,p1=x0+pt[r],p2=v+voff[r];p0<p1;p0++,p2++) x+= *p0 * *p2; 
 	//for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 * x;
-	Ztb(x1,x0,v+voff[r],qc[r],1,pt[r],work);
+	Ztb(x1,x0,v+voff[r],qc+r,&one,pt+r,work);
       }
       pa = pt[r]-1;
     } else {
@@ -1699,7 +1707,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	x1 = XWX + tps[r] + j + tps[c] * (ptrdiff_t) nxwx;   /* jth col of constrained block */
 	//for (x=0.0,p0=x0,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += nxwx,p1++) x += *p0 * *p1;
 	//for (p1=v+voff[c]+1,x0+= nxwx;p1<p2;x1 += nxwx,x0+= nxwx,p1++) *x1 = *x0 - *p1 *x;
-	Ztb(x1,x0,v+voff[c],qc[c],nxwx,pt[c],work);
+	Ztb(x1,x0,v+voff[c],qc+c,&nxwx,pt+c,work);
       }
     } else if (tpsu[c]!=tps[c]) { /* still need to shift cols leftwards */
       for (j=0;j<pa;j++) { /* work down rows */
@@ -1771,7 +1779,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 
 */   
   int *pt, *pd,i,j,ri,ci,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
-      *b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki,symmetric=1;
+    *b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki,symmetric=1,one=1;
   ptrdiff_t *off,*voff,mmp,q;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
   unsigned long long ht[256];
@@ -1955,7 +1963,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	  x1 = XWX + tpsr[r] + (tpsuc[c]+j) * (ptrdiff_t) nxwx;   /* jth col of constrained block */
 	  //for (x=0.0,p0=x0,p1=x0+pt[r],p2=v+voff[r];p0<p1;p0++,p2++) x+= *p0 * *p2; /* inner product of col and HH vector, v */
 	  //for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 * x; /* HH transformed to new col */
-	  Ztb(x1,x0,v+voff[r],qc[r],1,pt[r],work);
+	  Ztb(x1,x0,v+voff[r],qc+r,&one,pt+r,work);
         }
         pa = pt[r]-1; /* number of block rows after constraint */ 
       } else { /* block may still need to be shifted because of prior constraints */
@@ -1976,7 +1984,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	  x1 = XWX + tpsr[r] + j + tpsc[c] * (ptrdiff_t) nxwx;   /* jth col of constrained block */
 	  //for (x=0.0,p0=x0,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += nxwx,p1++) x += *p0 * *p1; /* inner product of row and HH vector, v */
 	  //for (p1=v+voff[c]+1,x0+= nxwx;p1<p2;x1 += nxwx,x0+= nxwx,p1++) *x1 = *x0 - *p1 *x;
-	  Ztb(x1,x0,v+voff[c],qc[c],nxwx,pt[c],work);
+	  Ztb(x1,x0,v+voff[c],qc+c,&nxwx,pt+c,work);
         }
       } else if (tpsuc[c]!=tpsc[c]) { /* still need to shift cols leftwards */
         for (j=0;j<pa;j++) { /* work down rows */

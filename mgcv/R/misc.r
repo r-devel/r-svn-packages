@@ -838,3 +838,23 @@ minres <- function(R,u,b) {
   cat("\n niter : ",oo$m,"\n")
   oo$x
 }
+
+## following are wrappers for KP STZ constraints - intended for testing only
+
+Zb <- function(b0,v,qc,p,w) {
+  b1 <- rep(0,p)
+  oo <- .C(C_Zb,b1=as.double(b1),as.double(b0),as.double(v),as.integer(qc),as.integer(p),as.double(w))
+  oo$b1
+}
+
+Ztb <- function(b0,v,qc,di,p,w) {
+  ## p is length(b0)/di
+  w <- rep(0,2*p)
+  M <- v[1]
+  pp <- p
+  for (i in 1:M) pp <- pp/v[i+1];
+  p0 <- prod(v[1+1:M]-1)*pp
+  b1 <- rep(0,p0*di)
+  oo <- .C(C_Ztb,b1=as.double(b1),as.double(b0),as.double(v),as.integer(qc),as.integer(di),as.integer(p),as.double(w))
+  oo$b1
+} 

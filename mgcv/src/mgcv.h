@@ -285,4 +285,7 @@ void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
              double *diagA,double *lb,int *n,double *tol);
 void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m);
 
-
+/* just for testing */
+void Zb(double *b1,double *b0,double *v,int *qc, int *p,double *w);
+void Ztb(double *b1,double *b0,double *v,int *qc,int *di, int *p,double *w);
+  
