@@ -1,5 +1,6 @@
 \name{smooth.terms}
 \alias{smooth.terms}
+\alias{smooths}
 \title{Smooth terms in GAM}
 \description{
 Smooth terms are specified in a \code{\link{gam}} formula using \code{\link{s}}, \code{\link{te}}, \code{\link{ti}} 
@@ -49,6 +50,11 @@ derivative.}
 These are two dimensional splines on a sphere. Arguments are latitude and longitude, and they are 
 the analogue of thin plate splines for the sphere. Useful for data sampled over a large portion of the globe, 
 when isotropy is appropriate. See \code{\link{Spherical.Spline}} for details.}
+
+\item{B-splines}{\code{bs="bs"}}{
+B-spline basis with integrated squared derivative penalties. The order of basis and penalty can be chosen separately, and several penalties of different orders can be applied. Somewhat like a derivative penalty version of P-splines. See \link{b.spline} for details.
+
+}
 
 \item{P-splines}{\code{bs="ps"}. 
 These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty

@@ -1577,7 +1577,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     else if (qc[i]>0) tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
     else { /* Kronecker product of sum to zero contrasts */ 
       si = (int) round(v[voff[i]]); /* number of contrasts */
-      kk += pt[i] - (int) round(v[voff[i]+si+1]); /* subtracting number of constraints */
+      tps[i+1] = tps[i] + pt[i] - (int) round(v[voff[i]+si+1]); /* subtracting number of constraints */
     }  
     tpsu[i+1] = tpsu[i] + pt[i]; /* where ith term starts in unconstrained param vector */ 
   }
@@ -1678,7 +1678,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   /* now XWX contains the unconstrained X'WX, but the constraints have to be applied to blocks involving tensor products */
   for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) {
     /* if Xr is tensor, may need to apply constraint */
-    if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
+    if (dt[r]>1&&qc[r]!=0) { /* first term is a tensor with a constraint */
       /* col by col form (I-vv')xwx, dropping first row... */
       /* col by col form Z' xwx where Z is constraint matrix */
       for (j=0;j<pt[c];j++) { /* loop over columns */
@@ -1699,7 +1699,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	}  
       }	
     }  
-    if (dt[c]>1&&qc[c]>0) { /* Xc term is a tensor with a constraint */
+    if (dt[c]>1&&qc[c]!=0) { /* Xc term is a tensor with a constraint */
       /* row by row form xwx(I-vv') dropping first col... */
       /* row by row form xwx Z, where Z is constraint matrix */
       for (j=0;j<pa;j++) { /* work down rows */
@@ -1955,7 +1955,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     for (;ci< *ncs;ci++) { /* and over required block cols */
       /* if Xr is tensor, may need to apply constraint */
       r = rs[ri];c = cs[ci];
-      if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
+      if (dt[r]>1&&qc[r]!=0) { /* first term is a tensor with a constraint */
       /* col by col form (I-vv')xwx, dropping first row... */
       /* col by col form Z' xwx where Z is constraint matrix */
         for (j=0;j<pt[c];j++) { /* loop over columns */
@@ -1976,7 +1976,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 	  }  
         }	
       }  
-      if (dt[c]>1&&qc[c]>0) { /* Xc term is a tensor with a constraint */
+      if (dt[c]>1&&qc[c]!=0) { /* Xc term is a tensor with a constraint */
         /* row by row form xwx(I-vv') dropping first col... */
 	/* row by row form xwx Z, where Z is constraint matrix */
         for (j=0;j<pa;j++) { /* work down rows */

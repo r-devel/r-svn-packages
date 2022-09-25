@@ -195,12 +195,16 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
 ## * if both NULL all terms are included, if only one is NULL then used for left and right. 
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
-  n <- length(w);pt <- 0;
-  for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
- 
+  n <- length(w);ptfull <- pt <- 0;
+  for (i in 1:nt) {
+    fullsize <- prod(p[ts[i]:(ts[i]+dt[i]-1)])
+    ptfull <- ptfull + fullsize
+    pt <- pt + fullsize - if (qc[i]>0) 1 else if (qc[i]<0) v[[i]][v[[i]][1]+2] else 0
+  } 
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     if (length(ar.stop)>1||ar.stop!=-1) warning("AR not available with sparse marginals")
     ## create list for passing to C
+    if (any(qc<0)) stop("sparse method for Kronecker product contrasts not implemented")
     m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
@@ -243,8 +247,8 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   }
   ## block oriented code...
   if (is.null(lt)&&is.null(lt)) {
-    #t0 <- system.time(
-    oo <- .C(C_XWXd0,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
+    #t0 <- system.time( ## BUG dodgy assumption about full sized XWX, based on one constraint per term!!!
+    oo <- .C(C_XWXd0,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
            k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
@@ -266,7 +270,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
       } else ncs <- length(rt)
     }  
     #t0 <- system.time(
-    oo <- .C(C_XWXd1,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
+    oo <- .C(C_XWXd1,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
            k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
@@ -304,7 +308,7 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
   ##for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
   if (is.null(lt)) {
     pt <- 0
-    for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
+    for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - if (qc[i]>0) 1 else if (qc[i]<0) v[[i]][v[[i]][1]+2] else 0
     lt <- 1:nt
   } else {
     lpip <- attr(X,"lpip") ## list of coefs for each term 
