@@ -105,13 +105,14 @@ data contain sufficient information to be able to estimate the appropriate varia
 achieved by splitting the penalty into several `basis penalties' these terms are not suitable as components of tensor 
 product smooths, and are not supported by \code{gamm}.}
 
-\item{Factor smooth interactions}{\code{bs="fs"}
-Smooth factor interactions are often produced using \code{by} variables (see \code{\link{gam.models}}), but a special smoother
-class (see \code{\link{factor.smooth.interaction}}) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. The \code{"fs"} smoothers are set up to be efficient when used with \code{\link{gamm}}, and have penalties on each null sapce component (i.e. they are fully `random effects'). 
-}
-}
+\item{Factor smooth interactions}{\code{bs="sz"}
+Smooth factor interactions (see \link{factor.smooth}) are often produced using \code{by} variables (see \code{\link{gam.models}}), but it is often desirable to include smooths which represent the deviations from some main effect smooth that apply for each level of a factor (or combination of factors).
+See \code{\link{smooth.construct.sz.smooth.spec}} for details.}
 
+\item{Random factor smooth interactions}{\code{bs="fs"}
+A special smoother class (see \code{\link{smooth.construct.fs.smooth.spec}}) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. The \code{"fs"} smoothers are set up to be efficient when used with \code{\link{gamm}}, and have penalties on each null sapce component (i.e. they are fully `random effects'). 
 }
+}}
 
 \seealso{\code{\link{s}}, \code{\link{te}}, \code{\link{t2}} \code{\link{tprs}},\code{\link{Duchon.spline}}, 
 \code{\link{cubic.regression.spline}},\code{\link{p.spline}}, \code{\link{mrf}}, \code{\link{soap}}, 

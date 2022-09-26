@@ -34,6 +34,10 @@ present, and reparameterization needs checking (also for bam).
   data. Useful for log normal Accelerated Failure Time models, Tobit 
   regression, rounded data etc.
 
+** 'sz' factor smooth interaction class added for implementing models with
+  main effect smooths and difference smooths for levels of a factor.
+  See ?factor.smooth.
+
 * modifications of sparce matrix coercions, to avoid deprecated direct 
   coercions. as(as(as(a, "dMatrix"), "generalMatrix"), "XsparseMatrix") in
   place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. Actually this requires

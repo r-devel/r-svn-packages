@@ -80,7 +80,7 @@ export("%.%",anova.gam, bam, bam.update,bandchol, betar,
        ziP, ziplss,zipll)
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,
-           heat.colors,terrain.colors,topo.colors,axisTicks)
+           heat.colors,terrain.colors,topo.colors,axisTicks,hcl.colors)
 importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
            mtext, par, persp,plot,points,
            polygon,rect,strheight,strwidth,text,title)

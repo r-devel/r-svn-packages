@@ -676,6 +676,95 @@ plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
 
 } ## end plot.mrf.smooth
 
+
+plot.sz.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
+                     partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
+                     pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
+                     ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
+                     shift=0,trans=I,by.resids=FALSE,scheme=0,...) {
+## plot method for factor smooth interactions designed for models such as s(x) + s(fac,x) where
+## the factor level dependent smooths are strictly deviations from the main effect smooth.
+
+  nf2i <- function(nf,i) {
+    k <- length(nf)
+    kk <- rep(0,k)
+    i <- i-1
+    for (j in k:1) {
+      kk[j] <- i %% nf[j] + 1
+      i <- i %/% nf[j]
+    }
+    kk
+  } ## nf2i
+
+  if (is.null(P)) { ## get plotting info
+    if (x$base$dim!=1) return(NULL) ## no method for base smooth dim > 1
+    raw <- data[x$base$term][[1]]
+    xx <- seq(min(raw),max(raw),length=n) # generate x sequence for prediction
+    nf <- unlist(lapply(x$flev,length)) ## levels per grouping factor
+    dat <- data.frame(rep(xx,prod(nf)))
+    k <- length(x$flev) ## number of factors
+    for (i in 1:k) {
+      re <- if (i<k) prod(nf[(i+1):k]) else 1
+      rs <- if (i>1) prod(nf[1:(i-1)]) else 1
+      dat[,i+1] <- factor(rep(rep(x$flev[[i]],each=re*n),rs),levels=x$flev[[i]])
+    }
+    names(dat) <- c(x$base$term,x$fterm)  
+    if (x$by!="NA") {        # deal with any by variables
+      dat[[x$by]] <- rep(1,n)
+    }
+    X <- PredictMat(x,dat)
+    if (is.null(xlab)) xlabel <- x$base$term else xlabel <- xlab
+    if (is.null(ylab)) ylabel <- label else ylabel <- ylab
+    return(list(X=X,scale=TRUE,se=TRUE,se.mult=se1.mult,raw=raw,xlab=xlabel,ylab=ylabel,
+             main="",x=xx,n=n,nf=nf))
+  } else { ## produce the plot
+    nft <- prod(P$nf) ## total number of curves
+    if (scheme!=1) {
+      kol <- hcl.colors(nft,palette = "viridis", alpha = .33) ## CI
+      lkol <- hcl.colors(nft,palette = "viridis", alpha = .66) ## mode
+      tkol <- hcl.colors(nft,palette = "viridis", alpha = 1) ## label
+    }  
+    xlim <- range(P$x);dx <- xlim[2]-xlim[1]
+    xt <- xlim[1] + (1:nft-.5)*dx/nft ## text locations
+    ind <- 1:P$n; mind <- P$n:1
+    
+    if(is.null(ylim)) ylim <- trans(range(c(P$fit+P$se,P$fit-P$se))+shift)
+
+    plot(P$x[ind],trans(P$fit[ind]+shift),ylim=ylim,xlab=P$xlab,ylab=P$ylab,type="n",...)
+
+    nfac <- length(P$nf) ## number of factors
+    kk <- rep(0,nfac) ## factor level index vector
+    if (scheme==1) {
+      for (i in 1:nft) {
+        ul <- trans(P$fit[ind] + P$se[ind]+shift)
+        ll <- trans(P$fit[ind] - P$se[ind]+shift)
+	lines(P$x,ul,col="grey",lty=i);lines(P$x,ll,col="grey",lty=i)
+        ii <- P$x < xt[i] - dx/30
+	yt <- approx(P$x,P$fit[ind],xt[i])$y
+        lines(P$x[ii],(P$fit[ind])[ii],lty=i,lwd=2)
+        text(xt[i],yt,paste(nf2i(P$nf,i),collapse="."))
+        ii <- P$x > xt[i] + dx/30
+        lines(P$x[ii],(P$fit[ind])[ii],lty=i,lwd=2)
+        ind <- ind + P$n; mind <- mind + P$n
+      }	
+    } else {
+      for (i in 1:nft) {
+        ul <- trans(P$fit[ind] + P$se[ind]+shift)
+        ll <- trans(P$fit[mind] - P$se[mind]+shift)
+        polygon(c(P$x,P$x[P$n:1]),c(ul,ll),col=kol[i],border=kol[i])
+        yt <- approx(P$x,P$fit[ind],xt[i])$y
+        ii <- P$x < xt[i] - dx/30
+        lines(P$x[ii],(P$fit[ind])[ii],col=lkol[i])
+        text(xt[i],yt,paste(nf2i(P$nf,i),collapse="."),col=tkol[i])
+        ii <- P$x > xt[i] + dx/30
+        lines(P$x[ii],(P$fit[ind])[ii],col=lkol[i])
+        ind <- ind + P$n; mind <- mind + P$n
+      }
+    }  
+  }
+} ## end plot.sz.interaction
+
+
 plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,

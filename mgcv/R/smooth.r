@@ -2289,6 +2289,190 @@ Predict.matrix.fs.interaction <- function(object,data)
   X
 } ## Predict.matrix.fs.interaction
 
+#######################################################################
+# General smooth-factor interactions, constrained to be differences to
+# a main effect smooth. 
+#######################################################################
+
+smooth.info.sz.smooth.spec <- function(object) {
+  object$tensor.possible <- TRUE ## signal that a tensor product construction is  possible here
+  object
+}
+
+smooth.construct.sz.smooth.spec <- function(object,data,knots) {
+## Smooths in which one covariate is a factor. Generates a smooth
+## for each level of the factor. Let b_{jk} be the kth coefficient
+## of the jth smooth. Construction ensures that \sum_k b_{jk} = 0,
+## for all j. Hence the smooths can be estimated in addition to an
+## overall main effect.
+## xt element specifies basis to use for smooths.
+
+  if (is.null(object$xt)) object$base.bs <- "tp" ## default smooth class
+  else if (is.list(object$xt)) {
+    if (is.null(object$xt$bs)) object$base.bs <- "tp" else
+    object$base.bs <- object$xt$bs 
+  } else { 
+    object$base.bs <- object$xt
+    object$xt <- NULL ## avoid messing up call to base constructor
+  }
+  object$base.bs <- paste(object$base.bs,".smooth.spec",sep="")
+
+  fterm <- NULL ## identify the factor variables
+  for (i in 1:length(object$term)) if (is.factor(data[[object$term[i]]])) { 
+    if (is.null(fterm)) fterm <- object$term[i] else fterm[length(fterm)+1] <- object$term[i]
+  }
+  
+  ## deal with no factor case, just base smooth constructor
+  if (is.null(fterm)) {
+    class(object) <- object$base.bs
+    return(smooth.construct(object,data,knots))
+  }
+
+  ## deal with factor only case, just transfer to "re" class
+  if (length(object$term)==length(fterm)) {
+    class(object) <- "re.smooth.spec"
+    return(smooth.construct(object,data,knots))
+  } 
+
+  ## Now remove factor terms from data...
+  fac <- data[fterm] 
+  data[fterm] <- NULL
+  k <- 0
+  oterm <- object$term
+
+  ## and strip it from the terms...
+  for (i in 1:object$dim) if (!object$term[i]%in%fterm) {
+    k <- k + 1
+    object$term[k] <- object$term[i]
+  }
+  object$term <- object$term[1:k]
+  object$dim <- length(object$term)
+
+  
+  ## call base constructor...
+  spec.class <- class(object)
+  class(object) <- object$base.bs
+  object <- smooth.construct(object,data,knots)
+  if (length(object$S)>1) stop("\"sz\" smooth cannot use a multiply penalized basis (wrong basis in xt)")
+
+  ## save some base smooth information
+
+  object$base <- list(bs=class(object),bs.dim=object$bs.dim,
+                      rank=object$rank,null.space.dim=object$null.space.dim,
+                      term=object$term,dim=object$dim)
+  object$term <- oterm ## restore original term list
+  object$dim <- length(object$term)
+  object$fterm <- fterm ## the factor names...
+
+  ## Store the base model matrix/S in case user wants to convert to r.e.
+  object$Xb <- object$X
+  object$base$S <- object$S
+  
+  nf <- rep(0,length(fac))
+  object$flev <- list()
+
+  Xf <- list()
+  n <- nrow(object$X)
+  for (j in 1:length(fac)) {
+    object$flev[[j]] <- levels(fac[[j]])
+
+    ## construct the sum to zero contrast matrix, P, ... 
+    nf[j] <- length(object$flev[[j]])
+   
+    Xf[[j]] <- matrix(as.numeric(rep(object$flev[[j]],each=n)==fac[[j]]),n,nf[j]) ## factor matrix
+  }
+  Xf[[j+1]] <- object$X
+  ## duplicate model matrix columns, and penalties...
+    
+  p0 <- ncol(object$X)
+  p <- p0*prod(nf)
+
+  X <- tensor.prod.model.matrix(Xf)
+
+  ind <- 1:p0
+  S <- list()
+  object$null.space.dim <- object$null.space.dim*prod(nf-1)
+  if (is.null(object$id)) { ## one penalty and one sp per smooth
+    for (i in 1:prod(nf)) { 
+      S0 <- matrix(0,p,p)
+      S0[ind,ind] <- object$S[[1]]
+      S[[i]] <- S0
+      ind <- ind + p0
+    }
+    object$rank <- rep(object$rank,prod(nf))
+  } else { ## one penalty, one sp
+    S0 <- matrix(0,p,p)
+    for (i in 1:prod(nf)) {
+      S0[ind,ind] <- S0[ind,ind] + object$S[[1]]
+      ind <- ind + p0
+    }
+    S[[1]] <- S0
+    object$rank <- prod(nf-1)*object$bs.dim -object$null.space.dim
+  }
+  
+  object$S <- S
+  object$X <- X 
+  
+  object$bs.dim <-prod(nf-1)*object$bs.dim #ncol(object$X) 
+  object$te.ok <- 0
+  
+  
+  object$side.constrain <- FALSE ## don't apply side constraints - these are really random effects
+  
+  object$C <- c(0,nf)
+  object$plot.me <- TRUE
+  class(object) <- if ("tensor.smooth.spec"%in%spec.class) c("sz.interaction","tensor.smooth")  else 
+                   "sz.interaction"
+  if ("tensor.smooth.spec"%in%spec.class) { 
+    ## give object margins like a tensor product smooth...
+    ## need just enough for fitting and discrete prediction to work
+    object$margin <- list()
+    nf <- length(fterm)
+    for (i in 1:nf) { 
+      form1 <- as.formula(paste("~",object$fterm[i],"-1"))
+      object$margin[[i]] <- list(X=Xf[[i]],term=fterm[i],form=form1,by="NA")
+      class(object$margin[[i]]) <- "random.effect"
+    }
+    object$margin[[nf+1]] <- object
+    object$margin[[nf+1]]$X <- Xf[[nf+1]]
+    object$margin[[nf+1]]$margin.only <- TRUE
+    object$margin[[nf+1]]$margin <- NULL
+    object$margin[[nf+1]]$term <- object$term[!object$term%in%object$fterm]
+  
+  }
+  object
+} ## end of smooth.construct.sz.smooth.spec
+
+
+Predict.matrix.sz.interaction <- function(object,data) {
+# prediction method function for the zero mean smooth-factor interaction class
+  ## first remove factor from the data...  
+  fac <- data[object$fterm]
+  data[object$fterm] <- NULL
+
+  ## now get base prediction matrix...
+  class(object) <- object$base$bs
+  object$rank <- object$base$rank
+  object$null.space.dim <- object$base$null.space.dim
+  object$bs.dim <- object$base$bs.dim
+  object$term <- object$base$term
+  object$dim <- object$base$dim
+  Xb <- Predict.matrix(object,data)
+  if (!is.null(object$margin.only)) return(Xb)
+  n <- nrow(Xb)
+  Xf <- list()
+  for (j in 1:length(object$flev)) {
+    nf <- length(object$flev[[j]])
+    Xf[[j]] <- matrix(as.numeric(rep(object$flev[[j]],each=n)==fac[[j]]),n,nf) ## factor matrix
+  }
+  Xf[[j+1]] <- Xb
+  X <- tensor.prod.model.matrix(Xf)
+  
+  X 
+} ## Predict.matrix.sz.interaction
+
+
+
 
 ##########################################
 ## Adaptive smooth constructors start here
