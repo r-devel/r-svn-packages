@@ -1358,7 +1358,12 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
           meanL1 <- x$smooth[[i]]$meanL1
           if (!is.null(meanL1)) X1 <- X1 / meanL1
           X1[,first:last] <- P$X
-          se.fit <- sqrt(pmax(0,rowSums(as(X1%*%x$Vp,"matrix")*X1)))
+          lpi <- attr(x$formula,"lpi")
+          if (is.null(lpi)) se.fit <- sqrt(pmax(0,rowSums(as(X1%*%x$Vp,"matrix")*X1))) else {
+            ii <- rep(0,0) ## only include constant uncertainty from relevant linear predictors  
+            for (q in 1:length(lpi)) if (any(first:last%in%lpi[[q]])) ii <- c(ii,lpi[[q]])
+            se.fit <- sqrt(pmax(0,rowSums(as(X1[,ii]%*%x$Vp[ii,ii],"matrix")*X1[,ii])))
+          }
         } else se.fit <- ## se in centred (or anyway unconstained) space only
         sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
         if (!is.null(P$exclude)) se.fit[P$exclude] <- NA

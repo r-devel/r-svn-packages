@@ -40,6 +40,10 @@ present, and reparameterization needs checking (also for bam).
 
 * mono.con corrected for cases with upper bounds. Thanks to Sean Wu.
 
+* plot.gam(...,seWithMean=TRUE) modified to only include mean uncertainty 
+  for the linear predictor of which the smooth is a part, when there are 
+  multiple linear predictors. Thanks to Gavin Simpson.
+
 * modifications of sparce matrix coercions, to avoid deprecated direct 
   coercions. as(as(as(a, "dMatrix"), "generalMatrix"), "XsparseMatrix") in
   place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. Actually this requires
