@@ -38,6 +38,8 @@ present, and reparameterization needs checking (also for bam).
   main effect smooths and difference smooths for levels of a factor.
   See ?factor.smooth.
 
+* mono.con corrected for cases with upper bounds. Thanks to Sean Wu.
+
 * modifications of sparce matrix coercions, to avoid deprecated direct 
   coercions. as(as(as(a, "dMatrix"), "generalMatrix"), "XsparseMatrix") in
   place of as(a,"dgXMatrix") where 'X' is 'C' or 'T'. Actually this requires

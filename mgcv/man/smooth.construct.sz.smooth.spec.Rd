@@ -7,9 +7,6 @@
 
 \description{Factor smooth interactions constructed to exclude main effects (and lower order factor smooth interactions). A smooth is constucted for each combination of the supplied factor levels. By appropriate application of sum to zero contrasts to equivalent smooth coefficients across factor levels, the required exclusion of lower order effects is achieved.   
 
-Simple factor smooth interactions, which are efficient when used with \code{\link{gamm}}.
-This smooth class allows a separate smooth for each level of a factor, with the same smoothing parameter for all 
-smooths. It is an alternative to using factor \code{by} variables.
 
 See \link{factor.smooth} for alternative factor smooth interactions.
 }
@@ -40,9 +37,9 @@ can be estimated in an identifiable manner, where \eqn{k(i)}{k(i)} indicates the
 
 Such sum to zero constraints are implemented using sum to zero contrasts: identity matrices with an extra row of -1s appended. Consider the case of a single factor first. The model matrix corresponding to a smooth per factor level is the row tensor product (see \code{\link{tensor.prod.model.matrix}}) of the model matrix for the factor, and the model matrix for the smooth. The contrast matrix is then the Kronecker product of the sum to zero contrast for the factor, and an identity matrix of dimension determined by the number of coefficients of the smooth.
 
-If there are multiple factors then the overall model matrix is the row Kronecker product of all the factor model matrices, while the contrast is the Kronecker product of all the sum-to-zero contrasts for the factors and a final identity matrix. Notice that this construction means that the main effects (and any interactions) of the factors are included in the factor level dependent smooths. In other words the individual smooths are not each centered. This means that adding main effects or interactions of the factors will lead to a rank deficient model. 
+If there are multiple factors then the overall model matrix is the row Kronecker product of all the factor model matrices and the smooth, while the contrast is the Kronecker product of all the sum-to-zero contrasts for the factors and a final identity matrix. Notice that this construction means that the main effects (and any interactions) of the factors are included in the factor level dependent smooths. In other words the individual smooths are not each centered. This means that adding main effects or interactions of the factors will lead to a rank deficient model. 
 
-The terms can have a smoothing parameter per smooth, or a single smoothing parameter for all the smooths. The latter is specified by giving the smooth term and \code{id}. e.g. \code{s(fac,x,bs="sz",id=1)}.
+The terms can have a smoothing parameter per smooth, or a single smoothing parameter for all the smooths. The latter is specified by giving the smooth term an \code{id}. e.g. \code{s(fac,x,bs="sz",id=1)}.
 
 The basis for the smooths can be selected by supplying a list as the \code{xt} argument to \code{\link{s}}, with a \code{bs} item. e.g. \code{s(fac,x,xt=list(bs="cr"))} selectes the \code{"cr"} basis. The default is \code{"tp"}
 
@@ -52,7 +49,7 @@ The plot method for this class has two schemes. \code{scheme==0} is in colour, w
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with input from Matteo Fasiolo.}
 
-\seealso{\code{\link{gam.models}}, \code{\link{gamm}}}
+\seealso{\code{\link{gam.models}}, \code{\link{gamm}}, \link{factor.smooth}}
 
 \examples{
 library(mgcv)
