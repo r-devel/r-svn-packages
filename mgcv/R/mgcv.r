@@ -1579,12 +1579,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   object[names(mv)] <- mv
 
-  if (!is.null(nei)&&criterion!="NCV") {
+  if (!is.null(nei)&&(criterion!="NCV"||nei$jackknife)) { ## returning NCV when other criterion used for sp selection, or computing perturbations
     if (!is.null(nei$QNCV)&&nei$GNCV) family$qapprox <- TRUE
     if (is.null(family$qapprox)) family$qapprox <- FALSE
     lsp <- if (is.null(G$L)) log(object$sp) + G$lsp0 else G$L%*%log(object$sp)+G$lsp0
     if (object$scale.estimated && criterion %in% c("REML","ML","EFS")) lsp <- lsp[-length(lsp)] ## drop log scale estimate
     if (is.null(nei$gamma)) nei$gamma <- 1 ## a major application of this NCV is to select gamma - so it must not itself change with gamma!
+    if (nei$jackknife) nei$jackknife <- 10 ## signal that cross-validated beta perturbations are required
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
                  offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
                  control=control,gamma=nei$gamma, 

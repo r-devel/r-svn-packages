@@ -213,7 +213,7 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
 
 
 SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DLET,SEXP DERIV) {
-/* Neighbourhood cross validation function.
+/* Neighbourhood cross validation function. CG version - not optimal.
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
            deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
    Input: X - n by p model matrix. Hi inverse penalized Hessian. H penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
@@ -275,7 +275,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     S = VECTOR_ELT(rS, j);rSj = REAL(S);q = ncols(S);
     F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j,rSj,&p,rSj,&p,&xx,Hd,&p FCONE FCONE);
   }  
-  if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
+  if (deriv>0) { /* derivarives of Hessian, dH/drho_j, needed */
     db=REAL(DB);dw=REAL(DW);dlet = REAL(DLET);
     dH = (double *)CALLOC((size_t) p2*(nsp+nth),sizeof(double));
     for (j=0;j<nsp+nth;j++) {
@@ -287,7 +287,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
         F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j-nth,rSj,&p,rSj,&p,&xx,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X + lambda_j S_j */
       }
     } 
-  }
+  } else if (deriv<0) dlet = REAL(DLET); /* storage for returning coeff changes per fold */
   FREE(dwX);
   for (io=ii=0,i=0;i<nm;i++) { /* loop over neighbourhoods, k[ii] is start of neighbourhood of i */
     p1 = g + p; /* fill accumulated g vector */
@@ -331,9 +331,10 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     for (;io<mi[i];io++) {
       for (xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-d[j]);  
       eta[io] = xx; /* neighbourhood cross validated eta */
-    }  
+    }
+    if (deriv<0) for (xip=dlet+p*i,j=0;j<p;j++) xip[j] = d[j]; /* dlet[,i] = d[] */
     /* now the derivatives */
-    if (deriv) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
+    if (deriv>0) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
 	//	Rprintf(".");	
       /* compute sum_nei(i) dg/drho_l, start with first element of neighbourhood */
       for (xx=0.0,xip=Xi,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
@@ -365,7 +366,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   FREE(Hp);FREE(Hd);
   FREE(g);FREE(d);FREE(cgwork);
   FREE(Xi);FREE(wXi);FREE(dwXi);
-  if (deriv) FREE(dH);
+  if (deriv>0) FREE(dH);
   PROTECT(kr=allocVector(INTSXP,1));
   INTEGER(kr)[0] = error; /* max CG iterations used */
   UNPROTECT(5);
@@ -390,12 +391,18 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
           k[m[i-1]:(m[i])] index the points in the ith neighbourhood. m[-1]=0 by convention. 
           Similarly ind[mi[i-1]:mi[i]] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
           beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
-          for no derivative calculations, deriv!=0 otherwise. 
+          for no derivative calculations, deriv>0 to obtain first derivatives. deriv < 0 to compute NCV score without derivatives
+          and return perturbations of beta in columns of DLET.  
          
    Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
-               beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) a pre-conditioned conjugate gradient 
-               iteration is used to solve for the change in beta caused by the omission. 
-               The gradient of this step w.r.t. to each smoothing parameter can also be obtained, again using CG to avoid O(p^3) cost for each obs.
+               beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) an O(p^2) update of the Cholesky
+               factor is made to obtain Cholesky factor with dropped observations, enabling O(p^2) solution for the updated parameter.
+
+               The gradient of this step w.r.t. to each smoothing parameter can also be obtained, again using the updated Cholesky factor to avoid 
+               O(p^3) cost for each obs.
+
+               If the updated Hessian is not positive definite the Cholesky update will detect this, and the routing falls back on Woodbury or minres.
+               
                A point can be predicted several times with different omitted neighbourhoods. ind[i] is the point being predicted and eta[i] its prediction.
                LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
  */
@@ -456,7 +463,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   error = (int *)CALLOC((size_t) nt,sizeof(int));   
   xx=1.0;z=0.0;
 
-  if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
+  if (deriv>0) { /* derivarives of Hessian, dH/drho_j, needed */
     dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
     db=REAL(DB);dw=REAL(DW);dlet = REAL(DLET);
     dH = (double *)CALLOC((size_t) p2*(nsp+nth),sizeof(double));
@@ -470,7 +477,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       }
     }
     FREE(dwX);
-  }
+  } else if (deriv<0) dlet = REAL(DLET); /* for storing the coefficient changes for each fold */
   
  
   #ifdef _OPENMP
@@ -544,9 +551,12 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     for (;io<mi[i];io++) {
       for (p0=d+tid*p,xx=0.0,xip=X+ind[io],j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-p0[j]);  
       eta[io] = xx; /* neighbourhood cross validated eta */
+    }
+    if (deriv<0) { /* return the coeff change */
+      for (p0=d+tid*p,p1=dlet+p*i,j=0;j<p;j++) p1[j] = p0[j]; /* dlet[,i] = d[] */
     }  
     /* now the derivatives */
-    if (deriv) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
+    if (deriv>0) for (l=0;l<nsp+nth;l++) { /* loop over smoothing parameters */
       /* compute sum_nei(i) dg/drho_l, start with first element of neighbourhood */
       for (xx=0.0,xip=Xi+tid*pmaxn,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
       for (dgp=dg+tid*p,xip=wXi+tid*pmaxn,p1=dgp+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
@@ -585,7 +595,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   FREE(R0);FREE(ddbuf);FREE(Rb);
   FREE(g);FREE(d);
   FREE(Xi);FREE(wXi);FREE(dwXi);
-  if (deriv) FREE(dH);
+  if (deriv>0) FREE(dH);
   FREE(work);if (!use_minres) FREE(iwork);
   for (j=0,i=0;i<nt;i++) j += error[i];
   FREE(error);
@@ -612,12 +622,7 @@ SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND
           beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
           for no derivative calculations, deriv!=0 otherwise. 
          
-   Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
-               beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) a pre-conditioned conjugate gradient 
-               iteration is used to solve for the change in beta caused by the omission. 
-               The gradient of this step w.r.t. to each smoothing parameter can also be obtained, again using CG to avoid O(p^3) cost for each obs.
-               A point can be predicted several times with different omitted neighbourhoods. ind[i] is the point being predicted and eta[i] its prediction.
-               LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
+ 
  */
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0;
@@ -1540,7 +1545,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
       //Rprintf(" fold=%d iter=%d updates=%d\n",i,j,nddbuf);
     }
 	
-    /* now create the linear predictors for the ith fold */
+    /* now create the linear predictors for the ith fold. d contains the perturbation to beta */
     for (;io<mi[i];io++)
     for (l=0;l<nlp;l++) {
       ln = no*l;jjl = jj[l];i1=ind[io];

@@ -650,13 +650,18 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
      w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2 ## !?
      R <- try(chol(crossprod(x,w*x)+St),silent=TRUE)
+     if (nei$jackknife > 2) { ## return NCV coef changes for each fold 
+       if (deriv>0) stop("jackknife and derivatives requested together")
+       dth <- matrix(0,ncol(x),length(nei$m))
+       deriv1 <- -1
+     } else deriv1 <- deriv
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
-        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv);
+        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv1);
 	warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
      } else { ## use Cholesky update approach
 	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv,
-	                    deta.cv, dth, deriv,.Machine$double.eps,control$ncv.threads);
+	                    deta.cv, dth, deriv1,.Machine$double.eps,control$ncv.threads);
 	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
      }   
      mu.cv <- linkinv(eta.cv)

@@ -1,4 +1,4 @@
-# R routines for gam fitting with calculation of derivatives w.r.t. sp.s
+## R routines for gam fitting with calculation of derivatives w.r.t. sp.s
 ## (c) Simon Wood 2004-2022
 
 ## These routines are for type 3 gam fitting. The basic idea is that a P-IRLS
@@ -674,15 +674,22 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
 	   eta.cv <- rep(0.0,length(nei$i))
 	   deta.cv <- if (deriv) matrix(0.0,length(nei$i),length(rS)) else matrix(0.0,1,length(rS))
-	   dum <- matrix(1.0,1,1);
+           if (nei$jackknife>2) { ## need coef changes for each NCV drop fold.
+             dd <- matrix(0,ncol(x),length(nei$m))
+	     if (deriv>0) stop("jackknife and derivatives requested together")
+	     deriv1 <- -1
+           } else { ## dd unused
+             dd <- matrix(1.0,1,1);
+	     deriv1 <- deriv
+	   }  
 	   R <- try(chol(crossprod(x,w1*x)+St),silent=TRUE)
 	   if (inherits(R,"try-error")) { ## use CG approach...
 	     Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
-             cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
+             cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dd, deriv1);
 	     warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
            } else { ## use Cholesky update approach
 	     pdef.fails <- .Call(C_Rncv,x,R,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv,
-	                         dum, deriv,.Machine$double.eps,control$ncv.threads);
+	                         dd, deriv1,.Machine$double.eps,control$ncv.threads);
 	     if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
 	   }
 	   if (family$qapprox) {
