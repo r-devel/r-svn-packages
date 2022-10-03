@@ -1,3 +1,7 @@
+2022-08-24  Brian Ripley
+
+	* src/nlmefit.c: Fix for -Wstrict-prototypes.
+
 2022-07-28  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-159
