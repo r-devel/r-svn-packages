@@ -234,7 +234,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj,nm,*ind,nth,*mi,io,io0,no;
   double *X,*g,*g1,*gp,*p1,*Hp,*Hi,*Xi,xx,*xip,*xip0,z,*Hd,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi,*cgwork,*dlet=NULL;
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw=NULL,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*cgwork,*dlet=NULL;
   char trans = 'T',ntrans = 'N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));

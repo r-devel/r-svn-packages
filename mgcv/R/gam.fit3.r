@@ -669,9 +669,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   ww <- w1 <- rep(0,nobs)
 	   ww[good] <- weg*(yg - mug)*mevg/var.mug
 	   w1[good] <- w
-	   if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-	   if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-	   if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+	  # if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+	  # if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+	   #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
 	   eta.cv <- rep(0.0,length(nei$i))
 	   deta.cv <- if (deriv) matrix(0.0,length(nei$i),length(rS)) else matrix(0.0,1,length(rS))
            if (nei$jackknife>2) { ## need coef changes for each NCV drop fold.
@@ -692,6 +692,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	                         dd, deriv1,.Machine$double.eps,control$ncv.threads);
 	     if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
 	   }
+	  
 	   if (family$qapprox) {
              NCV <- sum(wdr[nei$i]) + gamma*sum(-2*ww[nei$i]*(eta.cv-eta[nei$i]) + w1[nei$i]*(eta.cv-eta[nei$i])^2)
              if (deriv) {
@@ -710,7 +711,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
              }
      	     mu.cv <- linkinv(eta.cv)
 	     NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*sum(wdr[nei$i]) ## the NCV score - simply LOOCV if nei(i) = i for all i
-	   
+	    
              if (deriv) {
 	       dev1 <- if (gamma==1) 0 else -2*colSums((ww*(x%*%db.drho))[nei$i,,drop=FALSE]) 
 	       var.mug <- variance(mu.cv)
@@ -721,6 +722,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	       NCV1 <- -2 * colSums(ww1*deta.cv)
 	       NCV1 <- gamma*NCV1 - (gamma-1)*dev1
              } ## if deriv
+	   }
+	   if (nei$jackknife>2) {
+             nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
+             jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
+	     Vj<- T%*%crossprod(jkw*t(dd))%*%t(T) ## jackknife cov matrix
+	     attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs
+	     attr(NCV,"Vj") <- Vj
 	   }  
 	   attr(NCV,"eta.cv") <- eta.cv
 	   if (deriv) attr(NCV,"deta.cv") <- deta.cv

@@ -643,9 +643,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      ##       Should explicit inversion fail, fall back on tcrossprod(rV).
      #Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
      #Hi <- chol2inv(chol(crossprod(x,w*x)+St))
-     if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-     if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+     #if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+     #if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+     #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
      eta.cv <- rep(0.0,length(nei$i))
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
      w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2 ## !?
@@ -1275,7 +1275,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ncv <- family$ncv ## helps debugging!
     deriv1 <- if (deriv==0) 0 else 1
     ## create nei if null
-    if (is.null(nei)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+    if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
     if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
     ## complete dH

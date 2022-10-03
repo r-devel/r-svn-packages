@@ -1591,7 +1591,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                  control=control,gamma=nei$gamma, 
 		 scale=scale,printWarn=FALSE,start=start,scoreType="NCV",null.coef=G$null.coef,
                  pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei,...)
-    object$NCV <- as.numeric(b$NCV)		 
+    object$NCV <- as.numeric(b$NCV)
+    object$Vj <- attr(b$NCV,"Vj")
+    
   }
   ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
@@ -1640,6 +1642,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (method %in% c("QNCV","NCV")) {
     optimizer <- c("outer","bfgs")
     if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
+    if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:G$n,mi=1:G$n,m=1:G$n,k=1:G$n) ## LOOCV
+    if (is.null(nei$i)) if (length(nei$m)==G$n) nei$mi <- nei$i <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
+    if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    if (is.null(nei$jackknife)) nei$jackknife <- FALSE
   }  
 
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
