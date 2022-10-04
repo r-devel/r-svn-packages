@@ -1639,10 +1639,11 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,nei=NULL,...) {
 ## Do gam estimation and smoothness selection...
 
-  if (method %in% c("QNCV","NCV")) {
+  if (method %in% c("QNCV","NCV")||!is.null(nei)) {
     optimizer <- c("outer","bfgs")
     if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
-    if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:G$n,mi=1:G$n,m=1:G$n,k=1:G$n) ## LOOCV
+    if (is.null(nei)) nei <- list(i=1:G$n,mi=1:G$n,m=1:G$n,k=1:G$n) ## LOOCV
+    if (is.null(nei$k)||is.null(nei$m)) nei$k <- nei$m <- nei$mi <- nei$i <- 1:G$n 
     if (is.null(nei$i)) if (length(nei$m)==G$n) nei$mi <- nei$i <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
     if (is.null(nei$jackknife)) nei$jackknife <- FALSE
