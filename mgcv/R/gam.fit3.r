@@ -606,7 +606,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            scale.est <- (dev+dev.extra)/(n.true-trA)
          }
 
-        reml.scale <- NA  
+        reml.scale <- NA
+	Vg=NULL ## empirical cov matrix for grad (see NCV)
 
         if (scoreType%in%c("REML","ML")) { ## use Laplace (RE)ML
           
@@ -699,8 +700,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	       deta <- x%*%db.drho
 	       alpha1 <- if (fisher) 0 else (-(V1+g2) + (y-mu)*(V2-V1^2+g3-g2^2))/alpha
 	       w3 <- w1/g1*(alpha1 - V1 - 2 * g2)
-               NCV1 <- colSums(-2*ww[nei$i]*((1-gamma)*deta[nei$i,] + gamma*deta.cv) + 2*gamma*w1[nei$i]*(deta.cv*(eta.cv-eta[nei$i])) +
-	                gamma*w3[nei$i]* deta[nei$i,]*(eta.cv-eta[nei$i])^2)
+               ncv1 <- -2*ww[nei$i]*((1-gamma)*deta[nei$i,] + gamma*deta.cv) + 2*gamma*w1[nei$i]*(deta.cv*(eta.cv-eta[nei$i])) +
+	                gamma*w3[nei$i]* deta[nei$i,]*(eta.cv-eta[nei$i])^2
              }
            } else { ## exact version
              if (TRUE) {
@@ -713,21 +714,29 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*sum(wdr[nei$i]) ## the NCV score - simply LOOCV if nei(i) = i for all i
 	    
              if (deriv) {
-	       dev1 <- if (gamma==1) 0 else -2*colSums((ww*(x%*%db.drho))[nei$i,,drop=FALSE]) 
-	       var.mug <- variance(mu.cv)
+	       #dev1 <- if (gamma==1) 0 else -2*colSums((ww*(x%*%db.drho))[nei$i,,drop=FALSE]) 
+               dev1 <- if (gamma==1) 0 else -2*(ww*(x%*%db.drho))[nei$i,,drop=FALSE]
+               var.mug <- variance(mu.cv)
                mevg <- mu.eta(eta.cv)
 	       mug <- mu.cv
 	       ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	       ww1[!is.finite(ww1)] <- 0
-	       NCV1 <- -2 * colSums(ww1*deta.cv)
-	       NCV1 <- gamma*NCV1 - (gamma-1)*dev1
+	       #NCV1 <- -2 * colSums(ww1*deta.cv)
+	       #NCV1 <- gamma*NCV1 - (gamma-1)*dev1
+	       ncv1 <- -2*ww1*deta.cv*gamma - (gamma-1)*dev1
              } ## if deriv
 	   }
+
+           if (deriv) {
+             NCV1 <- colSums(ncv1) ## grad
+	     Vg <- crossprod(ncv1) ## empirical cov matrix of grad
+           }
+
 	   if (nei$jackknife>2) {
              nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
              jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
 	     Vj<- T%*%crossprod(jkw*t(dd))%*%t(T) ## jackknife cov matrix
-	     attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs
+	     attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs ## incomplete (not general enough)
 	     attr(NCV,"Vj") <- Vj
 	   }  
 	   attr(NCV,"eta.cv") <- eta.cv
@@ -852,7 +861,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         df.null = nulldf, y = y, converged = conv,##pearson.warning = pearson.warning,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,NCV=NCV,NCV1=NCV1,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
-        UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
+        UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,Vg=Vg,db.drho=db.drho,
         dw.drho=dw.drho,dVkk = matrix(oo$dVkk,nSp,nSp),ldetS1 = if (grderiv) rp$det1 else 0,
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat,warn=warn)
 } ## end gam.fit3
@@ -1027,6 +1036,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
         }
       }
     } ## k loop
+
     V.sp <- Vr;attr(V.sp,"L") <- L;attr(V.sp,"spind") <- spind <- (nth+1):M
     ## EXPERIMENTAL ## NOTE: no L handling - what about incomplete z/w??
     #P <- Vb %*% X/scale
@@ -1051,7 +1061,9 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
     }
     ## END EXPERIMENTAL
   } else V.sp <- edf2 <- Vc <- NULL
-  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+  ret <- list(Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+  if (is.null(object$Vc)) ret$Vc <- Vc
+  ret
 } ## gam.fit3.post.proc
 
 
@@ -2117,6 +2129,12 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                 dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
   score <- b[[sname]];grad <- t(L)%*%b[[sname1]];
 
+  if (!is.null(b$Vg)) {
+    M <- ncol(b$db.drho)
+    Vg <- (B%*%t(L)%*%b$Vg%*%L%*%B)[1:M,1:M] ## sandwich estimate of 
+    db.drho <- b$db.drho%*%L[1:M,,drop=FALSE]
+    b$Vc <- db.drho %*% (B %*% b$Vg %*%B) %*% t(db.drho) ## correction term for cov matrices
+  }
   b$dVkk <- NULL
   ## get approximate Hessian...
   ev <- eigen(B,symmetric=TRUE)
