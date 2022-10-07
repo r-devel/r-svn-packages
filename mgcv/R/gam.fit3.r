@@ -735,9 +735,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   if (nei$jackknife>2) {
              nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
              jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
-	     Vj<- T%*%crossprod(jkw*t(dd))%*%t(T) ## jackknife cov matrix
-	     attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs ## incomplete (not general enough)
-	     attr(NCV,"Vj") <- Vj
+	     dd <-jkw*t(dd)%*%t(T)
+	     Vj <- crossprod(dd) ## jackknife cov matrix
+	     #attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs ## incomplete (not general enough)
+             attr(Vj,"dd") <- dd
+             attr(NCV,"Vj") <- Vj
 	   }  
 	   attr(NCV,"eta.cv") <- eta.cv
 	   if (deriv) attr(NCV,"deta.cv") <- deta.cv
