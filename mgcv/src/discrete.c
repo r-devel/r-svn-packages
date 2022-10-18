@@ -1070,12 +1070,13 @@ void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n,
 ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,int nt, int tri) {
 /*  computes working memory requirement of XWXijs for given block - called by XWXspace below
 */
-  int si,sj,ri,rj,jm,im,kk,ddtj,
+  int si,sj,//ri,rj,
+    jm,im,kk,ddtj,
     ii,rfac,ddti,tensi,tensj,acc_w,alpha;
   ptrdiff_t nwork=0,mim,mjm; /* avoid integer overflow in large pointer calculations */ 
   si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
   /* compute number of columns in dXi/ number of rows of blocks in product */
-  for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
+  //for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
   im = ts[i]+dt[i]-1; /* the index of the final marginal for term i */
   mim = (ptrdiff_t) m[im];
   /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
@@ -1090,7 +1091,7 @@ ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int
     				  
   } else { /* general case */
     sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
-    for (rj=1,kk=ts[j];kk<ts[j]+dt[j]-1;kk++) rj *= p[kk];
+    //for (rj=1,kk=ts[j];kk<ts[j]+dt[j]-1;kk++) rj *= p[kk];
     jm = ts[j]+dt[j]-1; /* the index of the final marginal for term j */
     ddti = dt[i]-1;ddtj = dt[j]-1; /* number of marginals excluding final */
     if (ddti) tensi = 1; else tensi = 0; /* is term i a tensor? */
@@ -1179,7 +1180,8 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
    ht is a 256 vector initialized by SMinihash. sm is length n. SMstack is length n if tri==0, 3n otherwise.
 
 */
-  int si,sj,ri,rj,jm,im,kk,ddt,ddtj,koff,*K,*Ki,*Kj,pim,pjm,
+  int si,sj,//ri,rj,
+    jm,im,kk,ddt,ddtj,koff,*K,*Ki,*Kj,pim,pjm,
     ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1,*Kjl1,q;
   ptrdiff_t mim,mjm; /* avoid integer overflow in large pointer calculations */ 
   double x,*wl,*dXi,*dXj,*pdXj,*Xt,*Xi,*Xj,done=1.0,dzero=0.0,*Cq,*Dq,
@@ -1188,7 +1190,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
   si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
   if (tri) wl = ws + n - 1; else wl=ws; /* sub-diagonal else only to keep compiler happy */
   /* compute number of columns in dXi/ number of rows of blocks in product */
-  for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
+  //for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
   im = ts[i]+dt[i]-1; /* the index of the final marginal for term i */
   mim = (ptrdiff_t) m[im];
   /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
@@ -1281,11 +1283,12 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     /* Now form the Xi'WXi... */
     Xt = X + off[im]; /* final marginal model matrix */
     pim = p[im]; /* cols of Xt */
-    if (r!=c)  for (jj=0;jj<pim;jj++) for (ii=0;ii<pim;ii++) { /* block need not be symmetric */
+    if (r!=c) { for (jj=0;jj<pim;jj++) for (ii=0;ii<pim;ii++) { /* block need not be symmetric */
         Xi = Xt + mim * ii; /* iith col of Xt */
         Xj = Xt + mim * jj; /* jjth col of Xt */
         for (x=0.0,kk=0;kk<mim;kk++) x += wb[kk]*Xj[kk]*Xi[kk];
         XWX[c*pim+jj+(r*pim +ii)* (ptrdiff_t) nxwx] = XWX[r*pim+ii+(c*pim +jj)*(ptrdiff_t)nxwx] = x; 
+      }
     } else for (ii=0;ii<pim;ii++) for (jj=ii;jj<pim;jj++) { /* diagonal and symmetric */ 
         Xi = Xt + mim * ii; /* iith col of Xt */
         Xj = Xt + mim * jj; /* jjth col of Xt */
@@ -1295,7 +1298,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     }					  
   } else { /* general case */
     sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
-    for (rj=1,kk=ts[j];kk<ts[j]+dt[j]-1;kk++) rj *= p[kk];
+    //for (rj=1,kk=ts[j];kk<ts[j]+dt[j]-1;kk++) rj *= p[kk];
     jm = ts[j]+dt[j]-1; /* the index of the final marginal for term j */
     ddti = dt[i]-1;ddtj = dt[j]-1; /* number of marginals excluding final */
     if (ddti) tensi = 1; else tensi = 0; /* is term i a tensor? */

@@ -63,7 +63,7 @@ void RPackSarray(int m,matrix *S,double *RS)
 }
 
 
-matrix getD(h,nak) matrix h;int nak;
+matrix getD(matrix h,int nak)
 
 /* the matrix mapping the value of the spline to the gradients at the knots.
    nak is true for 'not-a-knot' end conditions at the early end, otherwise

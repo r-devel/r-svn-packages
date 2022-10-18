@@ -724,11 +724,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	       #NCV1 <- -2 * colSums(ww1*deta.cv)
 	       #NCV1 <- gamma*NCV1 - (gamma-1)*dev1
 	       ncv1 <- -2*ww1*deta.cv*gamma - (gamma-1)*dev1
+	       gjk <- colSums(ww1*x[nei$i,]) ## jackknife deriv of log lik estimate (multiplied by scale)
              } ## if deriv
 	   }
 
            if (deriv) {
              NCV1 <- colSums(ncv1) ## grad
+	     attr(NCV1,"gjk") <- gjk ## jackknife grad estimate BUG: incomplete - need qapprox version as well
 	     Vg <- crossprod(ncv1) ## empirical cov matrix of grad
            }
 

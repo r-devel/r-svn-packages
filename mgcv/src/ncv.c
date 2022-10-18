@@ -24,11 +24,12 @@ USA. */
 #include <omp.h>
 #endif
 
-#include <Rmath.h>
-#include <Rinternals.h>
-#include <Rconfig.h>
-#include "mgcv.h"
+//#include <Rmath.h>
+//#include <Rinternals.h>
+//#include <Rconfig.h>
 #include <R.h>
+#include "mgcv.h"
+
 
 void minres0(double *R, double *u,double *b, double *x, int *p,int *m) {
 /* Brute force alternative to minres for testing purposes */ 
@@ -40,14 +41,14 @@ void minres0(double *R, double *u,double *b, double *x, int *p,int *m) {
   ipiv = (int *)CALLOC((size_t) *p,sizeof(int));
   for (j=0;j<p2;j++) A[j] = R[j];
   xx=1.0;
-  F77_CALL(dtrmm)(&side,&uplo,&trans,&diag,p,p,&xx,R,p,A,p FCONE FCONE); /* A = R'R */
+  F77_CALL(dtrmm)(&side,&uplo,&trans,&diag,p,p,&xx,R,p,A,p FCONE FCONE FCONE FCONE); /* A = R'R */
   zz = -1.0;
   F77_CALL(dsyrk)(&uplo,&ntrans,p,m,&zz,u,p,&xx,A,p FCONE FCONE); /* A = R'R - uu' */
   for (j=0;j<*p;j++) x[j] = b[j];
-  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,&workq,&lwork,&j FCONE FCONE);
+  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,&workq,&lwork,&j FCONE);
   lwork=floor(workq);if (lwork<workq) lwork++;
   work = (double *)CALLOC((size_t) lwork,sizeof(double));
-  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,work,&lwork,&j FCONE FCONE);
+  F77_CALL(dsysv)(&uplo,p,&one,A,p,ipiv,x,p,work,&lwork,&j FCONE);
   FREE(A);FREE(ipiv);FREE(work);
 }
 
@@ -75,16 +76,16 @@ void woodbury(double *R, double *u,double *b, double *x, int *p,int *m,double *w
   v = work; work += *m;
   nwork = *iwork;
   for (i=0;i<pm;i++) RitU[i] = u[i];
-  F77_CALL(dtrsm)(&side,&uplo,&trans,&diag,p,m,&done,R,p,RitU,p FCONE FCONE); /* form R^{-T}U */
+  F77_CALL(dtrsm)(&side,&uplo,&trans,&diag,p,m,&done,R,p,RitU,p FCONE FCONE FCONE FCONE); /* form R^{-T}U */
   F77_CALL(dgemm)(&trans,&ntrans,m,m,p,&done,RitU,p,RitU,p,&dzero,B,m FCONE FCONE); /* form U^TR^{-1}R^{-T}U */
   for (p0=B,i=0;i < *m;i++,p0 += *m+1) *p0 += -1.0; /* B = U^TR^{-1}R^{-T}U - I */
   for (i=0;i<*p;i++) x[i] = b[i];
-  F77_CALL(dtrsv)(&uplo,&trans,&diag,p,R,p,x,&one FCONE FCONE); /* x = R^{-T} b */
-  F77_CALL(dgemv)(&trans,p,m,&done,RitU,p,x,&one,&dzero,v,&one FCONE FCONE); /* v = U^TR^{-1})R^{-T} b */
-  F77_CALL(dsysv)(&uplo,m,&one,B,m,iwork,v,m,work,&nwork,&i FCONE FCONE); /* v = B^{-1}U^TR^{-1})R^{-T} b */
+  F77_CALL(dtrsv)(&uplo,&trans,&diag,p,R,p,x,&one FCONE FCONE FCONE); /* x = R^{-T} b */
+  F77_CALL(dgemv)(&trans,p,m,&done,RitU,p,x,&one,&dzero,v,&one FCONE); /* v = U^TR^{-1})R^{-T} b */
+  F77_CALL(dsysv)(&uplo,m,&one,B,m,iwork,v,m,work,&nwork,&i FCONE); /* v = B^{-1}U^TR^{-1})R^{-T} b */
   xx = -1.0;
-  F77_CALL(dgemv)(&ntrans,p,m,&xx,RitU,p,v,&one,&done,x,&one FCONE FCONE); /* x = (I-R^{-T}UB^{-1}U^TR^{-1})R^{-T} b */
-  F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE); /* x = R^{-1}(I-R^{-T}UB^{-1}U^TR^{-1})R^{-T} b */
+  F77_CALL(dgemv)(&ntrans,p,m,&xx,RitU,p,v,&one,&done,x,&one FCONE); /* x = (I-R^{-T}UB^{-1}U^TR^{-1})R^{-T} b */
+  F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE FCONE); /* x = R^{-1}(I-R^{-T}UB^{-1}U^TR^{-1})R^{-T} b */
   
 } /* woodbury */ 
 
@@ -114,14 +115,14 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
     xx = x[i] = b[i];maxb += xx*xx; 
   }
   maxb = sqrt(maxb);
-  F77_CALL(dtrsv)(&uplo,&trans,&diag,p,R,p,x,&one FCONE FCONE); /* Solve R'x0* = b */
+  F77_CALL(dtrsv)(&uplo,&trans,&diag,p,R,p,x,&one FCONE FCONE FCONE); /* Solve R'x0* = b */
   xx = 1.0;
   for (i=0;i < *p * *m;i++) u1[i] = u[i];
-  F77_CALL(dtrsm)(&side,&uplo,&trans,&diag,p,m,&xx,R,p,u1,p); /* Solve R'u1 = u */
+  F77_CALL(dtrsm)(&side,&uplo,&trans,&diag,p,m,&xx,R,p,u1,p FCONE FCONE FCONE FCONE); /* Solve R'u1 = u */
   /* x currently contains R^{-T}b, form v = x - (I-u1u1')x = u1u1'x */
   zz = 0.0;
-  F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,x,&one,&zz,dum,&one); /* dum = u1'x */
-  F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,v1,&one); /* v1 = u1u1'x */
+  F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,x,&one,&zz,dum,&one FCONE); /* dum = u1'x */
+  F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,v1,&one FCONE); /* v1 = u1u1'x */
   for (beta1=0.0,i=0;i<*p;i++) { xx=v1[i]; beta1 += xx*xx;}
   epsilon = eta = beta1 = sqrt(beta1); /* beta1 = \\v1\\ */
   gamma0 = gamma1 = 1.0;sig0 = sig1 = 0.0;
@@ -129,9 +130,9 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
   for (j=0;j<200;j++) {
     for (i=0;i<*p;i++) { v1[i] /= beta1;z[i]=v1[i];}
     xx = 1.0; zz = 0.0;
-    F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,v1,&one,&zz,dum,&one); /* dum = u1'v1 */
+    F77_CALL(dgemv)(&trans,p,m,&xx,u1,p,v1,&one,&zz,dum,&one FCONE); /* dum = u1'v1 */
     zz = 1.0; xx = -1.0;
-    F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,z,&one); /* z = (I-u1u1')v1 */
+    F77_CALL(dgemv)(&ntrans,p,m,&xx,u1,p,dum,&one,&zz,z,&one FCONE); /* z = (I-u1u1')v1 */
     for (alpha=0.0,i=0;i<*p;i++) alpha += v1[i]*z[i];  /* alpha = v1'z = v1'(I-u1u1')v1 */
     for (beta2=0.0,i=0;i<*p;i++) {
       xx = v2[i] = z[i] - alpha * v1[i] - beta1 * v[i];
@@ -158,7 +159,7 @@ void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *wor
     sig0 = sig1; sig1 = sig2; beta1 = beta2;
     gamma0 = gamma1; gamma1 = gamma2;
   }
-  F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE); /* Solve R'x = x* */
+  F77_CALL(dtrsv)(&uplo,&ntrans,&diag,p,R,p,x,&one FCONE FCONE FCONE); /* Solve R'x = x* */
   *m=j;
 } /* minres */
 
@@ -184,13 +185,13 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
     if (c1>bmax) bmax = c1; /* find max abs b for convergence testing */
   }
   c1 = -1.0;c2=1.0;
-  F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,x,&one,&c2,r,&one FCONE FCONE); /* r = b - Ax */
+  F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,x,&one,&c2,r,&one FCONE); /* r = b - Ax */
   c1 = 0.0;
-  F77_CALL(dgemv)(&ntrans,&n,&n,&c2,Mi,&n,r,&one,&c1,z,&one FCONE FCONE); /* z = Mi r */
+  F77_CALL(dgemv)(&ntrans,&n,&n,&c2,Mi,&n,r,&one,&c1,z,&one FCONE); /* z = Mi r */
   for (i=0;i<n;i++) p[i] = z[i];
   c1=1.0;c2=0.0;
   for (k=0;k<200;k++) {  
-    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,p,&one,&c2,z1,&one FCONE FCONE); /* z1 = Ap */
+    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,p,&one,&c2,z1,&one FCONE); /* z1 = Ap */
     for (rz=0.0,pAp=0.0,i=0;i<n;i++) {rz += r[i]*z[i];pAp += p[i] * z1[i];} /*r'z & p'Ap*/
     if (pAp==0.0) {k=-k;break;} /* failed, A possibly not +ve def */
     alpha = rz/pAp;
@@ -200,7 +201,7 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
       if (fabs(r1[i])>rmax) rmax = fabs(r1[i]);
     }
     if (rmax < tol*bmax) break;
-    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,Mi,&n,r1,&one,&c2,z1,&one FCONE FCONE); /* z1 = Mi r1 */
+    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,Mi,&n,r1,&one,&c2,z1,&one FCONE); /* z1 = Mi r1 */
     for (r1z1=0.0,i=0;i<n;i++) r1z1 += r1[i] * z1[i];
     if (rz==0.0) {k=-k;break;} /* failed, A possibly not +ve def */
     beta = r1z1/rz;
@@ -324,7 +325,7 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
        y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
        dx and dy are increments of x and y indices.  */
     xx = 0.0;
-    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE FCONE); /* initial step Hi g */
+    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE); /* initial step Hi g */
     kk=CG(Hp,Hi,g,d,p,1e-13,cgwork); /* d is approx change in beta caused by dropping y_i and its neighbours */
     if (kk>error) error=kk;
     /* now create the linear predictors for target points */
@@ -350,11 +351,11 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       /* First create diag(dw[,l])Xi */
       for (j=0;j<p;j++) for (xip0=Xi+j*maxn,xip=dwXi+j*maxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
       z=1.0;xx=0.0;
-      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi,&maxn,d,&one,&xx,g,&one FCONE FCONE); /* g = diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi,&maxn,d,&one,&xx,g,&one FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE); /* g = dH_l d */
       for (j=0;j<p;j++) dg[j] += g1[j] - g[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
-      F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,dg,&one,&xx,d1,&one FCONE FCONE); /* initial step Hi dg */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,dg,&one,&xx,d1,&one FCONE); /* initial step Hi dg */
       kk=CG(Hp,Hi,dg,d1,p,1e-13,cgwork); /* d1 is deriv wrt rho_l of approx change in beta caused by dropping the y_i and its neighbours */
       if (kk>error) error=kk;
       for (io=io0;io<mi[i];io++) {
@@ -455,7 +456,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     iwork = (int *)CALLOC((size_t)niwork*nt,sizeof(int));
     /* workspace query (d not referenced) ... */
     nwork = -1;z = 1.0;i=1;
-    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE FCONE);
+    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE);
     nwork = (int) ceil(xx);
     nwork += maxn*(p+1+maxn);
   }  
@@ -537,8 +538,8 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
       for (p0=d+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j]; /* copy g to d */
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g via minres iteration, u, the skipped downdates are in ddbuf*/
      
       j = nddbuf; /* modified to number of iterations on exit */     
@@ -571,14 +572,14 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       /* First create diag(dw[,l])Xi */
       for (j=0;j<p;j++) for (xip0=Xi+j*maxn+pmaxn*tid,xip=dwXi+j*maxn+tid*pmaxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
       z=1.0;xx=0.0;
-      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi+pmaxn*tid,&maxn,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi+pmaxn*tid,&maxn,g+tid*p,&one,&xx,g1+tid*p,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = dH_l d */
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi+pmaxn*tid,&maxn,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi+pmaxn*tid,&maxn,g+tid*p,&one,&xx,g1+tid*p,&one FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = dH_l d */
       for (dgp = dg+tid*p,p0=g1+tid*p,p3=g+tid*p,j=0;j<p;j++) dgp[j] += p0[j] - p3[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
       if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
 	for (p0=d1+tid*p,p3=dg+tid*p,j=0;j<p;j++) p0[j] = p3[j];
-        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
-        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
+        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
+        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
       } else {  /* fallback solve (R0'R0 + uu') d= g where u are skipped downdates in ddbuf */
 	j = nddbuf;
 	if (use_minres) minres(R0+tid*p2,ddbuf+tid*pmaxn,dg+tid*p,d1+tid*p,&p,&j,work+nwork*tid); else {
@@ -627,7 +628,7 @@ SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND
   SEXP S,kr;
   int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,error=0,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0;
   double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
-    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet,*dp,eps,alpha;
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db=NULL,*dw,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet=NULL,*dp,eps,alpha;
   char trans = 'T',ntrans = 'N',uplo='U',diag='N';
   M = PROTECT(coerceVector(M,INTSXP));
   MI = PROTECT(coerceVector(MI,INTSXP));
@@ -726,8 +727,8 @@ SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
       for (j=0;j<p;j++) d[j] = g[j];
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g via minres iteration, u, the skipped downdates are in ddbuf*/
       if (!nwork) {
 	nwork =  p*(maxn+7)+maxn;
@@ -757,14 +758,14 @@ SEXP Rncv0(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND
       /* First create diag(dw[,l])Xi */
       for (j=0;j<p;j++) for (xip0=Xi+j*maxn,xip=dwXi+j*maxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
       z=1.0;xx=0.0;
-      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi,&maxn,d,&one,&xx,g,&one FCONE FCONE); /* g = diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi,&maxn,d,&one,&xx,g,&one FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE); /* g = dH_l d */
       for (j=0;j<p;j++) dg[j] += g1[j] - g[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
       if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
 	for (j=0;j<p;j++) d1[j] = dg[j];
-        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
-        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
+        F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE FCONE);
+        F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE FCONE);
       } else {  /* fallback solve (R0'R0 + uu') d= g where u are skipped downdates in ddbuf */
 	j = nddbuf;
 	minres(R0,ddbuf,dg,d1,&p,&j,work);
@@ -885,7 +886,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
       } /* lp loop */
     } /* neighbour loop */
     xx = 0.0;z=1.0;
-    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE FCONE); /* initial step Hi g */
+    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE); /* initial step Hi g */
     kk=CG(Hp,Hi,g,d,p,1e-13,cgwork); /* d is approx change in beta caused by dropping y_i and its neighbours */
     if (kk<0) {
       Rprintf("npd! ");kk = -kk;
@@ -907,7 +908,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
 	xx=0.0;z=1.0;
-        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d,&one,&xx,g,&one FCONE); /* g = dH_l d */
 	//for (j=0;j<p;j++) dg[j] = 0.0; /* clear deriv of g before accumulation - NOT needed - straight into g! */
         for (i1=i0;i1<m[i];i1++) { /* neighbour loop */
 	  ki=k[i1]; /* current neighbour of interest */
@@ -928,7 +929,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
            the change in beta vector, d. Now the derivative of grad vect w.r.t. log(sp[l])
            is also required */
 	xx=0.0;z=1.0;
-	F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d1,&one FCONE FCONE); /* initial step Hi d */
+	F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d1,&one FCONE); /* initial step Hi d */
         kk=CG(Hp,Hi,g,d1,p,1e-13,cgwork); /* d1 is deriv wrt rho_l of approx change in beta caused by dropping the y_i and its neighbours */
 	
 	if (kk<0) {
@@ -1072,8 +1073,8 @@ SEXP Rncvls0(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
       for (j=0;j<p;j++) d[j] = g[j];
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d,&one FCONE FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g where u is stored in ddbuf */
       error++; /* count the number of non +ve def cases */ 
       if (!nwork) {
@@ -1100,7 +1101,7 @@ SEXP Rncvls0(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
 	xx=0.0;z=1.0;
-        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d,&one,&xx,g,&one FCONE); /* g = dH_l d */
         for (i1=i0;i1<m[i];i1++) { /* neighbour loop */
 	  ki=k[i1]; /* current neighbour of interest */
 	  for (j=0;j<nlp;j++) for (q=0;q<nlp;q++) { /* have to do both triangles to avoid needing full matrix */
@@ -1121,8 +1122,8 @@ SEXP Rncvls0(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
            is also required */
         if (pdef) { /* solve for R0'R0 d1 = g1 */
 	  for (j=0;j<p;j++) d1[j] = g[j];
-          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
-          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0,&p,d1,&one FCONE FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0,&p,d1,&one FCONE FCONE FCONE);
         } else {  /* fallback solve (R0'R0 -uu')d1 = g1 where u stored in ddbuf*/
           j = nddbuf;
 	  minres(R0,ddbuf,g,d1,&p,&j,work);
@@ -1228,7 +1229,7 @@ SEXP Rncvls1(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
     iwork = (int *)CALLOC((size_t)niwork*nt,sizeof(int));
     /* workspace query (d not referenced) ... */
     nwork = -1;z = 1.0;i=1;
-    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE FCONE);
+    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE);
     nwork = (int) ceil(xx);
     nwork += maxn*nlp*(p+1+maxn*nlp);
   }
@@ -1293,8 +1294,8 @@ SEXP Rncvls1(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
       for (p0=d+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j];
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g where u is stored in ddbuf */
       error[tid]++; /* count the number of non +ve def cases */ 
     
@@ -1320,7 +1321,7 @@ SEXP Rncvls1(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
 	xx=0.0;z=1.0;
-        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = dH_l d */
+        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = dH_l d */
         for (i1=i0;i1<m[i];i1++) { /* neighbour loop */
 	  ki=k[i1]; /* current neighbour of interest */
 	  for (j=0;j<nlp;j++) for (q=0;q<nlp;q++) { /* have to do both triangles to avoid needing full matrix */
@@ -1341,8 +1342,8 @@ SEXP Rncvls1(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, S
            is also required */
         if (pdef) { /* solve for R0'R0 d1 = g1 */
 	  for (p0=d1+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j];
-          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
-          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
         } else {  /* fallback solve (R0'R0 -uu')d1 = g1 where u stored in ddbuf*/
           j = nddbuf; *(iwork+niwork*tid) = nwork;
 	  if (use_minres) minres(R0+tid*p2,ddbuf+tid*buffer_size,g+tid*p,d1+tid*p,&p,&j,work+nwork*tid); else
@@ -1450,7 +1451,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
     iwork = (int *)CALLOC((size_t)niwork*nt,sizeof(int));
     /* workspace query (d not referenced) ... */
     nwork = -1;z = 1.0;i=1;
-    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE FCONE);
+    F77_CALL(dsysv)(&uplo,&niwork,&i,d,&niwork,iwork,d,&niwork,&xx,&nwork,&j FCONE);
     nwork = (int) ceil(xx);
     nwork += niwork*(p+1+niwork);
   }
@@ -1532,8 +1533,8 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
       for (p0=d+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j];
-      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
-      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
+      F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g where u is stored in ddbuf */
       error[tid]++; /* count the number of non +ve def cases */ 
     
@@ -1560,7 +1561,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
 	xx=0.0;z=1.0;
-        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE FCONE); /* g = dH_l d */
+        F77_CALL(dgemv)(&ntrans,&p,&p,&z,dh,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = dH_l d */
         for (i1=i0;i1<m[i];i1++) { /* neighbour loop */
 	  ki=k[i1]; /* current neighbour of interest */
 	  for (j=0;j<nlp;j++) for (q=0;q<nlp;q++) { /* have to do both triangles to avoid needing full matrix */
@@ -1581,8 +1582,8 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
            is also required */
         if (pdef) { /* solve for R0'R0 d1 = g1 */
 	  for (p0=d1+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j];
-          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
-          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
+          F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
         } else {  /* fallback solve (R0'R0 -uu')d1 = g1 where u stored in ddbuf*/
           j = nddbuf; 
 	  if (use_minres) minres(R0+tid*p2,ddbuf+tid*buffer_size,g+tid*p,d1+tid*p,&p,&j,work+nwork*tid); else {
