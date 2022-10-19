@@ -2147,6 +2147,9 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   class(object) <- c("gam","glm","lm")
   if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
   names(object$gcv.ubre) <- method
+  ## The following lines avoid potentially very large objects in hidden environments being stored
+  ## with fitted gam objects. The downside is that functions like 'termplot' that rely on searching in
+  ## the environment of the formula can fail...
   environment(object$formula) <- environment(object$pred.formula) <-
   environment(object$terms) <- environment(object$pterms) <- .GlobalEnv
   if (!is.null(object$model))  environment(attr(object$model,"terms"))  <- .GlobalEnv

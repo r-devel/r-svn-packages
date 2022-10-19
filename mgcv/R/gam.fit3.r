@@ -670,9 +670,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   ww <- w1 <- rep(0,nobs)
 	   ww[good] <- weg*(yg - mug)*mevg/var.mug
 	   w1[good] <- w
-	  # if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-	  # if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-	   #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
 	   eta.cv <- rep(0.0,length(nei$i))
 	   deta.cv <- if (deriv) matrix(0.0,length(nei$i),length(rS)) else matrix(0.0,1,length(rS))
            if (nei$jackknife>2) { ## need coef changes for each NCV drop fold.
@@ -714,23 +711,20 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	     NCV <- gamma*sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) - (gamma-1)*sum(wdr[nei$i]) ## the NCV score - simply LOOCV if nei(i) = i for all i
 	    
              if (deriv) {
-	       #dev1 <- if (gamma==1) 0 else -2*colSums((ww*(x%*%db.drho))[nei$i,,drop=FALSE]) 
                dev1 <- if (gamma==1) 0 else -2*(ww*(x%*%db.drho))[nei$i,,drop=FALSE]
                var.mug <- variance(mu.cv)
                mevg <- mu.eta(eta.cv)
 	       mug <- mu.cv
 	       ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	       ww1[!is.finite(ww1)] <- 0
-	       #NCV1 <- -2 * colSums(ww1*deta.cv)
-	       #NCV1 <- gamma*NCV1 - (gamma-1)*dev1
 	       ncv1 <- -2*ww1*deta.cv*gamma - (gamma-1)*dev1
-	       gjk <- colSums(ww1*x[nei$i,]) ## jackknife deriv of log lik estimate (multiplied by scale)
+	       #gjk <- colSums(ww1*x[nei$i,]) ## jackknife deriv of log lik estimate (multiplied by scale)
              } ## if deriv
 	   }
 
            if (deriv) {
              NCV1 <- colSums(ncv1) ## grad
-	     attr(NCV1,"gjk") <- gjk ## jackknife grad estimate BUG: incomplete - need qapprox version as well
+	     #attr(NCV1,"gjk") <- gjk ## jackknife grad estimate - incomplete - need qapprox version as well
 	     Vg <- crossprod(ncv1) ## empirical cov matrix of grad
            }
 
@@ -739,7 +733,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
              jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
 	     dd <-jkw*t(dd)%*%t(T)
 	     Vj <- crossprod(dd) ## jackknife cov matrix
-	     #attr(Vj,"bias") <- T%*%rowMeans(dd)*nobs ## incomplete (not general enough)
              attr(Vj,"dd") <- dd
              attr(NCV,"Vj") <- Vj
 	   }  
@@ -2135,9 +2128,9 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   if (!is.null(b$Vg)) {
     M <- ncol(b$db.drho)
-    Vg <- (B%*%t(L)%*%b$Vg%*%L%*%B)[1:M,1:M] ## sandwich estimate of 
+    b$Vg <- (B%*%t(L)%*%b$Vg%*%L%*%B)[1:M,1:M] ## sandwich estimate of 
     db.drho <- b$db.drho%*%L[1:M,,drop=FALSE]
-    b$Vc <- db.drho %*% (B %*% b$Vg %*%B) %*% t(db.drho) ## correction term for cov matrices
+    b$Vc <- db.drho %*% b$Vg %*% t(db.drho) ## correction term for cov matrices
   }
   b$dVkk <- NULL
   ## get approximate Hessian...
