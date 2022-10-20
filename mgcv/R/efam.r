@@ -243,7 +243,7 @@ nb <- function (theta = NULL, link = "log") {
     }
     
     ls <- function(y,w,theta,scale) {
-       ## the log saturated likelihood function.
+       ## the log saturated likelihood function for nb
        Theta <- exp(theta)
        #vec <- !is.null(attr(theta,"vec.grad")) ## lsth by component?
        ylogy <- y;ind <- y>0;ylogy[ind] <- y[ind]*log(y[ind])
@@ -258,7 +258,8 @@ nb <- function (theta = NULL, link = "log") {
        psi0.th <- digamma(Theta)
        term <- Theta * (lyth - psi0.yth + psi0.th-theta)
        #lsth <- if (vec) -term*w else -sum(term*w)
-       lsth <- -sum(term*w)
+       LSTH <- matrix(-term*w,ncol=1)
+       lsth <- sum(LSTH)
        ## second deriv wrt theta...
        psi1.yth <- trigamma(yth) 
        psi1.th <- trigamma(Theta)
@@ -266,6 +267,7 @@ nb <- function (theta = NULL, link = "log") {
        lsth2 <- -sum(term*w)
        list(ls=ls, ## saturated log likelihood
             lsth1=lsth, ## first deriv vector w.r.t theta - last element relates to scale, if free
+	    LSTH1=LSTH, ## rows are above derivs by datum
             lsth2=lsth2) ## Hessian w.r.t. theta, last row/col relates to scale, if free
     }
 
@@ -571,6 +573,7 @@ cnorm <- function (theta = NULL, link = "identity") {
        ## right or left censored saturated log likelihoods are zero.
        list(ls=sum(d), ## saturated log likelihood
             lsth1=sum(d1), ## first deriv vector w.r.t theta - last element relates to scale, if free
+	    LSTH1=matrix(d1,ncol=1),
             lsth2=sum(d2)) ## Hessian w.r.t. theta, last row/col relates to scale, if free
     } ## ls cnorm
 
@@ -925,7 +928,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
 
   ls <- function(y,w,theta,scale) {
     ## the log saturated likelihood function. 
-    return(list(ls=0,lsth1=rep(0,R-2),lsth2=matrix(0,R-2,R-2)))
+    return(list(ls=0,lsth1=rep(0,R-2),LSTH1=matrix(0,length(y),R-2),lsth2=matrix(0,R-2,R-2)))
   } ## end of ls
   
   ## initialization is interesting -- needs to be with reference to initial cut-points
@@ -1224,16 +1227,13 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
     }
 
     ls <- function(y, w, theta, scale) {
-        ## evaluate saturated log likelihood + derivs w.r.t. working params and log(scale)
+        ## evaluate saturated log likelihood + derivs w.r.t. working params and log(scale) Tweedie
         a <- get(".a");b <- get(".b")
-	#vec <- !is.null(attr(theta,"vec.grad"))
-        LS <- w * ldTweedie(y, y, rho=log(scale), theta=theta,a=a,b=b)
-	#if (vec) lsth1 <- LS[,c(4,2)]
-	LS <- colSums(LS)
-        #if (!vec) lsth1 <- c(LS[4],LS[2])
+        Ls <- w * ldTweedie(y, y, rho=log(scale), theta=theta,a=a,b=b)
+	LS <- colSums(Ls)
 	lsth1 <- c(LS[4],LS[2]) ## deriv w.r.t. p then log scale
         lsth2 <- matrix(c(LS[5],LS[6],LS[6],LS[3]),2,2)
-        list(ls=LS[1],lsth1=lsth1,lsth2=lsth2)
+        list(ls=LS[1],lsth1=lsth1,LSTH1=Ls[,c(4,2)],lsth2=lsth2)
     }
 
  
@@ -1380,10 +1380,11 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
     }
     
     ls <- function(y,w,theta,scale) {
-       ## the log saturated likelihood function.
+       ## the log saturated likelihood function for betar
        ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
        list(ls=0,## saturated log likelihood
             lsth1=0,  ## first deriv vector w.r.t theta - last element relates to scale
+	    LSTH1 = matrix(0,length(y),1),
             lsth2=0) ##Hessian w.r.t. theta
      }
 
@@ -1710,7 +1711,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     }
     
     ls <- function(y,w,theta,scale) {
-       ## the log saturated likelihood function.
+       ## the log saturated likelihood function for scat
        ## (Note these are correct but do not correspond to NP notes)
        if (length(w)==1) w <- rep(w,length(y))
        #vec <- !is.null(attr(theta,"vec.grad"))
@@ -1722,8 +1723,8 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
        ## first derivative wrt theta...
        lsth2 <- matrix(0,2,2)  ## rep(0, 3)
        term <- nu2 * digamma(nu12)/2- nu2 * digamma(nu/2)/2 - 0.5*nu2nu
-       #lsth <- if (vec) cbind(w*term,-1*w) else c(sum(w*term),sum(-w))
-       lsth <- c(sum(w*term),sum(-w))
+       LSTH <- cbind(w*term,-1*w)
+       lsth <- colSums(LSTH)
        ## second deriv...      
        term <-  nu2^2 * trigamma(nu12)/4 + nu2 * digamma(nu12)/2 -
            nu2^2 * trigamma(nu/2)/4 - nu2 * digamma(nu/2)/2 + 0.5*(nu2nu)^2 - 0.5*nu2nu
@@ -1731,6 +1732,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
        lsth2[1,2] <- lsth2[2,1] <- lsth2[2,2] <- 0
        list(ls=ls,## saturated log likelihood
             lsth1=lsth, ## first derivative vector wrt theta
+	    LSTH1=LSTH,
             lsth2=lsth2) ## Hessian wrt theta
     }
 
@@ -1967,12 +1969,13 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
   }
 
   ls <- function(y,w,theta,scale) {
-       ## the log saturated likelihood function.
+       ## the log saturated likelihood function for ziP
        ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik
        #vec <- !is.null(attr(theta,"vec.grad"))
        #lsth1 <- if (vec) matrix(0,length(y),2) else c(0,0)
        list(ls=0,## saturated log likelihood
             lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
+            LSTH1=matrix(0,length(y),2),
             lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
   }
 

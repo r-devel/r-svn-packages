@@ -38,6 +38,10 @@ present, and reparameterization needs checking (also for bam).
   main effect smooths and difference smooths for levels of a factor.
   See ?factor.smooth.
 
+** 'NCV' smoothing parameter method added, but still experimental. 
+
+* replacment of some old (K&R) style C function declarations.
+
 * mono.con corrected for cases with upper bounds. Thanks to Sean Wu.
 
 * plot.gam(...,seWithMean=TRUE) modified to only include mean uncertainty 

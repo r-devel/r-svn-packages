@@ -637,15 +637,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    Kmat <- matrix(0,nrow(x),ncol(x)) 
    Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
-   NCV <- NCV1 <- REML <- REML1 <- REML2 <- NULL
+   Vg <- NCV <- NCV1 <- REML <- REML1 <- REML2 <- NULL
    if (scoreType=="NCV") {
-     ## NOTE: slightly more efficient to compute H here and pass to C_ncv along with explicit inverse for preconditioning.
-     ##       Should explicit inversion fail, fall back on tcrossprod(rV).
-     #Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
-     #Hi <- chol2inv(chol(crossprod(x,w*x)+St))
-     #if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-     #if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-     #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
      eta.cv <- rep(0.0,length(nei$i))
      deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
      w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2 ## !?
@@ -667,51 +660,80 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      mu.cv <- linkinv(eta.cv)
      nt <- family$n.theta
      if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):ncol(db.drho) else 1:ncol(db.drho)
-     dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
+     #dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
+     dev0 <- dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta)
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV
-       qdev <- dev0 + gamma*sum(dd$Deta[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2)
-       NCV <- qdev/(2*scale) - ls0$ls
+       #qdev <- dev0 + gamma*sum(dd$Deta[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2)
+       qdev <- dev0 + gamma*dd$Deta[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2
+       NCV <- sum(qdev)/(2*scale) - ls0$ls
        if (deriv) {
          deta <- x %*% db.drho
-         NCV1 <- (colSums(dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv)) +
-	 gamma*colSums(dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i])) +
-	 0.5*gamma*colSums(as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
+         #NCV1 <- (colSums(dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv)) +
+	 #gamma*colSums(dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i])) +
+	 #0.5*gamma*colSums(as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
+	 ncv1 <- (dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv) +
+	          gamma*dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i]) +
+	          0.5*gamma*as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2)/(2*scale)
 	 if (nt>0) { ## deal with direct dependence on the theta parameters
-           NCV1[1:nt] <- NCV1[1:nt]- ls0$lsth1[1:nt] +
-	      if (nt==1) (sum(dd$Dth[nei$i]) + gamma*sum(dd$Detath[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2))/(2*scale)
-	      else (colSums(dd$Dth[nei$i,]) + gamma*colSums(dd$Detath[nei$i,]*(eta.cv-eta[nei$i])) + 0.5*gamma*colSums(dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2))/(2*scale)
+           #NCV1[1:nt] <- NCV1[1:nt]- ls0$lsth1[1:nt] +
+	   #   if (nt==1) (sum(dd$Dth[nei$i]) + gamma*sum(dd$Detath[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2))/(2*scale)
+	   #   else (colSums(dd$Dth[nei$i,]) + gamma*colSums(dd$Detath[nei$i,]*(eta.cv-eta[nei$i])) + 0.5*gamma*colSums(dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2))/(2*scale)
+           ncv1[,1:nt] <- ncv1[,1:nt]- ls0$LSTH1[,1:nt] +
+	      if (nt==1) (dd$Dth[nei$i] + gamma*dd$Detath[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2)/(2*scale)
+	      else (dd$Dth[nei$i,] + gamma*dd$Detath[nei$i,]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2)/(2*scale)
          }
 	 if (!scale.known) {
-           NCV1 <- c(NCV1,-qdev/(2*scale) - ls0$lsth1[1+nt])
+           #NCV1 <- c(NCV1,-qdev/(2*scale) - ls0$lsth1[1+nt])
+	   ncv1 <- cbind(ncv1,-qdev/(2*scale) - ls0$LSTH1[,1+nt])
          }
        }
      } else { ## exact NCV
-       dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
-       NCV <- dev.cv/(2*scale) - ls0$ls
-       DEV <- dev0/(2*scale) - ls0$ls 
+       #dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
+       dev.cv <- dev.resids(y, mu.cv, weights,theta)
+       NCV <- sum(dev.cv)/(2*scale) - ls0$ls
+       DEV <- sum(dev0)/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
        if (deriv) {
          dd.cv <- dDeta(y[nei$i],mu.cv,weights[nei$i],theta,family,1) 
-         NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
-         if (gamma!=1) DEV1 <- colSums((dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE])/(2*scale)
+         #NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
+	 ncv1 <- dd.cv$Deta*deta.cv/(2*scale)
+         #if (gamma!=1) DEV1 <- colSums((dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE])/(2*scale)
+	 if (gamma!=1) dev1 <- (dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE]/(2*scale)
          if (nt>0) {
-           NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls0$lsth1[1:nt]
-	   if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE]) - ls0$lsth1[1:nt]
+           #NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls0$lsth1[1:nt]
+	   #if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE]) - ls0$lsth1[1:nt]
+	   ncv1[,1:nt] <- ncv1[,1:nt] + as.matrix(dd.cv$Dth/(2*scale)) - ls0$LSTH1[,1:nt]
+	   if (gamma!=1) dev1[,1:nt] <- dev1[,1:nt] + as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE] - ls0$LSTH1[,1:nt]
          }
          if (!scale.known) { ## deal with log scale parameter derivative
-           NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls0$lsth1[1+nt])
-	   if (gamma!=1) DEV1 <- c(DEV1,-dev0/(2*scale) - ls0$lsth1[1+nt])
+           #NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls0$lsth1[1+nt])
+	   #if (gamma!=1) DEV1 <- c(DEV1,-dev0/(2*scale) - ls0$lsth1[1+nt])
+	   ncv1 <- cbind(ncv1,-dev.cv/(2*scale) - ls0$LSTH1[,1+nt])
+	   if (gamma!=1) dev1 <- cbind(dev1,-dev0/(2*scale) - ls0$lSTH1[,1+nt])
          }
-         if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
+         #if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
+	 if (gamma!=1) ncv1 <- gamma*ncv1 - (gamma-1)*dev1
        }
      } ## exact NCV
+     
+     if (nei$jackknife>2) { 
+       nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
+       jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
+       dth <-jkw*t(dth)%*%t(T)
+       Vj <- crossprod(dd) ## jackknife cov matrix for coefs (beta)
+       attr(Vj,"dd") <- dd
+       attr(NCV,"Vj") <- Vj
+     }  
+
      attr(NCV,"eta.cv") <- eta.cv
      if (deriv) {
        attr(NCV,"deta.cv") <- deta.cv;
+       NCV1 <- colSums(ncv1)
        NCV1 <- NCV1[keep] ## drop derivatives for any fixed theta parameters
+       Vg <- crossprod(ncv1[,keep,drop=FALSE]) ## empirical cov matrix of grad
      }  
-   } else {
+   } else { ## RE/ML
     
      D2 <- matrix(oo$D2,ntot,ntot); ldet2 <- matrix(oo$ldet2,ntot,ntot)
      bSb2 <- matrix(oo$P2,ntot,ntot)
@@ -795,7 +817,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         scale.est=scale,reml.scale=scale,
         aic=aic.model,
         rank=oo$rank.est,
-        K=Kmat,control=control,
+        K=Kmat,control=control,Vg=Vg,
         dVkk = matrix(oo$dVkk,nSp,nSp),ldetS1 = if (grderiv) rp$det1 else 0
         #,D1=oo$D1,D2=D2,
         #ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
@@ -1014,6 +1036,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     } ## derivative checking end
     #grad <- ll$lb - St%*%coef 
     #Hp <- -ll$lbb+St
+    kappaH <- kappa(Hp)
     D <- diag(Hp)
     if (sum(!is.finite(D))>0) stop("non finite values in Hessian")
 
@@ -1193,10 +1216,17 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
 	coef <- start         ## converged, otherwise sp changes can lead to no sp objective change!
       } else {
         converged  <- FALSE
-	## NOTE: the threshold can be unrealistic if gradient can't be computed to this accuracy, e.g.
-	## because of very large smoothing parameters - could estimate grad accuracy from machine zero
-	## perturbation of grad calc, but perhaps too fussy. 
-        warn[[length(warn)+1]] <- paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
+	## NOTE: the threshold can be unrealistic if gradient or step can't be computed to this accuracy, e.g.
+	## because of very large smoothing parameters - could estimate grad/step accuracy from machine zero
+	## perturbation of grad/step calc, but perhaps too fussy.
+	coefp <- coef*(1+rnorm(length(coef))*.Machine$double.eps^.9)
+	llp <- llf(y,x,coef,weights,family,offset=offset,deriv=1)
+	gradp <- llp$lb - St%*%coefp
+	err <- min(1e-3,kappaH*max(1,mean(abs(gradp-grad))/mean(abs(coefp-coef)))*.Machine$double.eps)
+	## err is an estimate of the acheivable relative error, capped above at 1e-3 to ensure
+	## this level of stability loss gets reported!
+        if (max(abs(grad/drop(ll0)))>err) warn[[length(warn)+1]] <-
+	  paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
       }
       break ## no need to recompute L and D, so break now
     }
@@ -1282,11 +1312,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     if (deriv>0) {
       for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
     }
-    #overlap <- attr(attr(x,"lpi"),"overlap") ## is there overlap in dependence of lp's on beta?
-    ## NOTE: this needs updating. chol of raw Hp is a bad idea, and really all the
-    ##       computations should be done with diagonal pre-conditioning. This is easy,
-    ##       but should test code without this first!
-    #if (!overlap)
+  
     R1 <- try(chol(t(Hp/D)/D),silent=TRUE)
     ll$gamma <- gamma;
     ## note: use of quadratic approx to NCV signalled by family$qapprox
