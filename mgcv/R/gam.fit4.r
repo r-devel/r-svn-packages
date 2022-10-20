@@ -1016,7 +1016,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
   iconv <- max(abs(grad))<control$epsilon*abs(ll0)
   Hp <- -ll$lbb+St
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
-  rank <- q;drop <- NULL
+  rank <- q
   eigen.fix <- FALSE
   converged <- FALSE
   check.deriv <- FALSE; eps <- 1e-5 
@@ -1158,8 +1158,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
           if (perturbed==5) stop("indefinite penalized likelihood in gam.fit5 ")
           if (iter<4||rank.checked) {
             perturbed <- perturbed + 1
-            coef <- coef*(1+(runif(length(coef))*.02-.01)*perturbed) + 
-                    (runif(length(coef)) - 0.5 ) * mean(abs(coef))*1e-5*perturbed 
+            coef <- coef*(1+(rep_len(c(0,1),length(coef))*.02-.01)*perturbed) + 
+                    (rep_len(c(0,1),length(coef)) - 0.5 ) * mean(abs(coef))*1e-5*perturbed 
             ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
             ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
           } else {        
@@ -1219,13 +1219,13 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
 	## NOTE: the threshold can be unrealistic if gradient or step can't be computed to this accuracy, e.g.
 	## because of very large smoothing parameters - could estimate grad/step accuracy from machine zero
 	## perturbation of grad/step calc, but perhaps too fussy.
-	coefp <- coef*(1+rnorm(length(coef))*.Machine$double.eps^.9)
+	coefp <- coef*(1+rep_len(c(-1,1),length(coef))*.Machine$double.eps^.9)
 	llp <- llf(y,x,coef,weights,family,offset=offset,deriv=1)
 	gradp <- llp$lb - St%*%coefp
 	err <- min(1e-3,kappaH*max(1,mean(abs(gradp-grad))/mean(abs(coefp-coef)))*.Machine$double.eps)
 	## err is an estimate of the acheivable relative error, capped above at 1e-3 to ensure
 	## this level of stability loss gets reported!
-        if (max(abs(grad/drop(ll0)))>err) warn[[length(warn)+1]] <-
+        if (max(abs(grad/drop(ll0)))>max(err,control$epsilon*2)) warn[[length(warn)+1]] <-
 	  paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
       }
       break ## no need to recompute L and D, so break now

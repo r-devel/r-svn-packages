@@ -1609,7 +1609,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   #object$R <- mv$R ## qr.R(sqrt(W)X)
   object$aic <- object$aic + 2*sum(object$edf)
   object$nsdf <- G$nsdf
-  object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
+  object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <- object$dw.drho <-  
   object$GACV <-  object$GACV1 <-  object$GACV2 <-  object$REML <-  object$REML1 <-  object$REML2 <-  
   object$GCV<-object$GCV1<- object$GCV2 <- object$UBRE <-object$UBRE1 <- object$UBRE2 <- object$trA <-
   object$trA1<- object$trA2 <- object$alpha <- object$alpha1 <- object$scale.est <- NULL
