@@ -2,12 +2,12 @@
 \alias{trind.generator}
 \title{Generates index arrays for upper triangular storage}
 \usage{
-trind.generator(K = 2, ifunc=FALSE, reverse=FALSE)
+trind.generator(K = 2, ifunc=FALSE, reverse= !ifunc)
 }
 \arguments{
 \item{K}{positive integer determining the size of the array.}
 \item{ifunc}{if \code{TRUE} index functions are returned in place of index arrays.}
-\item{reverse}{should the reverse indices be computed?}
+\item{reverse}{should the reverse indices be computed? Probably not if \code{ifunc==TRUE}.}
 }
 \value{
 A list where the entries \code{i1} to \code{i4} are arrays in up to four dimensions, 

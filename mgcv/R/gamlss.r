@@ -17,7 +17,7 @@
 ## given l >= k >= j >= i structure then the block for index
 ## i,j,k,l starts at i4[i,j,k,l]*n+1, given symmetry over the indices. 
 
-trind.generator <- function(K=2,ifunc=FALSE,reverse=FALSE) {
+trind.generator <- function(K=2,ifunc=FALSE,reverse=!ifunc) {
 ## Generates index arrays for 'upper triangular' storage up to order 4
 ## Suppose you fill an array using code like...
 ## m = 1
