@@ -98,6 +98,7 @@ convertXPathObjectToR(xmlXPathObjectPtr obj, SEXP fun, int encoding, SEXP manage
     case XPATH_STRING:
         ans = mkString(XMLCHAR_TO_CHAR(obj->stringval)); //XXX encoding 
 	break;
+    // Next three not currently in xmlXPathObjectType
     case XPATH_POINT:
     case XPATH_RANGE:
     case XPATH_LOCATIONSET:

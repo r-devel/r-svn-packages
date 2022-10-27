@@ -1023,7 +1023,7 @@ RS_XML(notifyNamespaceDefinition)(USER_OBJECT_ arg, R_XMLSettings *parserSetting
 #endif
 
 USER_OBJECT_
-RS_XML(libxmlVersion)()
+RS_XML(libxmlVersion)(void)
 {
  USER_OBJECT_ ans;
  unsigned int val;
