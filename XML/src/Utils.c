@@ -146,7 +146,7 @@ void xmlParserError(void *ctx, const char *msg, ...)
  
 */
 void
-RSXML_setErrorHandlers()
+RSXML_setErrorHandlers(void)
 {
     // Next 2 are deprecated and will be made private
    xmlDefaultSAXHandlerInit();
