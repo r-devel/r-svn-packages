@@ -99,10 +99,12 @@ convertXPathObjectToR(xmlXPathObjectPtr obj, SEXP fun, int encoding, SEXP manage
         ans = mkString(XMLCHAR_TO_CHAR(obj->stringval)); //XXX encoding 
 	break;
     // Next three not currently in xmlXPathObjectType
+#ifdef LIBXML_XPTR_LOCS_ENABLED
     case XPATH_POINT:
     case XPATH_RANGE:
     case XPATH_LOCATIONSET:
-    case XPATH_USERS:
+#endif
+  case XPATH_USERS:
 	Rf_warning("currently unsupported xmlXPathObject type %d in convertXPathObjectToR. Please send mail to maintainer.", obj->type);
     default:
 	ans = R_NilValue;
