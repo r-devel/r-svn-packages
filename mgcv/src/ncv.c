@@ -816,17 +816,29 @@ static inline int i3f(int i,int j,int k,int K) {
 
 SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
 	   SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV) {
-/* This computes the NCV for GAMLSS families. X[,jj[[i]]] is the model matrix for the ith linear predictor.
+/* This computes the NCV for GAMLSS families, using a Conjugate Gradient iteration. 
+   Only intended as a fall back: Rncvls is better.
+
+   Inputs:
+   X[,jj[[i]]] is the model matrix for the ith linear predictor.
    H is the penalized Hessian, and Hi its inverse (or an approximation to it since its used as a pre-conditioner).
-   dH[[i]] is the derivarive of H w.r.t. log(sp[i]); k[m[i-1]:(m[i])] index the neighbours of the ind[i]th point 
-   (including ind[i],usually), m[-1]=0 by convention. beta - model coefficients. 
+   dH[[i]] is the derivarive of H w.r.t. log(sp[i]);   
    lj contains jth derivatives of the likelihood w.r.t. the lp for each datum.
+   k[m[i-1]:(m[i])] indexes the neighbours dropped for the ith neighbourhood.
+   ind[mi[i-1]:m[i]] indexes the points predicted for the ith neighbourhood.
+   m[-1]=mi[-1]=0 by convention. 
+   beta - model coefficients. 
    deta and dbeta are matrices with derivaives of the lp's and coefs in their cols. deta has the lps stacked in each 
    column. 
+   deriv=0 for no derivs, 1 to compute derivs.   
+   
+   Outputs:
    The perturbed etas will be returned in etacv: if nm is the length of ind,then eta[q*nm+i] is the ith element of 
    qth perturbed linear predictor.
-   The derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
-   deriv of qth lp w.r.t. lth log sp. 
+   If deriv>0 then the the derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
+   deriv of qth lp w.r.t. lth log sp. If deriv<0 the detacv contains the perturbtations of the coefs for each neighbourhood in its rows.
+ 
+ 
    BUG? Offset handling!!
 */
   double *X,*H,*Hi,*l1,*l2,*l3=NULL,*beta,*g,*Hp,xx,z,*d,*d1,*cgwork,*eta,*deta,v,*db=NULL,*dbp,*detacv,*dh;
@@ -845,7 +857,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
   eta = REAL(ETACV);H=REAL(h);Hi = REAL(hi);
   beta = REAL(BETA);
 
-  if (deriv) {
+  if (deriv>0) {
     l3=REAL(L3);deta=REAL(DETA);detacv=REAL(DETACV);db = REAL(DB);
   }  
   /* unpack the jj indices to here in order to avoid repeated list lookups withn loop */
@@ -903,7 +915,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
       }
       eta[ln+io] = xx;	
     }
-    if (deriv) { /* get the derivatives of the linear predictors */
+    if (deriv>0) { /* get the derivatives of the linear predictors */
       for (l=0;l<nsp;l++) {
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
@@ -947,7 +959,9 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
           detacv[io + q*no +l*(no*nlp)] = xx;  
         }	  
       } /* l loop - smoothing parameters */	
-    } /* if deriv */  
+    } else if (deriv<0) { /* the output beta perturbations to rows of detacv */
+      for (j=0;j<p;j++) detacv[i+nm*j] = d[j];
+    }  
   } /* main obs loop */
   for (l=0;l<nlp;l++) {
     /* iff coerceVector did not have to create a new vector then subtracting 1 from index will have changed original object in R, so need to 
@@ -1387,18 +1401,29 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
    l.p.s can share coefs in this version
 
    OMP parallelization
-
+   
+   Inputs:
    X[,jj[[i]]] is the model matrix for the ith linear predictor.
-   H is the penalized Hessian, and Hi its inverse (or an approximation to it since its used as a pre-conditioner).
-   dH[[i]] is the derivarive of H w.r.t. log(sp[i]); k[m[i-1]:(m[i])] index the neighbours of the ind[i]th point 
-   (including ind[i],usually), m[-1]=0 by convention. beta - model coefficients. 
+   R1 is the Cholesky factor of the penalized Hessian.
+   dH[[i]] is the derivarive of H w.r.t. log(sp[i]); 
    lj contains jth derivatives of the likelihood w.r.t. the lp for each datum.
+   w.r.t. the linear predictors. 
+   k[m[i-1]:m[i]] index the neighbours omitted for the ith neighbourhood.
+   ind[mi[i-1]:mi[i]] index the points to predict when the ith neighbourhood is omitted. 
+   mi[-1] = m[-1]=0 by convention.
+   beta - model coefficients. 
    deta and dbeta are matrices with derivatives of the lp's and coefs in their cols. deta has the lps stacked in each 
    column. 
+   deriv = 0 for no derivative computations, 1 to compute derivatives (first order).
+   eps is the machine precision.
+   nt is the number of threads to use. 
+
+   Outputs:
    The perturbed etas will be returned in etacv: if nm is the length of ind,then eta[q*nm+i] is the ith element of 
    qth perturbed linear predictor.
-   The derivatives of the perturbed linear predictors are in deta: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
-   deriv of qth lp w.r.t. lth log sp. 
+   If deriv>0 then the derivatives of the perturbed linear predictors are in detacv: detacv[q*nm+i + l*(np*nlp)]] is the ith element of 
+   deriv of qth lp w.r.t. lth log sp.
+   If deriv<0 then detacv is used to return the perturbed coefficint vectors for each neighbourhood/fold (in its rows)
 */
   double *X,*R,*l1,*l2,*l3,*beta,*g,*R0,xx,z,*d,*d1,*eta,*deta,v,*db,*dbp,*detacv,*dh,*b,alpha,alpha0,eps,*Rb,*ddbuf,*p0,*p3,*work;
   int **jj,*jjl,*jjq,*ind,*m,*k,n,p,nm,nlp,*plp,ii,i,j,i0,i1,l,ln,ki,p2,q,r,l2i,one=1,kk,nsp,*error,deriv,nddbuf,
@@ -1417,7 +1442,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
   nm = length(M);nlp = length(JJ);nsp = length(dH);no=length(IND);
   eta = REAL(ETACV);beta = REAL(BETA);R=REAL(R1);
 
-  if (deriv) {
+  if (deriv>0) {
     l3=REAL(L3);deta=REAL(DETA);detacv=REAL(DETACV);db = REAL(DB);
   } else l3=deta=detacv=db=NULL;
   /* unpack the jj indices to here in order to avoid repeated list lookups withn loop */
@@ -1556,7 +1581,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
       }
       eta[ln+io] = xx;	
     }
-    if (deriv) { /* get the derivatives of the linear predictors */
+    if (deriv>0) { /* get the derivatives of the linear predictors */
       for (l=0;l<nsp;l++) {
 	ln = l*nlp;
 	DH = VECTOR_ELT(dH, l);dh = REAL(DH);
@@ -1603,6 +1628,8 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
           detacv[io + q*no +l*(no*nlp)] = xx;  
         }	  
       } /* l loop - smoothing parameters */	
+    } else if (deriv<0) { /* write the perturbations of the coefs out to deta.cv (nm by p) */
+      for (p0=d+tid*p,j=0;j<p;j++) detacv[i+nm*j] = p0[j]; 
     }  
   } /* main obs loop */
   for (l=0;l<nlp;l++) {

@@ -1299,15 +1299,17 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     } ## if (deriv > 1)
   } ## if (deriv > 0)
 
+  Vg <- NULL ## jackknife grad matrix in NCV case
+
   if (scoreType=="NCV") {
     REML <- REML1 <- REML2 <- NULL
     if (deriv==0) ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1,d1b=d1b,ncv=TRUE) ## otherwise l1, l2 not returned
     ncv <- family$ncv ## helps debugging!
-    deriv1 <- if (deriv==0) 0 else 1
-    ## create nei if null
-    if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-    if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-    if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    deriv1 <- if (deriv==0) 0 else  if (nei$jackknife>2) -1 else 1
+    ## create nei if null - now in estimate.gam
+    #if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+    #if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+    #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
     ## complete dH
     if (deriv>0) {
       for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
@@ -1330,6 +1332,16 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     }
     NCV <- ret$NCV
     NCV1 <- ret$NCV1
+    Vg <- ret$Vg
+    if (deriv1<0) { ## Jackknife cov matrix...
+      nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
+      jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
+      dd <- jkw*attr(ret$NCV,"deta.cv")
+      #dd <-jkw*t(dd)%*%t(T)
+      dd <- Sl.repa(rp$rp,t(dd),l=-1) ## undo repara
+      Vj <- tcrossprod(dd) ## jackknife cov matrix
+      attr(NCV,"Vj") <- Vj
+    }
   } else { ## REML required
     NCV <- NCV1 <- NULL
     ## Compute the derivatives of log|H+S|... 
@@ -1437,7 +1449,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
        St=St, ## total penalty matrix
-       rp = rp$rp,
+       rp = rp$rp,Vg=Vg, 
        db.drho = db.drho, ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S1=rp$ldet1,
