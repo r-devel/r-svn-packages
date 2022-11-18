@@ -27,8 +27,9 @@ USA. */
 //#include <Rmath.h>
 //#include <Rinternals.h>
 //#include <Rconfig.h>
-#include <R.h>
 #include "mgcv.h"
+#include <R.h>
+
 
 
 void minres0(double *R, double *u,double *b, double *x, int *p,int *m) {
