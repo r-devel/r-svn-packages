@@ -16,7 +16,8 @@ importFrom("stats", # many S3 generics for which we define methods
            resid, residuals, rnorm, runif, setNames, sigma, simulate, terms,
            update, update.formula, var, vcov)
 
-importFrom("utils", head, tail, capture.output, packageDescription, warnErrList)
+importFrom("utils", head, tail, capture.output, packageDescription, str
+        , warnErrList)
 
 importFrom("lattice",
            Rows, bwplot, dotplot, llines, lpoints, lsegments, ltext,

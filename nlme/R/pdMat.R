@@ -437,7 +437,7 @@ print.pdMat <-
 
 str.pdMat <- function(object, ...) {
   if (isInitialized(object)) {
-      cat(sQuote(class(object)[1], q=FALSE), "with pdMatrix()")
+      cat(sQuote(class(object)[1], q=FALSE), "with matrix")
       str(pdMatrix(object), ...)
   } else {
       cat('Uninitialized ',
