@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013-2019) distributed under GPL2
+## (c) Simon N. Wood (2013-2022) distributed under GPL2
 ## Code for the gamlss families.
 ## idea is that there are standard functions converting
 ## derivatives w.r.t. mu to derivatives w.r.t. eta, given 
@@ -353,7 +353,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
 ## fh is a factorization of the penalized hessian, while D contains the corresponding
 ##    Diagonal pre-conditioning weights.
 ## deriv: 0 - just grad and Hess
-##        1 - tr(Hp^{-1} dH/drho_j) vector (was diagonal of first deriv of Hess - unused)
+##        1 - tr(Hp^{-1} dH/drho_j) vector - Hp^{-1} must be supplied in fh
 ##        2 - first deriv of Hess
 ##        3 - everything.
   K <- length(jj)
