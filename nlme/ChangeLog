@@ -1,6 +1,12 @@
+2023-01-23  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/groupedData.R (nfGroupedData, nmGroupedData):
+	fix deprecation logic to give a warning when not called
+	internally.
+
 2022-11-17  Martin Maechler <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 3.1-161 {not yet released}
+	* DESCRIPTION (Version): 3.1-161 (released)
 
 	* R/pdMat.R (str.pdMat): new method, fixing error for
 	   un-initialized, and misleading e.g., in `pdDiag` case.

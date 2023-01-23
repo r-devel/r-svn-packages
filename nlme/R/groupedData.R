@@ -1,6 +1,6 @@
 ###           groupedData - data frame with a grouping structure
 ###
-### Copyright 2006-2021  The R Core team
+### Copyright 2006-2023  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -50,14 +50,12 @@ nfGroupedData <-
            inner = NULL, labels = NULL, units = NULL)
 {
   ## want to stop exporting undocumented(!) nmGroupedData()
-  if(!local({ N <- -1L
-      while(identical(sys.call(N)[[1]], quote(eval))) N <- N-1L
-      identical(.sf <- sys.function(N), groupedData) ||
-          identical(environment(.sf), .ns) ||
-          identical(environment(sys.function(N-1L)), .ns) ||
-          identical(environment(sys.function(N-2L)), .ns)
-  }))
-    .Deprecated("groupedData", "nlme")
+  ## called internally from groupedData() via eval or from collapse.groupedData()
+  .internal <- any(unlist(lapply(tail(sys.frames()[-sys.nframe()],
+                                      3), # no need to look further up
+                                 utils::packageName)) == "nlme")
+  if(!.internal)
+    .Deprecated("groupedData")
   if (!(inherits(formula, "formula") && length(formula) == 3)) {
     stop("first argument to 'nfGroupedData' must be a two-sided formula")
   }
@@ -134,14 +132,12 @@ nmGroupedData <-
            inner = NULL, labels = NULL, units = NULL)
 {
   ## want to stop exporting undocumented(!) nmGroupedData()
-  if(!local({ N <- -1L
-      while(identical(sys.call(N)[[1]], quote(eval))) N <- N-1L
-      identical(.sf <- sys.function(N), groupedData) ||
-          identical(environment(.sf), .ns) ||
-          identical(environment(sys.function(N-1L)), .ns) ||
-          identical(environment(sys.function(N-2L)), .ns)
-  }))
-    .Deprecated("groupedData", "nlme")
+  ## called internally from groupedData() via eval
+  .internal <- any(unlist(lapply(tail(sys.frames()[-sys.nframe()],
+                                      3), # no need to look further up
+                                 utils::packageName)) == "nlme")
+  if(!.internal)
+    .Deprecated("groupedData")
   if (!(inherits(formula, "formula") && length(formula) == 3))
     stop("first argument to 'nmGroupedData' must be a two-sided formula")
   grpForm <- getGroupsFormula(formula, asList = TRUE)
