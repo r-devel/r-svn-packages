@@ -639,7 +639,7 @@ balancedGrouped <-
   form <- as.formula( form )
   data <- t( as.matrix( data ) )
   dn <- dimnames( data )
-  if ( all( !is.na( as.numeric( dn[[1]] ) ) ) ) {
+  if ( !anyNA( suppressWarnings( as.numeric( dn[[1]] ) ) ) ) {
     dn[[1]] <- as.numeric( dn[[1]] )
   }
   names(dn) <- c( as.character(getCovariateFormula(form)[[2]]),

@@ -4,6 +4,9 @@
 	fix deprecation logic to give a warning when not called
 	internally.
 
+	* R/groupedData.R (balancedGrouped): suppress spurious warning
+	from testing for numeric row names.
+
 2022-11-17  Martin Maechler <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-161 (released)
