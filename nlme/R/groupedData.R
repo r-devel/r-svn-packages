@@ -55,7 +55,7 @@ nfGroupedData <-
                                       3), # no need to look further up
                                  utils::packageName)) == "nlme")
   if(!.internal)
-    .Deprecated("groupedData")
+    .Deprecated("groupedData", "nlme")
   if (!(inherits(formula, "formula") && length(formula) == 3)) {
     stop("first argument to 'nfGroupedData' must be a two-sided formula")
   }
@@ -137,7 +137,7 @@ nmGroupedData <-
                                       3), # no need to look further up
                                  utils::packageName)) == "nlme")
   if(!.internal)
-    .Deprecated("groupedData")
+    .Deprecated("groupedData", "nlme")
   if (!(inherits(formula, "formula") && length(formula) == 3))
     stop("first argument to 'nmGroupedData' must be a two-sided formula")
   grpForm <- getGroupsFormula(formula, asList = TRUE)
