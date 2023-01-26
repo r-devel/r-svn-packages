@@ -49,7 +49,7 @@ nfGroupedData <-
 	   FUN = function(x) max(x, na.rm = TRUE), outer = NULL,
            inner = NULL, labels = NULL, units = NULL)
 {
-  ## want to stop exporting undocumented(!) nmGroupedData()
+  ## want to stop exporting nfGroupedData()
   ## called internally from groupedData() via eval or from collapse.groupedData()
   .internal <- any(unlist(lapply(tail(sys.frames()[-sys.nframe()],
                                       3), # no need to look further up
@@ -131,7 +131,7 @@ nmGroupedData <-
 	   FUN = function(x) max(x, na.rm = TRUE), outer = NULL,
            inner = NULL, labels = NULL, units = NULL)
 {
-  ## want to stop exporting undocumented(!) nmGroupedData()
+  ## want to stop exporting nmGroupedData()
   ## called internally from groupedData() via eval
   .internal <- any(unlist(lapply(tail(sys.frames()[-sys.nframe()],
                                       3), # no need to look further up
