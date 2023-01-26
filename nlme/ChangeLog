@@ -1,3 +1,8 @@
+2023-01-26  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* src/matrix.h: fix return value in C declaration of Fortran
+	subroutine 'RS'.  (PR#18438 by Lionel Henry.)
+
 2023-01-23  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/groupedData.R (nfGroupedData, nmGroupedData):
