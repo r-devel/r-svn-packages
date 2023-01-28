@@ -9,6 +9,7 @@
 %% said to be deprecated in 2018-08, with warning since 2023-01
 \alias{nfGroupedData}
 \alias{nmGroupedData}
+\alias{corIdent}
 
 \usage{
 ## internal functions wrapped by groupedData()
@@ -16,6 +17,8 @@ nfGroupedData(formula, data, order.groups, FUN, outer, inner,
               labels, units)
 nmGroupedData(formula, data, order.groups, FUN, outer, inner,
               labels, units)
+## trivial "identity" correlation:
+corIdent(form = NULL)
 }
 
 \description{
@@ -23,4 +26,9 @@ nmGroupedData(formula, data, order.groups, FUN, outer, inner,
   \pkg{nlme} only, and may be defunct as soon as the next release.
 }
 
+\examples{
+tools::assertWarning(verbose=TRUE, csId <-  corIdent(~ 1 | Subject))
+tools::assertWarning(verbose=TRUE, csI. <- Initialize(csId, data = Orthodont))
+tools::assertCondition( corMatrix(csI.),  "error", "warning")# quietly, catching warning
+}
 \keyword{internal}
