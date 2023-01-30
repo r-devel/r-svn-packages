@@ -9,6 +9,7 @@
 %% said to be deprecated in 2018-08, with warning since 2023-01
 \alias{nfGroupedData}
 \alias{nmGroupedData}
+%% deprecated 2023-01:
 \alias{corIdent}
 
 \usage{
@@ -17,7 +18,8 @@ nfGroupedData(formula, data, order.groups, FUN, outer, inner,
               labels, units)
 nmGroupedData(formula, data, order.groups, FUN, outer, inner,
               labels, units)
-## trivial "identity" correlation:
+
+## trivial "identity" correlation, never usefully implemented:
 corIdent(form = NULL)
 }
 
