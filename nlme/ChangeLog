@@ -400,7 +400,7 @@
 
 	* R/groupedData.R: deprecate the *undocumented* functions
 	nmGroupedData() and nfGroupedData() in favor of their wrapper
-	groupedData() (to allow subsequent code simplification.
+	groupedData() (to allow subsequent code simplification).
 
 2018-08-03  Martin Maechler  <maechler@stat.math.ethz.ch>
 

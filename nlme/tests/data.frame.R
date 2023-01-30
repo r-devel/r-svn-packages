@@ -17,11 +17,6 @@ stopifnot(inherits(gd, "groupedData"),
 	  identical(sort.list(levels(gs)),
 		    c(5L, 9L, 8L, 4L, 10L, 2L, 1L, 6L, 7L, 3L)))
 
-## undocumented n[fm]GroupedData should give a (deprecation) warning
-tools::assertWarning(
-nlme::nfGroupedData(resp ~ 1|subs)
-, if (getRversion() >= "3.6.0") "deprecatedWarning" else "warning")
-
 ## PR#18177 -- <groupedData>[j] should give a data frame
 require(nlme)
 stopifnot(is.data.frame(Meat[2]) # had 'drop=TRUE'

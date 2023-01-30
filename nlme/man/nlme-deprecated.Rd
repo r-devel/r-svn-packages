@@ -6,7 +6,7 @@
 \alias{nlme-deprecated}
 \title{Deprecated Functions in Package \pkg{nlme}}
 
-%% said to be deprecated in 2018-08, with warning since 2023-01
+%% deprecation announced in 2018-08, with warning since 2023-01
 \alias{nfGroupedData}
 \alias{nmGroupedData}
 %% deprecated 2023-01:
@@ -29,8 +29,16 @@ corIdent(form = NULL)
 }
 
 \examples{
-tools::assertWarning(verbose=TRUE, csId <-  corIdent(~ 1 | Subject))
-tools::assertWarning(verbose=TRUE, csI. <- Initialize(csId, data = Orthodont))
-tools::assertCondition( corMatrix(csI.),  "error", "warning")# quietly, catching warning
+assertDeprecation <- function(expr)
+  tools::assertCondition(expr, verbose = TRUE,
+    if(getRversion() >= "3.6.0") "deprecatedWarning" else "warning")
+
+assertDeprecation(
+  nlme::nfGroupedData(height ~ age | Subject, as.data.frame(Oxboys))
+)
+assertDeprecation( csId <-  corIdent(~ 1 | Subject) )
+assertDeprecation( csI. <- Initialize(csId, data = Orthodont) )
+assertDeprecation( corMatrix(csI.) )  # actually errors
 }
+
 \keyword{internal}
