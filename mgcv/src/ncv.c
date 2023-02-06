@@ -1,4 +1,4 @@
-/* Copyright (C) 2022 Simon N. Wood  simon.wood@r-project.org
+/* Copyright (C) 2022/3 Simon N. Wood  simon.wood@r-project.org
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -214,6 +214,37 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
 } /* CG */
 
 
+SEXP nei_cov(SEXP v,SEXP d, SEXP M, SEXP K) {
+/* Computes a direct estimate of the parameter covariance matrix V, given neighbourhood structure 
+   encoded in m and k, and parameters under leave one out perturbation in D. 
+*/
+  int *m,*k,n,p,i,j,i0,i1=0,ii,q;
+  double *D,*V,*Ds;
+  M = PROTECT(coerceVector(M,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  m = INTEGER(M); k = INTEGER(K);
+  V = REAL(v);
+  D = REAL(d);
+  n = length(M);
+  p = ncols(d);
+  for (ii=0;ii<p*p;ii++) V[ii]=0.0;
+  Ds = (double *)CALLOC((size_t) p,sizeof(double));
+  for (i=0;i<n;i++) { /* neibourhood loop */
+    i0 = i1;i1 = m[i]; /* k[i0:(i1-1)] are neighbours of i */
+    j=k[i0]; 
+    for (q=0;q<p;q++) Ds[q] = D[j+q*n]; /* first neighbour term to accumulate */  
+    for (ii=i0+1;ii<i1;ii++) { /* remainder */ 
+      j = k[ii];
+      for (q=0;q<p;q++) Ds[q] += D[j+q*n];
+    }
+    /* now add contribution to V */
+    for (ii=0,j=0;j<p;j++) for (q=0;q<p;q++,ii++) V[ii] += D[i+j*n]*Ds[q]; 
+  }
+  FREE(Ds);
+  UNPROTECT(2);
+  return(R_NilValue); 
+} /* nei_cov */  
+
 SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DLET,SEXP DERIV) {
 /* Neighbourhood cross validation function. CG version - not optimal.
    Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
@@ -221,8 +252,8 @@ SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
    Input: X - n by p model matrix. Hi inverse penalized Hessian. H penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
           w2 - -X'diag(w2)X is Hessian of log likelihood to within a scale parameter. db - db[i,j] is dbeta_i/d rho_j where rho_j is a log s.p. or 
           possibly other parameter. dw - dw[i,j] is dw2[i]/drho_j. rS[[i]] %*% t(rS[[i]]) is ith smoothing penalty matrix. 
-          k[m[i-1]:(m[i])] index the points in the ith neighbourhood. m[-1]=0 by convention. 
-          Similarly ind[mi[i-1]:mi[i]] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
+          k[m[i-1]:(m[i]-1)] index the points in the ith neighbourhood. m[-1]=0 by convention. 
+          Similarly ind[mi[i-1]:(mi[i]-1)] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
           beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
           for no derivative calculations, deriv!=0 otherwise. 
          
@@ -385,7 +416,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
    
    OMP parallel version - scaling reasonable, as irreducibly level 2 dominated.
 
-   Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are ommited from fit
+   Return: eta - eta[i] is linear predictor of y[ind[i]] when y[ind[i]] and its neighbours are omitted from fit
            deta - deta[i,j] is derivative of eta[ind[i]] w.r.t. log smoothing parameter j.
    Input: X - n by p model matrix. R chol factor of penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
           w2 - -X'diag(w2)X is Hessian of log likelihood to within a scale parameter. db - db[i,j] is dbeta_i/d rho_j where rho_j is a log s.p. or 
@@ -393,8 +424,9 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
           k[m[i-1]:(m[i])] index the points in the ith neighbourhood. m[-1]=0 by convention. 
           Similarly ind[mi[i-1]:mi[i]] index the points whose linear predictors are to be predicted on dropping of the ith neighbourhood.
           beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
-          for no derivative calculations, deriv>0 to obtain first derivatives. deriv < 0 to compute NCV score without derivatives
-          and return perturbations of beta in columns of DLET.  
+          for no derivative calculations, deriv>0 to obtain first derivatives.
+ 
+          deriv < 0 to compute NCV score without derivatives and return perturbations of beta in columns of DLET.  
          
    Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
                beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) an O(p^2) update of the Cholesky
