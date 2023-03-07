@@ -1559,7 +1559,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     } else b <- NULL
     obj <- gam2objective(lsp,args,printWarn=TRUE,...) # final model fit, with warnings 
     object <- attr(obj,"full.fit")
-    object$gcv.ubre <- as.numeric(obj) 
+    attr(obj,"full.fit") <- NULL
+    object$gcv.ubre <- obj 
     object$outer.info <- b
     object$sp <- exp(lsp)
   } # end of methods calling gam.fit2
