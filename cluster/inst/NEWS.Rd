@@ -6,6 +6,15 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
+\section{Changes in version 2.1.5 (2023-03-08, svn r....)}{
+  \subsection{Misc}{
+    \itemize{
+      \item renamed internal function \code{silhouette.default.R} to \code{silhouetteR}.
+      \item \file{CITATION} switched from old \code{citEntry()} to \code{bibentry()}.
+    }
+  }
+}
+
 \section{Changes in version 2.1.4 (2022-08-19, svn r8119)}{
   \subsection{New Features}{
     \itemize{
