@@ -27,6 +27,12 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized. Also there is no option to use the identical
   discretization to that used in fitting when predicting.
 
+1.8-43
+
+* smooth2random tweak to guarantee same eigenvector sign everytime for same 
+  problem (needed by some developers who don't want to carry the original 
+  transform around).
+
 1.8-42
 
 * One remaining old style C declaration fixed.
