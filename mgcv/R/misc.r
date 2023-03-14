@@ -851,7 +851,7 @@ neicov <- function(Dd,nei) {
   k <- nei$k-1
   .Call(C_nei_cov,V,Dd,nei$m,k)
   (V+t(V))/2
-} ## AddBVB
+} ## neicov
 
 
 ## following are wrappers for KP STZ constraints - intended for testing only

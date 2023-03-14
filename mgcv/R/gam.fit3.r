@@ -675,7 +675,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            if (nei$jackknife>2) { ## need coef changes for each NCV drop fold.
              dd <- matrix(0,ncol(x),length(nei$m))
 	     if (deriv>0) stop("jackknife and derivatives requested together")
-	     deriv1 <- -1
+	     deriv1 <- -1 ## signal that coef changes to be returned
            } else { ## dd unused
              dd <- matrix(1.0,1,1);
 	     deriv1 <- deriv
@@ -718,7 +718,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	       ww1 <- weights[nei$i]*(y[nei$i]-mug)*mevg/var.mug
 	       ww1[!is.finite(ww1)] <- 0
 	       ncv1 <- -2*ww1*deta.cv*gamma - (gamma-1)*dev1
-	       #gjk <- colSums(ww1*x[nei$i,]) ## jackknife deriv of log lik estimate (multiplied by scale)
              } ## if deriv
 	   }
 
@@ -732,9 +731,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
              nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
              jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
 	     dd <-jkw*t(dd)%*%t(T)
-	     Vj <- crossprod(dd) ## jackknife cov matrix
-             attr(Vj,"dd") <- dd
-             attr(NCV,"Vj") <- Vj
+	     #Vj <- crossprod(dd) ## jackknife cov matrix
+             #attr(Vj,"dd") <- dd
+             #attr(NCV,"Vj") <- Vj
+	     attr(NCV,"dd") <- dd
 	   }  
 	   attr(NCV,"eta.cv") <- eta.cv
 	   if (deriv) attr(NCV,"deta.cv") <- deta.cv

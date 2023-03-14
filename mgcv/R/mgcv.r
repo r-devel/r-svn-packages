@@ -1462,6 +1462,15 @@ formula.gam <- function(x, ...)
 { x$formula
 }
 
+BC <- function(y,lambda=1) {
+  y <- if (lambda==0) log(y) else (y^lambda-1)/lambda
+}
+
+corBC <- function(lambda,y,mu) {
+  n <- length(y)
+  qn <- qnorm((1:n-.5)/n)
+  -cor(qn,sort(BC(y,lambda)-BC(mu,lambda)))
+}
 
 
 gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,nei=NULL,...)
@@ -1579,25 +1588,44 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object,gamma)
 
   object[names(mv)] <- mv
-
+  if (!is.null(nei) && all.equal(sort(nei$i),1:nrow(G$X))&&criterion=="NCV") nei$jackknife <- TRUE
   if (!is.null(nei)&&(criterion!="NCV"||nei$jackknife)) { ## returning NCV when other criterion used for sp selection, or computing perturbations
     if (!is.null(nei$QNCV)&&nei$GNCV) family$qapprox <- TRUE
     if (is.null(family$qapprox)) family$qapprox <- FALSE
     lsp <- if (is.null(G$L)) log(object$sp) + G$lsp0 else G$L%*%log(object$sp)+G$lsp0
     if (object$scale.estimated && criterion %in% c("REML","ML","EFS")) lsp <- lsp[-length(lsp)] ## drop log scale estimate
     if (is.null(nei$gamma)) nei$gamma <- 1 ## a major application of this NCV is to select gamma - so it must not itself change with gamma!
-    if (nei$jackknife) nei$jackknife <- 10 ## signal that cross-validated beta perturbations are required
+    if (nei$jackknife) {
+      n <- length(nei$i)
+      nei1 <- list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV
+      nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
+    } else ne1 <- nei
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
                  offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
                  control=control,gamma=nei$gamma, 
 		 scale=scale,printWarn=FALSE,start=start,scoreType="NCV",null.coef=G$null.coef,
-                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei,...)
+                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
     object$NCV <- as.numeric(b$NCV)
-    object$Vj <- attr(b$NCV,"Vj")
-    p <- ncol(object$Ve)
-    ii <- which(rep(1:p,each=p)>=rep(1:p,p)) ## upper triangle index
-    x <- object$Ve[ii]; y <- object$Vj[ii]
-    attr(object$Vj,"scale.factor") <- sum(x*y)/sum(x^2) ## sf minimizes ||Vj - sf*Ve||^2_F (upper triangles only)
+    if (nei$jackknife) { ## need to compute direct cov matrix estimate
+      dd <- attr(b$NCV,"dd")*n/(n-sum(object$edf))
+      rsd0 <- object$y-object$fitted.values ## basic residuals
+      etacv <- attr(b$NCV,"eta.cv"); mucv = family$linkinv(etacv)
+      if (min(object$y) >= 0) { ## Box-Cox transform may improve performance
+        bc <- optimize(corBC,c(-1,2),y=object$y,mu=mucv)$minimum ## find best BC transform
+        rsd <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(mucv,bc)) ## CV transformed residuals
+        rsd1 <- rsd1 - mean(rsd1)
+        rsd1 <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(object$fitted.values,bc)) ## basic fit transformed residuals
+        rsd1 <- rsd1 - mean(rsd1)
+	rsd <- 1.5*rsd - .5*rsd1 ## corrected residuals
+      } else rsd <- 1.5*(object$y - mucv) - .5*rsd0 ## corrected residuals
+      dd <- dd*rsd/rsd0
+      object$Vp <- neicov(dd,nei) + object$Vp - object$Ve
+    }
+    #object$Vj <- attr(b$NCV,"Vj")
+    #p <- ncol(object$Ve)
+    #ii <- which(rep(1:p,each=p)>=rep(1:p,p)) ## upper triangle index
+    #x <- object$Ve[ii]; y <- object$Vj[ii]
+    #attr(object$Vj,"scale.factor") <- sum(x*y)/sum(x^2) ## sf minimizes ||Vj - sf*Ve||^2_F (upper triangles only)
   }
   ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 

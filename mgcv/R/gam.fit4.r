@@ -646,7 +646,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      if (nei$jackknife > 2) { ## return NCV coef changes for each fold 
        if (deriv>0) stop("jackknife and derivatives requested together")
        dth <- matrix(0,ncol(x),length(nei$m))
-       deriv1 <- -1
+       deriv1 <- -1 ## signal to return coef changes
      } else deriv1 <- deriv
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
@@ -721,9 +721,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
        jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
        dth <-jkw*t(dth)%*%t(T)
-       Vj <- crossprod(dd) ## jackknife cov matrix for coefs (beta)
-       attr(Vj,"dd") <- dd
-       attr(NCV,"Vj") <- Vj
+       #Vj <- crossprod(dd) ## jackknife cov matrix for coefs (beta)
+       #attr(Vj,"dd") <- dd
+       #attr(NCV,"Vj") <- Vj
+       attr(NCV,"dd") <- dd
      }  
 
      attr(NCV,"eta.cv") <- eta.cv
@@ -1340,8 +1341,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       dd <- jkw*attr(ret$NCV,"deta.cv")
       #dd <-jkw*t(dd)%*%t(T)
       dd <- Sl.repa(rp$rp,t(dd),l=-1) ## undo repara
-      Vj <- tcrossprod(dd) ## jackknife cov matrix
-      attr(NCV,"Vj") <- Vj
+      #Vj <- tcrossprod(dd) ## jackknife cov matrix
+      #attr(NCV,"Vj") <- Vj
+      attr(NCV,"dd") <- dd
     }
   } else { ## REML required
     NCV <- NCV1 <- NULL
