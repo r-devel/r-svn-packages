@@ -1599,7 +1599,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       n <- length(nei$i)
       nei1 <- list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV
       nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
-    } else ne1 <- nei
+    } else nei1 <- nei
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
                  offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
                  control=control,gamma=nei$gamma, 
@@ -1607,19 +1607,37 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                  pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
     object$NCV <- as.numeric(b$NCV)
     if (nei$jackknife) { ## need to compute direct cov matrix estimate
-      dd <- attr(b$NCV,"dd")*n/(n-sum(object$edf))
-      rsd0 <- object$y-object$fitted.values ## basic residuals
-      etacv <- attr(b$NCV,"eta.cv"); mucv = family$linkinv(etacv)
+      #dd <- attr(b$NCV,"dd")
+      rsd00 <- object$y-object$fitted.values ## basic residuals
+      ## experimental bias corrected basic residuals...
+      mubc <- family$linkinv(drop(G$X%*%(2*object$coefficients - object$F%*%object$coefficients)))
+      rsd0 <- object$y-mubc
+      rsd00 <- rsd00*sum(rsd0*rsd00)/sum(rsd00^2) ##- poor practical performance if used alone - oversimplified
+      ii <- abs(rsd0)<.2*abs(rsd00); if (any(ii)) rsd0[ii] <- rsd00[ii] ## avoid instability from very small residuals
+      #target <- mean((mubc-object$fitted.values)^2) ## target bias correction relaxation 
+      #lspt <- lsp;k <- 1
+      #while (k<6 && mean((b$fitted.values-object$fitted.values)^2)<target) { ## reduce sps until relaxed enough to match bias correction
+      #  lspt <- lspt - .5; k <- k + 1
+      #  b <- gam.fit3(x=G$X, y=G$y, sp=lspt,Eb=G$Eb,UrS=G$UrS,
+      #           offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
+      #           control=control,gamma=nei$gamma, 
+      #		 scale=scale,printWarn=FALSE,start=start,scoreType="NCV",null.coef=G$null.coef,
+      #           pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
+      #}
+      #rsd0 <- object$y-b$fitted.values ## basic residuals - bias corrected
+      dd <- attr(b$NCV,"dd")
+      etacv <- attr(object$gcv.ubre,"eta.cv"); mucv = family$linkinv(etacv)
+      alpha <- 1.0
       if (min(object$y) >= 0) { ## Box-Cox transform may improve performance
-        bc <- optimize(corBC,c(-1,2),y=object$y,mu=mucv)$minimum ## find best BC transform
+        bc <- optimize(corBC,c(0,1),y=object$y,mu=mucv)$minimum ## find best BC transform
         rsd <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(mucv,bc)) ## CV transformed residuals
-        rsd1 <- rsd1 - mean(rsd1)
+        rsd <- rsd - mean(rsd)
         rsd1 <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(object$fitted.values,bc)) ## basic fit transformed residuals
         rsd1 <- rsd1 - mean(rsd1)
-	rsd <- 1.5*rsd - .5*rsd1 ## corrected residuals
-      } else rsd <- 1.5*(object$y - mucv) - .5*rsd0 ## corrected residuals
+	rsd <- alpha*rsd - (alpha-1)*rsd1 ## corrected residuals
+      } else rsd <- alpha*(object$y - mucv) - (alpha-1)*rsd0 ## corrected residuals
       dd <- dd*rsd/rsd0
-      object$Vp <- neicov(dd,nei) + object$Vp - object$Ve
+      object$Vp <- neicov(dd,nei)*n/(n-sum(object$edf)) + object$Vp - object$Ve
     }
     #object$Vj <- attr(b$NCV,"Vj")
     #p <- ncol(object$Ve)
