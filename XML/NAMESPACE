@@ -315,7 +315,8 @@ S3method(xmlNamespace, XMLNode)
 S3method(xmlNamespace, XMLInternalNode)
 S3method(xmlNamespace, character)
 
-# No effect if append is not generic.
+## There is an unexported generic append() in this package
+## and a copy append.xmlMode which thus dispatches methods for append.
 S3method(append, XMLNode)
 S3method(append, default)
 
