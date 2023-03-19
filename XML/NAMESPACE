@@ -315,10 +315,9 @@ S3method(xmlNamespace, XMLNode)
 S3method(xmlNamespace, XMLInternalNode)
 S3method(xmlNamespace, character)
 
-## There is an unexported generic append() in this package
-## and a copy append.xmlMode which thus dispatches methods for append.
-S3method(append, XMLNode)
-S3method(append, default)
+## formerly an unexported generic append() with uexported copy append.xmlNode()
+S3method(append.xmlNode, XMLNode, append.XMLNode)
+S3method(append.xmlNode, default)
 
 exportMethods(saveXML)
 # S3method(saveXML, XMLInternalDocument)
