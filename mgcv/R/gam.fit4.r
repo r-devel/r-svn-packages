@@ -724,7 +724,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        #Vj <- crossprod(dd) ## jackknife cov matrix for coefs (beta)
        #attr(Vj,"dd") <- dd
        #attr(NCV,"Vj") <- Vj
-       attr(NCV,"dd") <- dd
+       attr(NCV,"dd") <- dth
      }  
 
      attr(NCV,"eta.cv") <- eta.cv
