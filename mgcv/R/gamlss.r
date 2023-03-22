@@ -141,7 +141,7 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
   nm <- length(nei$i)
   eta.cv <- matrix(0,nm,nlp)
   
-  deta.cv <- if (deriv>0) matrix(0,nm*nlp,nsp) else if (deriv<0) matrix(0,nm*length(beta),nsp)  else 0.0
+  deta.cv <- if (deriv>0) matrix(0,nm*nlp,nsp) else if (deriv<0) matrix(0,length(nei$m),length(beta))  else 0.0
   if (is.null(R)) {
     cg.iter <- .Call(C_ncvls,X,jj,H,Hi,dH,llf$l1,llf$l2,llf$l3,nei$i-1,nei$mi,nei$m,nei$k-1,beta,eta.cv,deta.cv,
                    deta,db,deriv)		   
@@ -165,18 +165,25 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
     }
     if (deriv>0) {
       #ncv1 <- -colSums(as.numeric(llf$l1[nei$i,])*(deta.cv*gamma+(1-gamma)*deta))
-      ncv1 <- -as.numeric(llf$l1[nei$i,])*(deta.cv*gamma+(1-gamma)*deta) 
+      rowk <- 1:nm
+      ncv1 <- -as.numeric(llf$l1[nei$i,1])*(deta.cv[rowk,]*gamma+(1-gamma)*deta[rowk,])
+      if (nlp>1) for (j in 2:nlp) {
+        rowk <- rowk + nm 
+        ncv1 <- ncv1 - as.numeric(llf$l1[nei$i,j])*(deta.cv[rowk,]*gamma+(1-gamma)*deta[rowk,])
+      }
       kk <- 0;jj <- 0
       for (j in 1:nlp) for (k in j:nlp) {
         kk <- kk  + 1
+	rowk <- 1:nm+(k-1)*nm
+	rowj <- 1:nm+(j-1)*nm
 	#ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*((deta[1:nm+(k-1)*nm,] + deta.cv[1:nm+(k-1)*nm,])*(eta.cv[,j]-eta[nei$i,j]) + 
 	#                   (eta.cv[,k]-eta[nei$i,k])*(deta.cv[1:nm+(j-1)*nm,] - deta[nei$i+(j-1)*n,])))*gamma*.5
-        ncv1 <- ncv1 - llf$l2[nei$i,kk]*((deta[1:nm+(k-1)*nm,] + deta.cv[1:nm+(k-1)*nm,])*(eta.cv[,j]-eta[nei$i,j]) +
-	                       (eta.cv[,k]-eta[nei$i,k])*(deta.cv[1:nm+(j-1)*nm,] - deta[nei$i+(j-1)*n,]))*gamma*.5
+        ncv1 <- ncv1 - llf$l2[nei$i,kk]*((deta[rowk,] + deta.cv[rowk,])*(eta.cv[,j]-eta[nei$i,j]) +
+	                       (eta.cv[,k]-eta[nei$i,k])*(deta.cv[rowj,] - deta[nei$i+(j-1)*n,]))*gamma*.5
         #if (j!=k) ncv1 <- ncv1 - colSums(llf$l2[nei$i,kk]*((deta[1:nm+(j-1)*nm,] + deta.cv[1:nm+(j-1)*nm,])*(eta.cv[,k]-eta[nei$i,k]) + 
 	#                   (eta.cv[,j]-eta[nei$i,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$i+(k-1)*n,])))*gamma*.5		  
-        if (j!=k) ncv1 <- ncv1 - llf$l2[nei$i,kk]*((deta[1:nm+(j-1)*nm,] + deta.cv[1:nm+(j-1)*nm,])*(eta.cv[,k]-eta[nei$i,k]) +
-	          (eta.cv[,j]-eta[nei$i,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$i+(k-1)*n,]))*gamma*.5
+        if (j!=k) ncv1 <- ncv1 - llf$l2[nei$i,kk]*((deta[rowj,] + deta.cv[rowj,])*(eta.cv[,k]-eta[nei$i,k]) +
+	          (eta.cv[,j]-eta[nei$i,j])*(deta.cv[rowk,] - deta[nei$i+(k-1)*n,]))*gamma*.5
         for (l in k:nlp) {
           jj <- jj + 1
 	  #ncv1 <- ncv1 - (1+(j!=k)) * gamma*.5 * colSums(

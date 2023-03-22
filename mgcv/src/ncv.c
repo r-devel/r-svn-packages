@@ -1476,8 +1476,9 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
   eta = REAL(ETACV);beta = REAL(BETA);R=REAL(R1);
 
   if (deriv>0) {
-    l3=REAL(L3);deta=REAL(DETA);detacv=REAL(DETACV);db = REAL(DB);
-  } else l3=deta=detacv=db=NULL;
+    l3=REAL(L3);deta=REAL(DETA);db = REAL(DB);
+  } else l3=deta=db=NULL;
+  if (deriv!=0) detacv=REAL(DETACV); else detacv = NULL;
   /* unpack the jj indices to here in order to avoid repeated list lookups withn loop */
   jj = (int **)CALLOC((size_t) nlp,sizeof(int *));
   plp = (int *)CALLOC((size_t) nlp,sizeof(int));

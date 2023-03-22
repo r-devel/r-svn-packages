@@ -457,25 +457,31 @@ Sl.rSb <- function(Sl,rho,beta) {
 
 Sl.inirep <- function(Sl,X,l=0,r=0,nt=1) {
 ## Re-parameterize X using initial Sl reparameterization info.
-## l,r = -2,-1,0,1,2. O is do not apply, negative to apply inverse transform Di,
+## l,r = -2,-1,0,1,2. O is do not apply, negative to apply inverse transform
+##       Di (t(D) if no Di indicating D orthogonal),
 ##       positive for transform D, 1 for transform, 2 for its transpose.
 ## Aim is for simpler and cleaner than Sl.initial.repara
   if (length(Sl)==0 && !l && !r) return(X) ## nothing to do
   if (is.matrix(X)) {
     for (b in 1:length(Sl)) if (Sl[[b]]$repara) {
+      nuDi <- is.null(Sl[[b]]$Di)
       ind <- Sl[[b]]$start:Sl[[b]]$stop
       if (l) X[ind,] <- if (l == 1) Sl[[b]]$D%*%X[ind,,drop=FALSE] else if (l == 2) t(Sl[[b]]$D)%*%X[ind,,drop=FALSE] else
-                        if (l == -1) Sl[[b]]$Di%*%X[ind,,drop=FALSE] else t(Sl[[b]]$Di)%*%X[ind,,drop=FALSE]
+             if (l == -1) { if (nuDi) t(Sl[[b]]$D)%*%X[ind,,drop=FALSE] else Sl[[b]]$Di%*%X[ind,,drop=FALSE] } else
+			  { if (nuDi) Sl[[b]]$D%*%X[ind,,drop=FALSE] else t(Sl[[b]]$Di)%*%X[ind,,drop=FALSE]} 
       if (r) X[,ind] <- if (l == 1) X[,ind,drop=FALSE]%*%Sl[[b]]$D else if (l == 2) X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) else
-                        if (l == -1) X[,ind,drop=FALSE]%*%Sl[[b]]$Di else X[,ind,drop=FALSE]%*%t(Sl[[b]]$Di)			
+             if (l == -1) { if (nuDi) X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) else X[,ind,drop=FALSE]%*%Sl[[b]]$Di} else
+			{ if (nuDi) X[,ind,drop=FALSE]%*%Sl[[b]]$D else X[,ind,drop=FALSE]%*%t(Sl[[b]]$Di)}			
     }
   } else { ## it's a vector
     for (b in 1:length(Sl)) if (Sl[[b]]$repara) {
-      ind <- Sl[[b]]$start:Sl[[b]]$stop
+      ind <- Sl[[b]]$start:Sl[[b]]$stop; nuDi <- is.null(Sl[[b]]$Di)
       if (l) X[ind] <- if (l == 1) Sl[[b]]$D%*%X[ind] else if (l == 2) t(Sl[[b]]$D)%*%X[ind] else
-                        if (l == -1) Sl[[b]]$Di%*%X[ind] else t(Sl[[b]]$Di)%*%X[ind]
+                        if (l == -1) { if (nuDi) t(Sl[[b]]$D)%*%X[ind] else Sl[[b]]$Di%*%X[ind] } else
+			{ if (nuDi) Sl[[b]]$D%*%X[ind] else t(Sl[[b]]$Di)%*%X[ind] }
       if (r) X[ind] <- if (l == 1) X[ind]%*%Sl[[b]]$D else if (l == 2) X[ind]%*%t(Sl[[b]]$D) else
-                        if (l == -1) X[ind]%*%Sl[[b]]$Di else X[ind]%*%t(Sl[[b]]$Di)			
+                        if (l == -1) { if (nuDi) X[ind]%*%t(Sl[[b]]$D) else X[ind]%*%Sl[[b]]$Di } else
+			{ if (nuDi) X[ind]%*%Sl[[b]]$D else X[ind]%*%t(Sl[[b]]$Di)}			
     }
   }
   X

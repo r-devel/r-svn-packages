@@ -1855,7 +1855,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   rm(b)
 
   B <- diag(length(initial$grad)) ## initial Hessian
-  feps <- 1e-4
+  feps <- 1e-4;fdgrad <- grad*0
   for (i in 1:length(lsp)) { ## loop to FD for Hessian
      ilsp <- lsp;ilsp[i] <- ilsp[i] + feps 
      b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
@@ -1865,7 +1865,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                scoreType=scoreType,null.coef=null.coef,
                pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...) 
      grad1 <- t(L)%*%b[[sname1]];
-
+     fdgrad[i] <- (b[[sname]]-score)/feps ## get FD grad for free - useful for debug checks
      B[i,] <- (grad1-grad)/feps 
      rm(b)
   } ## end of FD Hessian loop

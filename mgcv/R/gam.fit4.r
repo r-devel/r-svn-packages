@@ -1307,7 +1307,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     REML <- REML1 <- REML2 <- NULL
     if (deriv==0) ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1,d1b=d1b,ncv=TRUE) ## otherwise l1, l2 not returned
     ncv <- family$ncv ## helps debugging!
-    deriv1 <- if (deriv==0) 0 else  if (nei$jackknife>2) -1 else 1
+    deriv1 <-  if (nei$jackknife>2) -1 else if (deriv==0) 0 else  1
     ## create nei if null - now in estimate.gam
     #if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
     #if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
@@ -1338,12 +1338,13 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     if (deriv1<0) { ## Jackknife cov matrix...
       nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
       jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
-      dd <- jkw*attr(ret$NCV,"deta.cv")
+      dd <- attr(ret$NCV,"deta.cv")
       #dd <-jkw*t(dd)%*%t(T)
       dd <- Sl.repa(rp$rp,t(dd),l=-1) ## undo repara
+      dd <- Sl.inirep(Sl,dd,l=1) ## undo initial repara
       #Vj <- tcrossprod(dd) ## jackknife cov matrix
       #attr(NCV,"Vj") <- Vj
-      attr(NCV,"dd") <- dd
+      attr(NCV,"dd") <- jkw*t(dd)
     }
   } else { ## REML required
     NCV <- NCV1 <- NULL
