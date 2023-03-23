@@ -678,7 +678,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       theta <- alpha
     }
     theta
-  }
+  } ## getTheta ocat
 
   postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept) {
     posr <- list()
@@ -727,7 +727,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     rsd <- -2*wt*log(f) 
     attr(rsd,"sign") <- s
     rsd
-  } ## end of dev.resids
+  } ## ocat dev.resids
 
   Dd <- function(y, mu, theta, wt=NULL, level=0) {
   ## derivatives of the ocat deviance...
@@ -895,7 +895,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       } 
     }
     oo
-  } ## end of Dd (ocat)
+  } ## Dd (ocat)
  
   aic <- function(y, mu, theta=NULL, wt, dev) {
   
@@ -924,12 +924,12 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     ##f1 <- F(al1-mu);f0 <- F(al0-mu);f <- f1 - f0
     f <- Fdiff(al0-mu,al1-mu)
     -2*sum(log(f)*wt)
-  } ## end aic
+  } ## ocat aic
 
   ls <- function(y,w,theta,scale) {
     ## the log saturated likelihood function. 
     return(list(ls=0,lsth1=rep(0,R-2),LSTH1=matrix(0,length(y),R-2),lsth2=matrix(0,R-2,R-2)))
-  } ## end of ls
+  } ## ocat ls
   
   ## initialization is interesting -- needs to be with reference to initial cut-points
   ## so that mu puts each obs in correct category initially...
@@ -953,7 +953,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       Theta <- ocat.ini(R3,y)
       return(list(Theta=Theta))
     } 
-  }
+  } ## ocat preinitialize
 
   initialize <- expression({ 
     R <- length(family$getTheta())+2 ## don't use n.theta as it's used to signal fixed theta
@@ -1001,7 +1001,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       
     }
     res
-  } ## residuals
+  } ## ocat residuals
 
  
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
@@ -1057,7 +1057,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       } 
       return(fv)
     }
-  } ## predict
+  } ## ocat predict
 
   rd <- function(mu,wt,scale) {
     ## simulate data given fitted latent variable in mu 
@@ -1078,7 +1078,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       y[u > alpha[i]&u <= alpha[i+1]] <- i
     }
     y
-  }
+  } ## ocat rd
 
   environment(dev.resids) <- environment(aic) <- environment(putTheta) <-
   environment(getTheta) <- environment(rd) <- environment(predict) <- env
@@ -1158,7 +1158,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
     theta <- if (p == 1) log(y1/mu) else (y1^(1 - p) - mu^(1 - p))/(1 - p)
     kappa <- if (p == 2) log(y1/mu) else (y^(2 - p) - mu^(2 - p))/(2 - p)
     pmax(2 * (y * theta - kappa) * wt,0)
-  }
+  } ## tw dev.resids
     
   Dd <- function(y, mu, theta, wt, level=0) {
   ## derivatives of the tw deviance...
