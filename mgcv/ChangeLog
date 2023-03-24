@@ -29,9 +29,15 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-43
 
+* NCV variance estimation improvements.
+
 * smooth2random tweak to guarantee same eigenvector sign everytime for same 
   problem (needed by some developers who don't want to carry the original 
   transform around).
+
+* Some unregistered methods fixes.
+
+* tests directory removed, as check time was tripping up every CRAN submission.
 
 1.8-42
 
