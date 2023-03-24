@@ -152,7 +152,7 @@ pcls <- function(M)
   p
 } ## pcls
 
-all.vars1 <- function(form) {
+all_vars1 <- function(form) {
 ## version of all.vars that doesn't split up terms like x$y into x and y
   vars <- all.vars(form)
   vn <- all.names(form)
@@ -178,7 +178,7 @@ all.vars1 <- function(form) {
     }
   } else vn1 <- vn
   vn1
-} ## all.vars1
+} ## all_vars1
 
 interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
 # interprets a gam formula of the generic form:
@@ -2064,7 +2064,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
-    vars <- all.vars1(gp$fake.formula[-2]) ## drop response here
+    vars <- all_vars1(gp$fake.formula[-2]) ## drop response here
     inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
 
     ## allow a bit of extra flexibility in what `data' is allowed to be (as model.frame actually does)

@@ -617,7 +617,7 @@ cnorm <- function (theta = NULL, link = "identity") {
 
      environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
      environment(rd)<- environment(qf)<- environment(putTheta) <- env
-    structure(list(family = "censored normal", link = linktemp, linkfun = stats$linkfun,
+    structure(list(family = "cnorm", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,subsety=subsety,#variance=variance,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 

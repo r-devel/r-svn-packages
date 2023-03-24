@@ -43,7 +43,7 @@ chol2qr <- function(XX,Xy,nt=1) {
   list(R=R,f=f)
 } ## chol2qr
 
-qr.update <- function(Xn,yn,R=NULL,f=rep(0,0),y.norm2=0,use.chol=FALSE,nt=1)
+qr_update <- function(Xn,yn,R=NULL,f=rep(0,0),y.norm2=0,use.chol=FALSE,nt=1)
 ## Let X = QR and f = Q'y. This routine updates f and R
 ## when Xn is appended to X and yn appended to y. If R is NULL
 ## then initial QR of Xn is performed. ||y||^2 is accumulated as well.
@@ -72,10 +72,10 @@ qr.update <- function(Xn,yn,R=NULL,f=rep(0,0),y.norm2=0,use.chol=FALSE,nt=1)
     rp <- qrx$pivot;rp[rp] <- 1:p # reverse pivot
     return(list(R = qr.R(qrx)[,rp],f=fn,y.norm2=y.norm2))
   }
-} ## qr.update
+} ## qr_update
 
 
-qr.up <- function(arg) {
+qr_up <- function(arg) {
 ## routine for parallel computation of the QR factorization of 
 ## a large gam model matrix, suitable for calling with parLapply.
   wt <- rep(0,0) 
@@ -109,15 +109,15 @@ qr.up <- function(arg) {
     wt <- c(wt,w)
     z <- z[good];w <- w[good]
     w <- sqrt(w)
-    ## note assumption that nt=1 in following qr.update - i.e. each cluster node is strictly serial
-    if (b == 1) qrx <- qr.update(w*X[good,,drop=FALSE],w*z,use.chol=arg$use.chol) 
-    else qrx <- qr.update(w*X[good,,drop=FALSE],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=arg$use.chol)
+    ## note assumption that nt=1 in following qr_update - i.e. each cluster node is strictly serial
+    if (b == 1) qrx <- qr_update(w*X[good,,drop=FALSE],w*z,use.chol=arg$use.chol) 
+    else qrx <- qr_update(w*X[good,,drop=FALSE],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=arg$use.chol)
     rm(X);if(arg$gc.level>1) gc() ## X can be large: remove and reclaim
   }
   qrx$dev <- dev;qrx$wt <- wt;qrx$eta <- eta
   if (arg$gc.level>1) { rm(arg,ind,mu,y,weights,mu.eta.val,good,z,w,wt,w);gc()}
   qrx
-} ## qr.up
+} ## qr_up
 
 compress.df <- function(dat,m=NULL) {
 ## Takes dataframe in dat and compresses it by rounding and duplicate 
@@ -1202,8 +1202,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
              w <- w[good];z <- z[good]
              w <- sqrt(w)
              ## note that QR may be parallel using npt>1, even under serial accumulation...
-             if (b == 1) qrx <- qr.update(w*X[good,,drop=FALSE],w*z,use.chol=use.chol,nt=npt) 
-             else qrx <- qr.update(w*X[good,,drop=FALSE],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
+             if (b == 1) qrx <- qr_update(w*X[good,,drop=FALSE],w*z,use.chol=use.chol,nt=npt) 
+             else qrx <- qr_update(w*X[good,,drop=FALSE],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
              rm(X);if(gc.level>1) gc() ## X can be large: remove and reclaim
           }
           if (use.chol) { ## post proc to get R and f...
@@ -1217,11 +1217,11 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	    arg[[i]]$coef <- coef
 	    if (efam) arg[[i]]$theta <- theta
 	  }
-          res <- parallel::parLapply(cl,arg,qr.up) 
+          res <- parallel::parLapply(cl,arg,qr_up) 
           ## single thread debugging version 
           #res <- list()
           #for (i in 1:length(arg)) {
-          #  res[[i]] <- qr.up(arg[[i]])
+          #  res[[i]] <- qr_up(arg[[i]])
           #}
           ## now consolidate the results from the parallel threads...
           if (use.chol) {
@@ -1465,7 +1465,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
 
 
-ar.qr.up <- function(arg) {
+ar.qr_up <- function(arg) {
 ## function to perform QR updating with AR residuals, on one execution thread
   if (arg$rho!=0) { ## AR1 error model
      ld <- 1/sqrt(1 - arg$rho^2) ## leading diagonal of root inverse correlation
@@ -1507,13 +1507,13 @@ ar.qr.up <- function(arg) {
           y <- rwMatrix(stop,row,weight,y)[-1]
        } 
      } ## dealt with AR1      
-     qrx <- qr.update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=arg$use.chol)
+     qrx <- qr_update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=arg$use.chol)
      rm(X);if (arg$gc.level>1) {gc()} ## X can be large: remove and reclaim
   } ## all blocks dealt with
   qrx$yX.last <- yX.last
   if (arg$gc.level>1) {rm(arg,w,y,ind);gc()}
   qrx
-} ## ar.qr.up
+} ## ar.qr_up
 
 pabapr <- function(arg) {
 ## function for parallel calling of predict.gam
@@ -1719,7 +1719,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
            } 
          }      
 
-         qrx <- qr.update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
+         qrx <- qr_update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
          rm(X)
          if (gc.level>1) {gc()} ## X can be large: remove and reclaim
        } ## end of single thread block loop
@@ -1730,11 +1730,11 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
         }
      } else { ## use parallel accumulation
      
-       res <- parallel::parLapply(cl,arg,ar.qr.up)
+       res <- parallel::parLapply(cl,arg,ar.qr_up)
        ## Single thread de-bugging...
        # res <- list()
        # for (i in 1:length(arg)) {
-       #   res[[i]] <- ar.qr.up(arg[[i]])
+       #   res[[i]] <- ar.qr_up(arg[[i]])
        # }
 
        ## now consolidate the results from the parallel threads...
@@ -1764,7 +1764,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      #G$y <- mf[[gp$response]]
    
    } else { ## n <= chunk.size
-     if (rho==0) qrx <- qr.update(sqrt(G$w)*G$X,sqrt(G$w)*(G$y-G$offset),use.chol=use.chol,nt=npt) else {
+     if (rho==0) qrx <- qr_update(sqrt(G$w)*G$X,sqrt(G$w)*(G$y-G$offset),use.chol=use.chol,nt=npt) else {
        row <- c(1,rep(1:n,rep(2,n))[-c(1,2*n)])
        weight <- c(1,rep(c(sd,ld),n-1))
        stop <- c(1,1:(n-1)*2+1)
@@ -1779,7 +1779,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
        yX.last <- c(G$y[n],G$X[n,])  ## store final row, in case of update
        X <- rwMatrix(stop,row,weight,sqrt(G$w)*G$X)
        y <- rwMatrix(stop,row,weight,sqrt(G$w)*G$y)
-       qrx <- qr.update(X,y,use.chol=use.chol,nt=npt)
+       qrx <- qr_update(X,y,use.chol=use.chol,nt=npt)
    
        rm(X); if (gc.level>1) gc() ## X can be large: remove and reclaim
      } 
@@ -2527,7 +2527,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
-    vars <- all.vars1(gp$fake.formula[-2]) ## drop response here
+    vars <- all_vars1(gp$fake.formula[-2]) ## drop response here
     inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
 
     ## allow a bit of extra flexibility in what `data' is allowed to be (as model.frame actually does)
@@ -3058,9 +3058,9 @@ bam.update <- function(b,data,chunk.size=10000) {
     wy <- rwMatrix(stop,row,weight,wy)[-1]    
 
     ## update
-    b$qrx <- qr.update(wX,wy,b$qrx$R,b$qrx$f,b$qrx$y.norm2)
+    b$qrx <- qr_update(wX,wy,b$qrx$R,b$qrx$f,b$qrx$y.norm2)
   } else {
-    b$qrx <- qr.update(w*X,w*y,b$qrx$R,b$qrx$f,b$qrx$y.norm2)
+    b$qrx <- qr_update(w*X,w*y,b$qrx$R,b$qrx$f,b$qrx$y.norm2)
   }
 
   ## now do the refit...

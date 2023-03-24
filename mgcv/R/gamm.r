@@ -1315,7 +1315,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
   
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
-    vars <- all.vars1(gp$fake.formula[-2]) ## drop response here
+    vars <- all_vars1(gp$fake.formula[-2]) ## drop response here
     inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
     dl <- eval(inp, data, parent.frame())
     names(dl) <- vars ## list of all variables needed

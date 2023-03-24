@@ -35,12 +35,13 @@ The following families implement more general model classes. Usable only with \c
 \item \code{\link{gaulss}} a Gaussian location-scale model where the mean and the standard deviation are both modelled using smooth linear predictors.
 \item \code{\link{gevlss}} a generalized extreme value (GEV) model where the location, scale and shape parameters are each modelled using a linear predictor.
 \item \code{\link{gumbls}} a Gumbel location-scale model (2 linear predictors).
-\item \code{\link{shash}} Sinh-arcsinh location scale and shape model family (4 linear predicors).
-\item \code{\link{ziplss}} a `two-stage' zero inflated Poisson model, in which 'potential-presence' is modelled with one linear predictor, and Poisson mean abundance
-given potential presence is modelled with a second linear predictor. 
-\item \code{\link{mvn}}: multivariate normal additive models (no NCV). 
 \item \code{\link{multinom}}: multinomial logistic regression, for unordered categorical responses.  
- } %% end itemize 
+\item \code{\link{mvn}}: multivariate normal additive models (no NCV).
+\item \code{\link{shash}} Sinh-arcsinh location scale and shape model family (4 linear predicors).
+\item \code{\link{twlss}} Tweedie location scale and variance power model family (3 linear predicors).  Can only be fitted using EFS method.
+\item \code{\link{ziplss}} a `two-stage' zero inflated Poisson model, in which 'potential-presence' is modelled with one linear predictor, and Poisson mean abundance
+given potential presence is modelled with a second linear predictor.
+} %% end itemize 
 }
 
 %- maybe also `usage' for other objects documented here.
