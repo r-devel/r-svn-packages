@@ -1610,20 +1610,41 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                  pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
     object$NCV <- as.numeric(b$NCV)
     if (nei$jackknife) { ## need to compute direct cov matrix estimate
-      rsd0 <- object$y-object$fitted.values ## basic residuals
+      ## basic fit residuals...
+      rsd0 <- if (inherits(object$family,"general.family")) object$family$residuals(object) else
+              object$family$dev.resids(object$y,object$fitted.values,object$prior.weights)
+      ## compute cross validated residuals...
+      eta.cv <- attr(object$gcv.ubre,"eta.cv")
+      if (inherits(object$family,"general.family")) {
+        fitted0 <- object$fitted.values 
+        for (j in 1:ncol(eta.cv)) {
+          object$fitted.values[,j] <-
+	    if (j <= length(G$offset)&&!is.null(G$offset[[j]])) family$linfo[[j]]$linkinv(eta.cv[,j]+G$offset[[j]]) else 
+              family$linfo[[j]]$linkinv(eta.cv[,j])
+        }
+	rsd <- object$family$residuals(object); object$fitted.values <- fitted0	
+      } else {
+        mu.cv <- object$family$linkinv(eta.cv+G$offset)
+	rsd <- object$family$dev.resids(object$y,mu.cv,object$prior.weights)
+      }
+      ii <- !is.finite(rsd);if (any(ii)) rsd[ii] <- rsd0[ii]
+      #rsd0 <- object$y-object$fitted.values ## basic residuals
       dd <- attr(b$NCV,"dd")
       if (!loocv) { ## need to account for assumed independence structure 
-        etacv <- attr(object$gcv.ubre,"eta.cv"); mucv = family$linkinv(etacv) ## CV E(y)
-        if (min(object$y) >= 0) { ## Box-Cox transform may improve performance under residual skew
-          bc <- optimize(corBC,c(0,1),y=object$y,mu=mucv)$minimum ## find best BC transform
-          rsd <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(mucv,bc)) ## CV transformed residuals
-          rsd <- rsd - mean(rsd) 
-          rsd1 <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(object$fitted.values,bc)) ## basic fit transformed residuals
-          rsd1 <- rsd1 - mean(rsd1)
-	  rsd <- .5*rsd + .5 *rsd1 ## corrected residuals
-        } else rsd <- .5*(object$y - mucv) + .5 *rsd0 ## corrected residuals
+        if (FALSE) { ## limited to mean regressions!!
+          etacv <- attr(object$gcv.ubre,"eta.cv"); mucv = family$linkinv(etacv) ## CV E(y)
+          if (min(object$y) >= 0) { ## Box-Cox transform may improve performance under residual skew
+            bc <- optimize(corBC,c(0,1),y=object$y,mu=mucv)$minimum ## find best BC transform
+            rsd <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(mucv,bc)) ## CV transformed residuals
+            rsd <- rsd - mean(rsd) 
+            rsd1 <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(object$fitted.values,bc)) ## basic fit transformed residuals
+            rsd1 <- rsd1 - mean(rsd1)
+	    rsd <- .5*rsd + .5 *rsd1 ## corrected residuals
+          } else rsd <- .5*(object$y - mucv) + .5 *rsd0 ## corrected residuals
+	}
+	rsd <- 0.5*rsd + 0.5*rsd0
         dd1 <- dd*rsd/rsd0 ## correct to avoid underestimation (over-estimation if CV residuals used alone)	
-        Vj <- neicov(dd1,nei)*n/(n-sum(object$edf)) ## direct estimator uncorrected
+        Vj <- neicov(dd1,nei)#*n/(n-sum(object$edf)) ## direct estimator uncorrected
       } else Vj <- crossprod(dd) ## straight jackknife is fine.
       alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate
       attr(object$Ve,"Vp") <- object$Vp

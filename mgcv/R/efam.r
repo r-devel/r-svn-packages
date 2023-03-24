@@ -199,7 +199,7 @@ nb <- function (theta = NULL, link = "log") {
       mu[mu<=0] <- NA
       2 * wt * (y * log(pmax(1, y)/mu) - 
         (y + theta) * log((y + theta)/(mu + theta))) 
-    }
+    } ## nb residuals
     
     Dd <- function(y, mu, theta, wt, level=0) {
     ## derivatives of the nb deviance...
@@ -231,7 +231,7 @@ nb <- function (theta = NULL, link = "log") {
         r$Dmu3th <- 4 * wt * theta * (1 - 3*yth/muth)/muth^3
       }
       r
-    }
+    } ## nb Dd
 
     aic <- function(y, mu, theta=NULL, wt, dev) {
         if (is.null(theta)) theta <- get(".Theta")
