@@ -1861,6 +1861,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
 
     scale.as.sp <- (criterion%in%c("REML","ML")||(criterion=="NCV"&&inherits(G$family,"extended.family")))&&scale<=0
+    #scale.as.sp <- criterion%in%c("REML","ML")&&scale<=0
 
     if (scale.as.sp) { ## log(scale) to be estimated as a smoothing parameter
       if (fixedSteps>0) {
@@ -2242,7 +2243,7 @@ print.gam<-function (x,...)
   if (!is.null(x$rank) && x$rank< length(x$coefficients)) cat("rank: ",x$rank,"/",length(x$coefficients),sep="") 
   cat("\n")
   invisible(x)
-}
+} ## print.gam
 
 gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
@@ -2311,7 +2312,7 @@ gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, m
          idLinksBases=idLinksBases,scalePenalty=scalePenalty,efs.lspmax=efs.lspmax,efs.tol=efs.tol,
          keepData=as.logical(keepData[1]),scale.est=scale.est,edge.correct=edge.correct)
     
-}
+} ## gam.control
 
 
 

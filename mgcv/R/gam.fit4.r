@@ -659,8 +659,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      }   
      mu.cv <- linkinv(eta.cv)
      nt <- family$n.theta
-     if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):ncol(db.drho) else 1:ncol(db.drho)
-     #dev0 <- sum(dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta))
+     ## if some elements of theta are fixed, figure out which derivatives will be needed...
+     if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):(ncol(db.drho)+!scale.known) else 1:(ncol(db.drho)+!scale.known)
+   
      dev0 <- dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta)
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV

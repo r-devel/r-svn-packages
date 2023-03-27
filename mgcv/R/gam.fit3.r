@@ -972,16 +972,6 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
   WX <- sqrt(object$weights)*X
   qrx <- pqr(WX,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
-#  if (gamma!=1) { ## compute Vp assuming gamma is inverse learning rate - wrong parameterization s.t. Vp*gamma is it!
-#    H <- crossprod(WX)/gamma
-#    lsp <- lsp0 + if (is.null(L)) log(object$sp) else L %*% log(object$sp)
-#    sp <- exp(lsp)
-#    if (length(S)) for (i in 1:length(S)) {
-#      ii <- 1:nrow(S[[i]]) + off[i] - 1
-#      H[ii,ii] <- H[ii,ii] + sp[i] * S[[i]]
-#    }
-#    Vl <- chol2inv(chol(H))*scale
-#  } else Vl <- NULL
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     hess <- object$outer.info$hess
     edge.correct <- if (is.null(attr(hess,"edge.correct"))) FALSE else TRUE
@@ -2129,7 +2119,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   if (!is.null(b$Vg)) {
     M <- ncol(b$db.drho)
     b$Vg <- (B%*%t(L)%*%b$Vg%*%L%*%B)[1:M,1:M] ## sandwich estimate of 
-    db.drho <- b$db.drho%*%L[1:M,,drop=FALSE]
+    db.drho <- b$db.drho%*%L[1:M,1:M,drop=FALSE]
     b$Vc <- db.drho %*% b$Vg %*% t(db.drho) ## correction term for cov matrices
   }
   b$dVkk <- NULL
