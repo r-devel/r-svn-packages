@@ -1611,22 +1611,26 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     object$NCV <- as.numeric(b$NCV)
     if (nei$jackknife) { ## need to compute direct cov matrix estimate
       ## basic fit residuals...
-      rsd0 <- if (inherits(object$family,"general.family")) object$family$residuals(object) else
-              object$family$dev.resids(object$y,object$fitted.values,object$prior.weights)
+      #rsd0 <- if (inherits(object$family,"general.family")) object$family$residuals(object) else
+      #        sqrt(object$family$dev.resids(object$y,object$fitted.values,object$prior.weights)) ## note no sign - assumed same for rsd0/rsd
+      rsd0 <- residuals.gam(object)
       ## compute cross validated residuals...
       eta.cv <- attr(object$gcv.ubre,"eta.cv")
+      fitted0 <- object$fitted.values 
       if (inherits(object$family,"general.family")) {
-        fitted0 <- object$fitted.values 
+        #fitted0 <- object$fitted.values 
         for (j in 1:ncol(eta.cv)) {
           object$fitted.values[,j] <-
 	    if (j <= length(G$offset)&&!is.null(G$offset[[j]])) family$linfo[[j]]$linkinv(eta.cv[,j]+G$offset[[j]]) else 
               family$linfo[[j]]$linkinv(eta.cv[,j])
         }
-	rsd <- object$family$residuals(object); object$fitted.values <- fitted0	
+	#rsd <- object$family$residuals(object); object$fitted.values <- fitted0	
       } else {
-        mu.cv <- object$family$linkinv(eta.cv+G$offset)
-	rsd <- object$family$dev.resids(object$y,mu.cv,object$prior.weights)
+        object$fitted.values <- object$family$linkinv(eta.cv+G$offset)
+	#rsd <- sqrt(object$family$dev.resids(object$y,mu.cv,object$prior.weights))
       }
+      rsd <- residuals.gam(object)
+      object$fitted.values <- fitted0
       ii <- !is.finite(rsd);if (any(ii)) rsd[ii] <- rsd0[ii]
       #rsd0 <- object$y-object$fitted.values ## basic residuals
       dd <- attr(b$NCV,"dd")
@@ -1642,9 +1646,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 	    rsd <- .5*rsd + .5 *rsd1 ## corrected residuals
           } else rsd <- .5*(object$y - mucv) + .5 *rsd0 ## corrected residuals
 	}
-	rsd <- 0.5*rsd + 0.5*rsd0
+	#rsd <- 0.5*rsd + 0.5*rsd0
         dd1 <- dd*rsd/rsd0 ## correct to avoid underestimation (over-estimation if CV residuals used alone)	
-        Vj <- neicov(dd1,nei)#*n/(n-sum(object$edf)) ## direct estimator uncorrected
+        Vj <- (.5*neicov(dd1,nei)+.5*neicov(dd,nei))*n/(n-sum(object$edf)) ## direct estimator uncorrected
       } else Vj <- crossprod(dd) ## straight jackknife is fine.
       alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate
       attr(object$Ve,"Vp") <- object$Vp
