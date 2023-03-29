@@ -1472,6 +1472,27 @@ corBC <- function(lambda,y,mu) {
   -cor(qn,sort(BC(y,lambda)-BC(mu,lambda)))
 }
 
+neico4 <- function(nei,dd,dd1) {
+## nei is neighbourhood structure. dd are leave one out perturbations.
+## dd1 the same for a different residual
+## This routine computes the most basic covariance
+## matrix estimate, based on observed correlation within neighbourhoods
+## and assumption of zero correlation without. Somehow it is a testement
+## to my extreme slowness that it took me 6 months to come up with this
+## skull-thumpingly obvious solution having tried every other hare brained
+## scheme first.
+  n <- length(nei$i)
+  i1 <- 0
+  W <- dd*0 ## dbeta/dy (y-mu)
+  for (i in 1:n) {
+    i0 <- i1+1
+    i1 <- nei$m[i]
+    ii <- nei$k[i0:i1] ## neighbours of i
+    W[nei$i[i],] <-  W[nei$i[i],] + colSums(dd[ii,,drop=FALSE]) 
+  }
+  V <- t(dd1)%*%W
+} ## neico4
+
 
 gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,nei=NULL,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
@@ -1648,12 +1669,28 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 	}
 	#rsd <- 0.5*rsd + 0.5*rsd0
         dd1 <- dd*rsd/rsd0 ## correct to avoid underestimation (over-estimation if CV residuals used alone)	
-        Vj <- (.5*neicov(dd1,nei)+.5*neicov(dd,nei))*n/(n-sum(object$edf)) ## direct estimator uncorrected
+       
+	#delta <- rsd-rsd0
+	#dd0 <- dd*delta/rsd0
+	#Vc <- neico4(nei,dd1,dd0)
+	#Vd <- neicov(dd0,nei)
+        #bb <- max(2*sum(diag(Vc))/sum(diag(Vd))-1,0)
+	bb <- .5 #bb/(bb+1)
+	Vj <- (bb*neicov(dd1,nei)+(1-bb)*neicov(dd,nei))*n/(n-sum(object$edf)) ## direct estimator uncorrected
       } else Vj <- crossprod(dd) ## straight jackknife is fine.
-      alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate
+      ev <- eigen(Vj,symmetric=TRUE)
+      thresh <- max(ev$values)*.Machine$double.eps^.9
+      ii <- ev$values < thresh
+      if (any(ii)) { ## nearest pos def
+        ev$values[ii] <- thresh
+	Vj <- ev$vectors%*%(ev$values*t(ev$vectors))
+      }
+      alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
       attr(object$Ve,"Vp") <- object$Vp
       attr(object$Ve,"inv.learn") <- alpha
+      #foo <- (n-sum(object$edf))/n*(n/alpha)/(n/alpha-sum(object$edf)) ## correctiong for effective sample size
       object$Vp <- Vj + (object$Vp-object$Ve)*alpha
+      
     }
   }
   ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
