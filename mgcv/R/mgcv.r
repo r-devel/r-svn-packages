@@ -1675,9 +1675,12 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 	#Vc <- neico4(nei,dd1,dd0)
 	#Vd <- neicov(dd0,nei)
         #bb <- max(2*sum(diag(Vc))/sum(diag(Vd))-1,0)
+	
 	bb <- .5 #bb/(bb+1)
-	Vj <- (bb*neicov(dd1,nei)+(1-bb)*neicov(dd,nei))*n/(n-sum(object$edf)) ## direct estimator uncorrected
-      } else Vj <- crossprod(dd) ## straight jackknife is fine.
+	Vcv <- neicov(dd1,nei)*n/(n-sum(object$edf))
+	V0 <- neicov(dd,nei)*n/(n-sum(object$edf))
+	Vj <- Vcv#(bb*Vcv+(1-bb)*V0) ## direct estimator uncorrected
+      } else V0 <- Vj <- crossprod(dd) ## straight jackknife is fine.
       ev <- eigen(Vj,symmetric=TRUE)
       thresh <- max(ev$values)*.Machine$double.eps^.9
       ii <- ev$values < thresh
@@ -1685,7 +1688,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         ev$values[ii] <- thresh
 	Vj <- ev$vectors%*%(ev$values*t(ev$vectors))
       }
-      alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
+      #alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
+      alpha <- max(sqrt(sum(diag(V0))*sum(diag(Vj)))/sum(diag(object$Ve)),1) ## inverse learning rate
       attr(object$Ve,"Vp") <- object$Vp
       attr(object$Ve,"inv.learn") <- alpha
       #foo <- (n-sum(object$edf))/n*(n/alpha)/(n/alpha-sum(object$edf)) ## correctiong for effective sample size
