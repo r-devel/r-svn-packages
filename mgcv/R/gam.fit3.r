@@ -729,7 +729,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
 	   if (nei$jackknife>2) {
              nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
-             jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
+             jkw <- ((nobs-nk)/(nobs))^.4/sqrt(nk) ## jackknife weights
 	     dd <-jkw*t(dd)%*%t(T)
 	     #Vj <- crossprod(dd) ## jackknife cov matrix
              #attr(Vj,"dd") <- dd

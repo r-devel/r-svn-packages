@@ -1493,6 +1493,17 @@ neico4 <- function(nei,dd,dd1) {
   V <- t(dd1)%*%W
 } ## neico4
 
+pdef <- function(V,eps = .Machine$double.eps^.9) {
+## find nearest pdf matrix to symmetric matrix V
+  ev <- eigen(V,symmetric=TRUE)
+  thresh <- max(abs(ev$values))*eps
+  ii <- ev$values<thresh
+  if (any(ii)) {
+    ev$values[ii] <- thresh
+    V <- ev$vectors %*% (ev$values*t(ev$vectors))
+  }
+  V
+} ## pdef
 
 gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,nei=NULL,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
@@ -1675,26 +1686,25 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 	#Vc <- neico4(nei,dd1,dd0)
 	#Vd <- neicov(dd0,nei)
         #bb <- max(2*sum(diag(Vc))/sum(diag(Vd))-1,0)
-	
-	bb <- .5 #bb/(bb+1)
-	Vcv <- neicov(dd1,nei)*n/(n-sum(object$edf))
-	V0 <- neicov(dd,nei)*n/(n-sum(object$edf))
-	Vj <- Vcv#(bb*Vcv+(1-bb)*V0) ## direct estimator uncorrected
-      } else V0 <- Vj <- crossprod(dd) ## straight jackknife is fine.
-      ev <- eigen(Vj,symmetric=TRUE)
-      thresh <- max(ev$values)*.Machine$double.eps^.9
-      ii <- ev$values < thresh
-      if (any(ii)) { ## nearest pos def
-        ev$values[ii] <- thresh
-	Vj <- ev$vectors%*%(ev$values*t(ev$vectors))
+        #bb <- bb/(bb+1)
+
+        Vcv <- pdef(neicov(dd1,nei))  #*n/(n-sum(object$edf)) ## cross validated V (too large)
+	V0 <- pdef(neicov(dd,nei))  #*n/(n-sum(object$edf))   ## direct V (too small)
+	Vj <- (Vcv+V0)/2       ## combination less bad
+	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
+
+	alpha1 <- max(sum(Vj*object$Ve)/sum(object$Ve^2),1)
+	Vcv <- Vcv + (object$Vp-object$Ve)*alpha1 ## bias correct conservative (too large)
+	Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
+	attr(Vj,"Vcv") <- Vcv ## conservative as attribute
+      } else {
+        Vj <- pdef(crossprod(dd)) ## straight jackknife is fine.
+	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
+	Vj <- Vj + (object$Vp-object$Ve)*alpha ## biuas correct
       }
-      #alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
-      alpha <- max(sqrt(sum(diag(V0))*sum(diag(Vj)))/sum(diag(object$Ve)),1) ## inverse learning rate
-      attr(object$Ve,"Vp") <- object$Vp
+      attr(object$Ve,"Vp") <- object$Vp ## keep original
       attr(object$Ve,"inv.learn") <- alpha
-      #foo <- (n-sum(object$edf))/n*(n/alpha)/(n/alpha-sum(object$edf)) ## correctiong for effective sample size
-      object$Vp <- Vj + (object$Vp-object$Ve)*alpha
-      
+      object$Vp <- Vj     
     }
   }
   ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
