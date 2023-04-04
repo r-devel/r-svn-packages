@@ -1151,7 +1151,8 @@ multinom <- function(K=1) {
       if (se) { 
         ve <- matrix(0,nobs,K) ## variance of eta
         ce <- matrix(0,nobs,K*(K-1)/2) ## covariance of eta_i eta_j
-      } 
+      }
+      ii <- 0
       for (i in 1:K) {
         if (discrete) {
 	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[i]]) 
@@ -1164,7 +1165,7 @@ multinom <- function(K=1) {
 	  
           ve[,i] <- if (discrete) diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1,
 	                   lt=X$lpid[[i]],rt=X$lpid[[i]]) else drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
-          ii <- 0
+          ## ii <- 0 BUGGY location!
           if (i<K) for (j in (i+1):K) {
             ii <- ii + 1
             ce[,ii] <- if (discrete) diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1,

@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-43
 
+* 'multinom' variance fix for K>=3 cases. A counter was initialized in the wrong
+  place. Thanks to Max Goplerud for finding and reporting this.
+
 * NCV variance estimation improvements.
 
 * smooth2random tweak to guarantee same eigenvector sign everytime for same 
@@ -38,6 +41,7 @@ present, and reparameterization needs checking (also for bam).
 * Some unregistered methods fixes.
 
 * tests directory removed, as check time was tripping up every CRAN submission.
+
 
 1.8-42
 
