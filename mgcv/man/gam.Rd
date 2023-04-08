@@ -155,7 +155,7 @@ involving factor variables you might want to turn this off. Only do so if you kn
 even with factor variables present. Can be vector when \code{formula} is a list.}
 
 \item{nei}{A list specifying the neighbourhood structure for NCV. \code{k} is the vector of indices to be dropped
-for each neighbourhood and \code{m} gives the end of each neighbourhood. So \code{nei$k[(nei$m[j-1]+1):nei$m[j]]} gives the points dropped for the neighbourhood \code{j}. \code{i} is the vector of indices of points to predict, with corresponding endpoints \code{mi}. So \code{nei$i[(nei$mi[j-1]+1):nei$mi[j]]} indexes the points to predict for neighbourhood j. If \code{nei==NULL} (or \code{k} or \code{m} are missing) then leave-one-out cross validation is obtained.}
+for each neighbourhood and \code{m} gives the end of each neighbourhood. So \code{nei$k[(nei$m[j-1]+1):nei$m[j]]} gives the points dropped for the neighbourhood \code{j}. \code{i} is the vector of indices of points to predict, with corresponding endpoints \code{mi}. So \code{nei$i[(nei$mi[j-1]+1):nei$mi[j]]} indexes the points to predict for neighbourhood j. If \code{nei==NULL} (or \code{k} or \code{m} are missing) then leave-one-out cross validation is obtained. If \code{jackknife} is supplied then \code{TRUE} indicates to use raw jackknife covariances estimator and \code{FALSE} to use the conventional Bayes estimate. If not supplied then the estimator accounting for neighbourhood structure is used. \code{jackknife} ignored when \code{method} is not NCV.}
 
 \item{discrete}{experimental option for setting up models for use with discrete methods employed in \code{\link{bam}}. Do not modify.}
 
@@ -211,8 +211,7 @@ just AIC rescaled, but is only used when \eqn{s}{s} is known.
 
 Alternatives are GACV, NCV or a Laplace approximation to REML. There
 is some evidence that the latter may actually be the most effective choice. 
-The main computational challenge solved 
-by the \code{mgcv} package is to optimize the smoothness selection criteria efficiently and reliably. 
+The main computational challenge solved by the \code{mgcv} package is to optimize the smoothness selection criteria efficiently and reliably. 
 
 
 Broadly \code{gam} works by first constructing basis functions and one or more quadratic penalty 

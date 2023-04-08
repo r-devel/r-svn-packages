@@ -1620,21 +1620,25 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object,gamma)
 
   object[names(mv)] <- mv
-  if (!is.null(nei) && all.equal(sort(nei$i),1:nrow(G$X))&&criterion=="NCV") {
-    loocv <- length(nei$k)==length(nei$i) && all.equal(nei$i,nei$k) ## leave one out CV
-    nei$jackknife <- TRUE
-  }  
+  if (!is.null(nei)) {
+    if (all.equal(sort(nei$i),1:nrow(G$X))&&criterion=="NCV") { ## each point predicted
+      loocv <- length(nei$k)==length(nei$i) && all.equal(nei$i,nei$k) ## leave one out CV,
+      if (is.logical(nei$jackknife)&&nei$jackknife) loocv <- TRUE ## straight jackknife requested
+      if (nei$jackknife < 0) nei$jackknife <- TRUE ## signal cov matrix calc
+    } else if (nei$jackknife < 0) jackknife <- FALSE
+  }
   if (!is.null(nei)&&(criterion!="NCV"||nei$jackknife)) { ## returning NCV when other criterion used for sp selection, or computing perturbations
     if (!is.null(nei$QNCV)&&nei$GNCV) family$qapprox <- TRUE
     if (is.null(family$qapprox)) family$qapprox <- FALSE
     lsp <- if (is.null(G$L)) log(object$sp) + G$lsp0 else G$L%*%log(object$sp)+G$lsp0
     if (object$scale.estimated && criterion %in% c("REML","ML","EFS")) lsp <- lsp[-length(lsp)] ## drop log scale estimate
     if (is.null(nei$gamma)) nei$gamma <- 1 ## a major application of this NCV is to select gamma - so it must not itself change with gamma!
+    if (criterion!="NCV") nei$jackknife <- FALSE ## no cov matrix stuff.
     if (nei$jackknife) {
       n <- length(nei$i)
-      nei1 <- if (loocv) nei else list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV
+      nei1 <- if (loocv) nei else list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV or requested straight jackknife
       nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
-    } else nei1 <- nei
+    } else nei1 <- nei ## called with another criteria
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
                  offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
                  control=control,gamma=nei$gamma, 
@@ -1642,63 +1646,36 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                  pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
     object$NCV <- as.numeric(b$NCV)
     if (nei$jackknife) { ## need to compute direct cov matrix estimate
-      ## basic fit residuals...
-      #rsd0 <- if (inherits(object$family,"general.family")) object$family$residuals(object) else
-      #        sqrt(object$family$dev.resids(object$y,object$fitted.values,object$prior.weights)) ## note no sign - assumed same for rsd0/rsd
-      rsd0 <- residuals.gam(object)
-      ## compute cross validated residuals...
-      eta.cv <- attr(object$gcv.ubre,"eta.cv")
-      fitted0 <- object$fitted.values 
-      if (inherits(object$family,"general.family")) {
-        #fitted0 <- object$fitted.values 
-        for (j in 1:ncol(eta.cv)) {
-          object$fitted.values[,j] <-
-	    if (j <= length(G$offset)&&!is.null(G$offset[[j]])) family$linfo[[j]]$linkinv(eta.cv[,j]+G$offset[[j]]) else 
-              family$linfo[[j]]$linkinv(eta.cv[,j])
+      dd <- attr(b$NCV,"dd") ## leave-one-out parameter perturbations
+      if (!loocv) { ## need to account for assumed independence structure
+        rsd0 <- residuals.gam(object)
+        ## compute cross validated residuals...
+        eta.cv <- attr(object$gcv.ubre,"eta.cv")
+        fitted0 <- object$fitted.values 
+        if (inherits(object$family,"general.family")) {
+          for (j in 1:ncol(eta.cv)) {
+            object$fitted.values[,j] <-
+	      if (j <= length(G$offset)&&!is.null(G$offset[[j]])) family$linfo[[j]]$linkinv(eta.cv[,j]+G$offset[[j]]) else 
+                family$linfo[[j]]$linkinv(eta.cv[,j])
+          }	
+        } else {
+          object$fitted.values <- object$family$linkinv(eta.cv+G$offset)
         }
-	#rsd <- object$family$residuals(object); object$fitted.values <- fitted0	
-      } else {
-        object$fitted.values <- object$family$linkinv(eta.cv+G$offset)
-	#rsd <- sqrt(object$family$dev.resids(object$y,mu.cv,object$prior.weights))
-      }
-      rsd <- residuals.gam(object)
-      object$fitted.values <- fitted0
-      ii <- !is.finite(rsd);if (any(ii)) rsd[ii] <- rsd0[ii]
-      #rsd0 <- object$y-object$fitted.values ## basic residuals
-      dd <- attr(b$NCV,"dd")
-      if (!loocv) { ## need to account for assumed independence structure 
-        if (FALSE) { ## limited to mean regressions!!
-          etacv <- attr(object$gcv.ubre,"eta.cv"); mucv = family$linkinv(etacv) ## CV E(y)
-          if (min(object$y) >= 0) { ## Box-Cox transform may improve performance under residual skew
-            bc <- optimize(corBC,c(0,1),y=object$y,mu=mucv)$minimum ## find best BC transform
-            rsd <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(mucv,bc)) ## CV transformed residuals
-            rsd <- rsd - mean(rsd) 
-            rsd1 <- object$fitted.values^(1-bc)*(BC(object$y,bc)-BC(object$fitted.values,bc)) ## basic fit transformed residuals
-            rsd1 <- rsd1 - mean(rsd1)
-	    rsd <- .5*rsd + .5 *rsd1 ## corrected residuals
-          } else rsd <- .5*(object$y - mucv) + .5 *rsd0 ## corrected residuals
-	}
-	#rsd <- 0.5*rsd + 0.5*rsd0
+        rsd <- residuals.gam(object)
+        object$fitted.values <- fitted0
+        ii <- !is.finite(rsd);if (any(ii)) rsd[ii] <- rsd0[ii]
         dd1 <- dd*rsd/rsd0 ## correct to avoid underestimation (over-estimation if CV residuals used alone)	
-       
-	#delta <- rsd-rsd0
-	#dd0 <- dd*delta/rsd0
-	#Vc <- neico4(nei,dd1,dd0)
-	#Vd <- neicov(dd0,nei)
-        #bb <- max(2*sum(diag(Vc))/sum(diag(Vd))-1,0)
-        #bb <- bb/(bb+1)
 
         Vcv <- pdef(neicov(dd1,nei))  #*n/(n-sum(object$edf)) ## cross validated V (too large)
 	V0 <- pdef(neicov(dd,nei))  #*n/(n-sum(object$edf))   ## direct V (too small)
 	Vj <- (Vcv+V0)/2       ## combination less bad
 	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
-
 	alpha1 <- max(sum(Vj*object$Ve)/sum(object$Ve^2),1)
 	Vcv <- Vcv + (object$Vp-object$Ve)*alpha1 ## bias correct conservative (too large)
 	Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
 	attr(Vj,"Vcv") <- Vcv ## conservative as attribute
-      } else {
-        Vj <- pdef(crossprod(dd)) ## straight jackknife is fine.
+      } else { ## LOO or straight jackknife requested
+        Vj <- pdef(crossprod(dd)) ## straight jackknife is fine. NOTE: TEST revert dd1 to dd
 	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
 	Vj <- Vj + (object$Vp-object$Ve)*alpha ## biuas correct
       }
@@ -1758,7 +1735,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (is.null(nei$k)||is.null(nei$m)) nei$k <- nei$m <- nei$mi <- nei$i <- 1:G$n 
     if (is.null(nei$i)) if (length(nei$m)==G$n) nei$mi <- nei$i <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
-    if (is.null(nei$jackknife)) nei$jackknife <- FALSE
+    if (is.null(nei$jackknife)) nei$jackknife <- -1
   }  
 
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
