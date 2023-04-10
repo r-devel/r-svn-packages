@@ -675,7 +675,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
    
     if (inherits(G$family,"extended.family")) { ## preinitialize extended family
       efam <- TRUE
+      if (!is.null(G$family$preinitialize) && !is.null(attr(G$family$preinitialize,"needG"))) attr(G$family,"G") <- G
       pini <- if (is.null(G$family$preinitialize)) NULL else G$family$preinitialize(y,G$family)
+      if (is.null(G$family$preinitialize)) attr(G$family,"G") <- NULL
+      if (!is.null(pini$family)) G$family <- pini$family
       if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
       if (!is.null(pini$y)) y <- pini$y
       if (is.null(G$family$scale)) scale <- 1 else scale <- if (G$family$scale<0) scale else G$family$scale

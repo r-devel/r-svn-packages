@@ -85,7 +85,7 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
   cat("Deta: rdiff = ",range(dd$Deta-Deta.fd)," cor = ",cor(dd$Deta,Deta.fd),"\n")
   plot(dd$Deta,Deta.fd);abline(0,1)
   nt <- length(theta)
-  for (i in 1:nt) {
+  if (fam$n.theta && nt>0) for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dev1 <- fam$dev.resids(y, mu, wt,th1)   
     Dth.fd <- (dev1-dev)/eps
@@ -106,7 +106,7 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
   plot(dd$Deta4,Deta4.fd);abline(0,1)
   ## and now the higher derivs wrt theta...
   ind <- 1:nt
-  for (i in 1:nt) {
+  if (fam$n.theta && nt>0) for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dd1 <- dDeta(y,mu,wt,th1,fam,deriv=2)
     Detath.fd <- (dd1$Deta - dd$Deta)/eps 
@@ -169,7 +169,7 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
     on.exit(devAskNewPage(oask))
   }
   nt <- length(theta)
-  for (i in 1:nt) {
+  if (fam$n.theta>0&&nt>0) for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dev1 <- dev.resids(y, mu, wt,th1)
     Dth.fd <- (dev1-dev)/eps
@@ -190,7 +190,7 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
   if (plot) { plot(dd$Dmu4,Dmu4.fd,pch=pch,cex=cex);abline(0,1,col=2)}
   ## and now the higher derivs wrt theta 
   ind <- 1:nt
-  for (i in 1:nt) {
+  if (fam$n.theta>0&&nt>0) for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dd1 <- Dd(y, mu, th1, wt, level=2)
     Dmuth.fd <- (dd1$Dmu - dd$Dmu)/eps
@@ -230,7 +230,7 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
     if (plot) { plot(um,er,pch=pch,cex=cex);abline(0,1,col=2)}
     ind <- max(ind)+1:(nt-i)
   }
-}
+} ## fmud.test
 
 
 

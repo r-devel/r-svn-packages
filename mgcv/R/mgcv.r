@@ -1728,6 +1728,8 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,nei=NULL,...) {
 ## Do gam estimation and smoothness selection...
 
+  if (!is.null(G$family$method) && !method %in% G$family$method) method <- G$family$method[1] 
+
   if (method %in% c("QNCV","NCV")||!is.null(nei)) {
     optimizer <- c("outer","bfgs")
     if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
@@ -1845,8 +1847,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
       Gmod <- G$family$preinitialize(G) ## modifies some elements of G
       for (gnam in names(Gmod)) G[[gnam]] <- Gmod[[gnam]] ## copy these into G  
     } else {
-      ## extended family - just initializes theta and possibly y
+      ## extended family - usually just initializes theta and possibly y
+      if (!is.null(attr(G$family$preinitialize,"needG"))) attr(G$family,"G") <- G ## more complicated
       pini <- G$family$preinitialize(G$y,G$family)
+      attr(G$family,"G") <- NULL
+      if (!is.null(pini$family)) G$family <- pini$family
       if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
       if (!is.null(pini$y)) G$y <- pini$y
     }
