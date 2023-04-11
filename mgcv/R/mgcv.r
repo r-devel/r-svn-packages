@@ -1669,15 +1669,15 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         Vcv <- pdef(neicov(dd1,nei))  #*n/(n-sum(object$edf)) ## cross validated V (too large)
 	V0 <- pdef(neicov(dd,nei))  #*n/(n-sum(object$edf))   ## direct V (too small)
 	Vj <- (Vcv+V0)/2       ## combination less bad
-	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
+	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate - does lower limit make sense? 
 	alpha1 <- max(sum(Vj*object$Ve)/sum(object$Ve^2),1)
 	Vcv <- Vcv + (object$Vp-object$Ve)*alpha1 ## bias correct conservative (too large)
 	Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
 	attr(Vj,"Vcv") <- Vcv ## conservative as attribute
       } else { ## LOO or straight jackknife requested
-        Vj <- pdef(crossprod(dd)) ## straight jackknife is fine. NOTE: TEST revert dd1 to dd
-	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate
-	Vj <- Vj + (object$Vp-object$Ve)*alpha ## biuas correct
+        Vj <- pdef(crossprod(dd)) ## straight jackknife is fine.
+	alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate (do not impose lower limit)
+	Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
       }
       attr(object$Ve,"Vp") <- object$Vp ## keep original
       attr(object$Ve,"inv.learn") <- alpha
