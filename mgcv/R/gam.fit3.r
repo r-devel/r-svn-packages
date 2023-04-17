@@ -843,7 +843,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
     ## use exact MLE scale param for aic in gaussian case, otherwise scale.est (unless known)
     
-    dev1 <- if (scale.known) scale*sumw else if (family$family=="gaussian") dev else if (is.na(reml.scale)) scale.est*sumw else reml.scale*sumw  
+    dev1 <- if (scale.known) scale*sumw else if (family$family=="gaussian") dev else
+            if (is.na(reml.scale)) scale.est*sumw else reml.scale*sumw  
 
     aic.model <- aic(y, n, mu, weights, dev1) # note: incomplete 2*edf needs to be added
     if (control$trace) {
@@ -3071,6 +3072,7 @@ Tweedie <- function(p=1,link=power(0)) {
         n <- rep(1, nobs)
         mustart <- y + 0.1 * (y == 0)
     })
+
     ls <-  function(y,w,n,scale) {
       power <- p
       colSums(w*ldTweedie(y,y,p=power,phi=scale))
