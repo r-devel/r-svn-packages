@@ -240,7 +240,7 @@ nb <- function (theta = NULL, link = "log") {
             lgamma(y + 1) - Theta * log(Theta) + lgamma(Theta) -
             lgamma(Theta + y)
         2 * sum(term * wt)
-    }
+    } ## aic nb
     
     ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function for nb
@@ -269,7 +269,7 @@ nb <- function (theta = NULL, link = "log") {
             lsth1=lsth, ## first deriv vector w.r.t theta - last element relates to scale, if free
 	    LSTH1=LSTH, ## rows are above derivs by datum
             lsth2=lsth2) ## Hessian w.r.t. theta, last row/col relates to scale, if free
-    }
+    } ## ls nb
 
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the negative binomial family")
@@ -283,7 +283,7 @@ nb <- function (theta = NULL, link = "log") {
       posr$family <- 
       paste("Negative Binomial(",round(family$getTheta(TRUE),3),")",sep="")
       posr
-    }
+    } ## postproc nb
 
     rd <- function(mu,wt,scale) {
       Theta <- exp(get(".Theta"))
