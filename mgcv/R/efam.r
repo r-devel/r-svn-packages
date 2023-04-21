@@ -1,5 +1,5 @@
 ## (c) Simon N. Wood & Natalya Pya (scat, beta), 
-## 2013-2017. Released under GPL2.
+## 2013-2023. Released under GPL2.
 ## See gam.fit4.r for testing functions fmud.test and fetad.test.
 
 estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE) {
@@ -288,12 +288,12 @@ nb <- function (theta = NULL, link = "log") {
     rd <- function(mu,wt,scale) {
       Theta <- exp(get(".Theta"))
       rnbinom(n=length(mu),size=Theta,mu=mu)
-    }
+    } ## rd nb
 
     qf <- function(p,mu,wt,scale) {
       Theta <- exp(get(".Theta"))
       qnbinom(p,size=Theta,mu=mu)
-    }
+    } ## qf nb
  
 
      environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
@@ -1215,7 +1215,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         r$Dmu3th <- 2 * wt * mup1*(y/mu*(logmu*(1+p)*p-p -p-1) +logmu*(1-p)*p + p - 1 + p)*dpth1
       }
       r
-    }
+    } ## Dd tw
 
     aic <- function(y, mu, theta=NULL, wt, dev) {
         if (is.null(theta)) theta <- get(".Theta")  
@@ -1224,7 +1224,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         scale <- dev/sum(wt)
         -2 * sum(ldTweedie(y, mu, p = p, phi = scale)[, 1] * 
             wt) + 2
-    }
+    } ## aic tw
 
     ls <- function(y, w, theta, scale) {
         ## evaluate saturated log likelihood + derivs w.r.t. working params and log(scale) Tweedie
@@ -1234,7 +1234,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 	lsth1 <- c(LS[4],LS[2]) ## deriv w.r.t. p then log scale
         lsth2 <- matrix(c(LS[5],LS[6],LS[6],LS[3]),2,2)
         list(ls=LS[1],lsth1=lsth1,LSTH1=Ls[,c(4,2)],lsth2=lsth2)
-    }
+    } ## ls tw
 
  
     initialize <- expression({
@@ -1248,7 +1248,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
       posr$family <- 
       paste("Tweedie(p=",round(family$getTheta(TRUE),3),")",sep="")
       posr
-    }
+    } ## postproc tw
   
     rd <- function(mu,wt,scale) {
      th <- get(".Theta") 
@@ -1259,7 +1259,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
             rgamma(n=length(mu), shape = 1/scale, scale = mu * scale)
      else
             rTweedie(mu, p = p, phi = scale)
-    }
+    } ## rd tw
 
      environment(Dd) <- environment(ls) <-
      environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
@@ -1325,7 +1325,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
       ## yth <- y*theta
       2* wt * (-lgamma(theta) +lgamma(muth) + lgamma(theta - muth) - muth*(log(y)-log1p(-y)) - 
                 theta*log1p(-y) + log(y) + log1p(-y)) 
-    }
+    } ## dev.resids betar
     
     Dd <- function(y, mu, theta, wt, level=0) {
     ## derivatives of the -2*loglik...
@@ -1368,7 +1368,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         r$Dmu3th <- 3*r$Dmu3 + 2 * wt *theta^4*(mu*psi3.muth-onemu*psi3.onemuth)
       }
       r
-    }
+    } ## Dd betar
 
     aic <- function(y, mu, theta=NULL, wt, dev) {
         if (is.null(theta)) theta <- get(".Theta")
@@ -1377,7 +1377,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         term <- -lgamma(theta)+lgamma(muth)+lgamma(theta-muth)-(muth-1)*log(y)-
                (theta-muth-1)*log1p(-y) ## `-' log likelihood for each observation
         2 * sum(term * wt)
-    }
+    } ## aic betar
     
     ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function for betar
@@ -1386,7 +1386,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
             lsth1=0,  ## first deriv vector w.r.t theta - last element relates to scale
 	    LSTH1 = matrix(0,length(y),1),
             lsth2=0) ##Hessian w.r.t. theta
-     }
+     } ## ls betar
 
    
     ## preinitialization to reset G$y values of <=0 and >=1... 
@@ -1477,7 +1477,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
       }
 
       list(f=sum(wt*LS),term=LS,mu=mu) ## fields f (sat lik) and term (individual datum sat lik) expected
-    } ## saturated.ll
+    } ## saturated.ll betar
 
 
     ## computes deviance, null deviance, family label
@@ -1501,7 +1501,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
       posr$family <- 
       paste("Beta regression(",round(theta,3),")",sep="")
       posr
-    } ## postproc
+    } ## postproc betar
 
     initialize <- expression({
         ##n <- rep(1, nobs)
@@ -1528,7 +1528,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         res <- (object$y - mu)/object$family$variance(mu)^.5
       }
       res
-     } ## residuals
+     } ## residuals betar
 
     rd <- function(mu,wt,scale) {
      ## simulate data given fitted latent variable in mu 
@@ -1547,7 +1547,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
       q[q>=1-eps] <- 1 - eps
       q[q<eps] <- eps
       q
-    }
+    } ## rs betar
 
     environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     environment(rd)<- environment(qf) <- environment(variance) <- environment(putTheta) <-
@@ -1698,7 +1698,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
 
       }
       oo
-    }  ## end of Dd
+    }  ## Dd scat
 
  
     aic <- function(y, mu, theta=NULL, wt, dev) {
@@ -1708,7 +1708,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
         term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) +
            (nu+1)*log1p(((y-mu)/sig)^2/nu)/2  ## `-'log likelihood for each observation
         2 * sum(term * wt)
-    }
+    } ## aic scat
     
     ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function for scat
@@ -1734,7 +1734,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
             lsth1=lsth, ## first derivative vector wrt theta
 	    LSTH1=LSTH,
             lsth2=lsth2) ## Hessian wrt theta
-    }
+    } ## ls scat
 
     preinitialize <- function(y,family) {
       ## initialize theta from raw observations..
@@ -1745,7 +1745,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
          Theta <- c(1.5, log(0.8*sd(y))) 
          return(list(Theta=Theta))
        } ## otherwise fixed theta supplied
-    }
+    } ## preinitialize scat
 
     initialize <- expression({
         if (any(is.na(y))) stop("NA values not allowed for the scaled t family")
@@ -1760,7 +1760,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
       if (th[1]>999) th[1] <- Inf
       posr$family <- paste("Scaled t(",paste(th,collapse=","),")",sep="")
       posr
-    }
+    } ## postproc scat
     
     rd <- function(mu,wt,scale) {
      ## simulate data given fitted latent variable in mu 
@@ -1768,7 +1768,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
       nu <- exp(theta[1])+min.df; sig <- exp(theta[2])
       n <- length(mu)
       stats::rt(n=n,df=nu)*sig + mu
-    }
+    } ## rd scat
 
     environment(dev.resids) <- environment(aic) <- environment(getTheta) <- environment(Dd) <-
     environment(ls) <- environment(rd)<- environment(variance) <- environment(putTheta) <- env
@@ -1959,7 +1959,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
 
     }
     oo
-  } ## end Dd for ziP
+  } ## Dd ziP
   
   aic <- function(y, mu, theta=NULL, wt, dev) {
     if (is.null(theta)) theta <- get(".Theta")
@@ -1977,7 +1977,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
             lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
             LSTH1=matrix(0,length(y),2),
             lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
-  }
+  } ## ls ZiP
 
 
     initialize <- expression({
@@ -2014,7 +2014,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
       ## object$weights <- pmax(0,object$working.weights) ## Fisher can be too extreme
       ## E(y) = p * E(y) - but really can't mess with fitted.values if e.g. rd is to work.
       posr
-    } ## postproc
+    } ## postproc ZiP
 
     rd <- function(mu,wt,scale) {
     ## simulate data given fitted latent variable in mu 
@@ -2040,7 +2040,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
         y
       } 
       rzip(mu,get(".Theta"))
-    }
+    } ## rd ZiP
    
    saturated.ll <- function(y,family,wt=rep(1,length(y))) {
       ## function to get saturated ll for ziP - 
@@ -2078,7 +2078,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
       }
       l1 <- rep(0,length(pind));l1[pind] <- l
       l1
-    } ## saturated.ll
+    } ## saturated.ll ZiP
 
   residuals <- function(object,type=c("deviance","working","response")) {
     if (type == "working") { 
@@ -2140,7 +2140,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
       names(fv) <- c("fit","se.fit")
       return(fv)
     }
-  } ## predict
+  } ## predict ZiP
 
 
    

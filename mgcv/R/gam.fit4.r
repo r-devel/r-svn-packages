@@ -60,14 +60,16 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
    } ## end of non identity
    good <- is.finite(d$Deta)&is.finite(d$Deta2)
    if (deriv>0) {
-     if (length(theta)>1) good <- good&is.finite(rowSums(d$Dth))&is.finite(rowSums(d$Detath))&
-                                  is.finite(rowSums(d$Deta2th))&is.finite(d$Deta3) else
-     good <- good&is.finite(d$Dth)&is.finite(d$Detath)&is.finite(d$Deta2th)&is.finite(d$Deta3)
+     nth <- length(theta)
+     if (nth>1) good <- good&is.finite(rowSums(d$Dth))&is.finite(rowSums(d$Detath))&
+                                 is.finite(rowSums(d$Deta2th))&is.finite(d$Deta3) else
+     good <- good & is.finite(d$Deta3) & if (nth==0) TRUE else
+             is.finite(d$Dth)&is.finite(d$Detath)&is.finite(d$Deta2th)
      if (deriv>1) { 
-       if (length(theta)==1) good <- good&is.finite(d$Dth2)&is.finite(d$Detath2)&is.finite(d$Deta2th2)&
-                                     is.finite(d$Deta3th)&is.finite(d$Deta4) else
-       good <- good&is.finite(rowSums(d$Dth2))&is.finite(rowSums(d$Detath2))&is.finite(rowSums(d$Deta2th2))&
-               is.finite(rowSums(d$Deta3th))&is.finite(d$Deta4)
+       if (nth>1) good <- good&is.finite(rowSums(d$Dth2))&is.finite(rowSums(d$Detath2))&is.finite(rowSums(d$Deta2th2))&
+                          is.finite(rowSums(d$Deta3th))&is.finite(d$Deta4) else
+       good <- good & is.finite(d$Deta4) & if (nth==0) TRUE else
+               is.finite(d$Dth2)&is.finite(d$Detath2)&is.finite(d$Deta2th2)&is.finite(d$Deta3th)
      }
    }	   
    d$good <- good	   
