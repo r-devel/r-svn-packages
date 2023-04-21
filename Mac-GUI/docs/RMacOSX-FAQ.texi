@@ -4,8 +4,8 @@
 @settitle R for macOS FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2023
-@set FAQ-VERSION 4.2.3 @value{FAQ-YEAR}-03-15
-@set REL-VERSION 4.2.3
+@set FAQ-VERSION 4.3.0 @value{FAQ-YEAR}-04-21
+@set REL-VERSION 4.3.0
 @set GUI-VERSION 1.79
 @documentlanguage en
 @documentencoding ISO-8859-1
@@ -1219,7 +1219,7 @@ files. For R 4.0.0 and higher this is
 Also the @CRAN{} build includes libraries that are required
 to run @R{} inside the framework. Static libraries used by @CRAN{} @R{}
 and packages are available in
-@uref{https://mac.R-project.org/libs-4}
+@uref{https://mac.R-project.org/bin}
 
 @node Why is R.home() not versioned?, R.app GUI crashes on startup!, What is the difference between the CRAN build and a vanilla build?, Miscellaneous questions
 @section Why is R.home() in the R framework not versioned?
