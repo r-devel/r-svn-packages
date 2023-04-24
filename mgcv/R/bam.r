@@ -2207,7 +2207,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         }
         fit <- list(fit=fit,se.fit=se.fit)
       } else if (type=="response") fit <- object$family$linkinv(fit)
-    } else { ## family has its own response fitting code
+    } else { ## family has its own response prediction code
       X <- list(Xd=Xd,kd=kd,ks=ks,ts=ts,dt=dt,v=object$dinfo$v,qc=object$dinfo$qc,drop=object$dinfo$drop,lpid=lpid)
       if (nlp>1) attr(X,"lpi") <- lpi
       ## NOTE: not set up for families needing response for prediction (e.g. cox.ph)

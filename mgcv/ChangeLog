@@ -42,6 +42,7 @@ present, and reparameterization needs checking (also for bam).
 
 * tests directory removed, as check time was tripping up every CRAN submission.
 
+* coxph memory error fix - could make bfgs fitting fail.
 
 1.8-42
 
