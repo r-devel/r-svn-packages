@@ -744,8 +744,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      ## compute the REML score...
      ls <- family$ls(y,weights,theta,scale)
      nt <- length(theta)
-     lsth1 <- ls$lsth1[1:nt];
-     lsth2 <- as.matrix(ls$lsth2)[1:nt,1:nt] ## exclude any derivs w.r.t log scale here
+     lsth1 <- if (nt>0) ls$lsth1[1:nt] else rep(0,0)
+     lsth2 <- if (nt>0) as.matrix(ls$lsth2)[1:nt,1:nt] else matrix(0,0,0) ## exclude any derivs w.r.t log scale here
      REML <- ((dev+oo$P)/(2*scale) - ls$ls)/gamma + (oo$ldet - rp$det)/2 - 
              as.numeric(scoreType=="REML") * Mp * (log(2*pi*scale)/2-log(gamma)/2)
      
@@ -757,7 +757,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        }
        REML1 <- ((oo$D1+oo$P1)/(2*scale) - c(lsth1,rep(0,length(sp))))/gamma + (det1)/2
        if (deriv>1) {
-         ls2 <- D2*0;ls2[1:nt,1:nt] <- lsth2 
+         ls2 <- D2*0;if (nt>0) ls2[1:nt,1:nt] <- lsth2 
          if (nSp) ldet2[ind,ind] <- ldet2[ind,ind] - rp$det2
          REML2 <- ((D2+bSb2)/(2*scale) - ls2)/gamma + ldet2/2
        }
@@ -768,7 +768,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         dlr.dlphi <- (-Dp/(2 *scale) - ls$lsth1[nt+1])/gamma - as.numeric(scoreType=="REML") * Mp/2
         d2lr.d2lphi <- (Dp/(2*scale) - ls$lsth2[nt+1,nt+1])/gamma 
         d2lr.dspphi <- -(oo$D1+oo$P1)/(2*scale*gamma) 
-        d2lr.dspphi[1:nt] <- d2lr.dspphi[1:nt] - ls$lsth2[nt+1,1:nt]/gamma
+        if (nt>0) d2lr.dspphi[1:nt] <- d2lr.dspphi[1:nt] - ls$lsth2[nt+1,1:nt]/gamma
         REML1 <- c(REML1,dlr.dlphi)
         if (deriv==2) {
               REML2 <- rbind(REML2,as.numeric(d2lr.dspphi))

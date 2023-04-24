@@ -1055,7 +1055,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
         ind <- eta>alpha[i] & eta<=alpha[i+1]
         fv[ind] <- i
       } 
-      return(fv)
+      return(list(fv))
     }
   } ## ocat predict
 
