@@ -2798,6 +2798,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         if (sum(!(names(object$model)%in%names(newdata)))) stop(
         "newdata is a model.frame: it should contain all required variables\n")
          nd.is.mf <- TRUE
+	 response <- newdata[[yname]]
       } else {
         ## Following is non-standard to allow convenient splitting into blocks
         ## below, and to allow checking that all variables are in newdata ...

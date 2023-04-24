@@ -1938,14 +1938,16 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   
   na.act <- attr(newdata,"na.action") ## save the NA action for later
 
-
+  yname <- attr(attr(object$terms,"dataClasses"),"names")[attr(object$terms,"response")]
+  response <- newdata[[yname]]
+  
   ## Parametric terms have to be dealt with safely, but without forming all terms 
   ## or a full model matrix. Strategy here is to use predict.gam, having removed
   ## key smooth related components from model object, so that it appears to be
   ## a parametric model... 
   offset <- if (nlp>1) as.list(rep(0,nlp)) else 0
   para.discrete <- !is.null(object$dinfo$para.discrete)
-  if (!para.discrete&&(any(object$nsdf)||any(object$offset!=0))) { ## deal with parametric terms...
+  if (FALSE&&!para.discrete&&(any(object$nsdf)||any(object$offset!=0))) { ## deal with parametric terms...
     ## save copies of smooth info...
     .Deprecated(package="mgcv",msg="prediction from discrete bam models prior to 1.8-32 is deprecated, please refit")
     smooth <- object$smooth; coef <- object$coefficients; Vp <- object$Vp
@@ -2212,8 +2214,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       if (nlp>1) attr(X,"lpi") <- lpi
       ## NOTE: not set up for families needing response for prediction (e.g. cox.ph)
       fampred <- object$family$predict ## just eases debugging
-      ffv <- fampred(object$family,se=se,y=NULL,X=X,beta=object$coefficients,
-                             off=offset,Vb=object$Vp)  ## NOTE: offsets not handled
+      offs <- if (length(offset)==1) rep(offset,nrow(kd)) else offset ## avoid subsetting failure
+      ffv <- fampred(object$family,se=se,y=response,X=X,beta=object$coefficients,
+                             off=offs,Vb=object$Vp)  ## NOTE: offsets not handled
       fit <- ffv[[1]]
       if (se) fit <- list(fit=fit,se.fit =ffv[[2]])
     }
