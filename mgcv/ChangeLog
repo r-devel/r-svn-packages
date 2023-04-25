@@ -12,7 +12,7 @@ Currently deprecated and liable to be removed:
 
 Issues: 
 
-** openblas 0.3.x x<7 is not thread safe if itself compiled for single thread 
+* openblas 0.3.x x<7 is not thread safe if itself compiled for single thread 
    use and then called from multiple threads (unlike the reference BLAS, say).
    0.2.20 appears to be OK. For 0.3.x x>6 make USE_THREAD=0 USE_LOCKING=1
    to make openblas ensures thread safety.
@@ -27,7 +27,9 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized. Also there is no option to use the identical
   discretization to that used in fitting when predicting.
 
-1.8-43
+1.9-0
+
+** 'gfam' allows reponse variables to be from several different families. 
 
 * 'multinom' variance fix for K>=3 cases. A counter was initialized in the wrong
   place. Thanks to Max Goplerud for finding and reporting this.

@@ -1,5 +1,5 @@
 Package: mgcv
-Version: 1.8-43
+Version: 1.9-0
 Author: Simon Wood <simon.wood@r-project.org>
 Maintainer: Simon Wood <simon.wood@r-project.org>
 Title: Mixed GAM Computation Vehicle with Automatic Smoothness Estimation
