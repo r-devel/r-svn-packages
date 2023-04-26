@@ -3,7 +3,7 @@
 \alias{mgcv-package}
 \alias{mgcv}
 \docType{package}
-\title{Mixed GAM Computation Vehicle with GCV/AIC/REML smoothness estimation and GAMMs by REML/PQL
+\title{Mixed GAM Computation Vehicle with GCV/AIC/REML/NCV smoothness estimation and GAMMs by REML/PQL
 }
 \description{
 \code{mgcv} provides functions for generalized additive modelling (\code{\link{gam}} and \code{\link{bam}})  and
@@ -34,7 +34,7 @@ predictors can be specified using \code{\link{te}},  \code{\link{ti}} or \code{\
 overview of the built in smooth classes, and \code{\link{random.effects}} should be refered to for an overview 
 of random effects terms (see also \code{\link{mrf}} for Markov random fields). Estimation is by
 penalized likelihood or quasi-likelihood maximization, with smoothness
-selection by GCV, GACV, gAIC/UBRE or (RE)ML. See \code{\link{gam}}, \code{\link{gam.models}}, 
+selection by GCV, GACV, gAIC/UBRE, \code{\link{NCV}} or (RE)ML. See \code{\link{gam}}, \code{\link{gam.models}}, 
 \code{\link{linear.functional.terms}} and \code{\link{gam.selection}} for some discussion of model specification and
 selection. For detailed control of fitting see \code{\link{gam.convergence}},
 \code{\link{gam}} arguments \code{method} and \code{optimizer} and \code{\link{gam.control}}. For checking and

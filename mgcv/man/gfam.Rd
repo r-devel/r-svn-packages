@@ -5,7 +5,7 @@
 \title{Grouped families}
 \description{Family for use with \code{\link{gam}} or \code{\link{bam}} allowing a univariate response vector to be made up of variables from several different distributions. The response variable is supplied as a 2 column matrix, where the first column contains the response observations and the second column indexes the distribution (family) from which it comes. \code{gfam} takes a list of families as its single argument.
 
-Useful for modelling data from different sources that are linked by a model sharing some components. Smooth model components that are not shared are usually handled with by variables.  
+Useful for modelling data from different sources that are linked by a model sharing some components. Smooth model components that are not shared are usually handled with \code{by} variables (see \code{\link{gam.models}}).  
 }
 
 \usage{
@@ -24,11 +24,11 @@ Regular exponential families do not compute the same quantities as extended fami
 
 Scale parameters obviously have to be handled separately for each family, and treated as parameters to be estimated, just like other \code{extended.family} non-location distribution parameters. Again this is handled internally. This requirement is part of the reason that an \code{extended.family} is always produced, even if all elements of \code{fl} are standard exponential families. In consequence smoothing parameter estimation is always by REML or NCV. 
 
-Note that the null deviance is currently computed by assuming a single parameter model for each family, rather than just one family, which may slightly lower explained deviances.
+Note that the null deviance is currently computed by assuming a single parameter model for each family, rather than just one parameter, which may slightly lower explained deviances. Note also that residual checking should probably be done by disaggregating the residuals by family. For this reason functions are not provided to facilitate residual checking with \code{\link{qq.gam}}. 
 
 Prediction on the response scale requires that a family index vector is supplied, with the name of the response, as part of the new prediction data. However, families such as \code{\link{ocat}} which usually produce matrix predictions for prediction type \code{"response"}, will not be able to do so when part of \code{gfam}. 
 
-The family relies on the methods in Wood, Pya and Saefken (2016).
+\code{gfam} relies on the methods in Wood, Pya and Saefken (2016).
 
 }
 
@@ -100,6 +100,7 @@ plot(b,pages=1)
 
 ## set up model so that only the binomial observations depend
 ## on x0...
+
 dat$id1 <- as.numeric(dat$y[,2]==1)
 b1 <- gam(y~s(x0,by=id1)+s(x1)+s(x2)+s(x3),
          family=gfam(list(binomial,tw,gaussian)),data=dat)
