@@ -22,7 +22,8 @@ bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,
     paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
     cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,
-    coef=NULL,drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
+    coef=NULL,drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,
+    in.out=NULL,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -159,6 +160,8 @@ involving factor variables you might want to turn this off. Only do so if you kn
 
 \item{drop.intercept}{Set to \code{TRUE} to force the model to really not have the a constant in the parametric model part,
 even with factor variables present.}
+
+\item{in.out}{If supplied then this is a two item list of intial values. \code{sp} is initial smoothing parameter estiamtes and \code{scale} the initial scale parameter estimate (set to 1 if famiy does not have one).}
 
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }

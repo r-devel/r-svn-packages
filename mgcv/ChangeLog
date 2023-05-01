@@ -36,7 +36,9 @@ present, and reparameterization needs checking (also for bam).
 * 'multinom' variance fix for K>=3 cases. A counter was initialized in the wrong
   place. Thanks to Max Goplerud for finding and reporting this.
 
-* NCV variance estimation improvements.
+* NCV variance estimation improvements + na handling.
+
+* 'in.out' argument added for 'bam'.
 
 * smooth2random tweak to guarantee same eigenvector sign everytime for same 
   problem (needed by some developers who don't want to carry the original 

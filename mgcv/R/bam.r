@@ -654,9 +654,9 @@ mini.mf <-function(mf,chunk.size) {
 } ## mini.mf
 
 
-bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
+bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     mustart = NULL, offset = rep(0, nobs),rho=0, control = gam.control(), intercept = TRUE, 
-    gc.level=0,nobs.extra=0,npt=c(1,1),gamma=1) {
+    gc.level=0,nobs.extra=0,npt=c(1,1),gamma=1,in.out=NULL,...) {
 ## This is a version of bgam.fit designed for use with discretized covariates. 
 ## Difference to bgam.fit is that XWX, XWy and Xbeta are computed in C
 ## code using compressed versions of X. Parallelization of XWX formation
@@ -880,7 +880,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 
 
       if (iter==1) { ## need to get initial smoothing parameters 
-        lambda.0 <- initial.sp(qrx$R,G$S,G$off,XX=TRUE) ## note that this uses the untransformed X'X in qrx$R
+        lambda.0 <- if (is.null(in.out)) initial.sp(qrx$R,G$S,G$off,XX=TRUE) else in.out$sp ## note that this uses the untransformed X'X in qrx$R
         ## convert intial s.p.s to account for L 
         lsp0 <- log(lambda.0) ## initial s.p.
         if (!is.null(G$L)) lsp0 <- 
@@ -891,8 +891,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
       ## carry forward scale estimate if possible...
       if (scale>0) log.phi <- log(scale) else {
         if (iter==1) {
-            if (is.null(coef)||qrx$y.norm2==0) lsp0[n.sp+1] <- log(var(as.numeric(G$y))*.05) else
-               lsp0[n.sp+1] <- log(qrx$y.norm2/(nobs+nobs.extra))
+	    if (is.null(in.out)) {
+              if (is.null(coef)||qrx$y.norm2==0) lsp0[n.sp+1] <- log(var(as.numeric(G$y))*.05) else
+                 lsp0[n.sp+1] <- log(qrx$y.norm2/(nobs+nobs.extra))
+            } else lsp0[n.sp+1] <- log(in.out$scale)		 
         }
       }
 
@@ -1024,7 +1026,7 @@ regular.Sb <- function(S,off,sp,beta) {
 
 bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etastart = NULL,
     mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
-    cl = NULL,gc.level=0,use.chol=FALSE,nobs.extra=0,samfrac=1,npt=1) {
+    cl = NULL,gc.level=0,use.chol=FALSE,nobs.extra=0,samfrac=1,npt=1,in.out=NULL,...) {
     #y <- mf[[gp$response]]
     y <- G$y
     weights <- G$w
@@ -1343,13 +1345,15 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       } else if (method=="fREML") { ## use fast REML code
         ## block diagonal penalty object, Sl, set up before loop
         um <- Sl.Xprep(Sl,qrx$R,nt=npt)
-        lambda.0 <- initial.sp(qrx$R,G$S,G$off)
+        lambda.0 <- if (is.null(in.out)) initial.sp(qrx$R,G$S,G$off) else in.out$sp
         lsp0 <- log(lambda.0) ## initial s.p.
         ## carry forward scale estimate if possible...
         if (scale>0) log.phi <- log(scale) else {
           if (iter>1) log.phi <- log(object$scale) else {
-            if (is.null(coef)||qrx$y.norm2==0) log.phi <- log(var(as.numeric(G$y))*.05) else
-               log.phi <- log(qrx$y.norm2/(nobs+nobs.extra))
+	    if (is.null(in.out)) {
+              if (is.null(coef)||qrx$y.norm2==0) log.phi <- log(var(as.numeric(G$y))*.05) else
+                 log.phi <- log(qrx$y.norm2/(nobs+nobs.extra))
+	    } else log.phi <- log(in.out$scale)	 
           }
         }
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
@@ -1615,7 +1619,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 
 
 bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
-                    cl=NULL,gc.level=0,use.chol=FALSE,npt=1) {
+                    cl=NULL,gc.level=0,use.chol=FALSE,in.out=NULL,npt=1) {
 ## function that does big additive model fit in strictly additive case
    ## first perform the QR decomposition, blockwise....
    n <- nrow(mf)
@@ -1805,10 +1809,9 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
    } else if (method=="fREML"){ ## use fast REML code
      Sl <- Sl.setup(G) ## setup block diagonal penalty object
      um <- Sl.Xprep(Sl,qrx$R,nt=npt)
-     lambda.0 <- initial.sp(qrx$R,G$S,G$off)
+     lambda.0 <- if (is.null(in.out)) initial.sp(qrx$R,G$S,G$off) else in.out$sp
      lsp0 <- log(lambda.0) ## initial s.p.
-     if (scale<=0) log.phi <- log(var(as.numeric(G$y))*.05) else ## initial phi guess
-                   log.phi <- log(scale)
+     log.phi <- if (scale<=0) { if (is.null(in.out)) log(var(as.numeric(G$y))*.05) else log(in.out$scale) } else log(scale)
      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp,nt=npt,gamma=gamma)
@@ -2395,7 +2398,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
                 cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,coef=NULL,
-                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
+                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,in.out=NULL,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
@@ -2417,7 +2420,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             stop("family not recognized")
       
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
-    if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
+    if (scale==0) { if (family$family %in% c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","GACV.Cp","GCV.Cp","REML",
                     "ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
     if (is.logical(discrete)) {
@@ -2489,7 +2492,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <- mf$gc.level <-
     mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho  <- mf$cluster <- mf$discrete <-
     mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$drop.intercept <-
-    mf$coef <- mf$...<-NULL
+    mf$coef <- mf$in.out <- mf$... <-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
 
@@ -2852,10 +2855,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (G$am&&!G$discretize) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc() 
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
-                      gc.level=gc.level,use.chol=use.chol,npt=nthreads[1])
+                      gc.level=gc.level,use.chol=use.chol,in.out=in.out,npt=nthreads[1])
   } else if (G$discretize) {
     object <- bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,coef=coef,
-                       control = control,npt=nthreads,gc.level=gc.level,gamma=gamma,...)
+                       control = control,npt=nthreads,gc.level=gc.level,gamma=gamma,in.out=in.out,...)
                        
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc()
@@ -2869,7 +2872,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         control1$epsilon <- 1e-2
         object <- bgam.fit(G, mf[ind,], chunk.size, gp ,scale ,gamma,method=method,nobs.extra=0,
                        control = control1,cl=cluster,npt=nthreads[1],gc.level=gc.level,coef=coef,
-                       use.chol=use.chol,samfrac=1,...)
+                       use.chol=use.chol,samfrac=1,in.out=in.out,...)
         G$w <- Gw;G$offset <- Goffset
         coef <- object$coefficients
       }
@@ -2877,7 +2880,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## fit full dataset
     object <- bgam.fit(G, mf, chunk.size, gp ,scale ,gamma,method=method,coef=coef,
                        control = control,cl=cluster,npt=nthreads[1],gc.level=gc.level,
-                       use.chol=use.chol,...)
+                       use.chol=use.chol,in.out=in.out,...)
   }
 
   if (gc.level>0) gc()
