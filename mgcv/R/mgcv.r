@@ -1621,11 +1621,14 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   object[names(mv)] <- mv
   if (!is.null(nei)) {
-    if (all.equal(sort(nei$i),1:nrow(G$X))&&criterion=="NCV") { ## each point predicted
-      loocv <- length(nei$k)==length(nei$i) && all.equal(nei$i,nei$k) ## leave one out CV,
+    if (all.equal(sort(nei$i),1:nrow(G$X))&&length(nei$mi)==nrow(G$X)&&criterion=="NCV") { ## each point predicted on its own
+      loocv <- length(nei$k)==length(nei$i) && all.equal(nei$i,nei$k) && length(nei$m) == length(nei$k) ## leave one out CV,
       if (is.logical(nei$jackknife)&&nei$jackknife) loocv <- TRUE ## straight jackknife requested
       if (nei$jackknife < 0) nei$jackknife <- TRUE ## signal cov matrix calc
-    } else if (nei$jackknife < 0) jackknife <- FALSE
+    } else {
+      loocv <- FALSE
+      if (nei$jackknife < 0) nei$jackknife <- FALSE
+    }  
   }
   if (!is.null(nei)&&(criterion!="NCV"||nei$jackknife)) { ## returning NCV when other criterion used for sp selection, or computing perturbations
     if (!is.null(nei$QNCV)&&nei$GNCV) family$qapprox <- TRUE
@@ -1737,6 +1740,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (is.null(nei$k)||is.null(nei$m)) nei$k <- nei$m <- nei$mi <- nei$i <- 1:G$n 
     if (is.null(nei$i)) if (length(nei$m)==G$n) nei$mi <- nei$i <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
     if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    nei$m <- round(nei$m); nei$mi <- round(nei$mi); nei$k <- round(nei$k); nei$i <- round(nei$i); 
+    if (min(nei$i)<1||max(nei$i>G$n)||min(nei$k)<1||max(nei$k>G$n)) stop("nei indexes non-existent points")
+    if (nei$m[1]<1||max(nei$m)>length(nei$k)||length(nei$m)<2||any(diff(nei$m)<1)) stop('nei$m faulty')
+    if (nei$mi[1]<1||max(nei$mi)>length(nei$i)||length(nei$mi)<2||any(diff(nei$mi)<1)) stop('nei$mi faulty')
     if (is.null(nei$jackknife)) nei$jackknife <- -1
   }  
 
@@ -2055,6 +2062,33 @@ variable.summary <- function(pf,dl,n) {
 } ## end variable.summary
 
 
+nanei <- function(nb,k) {
+## nb is an NCV neighbourhood defining list, k an array of points to drop.
+## this function adjusts nb to remove the dropped points and adjust the
+## indices accordingly, so that the structure works with a data frame
+## from which rows in k have been dropped.
+  if (!length(k)) return
+  if (is.null(nb$k)||is.null(nb$m)||is.null(nb$mi)||is.null(nb$i)) stop("full nei list needed if data incomplete")
+  ## first work on dropped folds...
+  kk <- which(nb$k %in% k) ## position of dropped in nb$k
+  ## adjust m for the fact that points are to be dropped...
+  nb$m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
+  ii <- which(diff(c(0,nb$m))==0) ## identify zero length folds
+  if (length(ii)) nb$m <- nb$m[-ii] ## drop zero length folds
+  nb$k <- nb$k[-kk] ## drop the elements of k
+  nb$k <- nb$k - findInterval(nb$k,sort(k)) ## and shift indices to account for dropped
+
+  ## now the prediction folds...
+  kk <- which(nb$i %in% k) ## position of dropped in nb$i
+  ## adjust mi for the fact that points are to be dropped...
+  nb$mi <- nb$mi - cumsum(tabulate(findInterval(kk-1,nb$mi)+1,nbins=length(nb$m)))
+  ii <- which(diff(c(0,nb$mi))==0) ## identify zero length folds
+  if (length(ii)) nb$mi <- nb$mi[-ii] ## drop zero length folds
+  nb$i <- nb$i[-kk] ## drop the elements of k
+  nb$i <- nb$i - findInterval(nb$i,sort(k)) ## and shift indices to account for dropped
+  nb 
+} ## nanei
+
 ## don't be tempted to change to control=list(...) --- messes up passing on other stuff via ...
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
@@ -2099,7 +2133,13 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
     terms <- attr(mf,"terms")
-    
+
+    if (!is.null(nei)) { ## check if data dropped
+      k <- attr(mf,"na.action")
+      if (!is.null(k)) { ## need to adjust nei for dropped data
+        nei <- nanei(nei,as.numeric(k))
+      }
+    }
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
     vars <- all_vars1(gp$fake.formula[-2]) ## drop response here

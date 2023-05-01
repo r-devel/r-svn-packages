@@ -3,7 +3,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Neighbourhood Cross Validation}
 \description{
-NCV estimates smoothing parameters by optimizing the average ability of a model to predict subsets of data when subsets of data are omitted from fitting. Usually the predicted subset is a subset of the omitted subset. If both subsets are the same single datapoint, and the average is over all datapoints, then NCV is leave-one-out cross validation.
+NCV estimates smoothing parameters by optimizing the average ability of a model to predict subsets of data when subsets of data are omitted from fitting. Usually the predicted subset is a subset of the omitted subset. If both subsets are the same single datapoint, and the average is over all datapoints, then NCV is leave-one-out cross validation. QNCV is a quadratic approximation to NCV, guaranteed finite for any family link combination.
 
 In detail, suppose that a model is estimated by minimizing a penalized loss
 \deqn{\sum_i D(y_i,\theta_i) + \sum_j \lambda_j \beta^{\sf T} {S}_j \beta }{sum_i D(y_i,t_i) + sum_j v_j b'S_jb}
@@ -53,7 +53,7 @@ Chu and Marron (1991) Comparison of two bandwidth selectors with dependent error
 Arlot, S. and A. Celisse (2010). A survey of cross-validation procedures for model selection. Statistics Surveys 4, 40-79
 
 Roberts et al. (2017) Cross-validation strategies for data with temporal,
-spatial, hierarchical, or phylogenetic structure. Ecography 40(8), 913–929.
+spatial, hierarchical, or phylogenetic structure. Ecography 40(8), 913-929.
 
 Wood S.N. (2023) On Neighbourhood Cross Validation. in prep.
 }
@@ -79,9 +79,10 @@ for (i in 2:n) e[i] <- 0.6*e[i-1] + e[i]
 y <- f + e ## autocorrelated data
 nei <- nei.cor(4,n) ## construct neighbourhoods to mitigate 
 b0 <- gam(y~s(x,k=40)) ## GCV based fit
-b1 <- gam(y~s(x,k=40),method="NCV",nei=nei,control=gam.control(ncv.threads=2))
+gc <- gam.control(ncv.threads=2)
+b1 <- gam(y~s(x,k=40),method="NCV",nei=nei,control=gc)
 ## use "QNCV", which is identical here...
-b2 <- gam(y~s(x,k=40),method="QNCV",nei=nei,control=gam.control(ncv.threads=2))
+b2 <- gam(y~s(x,k=40),method="QNCV",nei=nei,control=gc)
 ## plot GCV and NCV based fits...
 f <- f - mean(f)
 par(mfrow=c(1,2))

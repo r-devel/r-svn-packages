@@ -441,7 +441,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
                LOOCV is recovered if ind = 0:(n-1) and each points neighbourhood is just itself.     
  */
   SEXP S,kr;
-  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,*error,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,
+  int maxn,i,nsp,n,p,pg,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,*error,jj,nm,*ind,nth,*mi,io,io0,no,pdef,nddbuf,nwork = 0,
     nt,tid=0,pmaxn,*iwork=NULL,use_minres=1,niwork=0;
   double *X,*g,*g1,*gp,*p1,*R0,*R,*Xi,xx,*xip,*xip0,z,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,*p0,*p3,*ddbuf,*Rb,*work=NULL,
     *deta,*beta,*dg,*dgp,*dwX=NULL,*wp,*wp1,*db=NULL,*dw=NULL,*rSj,*sp,*d1,*dbp,*dH=NULL,*xp,*wxp,*bp,*bp1,*dwXi,*dlet=NULL,*dp,eps,alpha;
@@ -466,8 +466,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
   #ifndef _OPENMP
   nt = 1;
   #endif
-  g = (double *)CALLOC((size_t) 3*p*nt,sizeof(double));
-  g1 = g + p*nt;dg = g1 + p*nt;
+ 
   d = (double *)CALLOC((size_t) 2*p*nt,sizeof(double)); /* perturbation to beta on dropping y_i and its neighbours */
   d1 = d + p*nt;
   /* need to know largest neighbourhood */
@@ -476,7 +475,10 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     i = m[j]; if (i-ii>maxn) maxn = i-ii; ii = i;
   }
   pmaxn = p*maxn;
- 
+  pg = p; if (pg<maxn) pg=maxn;
+  g = (double *)CALLOC((size_t) (2*p+pg)*nt,sizeof(double));
+  g1 = g + pg*nt;dg = g1 + p*nt;
+  
   Xi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* holds sub-matrix removed for this neighbourhood */
   wXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by diag(w2) */
   dwXi = (double *)CALLOC((size_t) pmaxn*nt,sizeof(double)); /* equivalent pre-multiplied by d diag(w2)/d rho_j */
@@ -523,13 +525,13 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     #ifdef _OPENMP
     tid = omp_get_thread_num();
     #endif
-    p1 = g + tid*p + p; /* fill accumulated g vector */
+    p1 = g + tid*pg + p; /* fill accumulated g vector */
     ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
     i0=ii;io0=io; /* record of start needed in deriv calc */
     for (p0=R0+tid*p2,p3=R,j=0;j<p;j++,p0+=p,p3+=p) for (q=0;q<=j;q++) p0[q] = p3[q]; /* copy Cholesky factor*/
     alpha = sqrt(fabs(w2ki));
     nddbuf=0; /* counter for number of updates to store as they cause loss of definiteness */
-    for (dp=d+tid*p,xip0=xip=Xi+pmaxn*tid,gp=g+tid*p,xp=X,wxp=wXi+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) { /* first element of neighbourhood */
+    for (dp=d+tid*p,xip0=xip=Xi+pmaxn*tid,gp=g+tid*pg,xp=X,wxp=wXi+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) { /* first element of neighbourhood */
       xx = xp[ki]; /* X[k[ii],j] */
       *gp = w1ki * xx; /* g gradient of log lik */
       *xip = xx; /* Xi matrix holding X[k[i],] */
@@ -547,7 +549,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     q=1; /* count rows of Xi */
     for (xip0++,ii++;ii<m[i];ii++,xip0++,q++) { /* accumulate rest of g and Xi for rest of neighbourhood*/ 
       ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];alpha = sqrt(fabs(w2ki));
-      for (dp=d+tid*p,xip=xip0,gp=g+p*tid,xp=X,wxp=wXi+q+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) {
+      for (dp=d+tid*p,xip=xip0,gp=g+pg*tid,xp=X,wxp=wXi+q+pmaxn*tid;gp<p1;dp++,gp++,xp += n,xip += maxn,wxp += maxn) {
 	xx = xp[ki];
 	*gp += w1ki * xx;
 	*xip = xx;
@@ -570,15 +572,15 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
     }  
     
     if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
-      for (p0=d+tid*p,p3=g+tid*p,j=0;j<p;j++) p0[j] = p3[j]; /* copy g to d */
+      for (p0=d+tid*p,p3=g+tid*pg,j=0;j<p;j++) p0[j] = p3[j]; /* copy g to d */
       F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
       F77_CALL(dtrsv)(&uplo,&ntrans,&diag,&p,R0+tid*p2,&p,d+tid*p,&one FCONE FCONE FCONE);
     } else {  /* fallback solve (R0'R0 - uu') d= g via minres iteration, u, the skipped downdates are in ddbuf*/
      
       j = nddbuf; /* modified to number of iterations on exit */     
-      if (use_minres) minres(R0+p2*tid,ddbuf+tid*pmaxn,g+p*tid,d+p*tid,&p,&j,work+tid*nwork); else {
+      if (use_minres) minres(R0+p2*tid,ddbuf+tid*pmaxn,g+pg*tid,d+p*tid,&p,&j,work+tid*nwork); else {
         *(iwork+niwork*tid) = nwork;
-	woodbury(R0+p2*tid,ddbuf+tid*pmaxn,g+p*tid,d+p*tid,&p,&j,work+tid*nwork,iwork+niwork*tid);
+	woodbury(R0+p2*tid,ddbuf+tid*pmaxn,g+pg*tid,d+p*tid,&p,&j,work+tid*nwork,iwork+niwork*tid);
       }	
       error[tid]++; /* count the number of non +ve def cases */
     }
@@ -605,10 +607,10 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       /* First create diag(dw[,l])Xi */
       for (j=0;j<p;j++) for (xip0=Xi+j*maxn+pmaxn*tid,xip=dwXi+j*maxn+tid*pmaxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
       z=1.0;xx=0.0;
-      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi+pmaxn*tid,&maxn,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi+pmaxn*tid,&maxn,g+tid*p,&one,&xx,g1+tid*p,&one FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
-      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d+tid*p,&one,&xx,g+tid*p,&one FCONE); /* g = dH_l d */
-      for (dgp = dg+tid*p,p0=g1+tid*p,p3=g+tid*p,j=0;j<p;j++) dgp[j] += p0[j] - p3[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi+pmaxn*tid,&maxn,d+tid*p,&one,&xx,g+tid*pg,&one FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi+pmaxn*tid,&maxn,g+tid*pg,&one,&xx,g1+tid*p,&one FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d+tid*p,&one,&xx,g+tid*pg,&one FCONE); /* g = dH_l d */
+      for (dgp = dg+tid*p,p0=g1+tid*p,p3=g+tid*pg,j=0;j<p;j++) dgp[j] += p0[j] - p3[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
       if (pdef) { /* solve for R0'R0 d = g - the change in beta caused by dropping neighbourhood i */
 	for (p0=d1+tid*p,p3=dg+tid*p,j=0;j<p;j++) p0[j] = p3[j];
         F77_CALL(dtrsv)(&uplo,&trans,&diag,&p,R0+tid*p2,&p,d1+tid*p,&one FCONE FCONE FCONE);
