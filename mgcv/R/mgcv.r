@@ -1621,8 +1621,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   object[names(mv)] <- mv
   if (!is.null(nei)) {
-    if (all.equal(sort(nei$i),1:nrow(G$X))&&length(nei$mi)==nrow(G$X)&&criterion=="NCV") { ## each point predicted on its own
-      loocv <- length(nei$k)==length(nei$i) && all.equal(nei$i,nei$k) && length(nei$m) == length(nei$k) ## leave one out CV,
+    if (isTRUE(all.equal(sort(nei$i),1:nrow(G$X))) && length(nei$mi)==nrow(G$X) && criterion=="NCV") { ## each point predicted on its own
+      loocv <- length(nei$k)==length(nei$i) && isTRUE(all.equal(nei$i,nei$k)) && length(nei$m) == length(nei$k) ## leave one out CV,
       if (is.logical(nei$jackknife)&&nei$jackknife) loocv <- TRUE ## straight jackknife requested
       if (nei$jackknife < 0) nei$jackknife <- TRUE ## signal cov matrix calc
     } else {
