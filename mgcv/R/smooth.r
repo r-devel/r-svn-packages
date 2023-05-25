@@ -321,11 +321,23 @@ get.var <- function(txt,data,vecMat = TRUE)
 # fails tries evaluating txt within data (only). Routine returns NULL
 # on failure, or if result is not numeric or a factor.
 # matrices are coerced to vectors, which facilitates matrix arguments 
-# to smooths.
+# to smooths. Note that other routines rely on this returning NULL if the
+# variable concerned is not in 'data' - this requires care, to avoid
+# picking things up from e.g. the global environment, while still allowing
+# searching that environment for e.g. user defined functions. 
 { x <- data[[txt]]
-  if (is.null(x)) 
-  { x <- try(eval(parse(text=txt),data,enclos=NULL),silent=TRUE)
+  if (is.null(x)) {
+    a <- parse(text=txt) 
+    x <- try(eval(a,data,enclos=NULL),silent=TRUE)
     if (inherits(x,"try-error")) x <- NULL
+  }
+  if (is.null(x)) { ## still null try allowing evaluation with access to more environments (e.g. to find functions)
+    txt1 <- all.vars(parse(text=txt)) ## hopefully the actual variable name
+    x <- try(eval(parse(text=txt1),data,enclos=NULL),silent=TRUE) ## check actual variable is in data
+    if (!inherits(x,"try-error")) { ## actual variable was present in data, so ok to try expression
+      x <- try(eval(parse(text=txt),data),silent=TRUE) ## can pick up functions from, e.g., global env
+      if (inherits(x,"try-error")) x <- NULL
+    }  
   }
   if (!is.numeric(x)&&!is.factor(x)) x <- NULL
   if (is.matrix(x)) {
