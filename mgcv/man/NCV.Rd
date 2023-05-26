@@ -15,17 +15,17 @@ is minimized w.r.t. the smoothing parameters, \eqn{\lambda_j}{v_j}. If \eqn{m=n}
 
 Except for a quadratic loss, \eqn{V}{V} can not be computed exactly, but it can be computed to \eqn{O(n^{-2})}{O(n^-2)} accuracy (fixed basis size), by taking single Newton optimization steps from the full data \eqn{\beta}{b} estimates to the equivalent when each \eqn{\alpha(k)}{a(k)} is dropped. This is what \code{mgcv} does. The Newton steps require update of the full model Hessian to the equivalent when each datum is dropped. This can be achieved at \eqn{O(p^2)}{O(p^2)} cost, where \eqn{p}{p} is the dimension of \eqn{\beta}{b}. Hence, for example, the ordinary cross validation criterion is computable at the \eqn{O(np^2)}{O(np^2)} cost of estimating the model given smoothing parameters.
 
-The NCV score computed in this way is optimized using a BFGS quasi-Newton method, adapted to the case in which smoothing prameters tending to infinity may cause indefiniteness. 
+The NCV score computed in this way is optimized using a BFGS quasi-Newton method, adapted to the case in which smoothing parameters tending to infinity may cause indefiniteness. 
 }
 
-\section{Spatial and temporal short range auto-correlation}{
+\section{Spatial and temporal short range autocorrelation}{
 A routine applied problem is that smoothing parameters tend to be underestimated in the presence of un-modelled short range autocorrelation, as the smooths try to fit the local excursions in the data caused by the local autocorrelation. Cross validation will tend to 'fit the noise' when there is autocorellation, since a model that fits the noise in the data correlated with an omitted datum, will also tend to closely fit the noise in the omitted datum, because of the correlation. That is autocorrelation works against the avoidance of overfit that cross validation seeks to achieve.
 
-For short range autocorrelation the problems can be avoided, or at least mitigated, by predicting each datum when all the data in its `local' neighbourhood are ommitted. The neighbourhoods being constructed in order that un-modelled correlation is minimized between the point of interest and points outside its neighbourhood. That is we set \eqn{m=n}{m=n}, \eqn{\delta(k)=k}{d(k)=k} and \eqn{\alpha(k) = {\tt nei}(k)}{a(k) = nei(k)}, where \code{nei(k)} are the indices of the neighbours of point \eqn{k}{k}. This approach has been known for a long time (e.g. Chu and Marron, 1991; Robert et al. 2017), but was rather too expensive for regular use for smoothing parameter estimation.}
+For short range autocorrelation the problems can be avoided, or at least mitigated, by predicting each datum when all the data in its `local' neighbourhood are omitted. The neighbourhoods being constructed in order that un-modelled correlation is minimized between the point of interest and points outside its neighbourhood. That is we set \eqn{m=n}{m=n}, \eqn{\delta(k)=k}{d(k)=k} and \eqn{\alpha(k) = {\tt nei}(k)}{a(k) = nei(k)}, where \code{nei(k)} are the indices of the neighbours of point \eqn{k}{k}. This approach has been known for a long time (e.g. Chu and Marron, 1991; Robert et al. 2017), but was rather too expensive for regular use for smoothing parameter estimation.}
 
 \section{Specifying the neighbourhoods}{
 
-The neighbourhood subsets \eqn{\alpha(k)}{a(k)} and \eqn{\delta(k)}{d(k)}have to be supplied to \code{\link{gam}}, and the \code{nei} argument does this. It is a list with the following arguments.
+The neighbourhood subsets \eqn{\alpha(k)}{a(k)} and \eqn{\delta(k)}{d(k)} have to be supplied to \code{\link{gam}}, and the \code{nei} argument does this. It is a list with the following arguments.
 \itemize{
 \item \code{k} is the vector of indices to be dropped for each neighbourhood.
 \item \code{m} gives the end of each neighbourhood. So \code{nei$k[(nei$m[j-1]+1):nei$m[j]]} gives the points dropped for the neighbourhood \code{j}: that is \eqn{\alpha(j)}{a(j)}.
@@ -37,9 +37,9 @@ If \code{nei==NULL} (or \code{k} or \code{m} are missing) then leave-one-out cro
 }
 
 \section{Numerical issues}{
-If a model is specified in which some coefficient values for \eqn{\beta}{b} have non-finite likelihood then the NCV criterion computed with single Newton steps could also be non-finite. A simple fix replaces the NCV criterion with a quadratic approximation to the criterion around the full data fit. The quadratic approximation is always finite. This 'QNCV' is essential for some families, such as \code{\link{gevlss}}.
+If a model is specified in which some coefficient values, \eqn{\beta}{b}, have non-finite likelihood then the NCV criterion computed with single Newton steps could also be non-finite. A simple fix replaces the NCV criterion with a quadratic approximation to the criterion around the full data fit. The quadratic approximation is always finite. This 'QNCV' is essential for some families, such as \code{\link{gevlss}}.
 
-Although the leading order cost of NCV is the same as REML or GCV, the actual cost is higher because the dominant operations costs are in matrix-vector, rather than matrix-matrix operations, so BLAS speed ups are small. However multi-core computing is worthwhile for NCV. See the option \code{ncv.threads} in \code{\link{gam.control}}.
+Although the leading order cost of NCV is the same as REML or GCV, the actual cost is higher because the dominant operations costs are in matrix-vector, rather than matrix-matrix, operations, so BLAS speed ups are small. However multi-core computing is worthwhile for NCV. See the option \code{ncv.threads} in \code{\link{gam.control}}.
 }
 
 

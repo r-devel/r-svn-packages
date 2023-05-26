@@ -40,6 +40,9 @@ present, and reparameterization needs checking (also for bam).
 
 * 'in.out' argument added for 'bam'.
 
+* slight internal change to mgcv:::get.var to enable user defined functions 
+  in arguments of smooths to work. 
+
 * smooth2random tweak to guarantee same eigenvector sign everytime for same 
   problem (needed by some developers who don't want to carry the original 
   transform around).
