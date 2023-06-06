@@ -2936,7 +2936,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
     if (se) { ## need to loop to find se of probabilities...
       vp <- gamma
       vp[,1] <- abs(gamma[,1])*sqrt(ve[,1])
-      vp[,2] <- abs(family$linfo[[2]]$mu.eta(eta[,2]))*sqrt(ve[2])
+      vp[,2] <- abs(family$linfo[[2]]$mu.eta(eta[,2]))*sqrt(ve[,2])
       return(list(fit=gamma,se.fit=vp))
     } ## if se
     list(fit=gamma)
