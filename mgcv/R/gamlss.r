@@ -1943,7 +1943,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
   stats <- list()
   for (i in 1:3) {
     if (link[[i]] %in% okLinks[[i]]) stats[[i]] <- make.link(link[[i]]) else 
-    stop(link[[i]]," link not available for mu parameter of gaulss")
+    stop(link[[i]]," link not available for gevlss")
     fam <- structure(list(link=link[[i]],canonical="none",linkfun=stats[[i]]$linkfun,
            mu.eta=stats[[i]]$mu.eta),
            class="family")
@@ -2640,7 +2640,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
   stats <- list()
   for (i in 1:2) {
     if (link[[i]] %in% okLinks[[i]]) stats[[i]] <- make.link(link[[i]]) else 
-    stop(link[[i]]," link not available for mu parameter of gammals")
+    stop(link[[i]]," link not available for gammals")
     fam <- structure(list(link=link[[i]],canonical="none",linkfun=stats[[i]]$linkfun,
            mu.eta=stats[[i]]$mu.eta),
            class="family")
@@ -2708,9 +2708,6 @@ gammals <- function(link=list("identity","log"),b=-7) {
     
   postproc <- expression({
     ## code to evaluate in estimate.gam, to evaluate null deviance
-    ## It's difficult to define a sensible version of this that ensures
-    ## that the data fall in the support of the null model, whilst being
-    ## somehow equivalent to the full fit
     object$fitted.values[,1] <- exp(object$fitted.values[,1])
     .my <- mean(object$y)
     object$null.deviance <- sum(((object$y-.my)/.my-log(object$y/.my))*exp(-object$fitted.values[,2]))*2

@@ -7,7 +7,6 @@ Liable to change in future release:
 
 Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
-- argument 'pers' in plot.gam (1.8-23, Nov 2017)
 - discrete method prediction from discrete bam objects fitted before 1.8-32 
 
 Issues: 
@@ -32,6 +31,8 @@ present, and reparameterization needs checking (also for bam).
 *** NCV smoothing parameter estimation now available for most models. See ?NCV.
 
 *** 'gfam' allows reponse variables to be from several different families. 
+
+* removed argument 'pers' from 'plot.gam' (deprecated since 1.8-23, Nov 2017).
 
 * 'multinom' variance fix for K>=3 cases. A counter was initialized in the wrong
   place. Thanks to Max Goplerud for finding and reporting this.
