@@ -3676,14 +3676,15 @@ ExtractData <- function(object,data,knots) {
    names(dat) <- object$term; m <- length(object$term)
    if (!is.null(attr(dat[[1]],"matrix")) && vecMat) { ## strip down to unique covariate combinations
      n <- length(dat[[1]])
-     X <- matrix(unlist(dat),n,m)
-     if (is.numeric(X)) {
+     #X <- matrix(unlist(dat),n,m) ## no use for factors!
+     X <- data.frame(dat)
+     #if (is.numeric(X)) {
        X <- uniquecombs(X)
        if (nrow(X)<n*.9) { ## worth the hassle
          for (i in 1:m) dat[[i]] <- X[,i]     ## return only unique rows
          attr(dat,"index") <- attr(X,"index") ## index[i] is row of dat[[i]] containing original row i
        }
-     } ## end if(is.numeric(X))
+     #} ## end if(is.numeric(X))
    }    
    if (object$by!="NA") {
      by <- get.var(object$by,data) 

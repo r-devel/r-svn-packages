@@ -32,6 +32,9 @@ present, and reparameterization needs checking (also for bam).
 
 *** 'gfam' allows reponse variables to be from several different families. 
 
+* Fix to tensor product constructor to allow matrix factor arguments to be 
+  handled correctly (previously failed). Thanks to Dave Miller.
+
 * removed argument 'pers' from 'plot.gam' (deprecated since 1.8-23, Nov 2017).
 
 * 'multinom' variance fix for K>=3 cases. A counter was initialized in the wrong
