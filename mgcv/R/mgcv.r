@@ -1410,7 +1410,9 @@ gam.setup <- function(formula,pterms,
     }
   } ## absorb.cons == FALSE
  
-  G$y <- data[[split$response]]
+  G$y <- drop(data[[split$response]])
+  ydim <- dim(G$y)
+  if (!is.null(ydim)&&length(ydim)<2) dim(G$y) <- NULL
          
   ##data[[deparse(split$full.formula[[2]],backtick=TRUE)]]
   
