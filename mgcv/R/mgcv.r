@@ -1517,30 +1517,14 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 #  2. Call `gam.fit3.post.proc' to get parameter covariance matrices, edf etc to
 #     add to `object' 
 { if (is.na(optimizer[2])) optimizer[2] <- "newton"
-  if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
-
-  if (optimizer[2]%in%c("nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
+  if (!optimizer[2]%in%c("newton","bfgs","nlm","optim")) stop("unknown outer optimization method.")
 
   if (length(lsp)==0) { ## no sp estimation to do -- run a fit instead
     optimizer[2] <- "no.sps" ## will cause gam2objective to be called, below
   }
   nbGetTheta <- substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1
   if (nbGetTheta) stop("Please provide a single value for theta or use nb to estimate it")
-  if (optimizer[2]=="nlm.fd") {
-    #if (nbGetTheta) stop("nlm.fd not available with negative binomial Theta estimation")
-    if (method%in%c("REML","ML","GACV.Cp","P-ML","P-REML")) stop("nlm.fd only available for GCV/UBRE")
-    um<-nlm(full.score,lsp,typsize=lsp,fscale=fscale, stepmax = 
-            control$nlm$stepmax, ndigit = control$nlm$ndigit,
-	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
-            iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,start=start,nei=nei,...)
-    lsp<-um$estimate
-    object<-attr(full.score(lsp,G,family,control,gamma=gamma,...),"full.gam.object")
-    object$gcv.ubre <- um$minimum
-    object$outer.info <- um
-    object$sp <- exp(lsp)
-    return(object)
-  }
+ 
   ## some preparations for the other methods, which all use gam.fit3...
  
   family <- fix.family.link(family)
@@ -1751,7 +1735,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
     if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
-    if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
+    #if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
        if (!(method%in%c("REML","NCV"))||optimizer[1]=="efs") method <- "REML"
        if (method=="NCV"&&is.null(G$family$ncv)) {
@@ -1772,17 +1756,17 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     }
   }
 
-  if (!optimizer[1]%in%c("perf","outer","efs")) stop("unknown optimizer")
+  if (!optimizer[1]%in%c("outer","efs")) stop("unknown optimizer")
   if (optimizer[1]=="efs") method <- "REML"
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML","NCV")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
  
   reml <- method%in%c("REML","P-REML","ML","P-ML","NCV")
-  if ((reml||!is.null(nei)) && optimizer[1]=="perf") {
-    warning("Reset optimizer to outer/newton") 
-    optimizer <- c("outer","newton")
-  } 
+  #if ((reml||!is.null(nei)) && optimizer[1]=="perf") {
+  #  warning("Reset optimizer to outer/newton") 
+  #  optimizer <- c("outer","newton")
+  #} 
   
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
   G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purposes 
@@ -1796,7 +1780,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
 
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp"||method=="NCV"||!is.null(nei)) ## && length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- (!G$am ||reml||method=="GACV.Cp"||method=="NCV"||!is.null(nei)) 
 
   ## sort out exact sp selection criterion to use
 
@@ -1839,15 +1823,15 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family; nb.fam.reset <- FALSE
-  if (outer.looping) {     
+#  if (outer.looping) {     
     ## how many performance iteration steps to use for initialization...
-    fixedSteps <- if (inherits(G$family,"extended.family")) 0 else control$outerPIsteps  
+#    fixedSteps <- if (inherits(G$family,"extended.family")) 0 else control$outerPIsteps  
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
       nb.fam.reset <- TRUE
     }
-  } else fixedSteps <- control$maxit+2
+#  } else fixedSteps <- control$maxit+2
   
   ## extended family may need to manipulate G...
     
@@ -1870,30 +1854,29 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
                                   offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))
   else lsp2 <- rep(0,0)
 
-  if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
-    ok <- TRUE ## run a few basic checks
-    if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
-    if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
-    if (!ok) stop("in.out incorrect: see documentation")
-    lsp <- log(in.out$sp) 
-  } else {## do performance iteration.... 
-    if (fixedSteps>0) {
-    
-      object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
-      lsp <- log(object$sp) 
-    } else {
+  if (!outer.looping) { ## additive GCV/UBRE
+    object <- am.fit(G,control=control,gamma=gamma,...)
+    lsp <- log(object$sp) 
+  } else {
+    if (!is.null(in.out)) { # initial s.p.s and scale provided
+      ok <- TRUE ## run a few basic checks
+      if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
+      if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
+      if (!ok) stop("in.out incorrect: see documentation")
+      lsp <- log(in.out$sp) 
+    } else { 
       lsp <- lsp2
     } 
-  }
-  if (nb.fam.reset) G$family <- family ## restore, in case manipulated for negative binomial 
+
+    if (nb.fam.reset) G$family <- family ## restore, in case manipulated for negative binomial 
     
-  if (outer.looping) {
+  #if (outer.looping) {
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
-    if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
-      ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
-      ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
-    }
+    #if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
+    #  ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
+    #  ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
+    #}
    
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
     ## and an estimate of the function scale, suitable for optimizers that need this.
@@ -1904,21 +1887,21 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     null.stuff  <- if (inherits(G$family,"general.family")) list() else { 
       if (is.null(G$family$get.null.coef)) get.null.coef(G,...) else G$family$get.null.coef(G,...)
     }
-    if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
+    #if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
 
     scale.as.sp <- (criterion%in%c("REML","ML")||(criterion=="NCV"&&inherits(G$family,"extended.family")))&&scale<=0
     #scale.as.sp <- criterion%in%c("REML","ML")&&scale<=0
 
     if (scale.as.sp) { ## log(scale) to be estimated as a smoothing parameter
-      if (fixedSteps>0) {
-        log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
-      } else {
+     # if (fixedSteps>0) {
+     #   log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
+     # } else {
         if (is.null(in.out)) {
           log.scale <- log(null.stuff$null.scale/10)
         } else {
           log.scale <- log(in.out$scale)
         }
-      }
+      #}
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...
       if (!is.null(G$L)) { 
@@ -1953,12 +1936,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
                         family=G$family,control=control,criterion=criterion,method=method,
                         optimizer=optimizer,scale=scale,gamma=gamma,G=G,start=start,nei=nei,...)
     
-    if (scale.as.sp)  object$sp <- 
-                                                object$sp[-length(object$sp)] ## drop scale estimate from sp array
+    if (scale.as.sp)  object$sp <- object$sp[-length(object$sp)] ## drop scale estimate from sp array
     
     if (inherits(G$family,"extended.family")&&nth>0) object$sp <- object$sp[-(1:nth)] ## drop theta params
  
-    object$mgcv.conv <- mgcv.conv 
+    #object$mgcv.conv <- mgcv.conv 
 
   } ## finished outer looping
 
@@ -2327,7 +2309,7 @@ print.gam<-function (x,...)
 gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
-                         nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
+                         nlm=list(),optim=list(),newton=list(),#outerPIsteps=0,
                          idLinksBases=TRUE,scalePenalty=TRUE,efs.lspmax=15,efs.tol=.1,
                          keepData=FALSE,scale.est="fletcher",edge.correct=FALSE) 
 # Control structure for a gam. 
@@ -2337,8 +2319,8 @@ gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, m
 # number of step halvings to employ in the mgcv search for the optimal GCV score, before giving up 
 # on a search direction. trace turns on or off some de-bugging information.
 # rank.tol is the tolerance to use for rank determination
-# outerPIsteps is the number of performance iteration steps used to intialize
-#                         outer iteration
+# outerPIsteps was the number of performance iteration steps used to intialize
+#                         outer iteration (unused for a while) 
 {   scale.est <- match.arg(scale.est,c("fletcher","pearson","deviance"))
     if (!is.logical(edge.correct)&&(!is.numeric(edge.correct)||edge.correct<0)) stop(
         "edge.correct must be logical or a positive number")
@@ -2387,7 +2369,7 @@ gam.control <- function (nthreads=1,ncv.threads=1,irls.reg=0.0,epsilon = 1e-7, m
     list(nthreads=round(nthreads),ncv.threads=round(ncv.threads),irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
-         optim=optim,newton=newton,outerPIsteps=outerPIsteps,
+         optim=optim,newton=newton,#outerPIsteps=outerPIsteps,
          idLinksBases=idLinksBases,scalePenalty=scalePenalty,efs.lspmax=efs.lspmax,efs.tol=efs.tol,
          keepData=as.logical(keepData[1]),scale.est=scale.est,edge.correct=edge.correct)
     
@@ -2436,7 +2418,8 @@ mgcv.find.theta<-function(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,tol)
 full.score <- function(sp,G,family,control,gamma,...)
 # function suitable for calling from nlm in order to polish gam fit
 # so that actual minimum of score is found in generalized cases
-{ if (is.null(G$L)) {
+{ .Deprecated(msg="Internal mgcv function full.score is no longer used and will be removed soon.")
+  if (is.null(G$L)) {
     G$sp<-exp(sp);
   } else {
     G$sp <- as.numeric(exp(G$L%*%sp + G$lsp0))
@@ -2455,7 +2438,95 @@ full.score <- function(sp,G,family,control,gamma,...)
   res <- xx$gcv.ubre.dev
   attr(res,"full.gam.object")<-xx
   res
-}
+} ## full.score
+
+am.fit <- function (G, #start = NULL, etastart = NULL, 
+    #mustart = NULL,# family = gaussian(), 
+    control = gam.control(),gamma=1,...) {
+    ## fit additive model using 'magic' returning gam type object.
+
+    family <- gaussian()
+    intercept<-G$intercept
+    n <- nobs <- NROW(G$y) ## n just there to keep codetools happy
+    y <- G$y # original data
+    X <- G$X # original design matrix
+    if (ncol(G$X) == 0) stop("Model seems to contain no terms")
+    olm <- G$am   # only need 1 iteration as it's a pure additive model.
+    
+    # obtain average element sizes for the penalties
+    n.S <- length(G$S)
+    if (n.S>0) {
+      S.size <- rep(0,n.S)
+      for (i in 1:n.S) S.size[i] <- mean(abs(G$S[[i]])) 
+    }
+    weights<-G$w # original weights
+
+    n.score <- sum(weights!=0) ## n to use in GCV score (i.e. don't count points with no influence)   
+
+    offset<-G$offset 
+
+    variance <- family$variance;dev.resids <- family$dev.resids
+    aic <- family$aic
+    if (NCOL(y) > 1) stop("y must be univariate unless binomial")
+    
+    scale <- G$sig2
+
+    msp <- G$sp
+    magic.control<-list(tol=G$conv.tol,step.half=G$max.half,#maxit=control$maxit+control$globit,
+                          rank.tol=control$rank.tol)
+
+    ## solve the penalized LS problem ...
+    good <- weights > 0
+    G$y <- y[good] - offset[good]
+    G$X <- X[good,,drop=FALSE]
+    G$w <- sqrt(weights[good]) ## note magic assumes sqrt weights
+    mr <- magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,matrix(0,0,ncol(G$X)),
+                G$w,gamma=gamma,G$sig2,G$sig2<0,
+                ridge.parameter=control$irls.reg,control=magic.control,n.score=n.score,nthreads=control$nthreads)
+    coef <- mr$b;msp <- mr$sp;G$sig2 <- mr$scale;G$gcv.ubre <- mr$score;
+
+    if (any(!is.finite(coef))) warning(gettextf("Non-finite coefficients at iteration"))
+  
+    mu <- eta <- drop(X %*% coef) # 1.5.0
+    dev <- sum(dev.resids(y, mu, weights))
+    
+    residuals <- rep(NA, nobs)
+    residuals[good] <- G$y - (mu - offset)[good]
+       
+    wtdmu <- if (intercept) sum(weights * y)/sum(weights) else offset
+    nulldev <- sum(dev.resids(y, wtdmu, weights))
+    n.ok <- nobs - sum(weights == 0)
+    nulldf <- n.ok - as.integer(intercept)
+    
+    ## Extract a little more information from the fit....
+
+    mv <- magic.post.proc(G$X,mr,w=G$w^2)
+    G$Vp<-mv$Vb;G$hat<-mv$hat;
+    G$Ve <- mv$Ve # frequentist cov. matrix
+    G$edf<-mv$edf
+    G$conv<-mr$gcv.info
+    G$sp<-msp
+    rank<-G$conv$rank
+
+    ## use MLE of scale in Gaussian case - best estimate otherwise. 
+    dev1 <- if (scale>0) scale*sum(weights) else dev 
+
+    aic.model <- aic(y, n, mu, weights, dev1) + 2 * sum(G$edf)
+    if (scale < 0) { ## deviance based GCV
+      gcv.ubre.dev <- n.score*dev/(n.score-gamma*sum(G$edf))^2
+    } else { # deviance based UBRE, which is just AIC
+      gcv.ubre.dev <- dev/n.score + 2 * gamma * sum(G$edf)/n.score - G$sig2
+    }
+
+    list(coefficients = as.vector(coef), residuals = residuals, fitted.values = mu, 
+        family = family,linear.predictors = eta, deviance = dev,
+        null.deviance = nulldev, iter = 1, weights = weights, prior.weights = weights,  
+        df.null = nulldf, y = y, converged = TRUE,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
+        R=mr$R,
+        boundary = FALSE,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,rV=mr$rV,mgcv.conv=G$conv,
+        gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
+} ## am.fit
+
 
 gam.fit <- function (G, start = NULL, etastart = NULL, 
     mustart = NULL, family = gaussian(), 
@@ -2468,7 +2539,8 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 # fixedSteps < its default causes at most fixedSteps iterations to be taken,
 # without warning if convergence has not been achieved. This is useful for
 # obtaining starting values for outer iteration.
-{   intercept<-G$intercept
+{   .Deprecated(msg="Internal mgcv function gam.fit is no longer used - see gam.fit3.")
+    intercept<-G$intercept
     conv <- FALSE
     n <- nobs <- NROW(G$y) ## n just there to keep codetools happy
     nvars <- NCOL(G$X) # check this needed

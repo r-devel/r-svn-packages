@@ -2110,6 +2110,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
     if (object$dim>1) stop("fs smooth not suitable for discretisation with more than one metric predictor") 
     form1 <- as.formula(paste("~",object$fterm,"-1")) 
     fac -> data[[fterm]]
+    if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(form1)] ## avoid over-zealous checking
     object$margin[[1]] <- list(X=model.matrix(form1,data),term=object$fterm,form=form1,by="NA")
     class(object$margin[[1]]) <- "random.effect"
     object$margin[[2]] <- object
@@ -2559,7 +2560,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   if (!is.null(object$id)) stop("random effects don't work with ids.")
   
   form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
-  object$X <- model.matrix(form,data)
+  ## following construction avoids silly model.matrix overchecking...
+  object$X <- model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
   object$bs.dim <- ncol(object$X)
 
   if (inherits(object,"tensor.smooth.spec")) { 
@@ -2568,6 +2570,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
     maxd <- maxi <- 0
     for (i in 1:object$dim) {
       form1 <- as.formula(paste("~",object$term[i],"-1"))
+      if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(form1)]
       object$margin[[i]] <- list(X=model.matrix(form1,data),term=object$term[i],form=form1,by="NA")
       class(object$margin[[i]]) <- "random.effect"
       d <- ncol(object$margin[[i]]$X)
@@ -2630,6 +2633,8 @@ Predict.matrix.random.effect <- function(object,data) {
 ## fit factor levels, we will get NA's for levels introduced at the
 ## prediction stage, and these effects will be set to zero in prediction.
   ##X <- model.matrix(object$form,data)
+  ## following fixes over zealous checks...
+  if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(object$form)]
   X <- model.matrix(object$form,model.frame(object$form,data,na.action=na.pass))
   X[!is.finite(X)] <- 0
   X

@@ -84,10 +84,9 @@ of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likel
 exponential family \code{"REML"} is the default, and the only other options are \code{"ML"}, \code{"NCV"} or \code{"QNCV"}.}
 
 \item{optimizer}{An array specifying the numerical optimization method to use to optimize the smoothing 
-parameter estimation criterion (given by \code{method}). \code{"perf"} (deprecated) for performance iteration. \code{"outer"} 
-for the more stable direct approach. \code{"outer"} can use several alternative optimizers, specified in the 
-second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"}, \code{"nlm"} 
-and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivatives and is very slow). \code{"efs"}
+parameter estimation criterion (given by \code{method}). \code{"outer"} 
+for the direct nested optimization approach. \code{"outer"} can use several alternative optimizers, specified in the 
+second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"} or \code{"nlm"}. \code{"efs"}
 for the extended Fellner Schall method of Wood and Fasiolo (2017).}
 
 \item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
