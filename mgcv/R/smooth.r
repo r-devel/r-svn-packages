@@ -2570,8 +2570,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
     maxd <- maxi <- 0
     for (i in 1:object$dim) {
       form1 <- as.formula(paste("~",object$term[i],"-1"))
-      if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(form1)]
-      object$margin[[i]] <- list(X=model.matrix(form1,data),term=object$term[i],form=form1,by="NA")
+      data1 <- if (is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form1)] else data
+      object$margin[[i]] <- list(X=model.matrix(form1,data1),term=object$term[i],form=form1,by="NA")
       class(object$margin[[i]]) <- "random.effect"
       d <- ncol(object$margin[[i]]$X)
       if (d>maxd) {maxi <- i;maxd <- d}

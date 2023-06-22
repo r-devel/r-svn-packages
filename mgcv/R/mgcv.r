@@ -2487,7 +2487,7 @@ am.fit <- function (G, #start = NULL, etastart = NULL,
 
     if (any(!is.finite(coef))) warning(gettextf("Non-finite coefficients at iteration"))
   
-    mu <- eta <- drop(X %*% coef) # 1.5.0
+    mu <- eta <- drop(X %*% coef + offset) 
     dev <- sum(dev.resids(y, mu, weights))
     
     residuals <- rep(NA, nobs)
