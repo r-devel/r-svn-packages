@@ -17,14 +17,13 @@ Issues:
    to make openblas ensures thread safety.
 
 * .C can't use R's long vectors, which can lead to bam failing on very large
-  datasets. probably requires extensive re-writing using .Call.
+  datasets. Probably requires extensive re-writing using .Call.
 
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
-* bam(...,discrete=TRUE) does not currently deal with the corner case in 
-  which no smoother is penalized. Also there is no option to use the identical
-  discretization to that used in fitting when predicting.
+* bam(...,discrete=TRUE) has no option to use the identical
+  discretizaton to that used in fitting when predicting.
 
 1.9-0
 

@@ -1735,7 +1735,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
     if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
-    #if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
        if (!(method%in%c("REML","NCV"))||optimizer[1]=="efs") method <- "REML"
        if (method=="NCV"&&is.null(G$family$ncv)) {
@@ -1763,10 +1762,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
  
   reml <- method%in%c("REML","P-REML","ML","P-ML","NCV")
-  #if ((reml||!is.null(nei)) && optimizer[1]=="perf") {
-  #  warning("Reset optimizer to outer/newton") 
-  #  optimizer <- c("outer","newton")
-  #} 
   
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
   G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purposes 
@@ -1820,18 +1815,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (method=="P-REML")  criterion <- method <- "REML"
   } 
 
-  # take only a few IRLS steps to get scale estimates for "pure" outer
-  # looping...
   family <- G$family; nb.fam.reset <- FALSE
-#  if (outer.looping) {     
-    ## how many performance iteration steps to use for initialization...
-#    fixedSteps <- if (inherits(G$family,"extended.family")) 0 else control$outerPIsteps  
-    if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
+  
+  if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
       nb.fam.reset <- TRUE
-    }
-#  } else fixedSteps <- control$maxit+2
+  }
   
   ## extended family may need to manipulate G...
     
@@ -1869,48 +1859,31 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     } 
 
     if (nb.fam.reset) G$family <- family ## restore, in case manipulated for negative binomial 
-    
-  #if (outer.looping) {
-    # don't allow PI initial sp's too far from defaults, otherwise optimizers may
-    # get stuck on flat portions of GCV/UBRE score....
-    #if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
-    #  ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
-    #  ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
-    #}
-   
+       
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
     ## and an estimate of the function scale, suitable for optimizers that need this.
     ## Doesn't make sense for general families that have to initialize coefs directly.
   
-    ## null.stuff  <- if(inherits(G$family,"general.family")) list() else get.null.coef(G,...)
-    ## Matteo modification to facilitate qgam...
     null.stuff  <- if (inherits(G$family,"general.family")) list() else { 
       if (is.null(G$family$get.null.coef)) get.null.coef(G,...) else G$family$get.null.coef(G,...)
     }
-    #if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
 
     scale.as.sp <- (criterion%in%c("REML","ML")||(criterion=="NCV"&&inherits(G$family,"extended.family")))&&scale<=0
-    #scale.as.sp <- criterion%in%c("REML","ML")&&scale<=0
-
+ 
     if (scale.as.sp) { ## log(scale) to be estimated as a smoothing parameter
-     # if (fixedSteps>0) {
-     #   log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
-     # } else {
-        if (is.null(in.out)) {
+      if (is.null(in.out)) {
           log.scale <- log(null.stuff$null.scale/10)
-        } else {
+      } else {
           log.scale <- log(in.out$scale)
-        }
-      #}
+      }
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...
       if (!is.null(G$L)) { 
         G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
-        #attr(G$L,"scale") <- TRUE ## indicates scale estimated as sp
       }
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     } 
-     ## check if there are extra parameters to estimate
+    ## check if there are extra parameters to estimate
     if (inherits(G$family,"extended.family")&&!inherits(G$family,"general.family")&&G$family$n.theta>0) {
       th0 <- G$family$getTheta() ## additional (initial) parameters of likelihood 
       nth <- length(th0)
@@ -1940,8 +1913,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     
     if (inherits(G$family,"extended.family")&&nth>0) object$sp <- object$sp[-(1:nth)] ## drop theta params
  
-    #object$mgcv.conv <- mgcv.conv 
-
   } ## finished outer looping
 
   ## correct null deviance if there's an offset [Why not correct calc in gam.fit/3???]....

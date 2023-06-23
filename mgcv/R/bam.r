@@ -946,7 +946,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     reml <- reml - (nobs/gamma-df)*log(ld)
   }
 
-  for (i in 1:ncol(prop$db)) prop$db[,i] <- ## d beta / d rho matrix
+  if (ncol(prop$db)>0) for (i in 1:ncol(prop$db)) prop$db[,i] <- ## d beta / d rho matrix
         Sl.initial.repara(Sl,as.numeric(prop$db[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt[1]) 
 
   object <- list(db.drho=prop$db,
@@ -1949,67 +1949,24 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   ## key smooth related components from model object, so that it appears to be
   ## a parametric model... 
   offset <- if (nlp>1) as.list(rep(0,nlp)) else 0
-  para.discrete <- !is.null(object$dinfo$para.discrete)
-  if (FALSE&&!para.discrete&&(any(object$nsdf)||any(object$offset!=0))) { ## deal with parametric terms...
-    ## save copies of smooth info...
-    .Deprecated(package="mgcv",msg="prediction from discrete bam models prior to 1.8-32 is deprecated, please refit")
-    smooth <- object$smooth; coef <- object$coefficients; Vp <- object$Vp
-    ## remove key smooth info from object
-    ## first identify coefficients (indexed by ii) to retain, and modify pstart
-    ## attribute so that it's pointing to retained coefficient array.
-    if (length(object$nsdf)>1) {
-      pstart <- attr(object$nsdf,"pstart")
-      ps <- pstart * 0
-      ii <- rep(0,0); k <- 1
-      for (i in 1:length(object$nsdf)) if (object$nsdf[i]) {
-        ps[i] <- k;k <- k + object$nsdf[i]
-        ii <- c(ii,1:object$nsdf[i]+pstart[i]-1)
-      }
-      attr(object$nsdf,"pstart") <- ps ## make compatible with stripping out smooths
-    } else { ii <- 1:object$nsdf; pstart <- 1; ps <- 1}
-    object$coefficients <-  object$coefficients[ii]
-    object$Vp <- object$Vp[ii,ii]
-    object$smooth <- NULL
-    ## get prediction for parametric component. Always "lpmatrix", unless terms required.
-    ptype <- if (type %in% c("terms","iterms")) type else "lpmatrix"
-    pterms <- if (is.null(terms)) terms else terms[terms %in% row.names(attr(object$pterms,"factors"))]
-    pexclude <- if (is.null(exclude)) exclude else exclude[exclude %in% row.names(attr(object$pterms,"factors"))]
-    pp <- predict.gam(object,newdata=newdata,type=ptype,se.fit=se.fit,terms=pterms,exclude=pexclude,
-            block.size=block.size,newdata.guaranteed=TRUE,
-            na.action=na.action,...)  
-    ## restore smooths to 'object'
-    object$coefficients <- coef
-    object$Vp <- Vp
-    object$smooth <- smooth
-    if (length(object$nsdf)) pstart -> attr(object$nsdf,"pstart") ## restore pstart
-    if (ptype=="lpmatrix") {
-      offset <- attr(pp,"model.offset")
-      if (is.null(offset)) offset <- if (nlp==1) 0 else as.list(rep(0,nlp))
-    }
-  } else {
-    pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0) ## note: needed in terms branch below
-  } ## parametric component dealt with in non-discrete case
+
+  pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0) ## note: needed in terms branch below
 
   ## now discretize covariates...
   if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata)
-  dk <- if (para.discrete) discrete.mf(object$dinfo$gp,mf=newdata,names.pmf=object$dinfo$pmf.names,full=TRUE) else
-        discrete.mf0(object$dinfo$gp,mf=newdata,names.pmf=NULL,full=FALSE)
+  dk <- discrete.mf(object$dinfo$gp,mf=newdata,names.pmf=object$dinfo$pmf.names,full=TRUE)
   Xd <- list() ### list of discrete model matrices...
   n <- if (is.matrix(newdata[[1]])) nrow(newdata[[1]]) else length(newdata[[1]])
   kb <- k <- 1;kd <- dk$k
   ks <- matrix(0,0,2) ## NOTE: slightly more efficient not to repeatedly extend
-  if (para.discrete) { 
-    for (j in 1:nlp) { ## loop over parametric components of linear predictors
+  for (j in 1:nlp) { ## loop over parametric components of linear predictors
       ## get discretized marginal matrices for the parametric model (if contrast warnings see predict.gam fix)
       ptens <- if (nlp==1&&!is.list(object$pterms)) terms2tensor(object$pterms,dk$mf,object$contrasts) else
 	             terms2tensor(object$pterms[[j]],dk$mf,object$contrasts)
       offi <- if (nlp==1&&!is.list(object$pterms)) attr(object$pterms,"offset") else attr(object$pterms[[j]],"offset")
       if (!is.null(offi)) {
-        #offname <- if (nlp==1&&!is.list(object$pterms)) attr(object$pterms,"factor") else attr(object$pterms[[j]],"factor")
-	#offname <- rownames(offname)[offi]
         offname <- if (nlp==1&&!is.list(object$pterms)) names(attr(object$pterms,"dataClasses"))[offi] else
 	                                                names(attr(object$pterms[[j]],"dataClasses"))[offi]
-        
 	if (j==1&&nlp>1) offset <- list()
 	if (nlp>1) offset[[j]] <- newdata[[offname]] else  offset <- newdata[[offname]]
       }
@@ -2022,17 +1979,8 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         }	
       }
       kb <- kb + length(ptens$ts)
-    } ## parametric lp loop
-  } ## if (para.discrete)
-
-  if (!para.discrete && any(object$nsdf>0)) for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) {
-     Xd[[k]] <- if (type%in%c("terms","iterms")) matrix(0,0,0) else pp[,ps[k]+1:object$nsdf[k]-1,drop=FALSE] 
-     kd <- cbind(1:nrow(newdata),kd) ## add index for parametric part to index list
-     k <- k + 1; 
-     dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
-     dk$nr <- c(NA,dk$nr) ## need array index to match elements of Xd
-  } 
-  
+  } ## parametric lp loop
+ 
   ts <- object$dinfo$ts
   dt <- object$dinfo$dt
 
@@ -2087,82 +2035,33 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   ## end of discrete set up
   se <- se.fit
   if (type=="terms") {
-    if (para.discrete) {
-      term.lab <- names(object$dinfo$ts) ## names of all terms
-      termi <- rep(TRUE,length(term.lab)) ## do we want term included?
-      termi[term.lab=="(Intercept)"] <- FALSE ## not if it's intercept
-      if (!is.null(terms)) termi <- termi & term.lab %in% terms ## and only if it's in terms
-      if (!is.null(exclude)) termi <- termi & !(term.lab %in% exclude) ## and not in exclude
-      uterms <- unique(term.lab[termi])
-      nterms <- length(uterms) ## sum(termi) 
-      fit <- matrix(0,nrow(kd),nterms)
-      if (se) se.fit <- matrix(0,nrow(kd),nterms)
-      for (k in 1:nterms) {
-        lt <- which(term.lab%in%uterms[k]) ## discrete terms involved in this smooth (can be more than one)
-        if (termi[lt]) {
-          fit[,k] <- Xbd(Xd,object$coefficients,kd,ks,                          
-                      ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
-          if (se) se.fit[,k] <- diagXVXd(Xd,object$Vp,kd,ks,                
-                       ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,nthreads=n.threads,lt=lt,rt=lt)^.5
-        }	
-      }
-      colnames(fit) <- uterms
-      if (se) {
-        colnames(se.fit) <- uterms
-	fit <- list(fit=fit,se.fit=se.fit)
-      }
-    } else { ## legacy code for prediction from old objects
-      term.lab <- unlist(lapply(object$smooth,function(x) x$label))
-      termi <- rep(TRUE,length(object$smooth))
-      if (!is.null(terms)) termi <- termi & term.lab %in% terms
-      if (!is.null(exclude)) termi <- termi & !(term.lab %in% exclude)
-      if (any(object$nsdf>0)) {
-        if (se) {
-          fit <- cbind(pp$fit,matrix(0,nrow(kd),sum(termi)))
-          se.fit <- cbind(pp$se.fit,matrix(0,nrow(kd),sum(termi))) 
-        } else fit <- cbind(pp,matrix(0,nrow(kd),sum(termi)))
-        #k <- 2; ## starting Xd
-        kk <- ncol(fit) - sum(termi) + 1 ## starting col of fit for smooth terms
-      } else {
-        if (se) {
-          fit <- matrix(0,nrow(kd),sum(termi))
-          se.fit <- matrix(0,nrow(kd),sum(termi)) 
-        } else fit <- matrix(0,nrow(kd),sum(termi))
-        #k <- 1; ## starting Xd
-        kk <- 1 ## starting col of fit for smooth terms
-      }
-      k <- min(which(!is.na(dk$nr))) ## starting Xd
-      n.smooth <- length(object$smooth)
-      if (n.smooth) for (i in 1:n.smooth) {
-        ilab <- object$smooth[[i]]$label
-        if (termi[i]) {
-          ii <- ts[k]:(ts[k]+dt[k]-1) ## index components for this term
-          ind <- object$smooth[[i]]$first.para:object$smooth[[i]]$last.para ## index coefs for this term
-          if (!is.null(object$dinfo$drop)) { 
-            drop <- object$dinfo$drop-object$smooth[[i]]$first.para+1
-            drop <- drop[drop<=length(ii)]
-          } else drop <- NULL
-          fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd,ks[ii,],                           ##kd[,ii,drop=FALSE]
-                      1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop)
-          if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind,drop=FALSE],kd,ks[ii,],                 #kd[,ii,drop=FALSE],
-                       1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop,nthreads=n.threads)^.5
-          kk <- kk + 1
-        }
-        k <-  k + 1;
-      } 
-      fit.names <- c(if (se) colnames(pp$fit) else colnames(pp), term.lab[termi])
-      colnames(fit) <- fit.names
-      if (se) { 
-        colnames(se.fit) <- fit.names
-        fit <- list(fit=fit,se.fit=se.fit)
-      }
-    } ## !para.discrete branch  
+    term.lab <- names(object$dinfo$ts) ## names of all terms
+    termi <- rep(TRUE,length(term.lab)) ## do we want term included?
+    termi[term.lab=="(Intercept)"] <- FALSE ## not if it's intercept
+    if (!is.null(terms)) termi <- termi & term.lab %in% terms ## and only if it's in terms
+    if (!is.null(exclude)) termi <- termi & !(term.lab %in% exclude) ## and not in exclude
+    uterms <- unique(term.lab[termi])
+    nterms <- length(uterms) ## sum(termi) 
+    fit <- matrix(0,nrow(kd),nterms)
+    if (se) se.fit <- matrix(0,nrow(kd),nterms)
+    for (k in 1:nterms) {
+      lt <- which(term.lab%in%uterms[k]) ## discrete terms involved in this smooth (can be more than one)
+      if (termi[lt]) {
+        fit[,k] <- Xbd(Xd,object$coefficients,kd,ks,                          
+                    ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
+        if (se) se.fit[,k] <- diagXVXd(Xd,object$Vp,kd,ks,                
+                     ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,nthreads=n.threads,lt=lt,rt=lt)^.5
+      }	
+    }
+    colnames(fit) <- uterms
+    if (se) {
+      colnames(se.fit) <- uterms
+      fit <- list(fit=fit,se.fit=se.fit)
+    } 
   } else if (type=="lpmatrix") {
-    if (para.discrete) {
-      lt <- 1:length(ts);names(lt) <- names(ts)
-      if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
-      if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
-    } else lt <- NULL 
+    lt <- 1:length(ts);names(lt) <- names(ts)
+    if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
+    if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
     fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
     if (nlp>1) attr(fit,"lpi") <- lpi
   } else { ## link or response 
@@ -2172,22 +2071,18 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         fit <- matrix(0,nrow(kd),nlp)
 	if (se) se.fit <- matrix(0,nrow(kd),nlp)
         for (i in 1:nlp) {
-          if (para.discrete) {
-            lt <- 1:length(ts);names(lt) <- names(ts)
-	    lt <- lt[lpid[[i]]]
-            if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
-            if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
-          } else lt <- lpid[[i]]
+          lt <- 1:length(ts);names(lt) <- names(ts)
+	  lt <- lt[lpid[[i]]]
+          if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
+          if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
           fit[,i] <- Xbd(Xd,object$coefficients,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt) + offset[[i]]
 	  if (se) se.fit[,i] <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,
 	                                        lt=lt,rt=lt,nthreads=n.threads)^.5
 	}  
       } else {
-        if (para.discrete) {
-          lt <- 1:length(ts);names(lt) <- names(ts)
-          if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
-          if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
-        } else lt <- NULL 
+        lt <- 1:length(ts);names(lt) <- names(ts)
+        if (!is.null(terms)) lt <- lt[names(lt)%in%terms]
+        if (!is.null(exclude)) lt <- lt[!names(lt)%in%exclude]
         fit <- Xbd(Xd,object$coefficients,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt) + offset
 	if (se) se.fit <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt,rt=lt,nthreads=n.threads)^.5
       }
@@ -2196,11 +2091,6 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         dmu.deta <- object$family$mu.eta
       } else linkinv <- dmu.deta <- NULL
       if (se==TRUE) {
-#        if (nlp>1) {
-#          se.fit <- matrix(0,nrow(kd),nlp)
-#          for (i in 1:nlp) se.fit[,i] <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,
-#	                                        lt=lpid[[i]],rt=lpid[[i]],nthreads=n.threads)^.5
-#        } else se.fit <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,nthreads=n.threads)^.5
         if (type=="response") {
 	  if (nlp>1) for (i in 1:nlp) {
 	    se.fit[,i] <- se.fit[,i] * abs(object$family$linfo[[i]]$mu.eta[fit[,i]])
