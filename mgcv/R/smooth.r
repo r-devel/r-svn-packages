@@ -4338,9 +4338,9 @@ PredictMat <- function(object,data,n=nrow(data))
         ## Remainder are constants to be swept out of remaining columns 
         ## Actually better handled first (see above)
         #X <- X[,-qrc[1],drop=FALSE] - matrix(qrc[-1],nrow(X),ncol(X)-1,byrow=TRUE)
-      } else if (length(qrc)>0) { ## Kronecker product of sum-to-zero contrasts
+      } else if (length(qrc)>1) { ## Kronecker product of sum-to-zero contrasts
         m <- qrc[-c(1,length(qrc))] ## contrast dimensions - less initial code and final number of constraints
-	X <- t(XZKr(X,m))
+	if (length(m)>0) X <- t(XZKr(X,m))
       } else if (qrc>0) { ## simple set to zero constraint
         X <- X[,-qrc,drop=FALSE]
       } else if (qrc<0) { ## params sum to zero
