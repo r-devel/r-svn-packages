@@ -126,7 +126,7 @@ section of AR1 correlation. Very first observation in data frame does not need t
 there are no breaks in AR1 correlaion.}
 
 \item{discrete}{with \code{method="fREML"} it is possible to discretize covariates for storage and efficiency reasons.
-If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins.}
+If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins. Parametric terms use the maximum number specified.}
 
 \item{cluster}{\code{bam} can compute the computationally dominant QR decomposition in parallel using \link[parallel:clusterApply]{parLapply}
 from the \code{parallel} package, if it is supplied with a cluster on which to do this (a cluster here can be some cores of a 
