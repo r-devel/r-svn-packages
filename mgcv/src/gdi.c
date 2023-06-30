@@ -815,7 +815,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 */
 
 { double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1,*pTkm;
-    int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col,Mtot;
+  int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col,Mtot,work_n;
   int tid;
   if (nthreads<1) nthreads = 1;
   
@@ -830,7 +830,8 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
       return;
   }
   /* set up work space */
-  work =  (double *)CALLOC((size_t)*n * nthreads,sizeof(double));
+  work_n = *n; if (work_n < *r) work_n = *r;
+  work =  (double *)CALLOC((size_t) work_n * nthreads,sizeof(double));
   tid=0; /* thread identifier defaults to zero if openMP not available */
   /* now loop through the smoothing parameters to create K'TkK */
   if (deriv2) {
@@ -886,7 +887,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
       #endif    
       bt=1;ct=0;mgcv_mmult(PtrSm + tid * *r * max_col,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
       /*rSoff += rSncol[m];*/
-      trPtSP[m] = sp[m] * diagABt(work + *n * tid,PtrSm + tid * *r * max_col,
+      trPtSP[m] = sp[m] * diagABt(work + work_n * tid,PtrSm + tid * *r * max_col,
                                  PtrSm + tid * *r * max_col,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
       det1[m + *M0] += trPtSP[m]; /* completed first derivative */
       if (deriv2) { /* get P'S_mP */
@@ -920,20 +921,20 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
         det2[km] = xx;
 
         /* - tr(KTkKK'TmK) */
-        det2[km] -= diagABt(work + *n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+        det2[km] -= diagABt(work + work_n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
         /* sp[k]*tr(P'S_kP) */
         if (k >= *M0 && k==m) det2[km] += trPtSP[m - *M0];
 
         /* -sp[m]*tr(K'T_kKP'S_mP) */
-        if (m >= *M0) det2[km] -= sp[m - *M0]*diagABt(work + *n * tid,KtTK + k * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
+        if (m >= *M0) det2[km] -= sp[m - *M0]*diagABt(work + work_n * tid,KtTK + k * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
      
         /* -sp[k]*tr(K'T_mKP'S_kP) */
-        if (k >= *M0) det2[km] -= sp[k - *M0]*diagABt(work + *n * tid,KtTK + m * *r * *r,PtSP + (k - *M0) * *r * *r,r,r);
+        if (k >= *M0) det2[km] -= sp[k - *M0]*diagABt(work + work_n * tid,KtTK + m * *r * *r,PtSP + (k - *M0) * *r * *r,r,r);
  
         /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
         if (k >= *M0 && m >= *M0) det2[km] -= sp[m - *M0]*sp[k - *M0]*
-                                  diagABt(work + *n * tid,PtSP + (k - *M0) * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
+                                  diagABt(work + work_n * tid,PtSP + (k - *M0) * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
 
         det2[mk] = det2[km];
       }     
@@ -1327,8 +1328,9 @@ void ift1(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
 */
 { int n_2dCols,i,j,k,one=1,bt,ct;
   double *work,*Skb,*pp,*p0,*p1,*work1;
-  work = (double *) CALLOC((size_t)*n,sizeof(double));
-  work1 = (double *) CALLOC((size_t)*n,sizeof(double));
+  i = *n; if (i < *r) i = *r;
+  work = (double *) CALLOC((size_t)i,sizeof(double));
+  work1 = (double *) CALLOC((size_t)i,sizeof(double));
   Skb = (double *) CALLOC((size_t)*r,sizeof(double));
   n_2dCols = (*M * (1 + *M))/2;
   for (i=0;i<*M;i++) { /* first derivative loop */

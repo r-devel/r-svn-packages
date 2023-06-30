@@ -326,8 +326,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
               w <- weg*alpha*mevg^2/var.mug
             }
 
-            
-            if (sum(good)<ncol(x)) stop("Not enough informative observations.")
+## NOTE: TEST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!            
+##            if (sum(good)<ncol(x)) stop("Not enough informative observations.")
+## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (control$trace) t1 <- proc.time()
 
             ng <- sum(good);zg[1:ng] <- z ## ensure y dim large enough for beta in all cases
