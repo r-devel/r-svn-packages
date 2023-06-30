@@ -220,7 +220,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 ## ... there is an element of nr and ks for each variable of
 ## mf. Variables are only discretized and stored in mf once.
 ## Model terms can be matched to elements of nr and ks based on the
-## 'xnames' retuned from terms2tensor, or the 'terms' component of
+## 'xnames' returned from terms2tensor, or the 'terms' component of
 ## smooth objects.
 ## ks has an extra row, k an extra column and nr an extra entry for
 ## any "(Intercept)"
@@ -244,7 +244,6 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
  
   nk <- nk + length(names.pmf)
   k <- matrix(0,nrow(mf),nk) ## each column is an index vector
-  #k.start <- 1:(nk+1) ## record last column for each term
   ks <- matrix(NA,nk,2,dimnames=list(rep("",nk)))
   ik <- 0 ## index counter i.e. counts marginal smooths and their indices
   nr <- rep(0,nk) ## number of rows for marginal term
@@ -310,7 +309,6 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## padding is necessary if gam.setup is to be used for setup
 
   if (full) {
-   # colnames(k) <- rep("",ncol(k))
     maxr <- max(nr)
     ## If NA's caused rows to be dropped in mf, then they should
     ## also be dropped in pmf, otherwise we can end up with factors
@@ -1641,7 +1639,8 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 } # end of bam.fit
 
 predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
-                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,n.threads=1,gc.level=0,...) {
+                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
+			 n.threads=1,gc.level=0,...) {
 ## function for prediction from a bam object, by discrete methods
 
   ## remove some un-needed stuff from object
