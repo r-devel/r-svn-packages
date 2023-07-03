@@ -331,7 +331,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ## !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (control$trace) t1 <- proc.time()
 
-            ng <- sum(good);zg[1:ng] <- z ## ensure y dim large enough for beta in all cases
+            ng <- sum(good);zg[1:ng] <- z ## ensure y dim large enough for beta in all cases (including p>n)
             oo <- .C(C_pls_fit1,y=as.double(zg),X=as.double(x[good,]),w=as.double(w),wy=as.double(w*z),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(ng),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
