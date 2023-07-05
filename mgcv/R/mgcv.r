@@ -2196,9 +2196,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     return(G)
   }  
 
-## WARNING TEST!!!!!!!!!!!!!!!!!!!!
-##  if (ncol(G$X)>nrow(G$X)) warning("Model has more coefficients than data") ##stop("Model has more coefficients than data") 
-##!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  ## if (ncol(G$X)>nrow(G$X)) warning("Model has more coefficients than data") ##stop("Model has more coefficients than data") 
 
   G$conv.tol <- control$mgcv.tol      # tolerence for mgcv
   G$max.half <- control$mgcv.half # max step halving in Newton update mgcv

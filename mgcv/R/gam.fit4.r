@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013-2022). Provided under GPL 2.
+# (c) Simon N. Wood (2013-2022). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
 dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
@@ -668,55 +668,39 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      dev0 <- dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta)
      ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV
-       #qdev <- dev0 + gamma*sum(dd$Deta[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2)
        qdev <- dev0 + gamma*dd$Deta[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2
        NCV <- sum(qdev)/(2*scale) - ls0$ls
        if (deriv) {
          deta <- x %*% db.drho
-         #NCV1 <- (colSums(dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv)) +
-	 #gamma*colSums(dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i])) +
-	 #0.5*gamma*colSums(as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2))/(2*scale)
 	 ncv1 <- (dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv) +
 	          gamma*dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i]) +
 	          0.5*gamma*as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2)/(2*scale)
 	 if (nt>0) { ## deal with direct dependence on the theta parameters
-           #NCV1[1:nt] <- NCV1[1:nt]- ls0$lsth1[1:nt] +
-	   #   if (nt==1) (sum(dd$Dth[nei$i]) + gamma*sum(dd$Detath[nei$i]*(eta.cv-eta[nei$i])) + 0.5*gamma*sum(dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2))/(2*scale)
-	   #   else (colSums(dd$Dth[nei$i,]) + gamma*colSums(dd$Detath[nei$i,]*(eta.cv-eta[nei$i])) + 0.5*gamma*colSums(dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2))/(2*scale)
            ncv1[,1:nt] <- ncv1[,1:nt]- ls0$LSTH1[,1:nt] +
 	      if (nt==1) (dd$Dth[nei$i] + gamma*dd$Detath[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2)/(2*scale)
 	      else (dd$Dth[nei$i,] + gamma*dd$Detath[nei$i,]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2)/(2*scale)
          }
 	 if (!scale.known) {
-           #NCV1 <- c(NCV1,-qdev/(2*scale) - ls0$lsth1[1+nt])
 	   ncv1 <- cbind(ncv1,-qdev/(2*scale) - ls0$LSTH1[,1+nt])
          }
        }
      } else { ## exact NCV
-       #dev.cv <- sum(dev.resids(y, mu.cv, weights,theta))
        dev.cv <- dev.resids(y, mu.cv, weights,theta)
        NCV <- sum(dev.cv)/(2*scale) - ls0$ls
        DEV <- sum(dev0)/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
        if (deriv) {
          dd.cv <- dDeta(y[nei$i],mu.cv,weights[nei$i],theta,family,1) 
-         #NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
 	 ncv1 <- dd.cv$Deta*deta.cv/(2*scale)
-         #if (gamma!=1) DEV1 <- colSums((dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE])/(2*scale)
 	 if (gamma!=1) dev1 <- (dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE]/(2*scale)
          if (nt>0) {
-           #NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls0$lsth1[1:nt]
-	   #if (gamma!=1) DEV1[1:nt] <- DEV1[1:nt] + colSums(as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE]) - ls0$lsth1[1:nt]
-	   ncv1[,1:nt] <- ncv1[,1:nt] + as.matrix(dd.cv$Dth/(2*scale)) - ls0$LSTH1[,1:nt]
+       	   ncv1[,1:nt] <- ncv1[,1:nt] + as.matrix(dd.cv$Dth/(2*scale)) - ls0$LSTH1[,1:nt]
 	   if (gamma!=1) dev1[,1:nt] <- dev1[,1:nt] + as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE] - ls0$LSTH1[,1:nt]
          }
          if (!scale.known) { ## deal with log scale parameter derivative
-           #NCV1 <- c(NCV1,-dev.cv/(2*scale) - ls0$lsth1[1+nt])
-	   #if (gamma!=1) DEV1 <- c(DEV1,-dev0/(2*scale) - ls0$lsth1[1+nt])
 	   ncv1 <- cbind(ncv1,-dev.cv/(2*scale) - ls0$LSTH1[,1+nt])
 	   if (gamma!=1) dev1 <- cbind(dev1,-dev0/(2*scale) - ls0$lSTH1[,1+nt])
          }
-         #if (gamma!=1) NCV1 <- gamma*NCV1 - (gamma-1)*DEV1
 	 if (gamma!=1) ncv1 <- gamma*ncv1 - (gamma-1)*dev1
        }
      } ## exact NCV

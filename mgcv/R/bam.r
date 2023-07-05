@@ -68,7 +68,7 @@ qr_update <- function(Xn,yn,R=NULL,f=rep(0,0),y.norm2=0,use.chol=FALSE,nt=1)
       yn <- c(f,yn)
     }
     qrx <- if (nt==1) qr(Xn,tol=0,LAPACK=TRUE) else pqr2(Xn,nt)
-    fn <- qr.qty(qrx,yn)[1:p]
+    fn <- qr.qty(qrx,yn)[1:min(p,nrow(Xn))]
     rp <- qrx$pivot;rp[rp] <- 1:p # reverse pivot
     return(list(R = qr.R(qrx)[,rp],f=fn,y.norm2=y.norm2))
   }
@@ -2427,7 +2427,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       if (is.null(G$offset)) G$offset <- rep(0,n)
     }
    
-    if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
+##    if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
   
     if (ncol(G$X) > chunk.size && !discretize) { ## no sense having chunk.size < p
       chunk.size <- 4*ncol(G$X)

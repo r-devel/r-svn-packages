@@ -2082,8 +2082,6 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   if (n_work < k) n_work = k;
   work = (double *)CALLOC((size_t) n_work,sizeof(double)); /* work space for several routines*/
   
-  // nr = *q + *Enrow; // BUG if q>n !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
   if (*n < *q) nr = *n + *Enrow; else nr = *q + *Enrow;
   
   R = (double *)CALLOC((size_t)*q * nr,sizeof(double));
@@ -2470,7 +2468,6 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
  
   work = (double *)CALLOC((size_t) n_work,sizeof(double)); /* work space for several routines*/
 
-  //nr = *q + *Enrow; // BUG
   if (*n < *q) nr = *n + *Enrow; else nr = *q + *Enrow;
   
   R = (double *)CALLOC((size_t)*q * nr,sizeof(double));
@@ -3086,8 +3083,8 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
 
   if (!*use_wy) { /* Now get the fitted values X \beta, *without* finding \beta */
     /* st left=1;tp=1;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); */ /* z = Q'z */
-    tp=1;mgcv_pqrqy(z,WX,tau,n,&rr,&one,&tp,nt);
-    j = rank; if (j > rr) j = rr; /* number of rows in r factor */
+    tp=1;mgcv_pqrqy(z,WX,tau,n,&rr,&one,&tp,nt); 
+    j = rank; //if (j > rr) j = rr; /* number of rows in r factor */
     for (i=j;i<nz;i++) z[i]=0.0;
     left=1,tp=1; 
     mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1'Q'z, where Q1 is the first rank rows of second orth factor */
@@ -3104,13 +3101,14 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
     }
   
     left=1,tp=0; mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1 Q1'Q'z */
-
-    for (*penalty=0.0,i=rank;i<nr;i++) *penalty += z[i]*z[i]; /* the penalty term */
+    
+    /* the penalty term, using  Eb = Q2Q1'Q'z, where Q2 is part of second orth factor excluding Q1... */
+    for (*penalty=0.0,i=rr;i<nr;i++) *penalty += z[i]*z[i]; 
 
     for (i=rank;i < *n;i++) z[i]=0.0;
 
     /* st left=1;tp=0;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); */ /* z = Q Q1 Q1'Q z */
-    tp=0;mgcv_pqrqy(z,WX,tau,n,&rr,&one,&tp,nt);
+    tp=0;mgcv_pqrqy(z,WX,tau,n,&rr,&one,&tp,nt); 
 
     for (i=0;i<*n;i++) eta[i] = z[i]/raw[i]; /* the linear predictor */
   } /* if (!*use_wy) */
