@@ -174,7 +174,7 @@ Otherwise the function returns an object of class \code{"gam"} as described in \
 A generalized additive model (GAM) is a generalized linear model (GLM) in which the linear 
 predictor is given by a user specified sum of smooth functions of the covariates plus a 
 conventional parametric component of the linear predictor. A simple example is:
-\deqn{\log(E(y_i)) = \alpha + f_1(x_{1i})+f_2(x_{2i})}{log(E(y_i))= a + f_1(x_1i)+f_2(x_2i)}
+\deqn{\log\{E(y_i)\} = \alpha + f_1(x_{1i})+f_2(x_{2i})}{log\{E(y_i)\}= a + f_1(x_1i)+f_2(x_2i)}
 where the (independent) response variables \eqn{y_i \sim {\rm Poi }}{y_i~Poi}, and
 \eqn{f_1}{f_1} and \eqn{f_2}{f_2} are smooth functions of covariates \eqn{x_1}{x_1} and 
 \eqn{x_2}{x_2}. The log is an example of a link function. Note that to be identifiable the model
@@ -221,17 +221,16 @@ fit using \code{\link{gam.fit}}, \code{\link{gam.fit3}} or variants, which are m
 of \code{\link{glm.fit}}. The GAM 
 penalized likelihood maximization problem is solved by Penalized Iteratively 
 Re-weighted  Least Squares (P-IRLS) (see e.g. Wood 2000). 
-Smoothing parameter selection is possible in one of two ways. (i)
+Smoothing parameter selection is possible in one of three ways. (i)
 `Performance iteration' uses the fact that at each P-IRLS step a working penalized linear model
 is estimated, and the smoothing parameter estimation can be performed for each such working model.
 Eventually, in most cases, both model parameter estimates and smoothing 
-parameter estimates converge. This option is available in \code{\link{bam}} and \code{\link{gamm}} but
-is deprecated for \code{gam} (ii) Alternatively the P-IRLS scheme is iterated to
-convergence for each trial set of smoothing parameters, and GCV, UBRE or REML scores
-are only evaluated on convergence - optimization is then `outer' to the P-IRLS
+parameter estimates converge. This option is available in \code{\link{bam}} and \code{\link{gamm}}.
+(ii) Alternatively the P-IRLS scheme is iterated to convergence for each trial set of smoothing parameters,
+and GCV, UBRE or REML scores are only evaluated on convergence - optimization is then `outer' to the P-IRLS
 loop: in this case the P-IRLS iteration has to be differentiated, to
 facilitate optimization, and \code{\link{gam.fit3}} or one of its variants is used in place of
-\code{gam.fit}. \code{gam} uses the second method, outer iteration.
+\code{gam.fit}. (iii) The extended Fellner-Schall algorithm of Wood and Fasiolo (2017) alternates estimation of model coefficients with simple updates of smoothing parameters, eventually approximately maximizing the marginal likelihood of the model (REML). \code{gam} uses the second method, outer iteration, by default.
 
 
 Several alternative basis-penalty types  are built in for representing model
@@ -255,8 +254,7 @@ general linear functionals of smooths, via the summation convention mechanism de
 \code{\link{linear.functional.terms}}. \code{link{family.mgcv}} details what is available beyond GLMs 
 and the exponential family.
      
-Details of the default underlying fitting methods are given in Wood (2011
-and 2004). Some alternative methods are discussed in Wood (2000 and 2006). 
+Details of the default underlying fitting methods are given in Wood (2011, 2004) and Wood, Pya and Saefken (2016). Some alternative methods are discussed in Wood (2000, 2017). 
 
 \code{gam()} is not a clone of Trevor Hastie's original (as supplied in S-PLUS or package \code{gam}). The major
 differences are (i) that by default estimation of the
@@ -288,31 +286,38 @@ Journal of the American Statistical Association 111, 1548-1575
 Wood, S.N. (2011) Fast stable restricted maximum likelihood 
 and marginal likelihood estimation of semiparametric generalized linear 
 models. Journal of the Royal Statistical Society (B) 73(1):3-36
+\doi{10.1111/j.1467-9868.2010.00749.x}
 
 Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass. 99:673-686. [Default
 method for additive case by GCV (but no longer for generalized)]
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
+\doi{10.1111/1467-9868.00374}
 
 Wood, S.N. (2006a) Low rank scale invariant tensor product smooths for
 generalized additive mixed models. Biometrics 62(4):1025-1036
 
 Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
-and Hall/CRC Press.
+and Hall/CRC Press. \doi{10.1201/9781315370279}
 
 Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing
 parameter optimization with application to Tweedie location, scale and shape models.
-Biometrics 73 (4), 1071-1081
+Biometrics 73 (4), 1071-1081 \doi{10.1111/biom.12666}
 
-Wood S.N., F. Scheipl and J.J. Faraway (2012) Straightforward intermediate rank tensor product smoothing
-in mixed models. Statistical Computing.
+Wood S.N., F. Scheipl and J.J. Faraway (2013) Straightforward intermediate rank tensor product smoothing
+in mixed models. Statistics and Computing 23: 341-360. \doi{10.1007/s11222-012-9314-z}
 
 Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
-Model Components. Scandinavian Journal of Statistics, 39(1), 53-74.
+Model Components. Scandinavian Journal of Statistics, 39(1), 53-74. \doi{10.1111/j.1467-9469.2011.00760.x}
 
 
 Key Reference on GAMs and related models:
+
+Wood, S. N. (2020) Inference and computation with generalized
+additive models and their extensions. Test 29(2): 307-339.
+\doi{10.1007/s11749-020-00711-5}
+
 
 Hastie (1993) in Chambers and Hastie (1993) Statistical Models in S. Chapman
 and Hall.
@@ -360,10 +365,6 @@ Wahba (e.g. 1990) and Gu (e.g. 2002).
 The default basis dimensions used for smooth terms are essentially arbitrary, and 
 it should be checked that they are not too small. See \code{\link{choose.k}} and
 \code{\link{gam.check}}. 
-
-You must have more unique combinations of covariates than the model has total
-parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
-terms less the number of spline terms). 
 
 Automatic smoothing parameter selection is not likely to work well when 
 fitting models to very few response data.

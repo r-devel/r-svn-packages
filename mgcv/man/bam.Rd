@@ -210,7 +210,7 @@ Wood, S.N., Goude, Y. & Shaw S. (2015) Generalized additive models for large dat
 Wood, S.N., Li, Z., Shaddick, G. & Augustin N.H. (2017) Generalized additive models for gigadata: modelling the UK black smoke network daily data. Journal of the American Statistical Association. 112(519):1199-1210
 \doi{10.1080/01621459.2016.1195744}
 
-Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing.
+Li, Z & S.N. Wood (2020) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing. 30:19-25
 \doi{10.1007/s11222-019-09864-2}
 
 }
@@ -223,10 +223,6 @@ Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized
 \section{WARNINGS }{
 
 The routine may be slower than optimal if the default \code{"tp"} basis is used. 
-
-Unless discrete=TRUE, you must have more unique combinations of covariates than the model has total
-parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
-terms less the number of spline terms). 
 
 This routine is less stable than `gam' for the same dataset.
 

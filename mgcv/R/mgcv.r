@@ -2022,7 +2022,7 @@ nanei <- function(nb,k) {
 ## this function adjusts nb to remove the dropped points and adjust the
 ## indices accordingly, so that the structure works with a data frame
 ## from which rows in k have been dropped.
-  if (!length(k)) return
+  if (!length(k)) return()
   if (is.null(nb$k)||is.null(nb$m)||is.null(nb$mi)||is.null(nb$i)) stop("full nei list needed if data incomplete")
   ## first work on dropped folds...
   kk <- which(nb$k %in% k) ## position of dropped in nb$k
