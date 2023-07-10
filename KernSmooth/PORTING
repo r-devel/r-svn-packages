@@ -258,4 +258,4 @@ Version 2.23-22
 ===============
 
 src/Makevars does not need FLIBS as there is Fortran code in the package.
-(Release deferred as R CMD check --as-cran warns on released R.)
+(And macOS now warns on duplication.)
