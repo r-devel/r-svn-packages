@@ -259,3 +259,8 @@ Version 2.23-22
 
 src/Makevars does not need FLIBS as there is Fortran code in the package.
 (And macOS now warns on duplication.)
+
+Version 2.23-23
+===============
+
+Declare a variable in cp.f to pacify Intel ifx.
