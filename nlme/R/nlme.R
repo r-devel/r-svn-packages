@@ -1,6 +1,6 @@
 ###            Fit a general nonlinear mixed effects model
 ###
-### Copyright 2006-2022  The R Core team
+### Copyright 2006-2023  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -1083,7 +1083,7 @@ getParsNlme <-
 ###  Methods for standard generics
 ###
 
-formula.nlme <- function(x, ...) x$formula
+formula.nlme <- function(x, ...) x$formula %||% eval(x$call[["model"]])
 
 predict.nlme <-
   function(object, newdata, level = Q, asList = FALSE, na.action = na.fail,

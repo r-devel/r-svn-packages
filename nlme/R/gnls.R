@@ -636,7 +636,7 @@ getParsGnls <- function(plist, pmap, beta, N)
 
 coef.gnls <- function(object, ...) object$coefficients
 
-formula.gnls <- function(x, ...) x$formula
+formula.gnls <- function(x, ...) x$formula %||% eval(x$call[["model"]])
 
 getData.gnls <-
   function(object)
