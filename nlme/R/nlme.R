@@ -1018,9 +1018,11 @@ nlme.formula <-
 		 residuals = Resid,
 		 plist = plist,
                  map = list(fmap=fmap,rmap=rmap,rmapRel=rmapRel,bmap=bmap),
-                 fixDF = fixDF),
+                 fixDF = fixDF
+               , formula = model # => reliable formula.nlme() [PR#18599]
+                 ),
             ## saving labels and units for plots
-            units = if(isGrpd) attr(data, "units"),
+            units  = if(isGrpd) attr(data, "units"),
             labels = if(isGrpd) attr(data, "labels"))
 } ## {nlme.formula}
 
@@ -1081,7 +1083,7 @@ getParsNlme <-
 ###  Methods for standard generics
 ###
 
-formula.nlme <- function(x, ...) eval(x$call[["model"]])
+formula.nlme <- function(x, ...) x$formula
 
 predict.nlme <-
   function(object, newdata, level = Q, asList = FALSE, na.action = na.fail,
