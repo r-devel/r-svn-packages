@@ -1,7 +1,8 @@
 2023-07-31  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* R/nlme.R (nlme.formula), R/gnls.R (gnls): store 'model' argument` as 'formula'
-	==> trivial formula() methods, fixing PR#15892 by Ben Bolker.
+	* R/nlme.R (nlme.formula, formula.nlme):
+	* R/gnls.R (gnls, formula.gnls): store 'model' argument as 'formula'
+	==> trivial formula() methods, fixing PR#18559 by Ben Bolker.
 
 2023-04-06  Martin Maechler  <maechler@stat.math.ethz.ch>
 
