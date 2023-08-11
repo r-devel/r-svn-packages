@@ -13,10 +13,10 @@ clara <- function(x, k,
     if(inherits(x, "dist"))# catch user error
 	stop("'x' is a \"dist\" object, but should be a data matrix or frame")
     x <- data.matrix(x)
-    if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
+    if(!(is.numeric(x) || is.logical(x))) stop("x is not a numeric dataframe or matrix.")
     n <- nrow(x)
     if((k <- as.integer(k)) < 1 || k > n - 1)
-	stop("The number of cluster should be at least 1 and at most n-1." )
+	stop("The number of cluster should be at least 1 and at most n-1." ) # ==> n >= 2
     if((sampsize <- as.integer(sampsize)) < max(2,k+1))
 	stop(gettextf("'sampsize' should be at least %d = max(2, 1+ number of clusters)",
                       max(2,k+1)), domain=NA)
@@ -92,10 +92,10 @@ to suppress this warning.")
 	      double (3 * sampsize),	# = tmp			## 33
 	      integer(6 * sampsize)	# = itmp
 	      )[if(cluster.only) c("clu", "jstop") else substitute()] # empty index: <all>
-    ## give a warning when errors occured
     ## res[] components really used below:
     ## jstop, clu, silinf, dis, sample, med, imed, obj, size, maxis, avdis, ratdis,
     ## avsil, ttsil
+    ## give a warning when errors occured:
     if(res$jstop) {
 	if(mdata && any(aNA <- apply(inax,1, all))) {
 	    i <- which(aNA)
@@ -124,7 +124,6 @@ to suppress this warning.")
     if(!is.null(namx)) names(clustering) <- namx
     if(cluster.only)
         return(clustering)
-    sildim <- res$silinf[, 4]
     ## adapt C output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
     disv <- res$dis[-1]
@@ -136,6 +135,7 @@ to suppress this warning.")
     attr(disv, "Labels") <- namx[res$sample]
     res$med <- if(medoids.x) ox[res$imed, , drop = FALSE]
     ## add labels to C output
+    sildim <- res$silinf[, 4]
     if(!is.null(namx)) {
 	sildim     <- namx[sildim]
 	res$sample <- namx[res$sample]
@@ -149,9 +149,9 @@ to suppress this warning.")
     if(k > 1) {
 	dimnames(res$silinf) <- list(sildim,
 				     c("cluster", "neighbor", "sil_width", ""))
-	r$silinfo <- list(widths = res$silinf[, -4],
+	r$silinfo <- list(widths          = res$silinf[, -4],
 			  clus.avg.widths = res$avsil,
-			  avg.width = res$ttsil)
+			       avg.width  = res$ttsil)
     }
     if(keep.data) r$data <- data
     class(r) <- c("clara", "partition")

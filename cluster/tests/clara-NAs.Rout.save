@@ -1,6 +1,6 @@
 
-R version 3.5.3 Patched (2019-03-11 r76305) -- "Great Truth"
-Copyright (C) 2019 The R Foundation for Statistical Computing
+R Under development (unstable) (2022-10-14 r83104) -- "Unsuffered Consequences"
+Copyright (C) 2022 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -618,7 +618,7 @@ end{bswap2}: sky = 347.279
  obj= 7.91099
 C clara(): best sample _found_ ; nbest[1:44] =
  c(2,5,10,11,14,18,21,22,23,24,25,26,27,29,33,34,36,37,39,41,42,43,45,47,49,50,55,57,58,60,62,64,67,68,71,73,75,77,79,82,83,84,85,87)
- --> dysta2(nbest), resul(), end
+ --> dysta2(nbest),  resul(),  black() and return() from C.
 Call:	 clara(x = x, k = 2, samples = 12, trace = 3) 
 Medoids:
      [,1] [,2]
@@ -655,4 +655,4 @@ to suppress this warning.
 > 
 > proc.time()
    user  system elapsed 
-  0.169   0.044   0.264 
+  0.114   0.044   0.152 

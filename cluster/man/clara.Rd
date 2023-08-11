@@ -14,7 +14,8 @@ clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
 \arguments{
   \item{x}{
     data matrix or data frame, each row corresponds to an observation,
-    and each column corresponds to a variable.  All variables must be numeric.
+    and each column corresponds to a variable.  All variables must be
+    numeric (or logical).
     Missing values (NAs) are allowed.}
   \item{k}{integer, the number of clusters.
     It is required that \eqn{0 < k < n} where \eqn{n} is the number of
@@ -92,7 +93,8 @@ clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
   integer vector of length \eqn{n} with entries from \code{1:k}.
 }
 \details{
-  \code{clara} is fully described in chapter 3 of Kaufman and Rousseeuw (1990).
+  \code{clara} (for "euclidean" and "manhattan") is fully described in
+  chapter 3 of Kaufman and Rousseeuw (1990).
   Compared to other partitioning methods such as \code{pam}, it can deal with
   much larger datasets.  Internally, this is achieved by considering
   sub-datasets of fixed size (\code{sampsize}) such that the time and

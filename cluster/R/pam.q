@@ -45,7 +45,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     else {
 	## check input matrix and standardize, if necessary
 	x <- data.matrix(x)# dropping "automatic rownames" compatibly with daisy()
-	if(!is.numeric(x)) stop("'x' is not a numeric dataframe or matrix.")
+        if(!(is.numeric(x) || is.logical(x))) stop("x is not a numeric dataframe or matrix.")
 	x2 <- x ; dimnames(x2) <- NULL
 	n <- nrow(x2)
 	if(n > nMax)

@@ -65,6 +65,9 @@ Things done are moved to `./DONE-MM`
 
 ### `pam()` (and also `clara()`)
 
+* clara() got metric="jaccard" (donated in 2018) ==> copy to pam(), too !!
+  		well: actually that is *BUGGY* 
+
 * pam() and clara(): Should be possible to "re"start with GIVEN medoids.
 		     now possible for pam(), not for clara();
 		     --> "synchronize src/pam.c and src/clara.c in
