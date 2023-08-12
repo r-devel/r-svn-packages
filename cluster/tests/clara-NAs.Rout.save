@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2022-10-14 r83104) -- "Unsuffered Consequences"
-Copyright (C) 2022 The R Foundation for Statistical Computing
+R version 4.3.1 Patched (2023-08-12 r84937) -- "Beagle Scouts"
+Copyright (C) 2023 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -395,7 +395,7 @@ to suppress this warning.
 > 
 > x <- x[-33,]
 > ## still had the ** dysta2() .. OUT" problem {no longer!}
-> clara(x, 2, samples = 12, trace = 3)
+> c2  <- clara(x, 2, samples = 12, trace = 3)
 C clara(): (nsam,nran,n) = (44,12,87); 'large_sample',
 C clara(): sample 1  finding 1st... new k{ran}:
 .. kall: FALSE, 
@@ -619,32 +619,75 @@ end{bswap2}: sky = 347.279
 C clara(): best sample _found_ ; nbest[1:44] =
  c(2,5,10,11,14,18,21,22,23,24,25,26,27,29,33,34,36,37,39,41,42,43,45,47,49,50,55,57,58,60,62,64,67,68,71,73,75,77,79,82,83,84,85,87)
  --> dysta2(nbest),  resul(),  black() and return() from C.
-Call:	 clara(x = x, k = 2, samples = 12, trace = 3) 
-Medoids:
-     [,1] [,2]
-[1,]   NA    1
-[2,]   50   14
-Objective function:	 7.910988
-Clustering vector: 	 int [1:87] 1 1 1 2 1 1 1 2 1 2 1 2 1 2 2 1 1 1 ...
-Cluster sizes:	    	 56 31 
-Best sample:
- [1]  2  5 10 11 14 18 21 22 23 24 25 26 27 29 33 34 36 37 39 41 42 43 45 47 49
-[26] 50 55 57 58 60 62 64 67 68 71 73 75 77 79 82 83 84 85 87
-
-Available components:
- [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
- [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 Warning message:
 In clara(x, 2, samples = 12, trace = 3) :
   Distance computations with NAs: using correct instead of pre-2016 wrong formula.
 Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
 to suppress this warning.
+> c2. <- clara(x, 2, samples = 12, trace = 1, correct.d=TRUE)
+C clara(): (nsam,nran,n) = (44,12,87); 'large_sample',
+C clara(): sample 1  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 2  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 3  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 4  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 5  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 6  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 7  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 8  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 9  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 10  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 11  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): sample 12  {295} [ntt=43, nunfs=0]  -> dysta2()
+C clara(): best sample _found_  --> dysta2(nbest),  resul(),  black() and return() from C.
+> c2g <- clara(x, 2, samples = 12, sampsize=nrow(x), trace = 2, metric = "gower", pamLike=TRUE, correct.d=TRUE)
+C clara(): (nsam,nran,n) = (87,12,87); 'full_sample',
+ -> dysta2()
+. clara(): s:= max dys[1..3741] = 1;
+ bswap2(): 37 29  after build: medoids are 29 37
+ --> sky = sum_j D_j= 8.13561
+end{bswap2}: sky = 8.13561
+ 1st proper or new best: obj= 13.5632
+C clara(): best sample _found_ ; nbest[1:87] =
+ c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87)
+ --> dysta2(nbest),  resul(),  black() and return() from C.
+> p2g <- pam(daisy(x,"gower"), k=2, trace = 3)
+pam()'s bswap(*, s=0.785, pamonce=0): build 2 medoids:
+    new repr. 37
+    new repr. 64
+  after build: medoids are 37 64
+  and min.dist dysma[1:n] are
+   0.02    0.3    0.1  0.131   0.02   0.04   0.24 0.0898   0.08 0.0238
+   0.04 0.0738   0.02  0.056  0.046   0.06    0.2   0.16   0.02 0.0319
+ 0.0817   0.06      0 0.0498   0.12    0.1  0.136   0.18    0.2    0.2
+   0.02   0.06 0.0576   0.48   0.08   0.12      0 0.0279   0.08   0.08
+    0.2   0.12  0.119  0.131 0.0938    0.1  0.185   0.06   0.04 0.0838
+ 0.0717   0.06 0.0833   0.12   0.06  0.388   0.02 0.0438   0.08   0.08
+   0.08   0.22   0.08      0   0.06   0.06   0.02   0.06   0.12   0.16
+      0   0.32   0.04 0.0798  0.096      0  0.076 0.0398   0.02   0.24
+ 0.0676   0.02   0.24    0.3   0.02    0.1   0.18
+end{bswap()}, end{cstat()}
+> (icall <- which(names(c2) == "call"))
+[1] 8
+> ## c2g and p2g  are *quite* different !
+> table(c2g$clustering,
++       p2g$clustering)
+   
+     1  2
+  1 40 32
+  2 15  0
+> ##    1  2
+> ## 1 40 32
+> ## 2 15  0  <<  not *one* pair of  {2,2}   !?!
+> 
+> stopifnot(exprs = {
++     all.equal(c2[-icall], c2.[-icall])
++ })
 > 
 > data(xclara)
 > suppressWarnings(RNGversion("3.5.0")) # back compatibility of results
 > set.seed(123)
 > xclara[sample(nrow(xclara), 50),] <- NA
-> try( clara(xclara, k = 3) ) #-> "nice" error message depicting first 12 missing obs
+> try( clara(xclara, k = 3) ) #-> "nice" error message  {.. first 12 missing obs} :
 Error in clara(xclara, k = 3) : 
   50 observations (74,126,137,308,411,423,438,451,642,686,689,735 ...) have *only* NAs --> omit them for clustering!
 In addition: Warning message:
@@ -652,7 +695,10 @@ In clara(xclara, k = 3) :
   Distance computations with NAs: using correct instead of pre-2016 wrong formula.
 Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
 to suppress this warning.
+> ## Error in clara(xclara, k = 3) :
+> ##   50 observations (74,126,137,308,411,423,438,451,642,686,689,735 ...) have *only* NAs
+> ##     --> omit them for clustering!
 > 
 > proc.time()
    user  system elapsed 
-  0.114   0.044   0.152 
+  0.140   0.032   0.165 
