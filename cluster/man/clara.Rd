@@ -6,7 +6,7 @@
   clustering of the data into \code{k} clusters.
 }
 \usage{
-clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
+clara(x, k, metric = c("euclidean", "manhattan", "jaccard", "gower"),
       stand = FALSE, cluster.only = FALSE, samples = 5,
       sampsize = min(n, 40 + 2 * k), trace = 0, medoids.x = TRUE,
       keep.data = medoids.x, rngR = FALSE, pamLike = FALSE, correct.d = TRUE)
@@ -23,8 +23,8 @@ clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
   \item{metric}{
     character string specifying the metric to be used for calculating
     dissimilarities between observations.
-    The currently available options are "euclidean", "manhattan", and
-    "jaccard".
+    The currently available options are "euclidean", "manhattan", 
+    "jaccard", and "gower".  For the latter, see \code{\link{daisy}()}.
 
     Euclidean distances are root sum-of-squares of differences, and
     manhattan distances are the sum of absolute differences.
@@ -153,6 +153,8 @@ clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
   and Kamil Jadeszko.
   All arguments from \code{trace} on, and most \R documentation and all
   tests by Martin Maechler.
+
+  Kasper Fischer-Rasmussen provided \R and C code for \code{metric = "gower"}.
 }
 \seealso{
   \code{\link{agnes}} for background and references;

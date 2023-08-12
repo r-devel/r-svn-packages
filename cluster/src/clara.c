@@ -32,7 +32,7 @@ void cl_clara(int *n,  /* = number of objects */
 	      int *mdata,	/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
 	      double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
 	      int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */
-	      DISS_KIND *diss_kind, // aka 'metric' \in {EUCLIDEAN, MANHATTAN, JACCARD}
+	      DISS_KIND *diss_kind, // aka 'metric' \in {EUCLIDEAN, MANHATTAN, JACCARD, GOWER}
 	      int/*logical*/ *rng_R,/*= {0,1};  0 : use clara's internal weak RNG;
 				     *	        1 : use R's RNG (and seed) */
 	      int/*logical*/ *pam_like,/* if (1), we do "swap()" as in pam(), otherwise
@@ -345,6 +345,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    int *jtmd, double *valmd, Rboolean has_NA, Rboolean *toomany_NA)
 {
     int nlk = 0;
+    int current_group = 0; // for GOWER only: Counter for overall index
     dys[0] = 0.;/* very first index; *is* used because ind_2(i,i) |-> 0 ! */
     for (int l = 1; l < nsam; ++l) {
 	int lsel = nsel[l];
@@ -377,8 +378,40 @@ void dysta2(int nsam, int jpp, int *nsel,
 		    } else if( x[lj] > 0.9 || x[kj] > 0.9)// any is 1 - increment N_ones
 			N_ones++ ;
 		}
-		else // (diss_kind == MANHATTAN)
-		    clk += fabs(x[lj] - x[kj]);
+                else if (diss_kind == MANHATTAN)
+                    clk += fabs(x[lj] - x[kj]);
+                else if (diss_kind == GOWER) {
+                    if (x[lj] == x[kj]) {
+                        continue /* next j */;
+                    }
+                    double diff;
+                    if (jtmd[j] >= 0) { // Numerical feature
+
+                        diff = fabs(x[lj] - x[kj]);
+
+                        // Find the maximum and minimum values of this feature
+                        double max_val = -1.0 / 0.0;
+                        double min_val = 1.0 / 0.0;
+                        for (int i = 0; i < nsam; ++i){
+
+                            double val = x[i + nsam * current_group];
+                            if (val > max_val) {
+                                max_val = val;
+                            }
+                            if (val < min_val) {
+                                min_val = val;
+                            }
+
+                        }
+                        current_group = (current_group + 1) % 2; // Toggle between 0 and 1
+                        double range = max_val - min_val;
+                        diff /= range;
+
+                    } else { // Categorical feature
+                        diff = (x[lj] != x[kj]);
+                    }
+                    clk += diff;
+                }
 	    } /* for( j ..) */
 	    if (npres == 0) {/* cannot compute d(.,.) because of too many NA */
 		*toomany_NA = TRUE;
@@ -386,9 +419,10 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    } else {
 		double d1 = clk * (jpp / (double) npres);
 		dys[nlk] =
-		    (diss_kind == EUCLIDEAN) ? sqrt(d1)
-		    :(diss_kind ==  JACCARD) ? 1 - clk / (double) N_ones
-		    :/* diss_kind == MANHATTAN */ d1 ;
+		      (diss_kind == EUCLIDEAN) ? sqrt(d1)
+		    : (diss_kind ==  JACCARD)  ? 1 - clk / (double) N_ones
+                    : (diss_kind == MANHATTAN) ? d1
+                    : /* diss_kind == GOWER */ d1 / jpp;
 	    }
 	} /* for( k ) */
     } /* for( l ) */

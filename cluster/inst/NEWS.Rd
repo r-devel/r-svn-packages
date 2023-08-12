@@ -6,11 +6,13 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.5 (2023-08-11, svn r88260)}{
+\section{Changes in version 2.1.5 (2023-08-12, svn r8265)}{
   \subsection{New Features}{
     \itemize{
       \item \code{pam()} and \code{clara()} also accept a
       \code{\link{logical}} matrix as input.
+      \item \code{clara()} gets new \code{metric = "gower"} donated by
+      Kasper Fischer-Rasmussen.
     }
   }
   \subsection{Misc}{

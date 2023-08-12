@@ -3,7 +3,7 @@
 #### Note that the algorithm is O(n), but O(ns^2) where ns == sampsize
 
 clara <- function(x, k,
-		  metric = c("euclidean", "manhattan", "jaccard"),
+		  metric = c("euclidean", "manhattan", "jaccard", "gower"),
                   stand = FALSE, cluster.only = FALSE,
 		  samples = 5, sampsize = min(n, 40 + 2 * k), trace = 0,
                   medoids.x = TRUE, keep.data = medoids.x, rngR = FALSE,
@@ -66,7 +66,7 @@ to suppress this warning.")
 	      as.integer(mdata),	# = mdata
 	      valmd = if(mdata) rep(valmisdat, jp) else -1.,	## 9
 	      jtmd  = if(mdata) jtmd else integer(1),
-	      c("euclidean" = 1L, "manhattan" = 2L, "jaccard" = 3L)[[metric]],
+	      c("euclidean" = 1L, "manhattan" = 2L, "jaccard" = 3L, "gower" = 6L)[[metric]],
 					# =  diss_kind (DISS_KIND : ../src/cluster.h)
 	      as.logical(rngR[1]), 	# = rng_R		## 12
 	      as.logical(pamLike[1]),	# = pam_like

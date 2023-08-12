@@ -125,8 +125,8 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
     ##	type2 <- paste(type2, collapse = "")
     typeCodes <- c('A','S','N','O','I','T')
     ##              1   2   3   4   5   6  --> passed to Fortran below
-    type3 <- match(type2, typeCodes)# integer
-    if(any(ina <- is.na(type3)))
+    iType <- match(type2, typeCodes)# integer
+    if(any(ina <- is.na(iType)))
 	stop(gettextf("invalid type %s for column numbers %s",
 		      type2[ina], pColl(which(ina))))
     if((mdata <- any(inax <- is.na(x)))) { # TRUE if x[] has any NAs
@@ -146,7 +146,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
                      as.double(weights),
 		     if(mdata) jtmd else integer(1),
 		     jdat,
-		     type3,		# vtype
+		     iType,		# vtype
 		     ndyst,
 		     as.integer(mdata),
 		     dis = double((n * (n - 1))/2),
@@ -166,7 +166,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
     attr(disv, "Labels") <- dimnames(x)[[1]]
     attr(disv, "Size") <- n
     attr(disv, "Metric") <- if(!ndyst) "mixed" else metric
-    if(!ndyst) attr(disv, "Types") <- typeCodes[type3]
+    if(!ndyst) attr(disv, "Types") <- typeCodes[iType]
     disv
 }
 
