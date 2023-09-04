@@ -5,17 +5,17 @@
 \description{Apply Integrated Nested Laplace Approximation (INLA, Rue et al. 2009) to models estimable by \code{\link{gam}} or \code{\link{bam}}, using the INLA variant described in Wood (2019). Produces marginal posterior densities for each coefficient, selected coefficients or linear transformations of the coefficient vector. 
 }
 \usage{
-ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0)
+ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,integ=0,approx=0)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
  \item{G}{A pre-fit gam object, as produced by \code{gam(...,fit=FALSE)} or \code{bam(...,discrete=TRUE,fit=FALSE)}.}
-\item{A}{Either a matrix of transforms of the coefficients that are of interest, or an array of indices of the parameters of interest. If \code{NULL} then distributions are produced for all coefficients.}
+\item{A}{Either a matrix whose rows are transforms of the coefficients that are of interest (no more rows than columns, full row rank), or an array of indices of the parameters of interest. If \code{NULL} then distributions are produced for all coefficients.}
 \item{nk}{Number of values of each coefficient at which to evaluate its log marginal posterior density. These points are then spline interpolated.}
 \item{nb}{Number of points at which to evaluate posterior density of coefficients for returning as a gridded function.}
 \item{J}{How many determinant updating steps to take in the log determinant approximation step. Not recommended to increase this. }
 \item{interactive}{If this is \code{>0} or \code{TRUE} then every approximate posterior is plotted in red, overlaid on the simple Gaussian approximate posterior. If \code{2} then waits for user to press return between each plot. Useful for judging whether anything is gained by using INLA approach. }
-\item{int}{0 to skip integration and just use the posterior modal smoothing parameter. >0 for integration using the CCD approach proposed in Rue et al. (2009).}
+\item{integ}{0 to skip integration and just use the posterior modal smoothing parameter. >0 for integration using the CCD approach proposed in Rue et al. (2009).}
 \item{approx}{0 for full approximation; 1 to update Hessian, but use approximate modes; 2 as 1 and assume constant Hessian. See details.}
 }
 
@@ -53,8 +53,8 @@ The routine is written for relatively expert users.
 \examples{
   require(mgcv); require(MASS)
 
-  ## example using a scale location model for the motorcycle data. A simple plotting
-  ## routine is produced first...
+  ## example using a scale location model for the motorcycle data. A simple
+  ## plotting routine is produced first...
 
   plot.inla <- function(x,inla,k=1,levels=c(.025,.1,.5,.9,.975),
                lcol = c(2,4,4,4,2),lwd = c(1,1,2,1,1),lty=c(1,1,1,1,1),

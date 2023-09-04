@@ -107,7 +107,7 @@ logf <- function(beta,b,Bi=NULL,Xm=NULL,deriv=0) {
       k <- k + 1 
     }
   }
-  if (!is.null(Bi)) dd <- drop(t(dd) %*% Bi)
+  if (deriv && !is.null(Bi)) dd <- drop(t(dd) %*% Bi)
   list(ll =(sll + pen)/(2*b$sig2),dd=dd) ## on neg log lik scale
 } ## logf
 
@@ -124,6 +124,7 @@ Acomp <- function(A,ortho=TRUE) {
 ## then returns full rank n by n matrix, B, whose last n-p
 ## rows are orthogonal to A, and its inverse Bi.
   p <- nrow(A);n<- ncol(A)
+  if (p>n) stop("A can not have more rows that columns")
   if (ortho) { ## use orthogonal methods - very stable
     qra <- qr(t(A))  
     R <- qr.R(qra)
@@ -186,7 +187,7 @@ Rsolve <- function(R,b) {
   a
 } ## Rsolve
 
-ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
+ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,integ=0,approx=0) {
 ## apply inla to a gam post fit
 ## A is matrix or vector of linear transforms of interest, or an indices
 ## of the coefficients of interest (only if length!=p).
@@ -196,7 +197,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
 ##      * handling of rank deficiency?
   prog <- interactive()&&interactive<2
   if (!inherits(G,"gam.prefit")&&!inherits(G,"bam.prefit")) stop("Requires a gam or bam prefit object")
-  if (int !=0 ) G0 <- G ## need un-manipulated copy for calling gam
+  if (integ !=0 ) G0 <- G ## need un-manipulated copy for calling gam
   if (inherits(G,"gam.prefit")) b <- gam(G=G,method="REML") else {
     if (!inherits(G,"bam.prefit")) stop("Requires a gam or bam prefit object")
     if (is.null(G$Xd)) stop("bam fits only supported with discrete==TRUE")
@@ -214,13 +215,13 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
 
   ## check that family supports enough derivatives to allow integration step,
   ## otherwise just use empirical Bayes.
-  if (!is.null(G$family$available.derivs)&&G$family$available.derivs==0&&int>0) {
-    int <- 0
+  if (!is.null(G$family$available.derivs)&&G$family$available.derivs==0&&integ>0) {
+    integ <- 0
     warning("integration not available with this family - insufficient derivatives")
   }
   
   ## Gaussian approximation is that log(sp) ~ N(lsp,V)
-  if (int>0) { ## integration requested
+  if (integ>0) { ## integration requested
     rV <- chol(V) ## Rv'z + lsp gives trial sp
     ip <- dg(ncol(rV)) ## integration points
     nip <- nrow(ip$D)
