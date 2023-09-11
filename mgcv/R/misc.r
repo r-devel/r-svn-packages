@@ -1,4 +1,4 @@
-## (c) Simon N. Wood 2011-2019
+## (c) Simon N. Wood 2011-2023
 ## Many of the following are simple wrappers for C functions
 
 dpnorm <- function(x0,x1) {
@@ -18,8 +18,8 @@ dpnorm <- function(x0,x1) {
 
 "%.%" <- function(a,b) {
   if (inherits(a,"dgCMatrix")||inherits(b,"dgCMatrix"))
-  tensor.prod.model.matrix(list(
-  as(as(as(a, "dMatrix"), "generalMatrix"), "CsparseMatrix"),
+  tensor.prod.model.matrix(list( ## following is coercion to double, general (no special structure), compressed column 
+  as(as(as(a, "dMatrix"), "generalMatrix"), "CsparseMatrix"), 
   as(as(as(b, "dMatrix"), "generalMatrix"), "CsparseMatrix")
   )) else tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
 #  tensor.prod.model.matrix(list(as(a,"dgCMatrix"),as(b,"dgCMatrix"))) else - deprecated
@@ -853,6 +853,26 @@ neicov <- function(Dd,nei) {
   (V+t(V))/2
 } ## neicov
 
+
+## Routines to force matrix to pdef
+
+pdev <- function(A) {
+## Force A to meet necessary conditions for +ve def from Thm 4.2.8. of Golub and van Load 4th ed.
+## Non-positive diagonals are set to diagonal dominance. Off diagonals are then set to just meet
+## necessary conditions.
+## NOTE: A is modified directly in situ, so care needed to force a copy to be kept if it's needed
+## A0 <- A will not work, as R only actually copies when R modifies!
+## A0 <- A; A0[1,1] <- A0[1,1] + 1;A0[1,1] <- A0[1,1] - 1  works.  
+  if (inherits(A,"Matrix")) {
+    if (!inherits(A,"dgCMatrix")) A <- as(as(as(A, "dMatrix"), "generalMatrix"), "CsparseMatrix")
+    da <- diag(A); ii <- which(da==0)
+    if (length(ii)) diag(A)[ii] <- -1e-30 ## Avoid C code having to insert extra non-zeroes
+    .Call(C_spdev,A)
+  } else { ## dense matrix
+    .Call(C_dpdev,A)
+  }
+  return(A)
+}
 
 ## following are wrappers for KP STZ constraints - intended for testing only
 

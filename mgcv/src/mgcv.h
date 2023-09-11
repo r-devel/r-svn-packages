@@ -197,6 +197,7 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse);
 void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt);
 void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt);
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt);
+SEXP dpdev(SEXP a);
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT,SEXP NB);
 SEXP mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N);
 SEXP mgcv_Rpbsi(SEXP A, SEXP NT);
@@ -233,6 +234,7 @@ SEXP sXbd(SEXP X,SEXP BETA,SEXP LT);
 SEXP sXyd(SEXP X,SEXP Y,SEXP LT);
 SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
 SEXP AddBVB(SEXP A,SEXP bt, SEXP vbt);
+SEXP spdev(SEXP A);
 
 /* basis constructor/prediction routines*/
 
