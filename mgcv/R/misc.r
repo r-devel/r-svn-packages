@@ -867,10 +867,11 @@ pdev <- function(A) {
     if (!inherits(A,"dgCMatrix")) A <- as(as(as(A, "dMatrix"), "generalMatrix"), "CsparseMatrix")
     da <- diag(A); ii <- which(da==0)
     if (length(ii)) diag(A)[ii] <- -1e-30 ## Avoid C code having to insert extra non-zeroes
-    .Call(C_spdev,A)
+    mod <- .Call(C_spdev,A)
   } else { ## dense matrix
-    .Call(C_dpdev,A)
+    mod <- .Call(C_dpdev,A)
   }
+  if (mod>0) attr(A,"modified") <- mod
   return(A)
 }
 
