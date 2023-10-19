@@ -12,6 +12,7 @@ clara <- function(x, k,
     ## check type of input matrix and values of input numbers
     if(inherits(x, "dist"))# catch user error
 	stop("'x' is a \"dist\" object, but should be a data matrix or frame")
+    ## for "gower" we should allow 'type'  as in daisy() --> use that code in a *modular* way
     x <- data.matrix(x)
     if(!(is.numeric(x) || is.logical(x))) stop("x is not a numeric dataframe or matrix.")
     n <- nrow(x)

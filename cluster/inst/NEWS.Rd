@@ -6,13 +6,14 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.5 (2023-08-12, svn r8265)}{
+\section{Changes in version 2.1.5 (2023-10-19, svn r8272)}{
   \subsection{New Features}{
     \itemize{
       \item \code{pam()} and \code{clara()} also accept a
       \code{\link{logical}} matrix as input.
       \item \code{clara()} gets new \code{metric = "gower"} donated by
       Kasper Fischer-Rasmussen.
+      FIXME -- have problems/bugs -- FIXME
     }
   }
   \subsection{Misc}{
@@ -20,6 +21,8 @@
       \item renamed internal function \code{silhouette.default.R} to \code{silhouetteR}.
       \item \file{CITATION} switched from old \code{citEntry()} to \code{bibentry()}.
       \item \code{clara(*, trace = <pos>)} prints slightly better info.
+      \item \file{DESCRIPTION} gets \kbd{Enhances: } for packages
+      cross-referenced in \file{man/*.Rd}.
     }
   }
 }
@@ -100,7 +103,7 @@
   }
 }
 
-\section{Changes in version 2.1.0 (2019-06-07, svn r7674)}{
+\section{Changes in version 2.1.0 (2019-06-14, svn r7675)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{volume(obj)} is now correct also for ellipsoids of

@@ -87,7 +87,9 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 
     ## standardize, if necessary, i.e., *iff* all vars are "I"nterval scaled:
     all.I <- all(type2 == "I")
-    if(all.I && { metric <- match.arg(metric); metric != "gower" }) {
+    miss_metric <- missing(metric)
+    metric <- match.arg(metric)
+    if(all.I && metric != "gower") {
 	if(stand) {
 	    x <- scale(x, center = TRUE, scale = FALSE) #-> 0-means
 	    sx <- colMeans(abs(x), na.rm = TRUE)# can still have NA's
@@ -103,7 +105,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 	ndyst <- if(metric == "manhattan") 2L else 1L # == diss_kind
     }
     else { ## mixed case or explicit "gower"
-	if(!missing(metric) && metric != "gower" && !all.I)
+	if(!miss_metric && metric != "gower" && !all.I)
 	    warning("with mixed variables, metric \"gower\" is used automatically")
         ## FIXME: think of a robust alternative scaling to
         ##        Gower's  (x - min(x)) / (max(x) - min(x))

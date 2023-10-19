@@ -169,8 +169,8 @@ void cl_clara(int *n,  /* = number of objects */
 		}
 	    }
 
-	    do {
-		/* Loop finding random index 'rand_k' in {1:n},
+	    do { /*------------------------------------------------------------
+		 * Loop finding random index 'rand_k' in {1:n},
 		 * not in nrx[0:(k-1)] nor nsel[1:ntt] : */
 	    L210:
 		NEW_rand_k_trace_print(210)
@@ -201,7 +201,7 @@ void cl_clara(int *n,  /* = number of objects */
 	    } while (ntt < n_sam);
 
 	L295:
-	    if(*trace_lev) Rprintf(" {295} [ntt=%d, nunfs=%d] ", ntt, nunfs);
+	    if(*trace_lev) Rprintf(" [ntt=%d, nunfs=%d] ", ntt, nunfs);
 	    if (lrg_sam) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
 		for (j = 1, jk = 0, js = 0; j <= *n; j++) {
@@ -222,24 +222,24 @@ void cl_clara(int *n,  /* = number of objects */
 	    for (j = 0; j < *nsam; ++j)
 		nsel[j] = j+1;/* <- uses 1-indices for its *values*! */
 	}
-	if(*trace_lev) Rprintf(" -> dysta2()\n");
+	if(*trace_lev) Rprintf(" -> dysta2()");
 
 	dysta2(*nsam, *jpp, nsel, x, *n, dys, *diss_kind,
 	       jtmd, valmd, has_NA, &dyst_toomany_NA);
 	if(dyst_toomany_NA) {
 	    if(*trace_lev)
-		Rprintf("  dysta2() gave dyst_toomany_NA --> new sample\n");
+		Rprintf(" gave dyst_toomany_NA --> new sample.\n");
 	    dyst_toomany_NA = FALSE;
 	    ++nunfs;
 	    continue;/* random sample*/
-	}
+	} else if(*trace_lev) Rprintf(".\n");
 
 	double s = 0., sky;
 	for(l = 1; l <= n_dys; l++) /* dys[0] is not used here */
 	    if (s < dys[l])
 		s = dys[l];
 	if(*trace_lev >= 2)
-	    Rprintf(". clara(): s:= max dys[1..%d] = %g;", n_dys,s);
+	    Rprintf(" clara(): s:= max{dys[1..%d]} = %g;", n_dys,s);
 
 	bswap2(*kk, *nsam, s, dys, *pam_like, *trace_lev,
 	       /* --> */ &sky, nrepr,
@@ -262,8 +262,8 @@ void cl_clara(int *n,  /* = number of objects */
 		Rprintf(" selec() -> 'NAfs'");
 	}
 	else if(!kall || zba > zb) { /* 1st proper sample  or  new best */
+	    if(*trace_lev >= 2) Rprintf(kall ? "new best" : "1st proper sample");
 	    kall = TRUE;
-	    if(*trace_lev >= 2) Rprintf(" 1st proper or new best:");
 	    zba = zb;
 	    for (jk = 0; jk < *kk; ++jk) {
 		ttbes[jk] = ttd	 [jk];
@@ -275,7 +275,7 @@ void cl_clara(int *n,  /* = number of objects */
 		nbest[js] = nsel[js];
 	    sx = s;
 	}
-	if(*trace_lev >= 2) Rprintf(" obj= %g\n", zb/rnn);
+	if(*trace_lev) Rprintf("%sobj= %g\n", (*trace_lev < 2) ?", " :" ",  zb/rnn);
 
 	if(full_sample) break; /* out of resampling */
     }
@@ -283,11 +283,7 @@ void cl_clara(int *n,  /* = number of objects */
     if(*rng_R && !full_sample)
 	PutRNGstate();
 
-    if (nunfs >= *nran) { *jstop = 1; return; }
-    /* else */
-    if (!kall) { *jstop = 2; return; }
-
-    if(*trace_lev) {
+    if(*trace_lev && !full_sample) {
 	Rprintf("C clara(): best sample _found_ ");
 	if(*trace_lev >= 2) {
 	    Rprintf("; nbest[1:%d] =\n c(", *nsam);
@@ -297,14 +293,16 @@ void cl_clara(int *n,  /* = number of objects */
 	    }
 	    Rprintf(")\n");
 	}
-	Rprintf(" --> dysta2(nbest), ");
     }
 
-
-/*     for the best subsample, the objects of the entire data set
-     are assigned to their clusters */
-
     *obj = zba / rnn;
+
+    if (nunfs >= *nran) { *jstop = 1; return; }
+    /* else */
+    if (!kall) { *jstop = 2; return; }
+
+/* for the best subsample, the objects of the entire data set
+   are assigned to their clusters */
     dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd,
 	   has_NA, &dyst_toomany_NA);
     if(dyst_toomany_NA) {
