@@ -1,8 +1,11 @@
+## not run usually:
+if(!cluster:::doExtras()) q("no")
+
 library(cluster)
-##      =========>> This will *NOT* be in final tarball, i.e, only tested by maintainer
+
 ## generate 1500 objects, divided into 2 clusters.
 suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
-set.seed(264)
+set.seed(264) ## <-- different than ./clara.R's !
 x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
            cbind(rnorm(800,50,8), rnorm(800,10,8)))
 
@@ -72,6 +75,17 @@ plot(clx3)
 ## The  rngR = TRUE case is currently in the non-strict tests
 ## ./clara-ex.R
 ## ~~~~~~~~~~~~
+
+## trace output checking
+RNGversion("4.3"); RNGkind()
+set.seed(144)
+xc120 <- xclara[sort(sample.int(nrow(xclara), 120)), ]
+cx3.1 <- clara(xc120, 3, trace = 1)
+cx3.2 <- clara(xc120, 3, trace = 2)
+cx3.3 <- clara(xc120, 3, trace = 3)
+cx3.4 <- clara(xc120, 3, trace = 4)
+if(FALSE) # no change
+cx3.5 <- clara(xc120, 3, trace = 5)
 
 ###--- End version of example(clara) -------
 

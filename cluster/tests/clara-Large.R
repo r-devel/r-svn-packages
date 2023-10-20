@@ -1,6 +1,7 @@
 ### Clara with really LARGE data set --- CPU testing
-library(cluster)
+if(!cluster:::doExtras()) q("no")
 
+library(cluster)
 
 ## generate 15*N objects, divided into 2 clusters.
 N <- 10000

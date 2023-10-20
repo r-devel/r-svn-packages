@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2023-10-18 r85349) -- "Unsuffered Consequences"
+R Under development (unstable) (2023-10-19 r85356) -- "Unsuffered Consequences"
 Copyright (C) 2023 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu
 
@@ -15,11 +15,14 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> ## not run usually:
+> if(!cluster:::doExtras()) q("no")
+> 
 > library(cluster)
-> ##      =========>> This will *NOT* be in final tarball, i.e, only tested by maintainer
+> 
 > ## generate 1500 objects, divided into 2 clusters.
 > suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
-> set.seed(264)
+> set.seed(264) ## <-- different than ./clara.R's !
 > x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
 +            cbind(rnorm(800,50,8), rnorm(800,10,8)))
 > 
@@ -317,13 +320,13 @@ $clusinfo
 + }
 > print(clara(xx, 2, samples= 5, trace = 3)[clInd])
 C clara(): (nsam,nran,n) = (44,5,1500);
-C clara(): sample 1  finding 1st... new k{ran}:
+- clara sample  1  finding 1st... new k{ran}:
 .. kall: FALSE, 
 ... nrx [0:1]= 0 0 
 ... nsel[0:0]= 23 
- [ntt=44, nunfs=0] .. nsel[1:44]= 23 54 87 103 140 199 246 303 306 322 394 408 412 414 428 461 468 521 592 647 859 898 906 967 971 1007 1028 1039 1114 1149 1151 1192 1237 1250 1279 1291 1301 1317 1340 1353 1366 1381 1383 1492  -> dysta2().
- clara(): s:= max{dys[1..946]} = 84.6494;
-clara()'s bswap2(*, s=84.6494):     new repr. 13
+ [ntt=44, nunfs=0] .. nsel[1:44]= 23 54 87 103 140 199 246 303 306 322 394 408 412 414 428 461 468 521 592 647 859 898 906 967 971 1007 1028 1039 1114 1149 1151 1192 1237 1250 1279 1291 1301 1317 1340 1353 1366 1381 1383 1492  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 84.6494;
+ bswap2(*, s=84.6494), 1. BUILD:     new repr. 13
     new repr. 6
   after build: medoids are  6 13
   and min.dist dysma[1:n] are
@@ -335,15 +338,15 @@ clara()'s bswap2(*, s=84.6494):     new repr. 13
  --> sky = sum_j D_j= 541.2
    swp new 11 <-> 13 old; decreasing diss. by -104.377
   Last swap: new 11 <-> 13 old; decreasing diss. by 1
-end{bswap2}: sky = 436.824
+ end{bswap2}: sky = 436.824
 1st proper sample obj= 10.1407
-C clara(): sample 2  if (kall && nunfs...): 
+- clara sample  2  if (kall && nunfs...): 
 .. kall: T, 
 ... nrx [0:1]= 199 394 
 ... nsel[0:1]= 199 394 
- [ntt=44, nunfs=0] .. nsel[1:44]= 21 50 97 142 168 191 192 197 199 224 325 328 394 433 458 471 651 712 714 722 797 805 837 909 919 926 999 1006 1018 1019 1049 1081 1084 1132 1144 1150 1201 1207 1291 1307 1330 1374 1426 1428  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2326;
-clara()'s bswap2(*, s=82.2326):     new repr. 24
+ [ntt=44, nunfs=0] .. nsel[1:44]= 21 50 97 142 168 191 192 197 199 224 325 328 394 433 458 471 651 712 714 722 797 805 837 909 919 926 999 1006 1018 1019 1049 1081 1084 1132 1144 1150 1201 1207 1291 1307 1330 1374 1426 1428  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2326;
+ bswap2(*, s=82.2326), 1. BUILD:     new repr. 24
     new repr. 27
   after build: medoids are 24 27
   and min.dist dysma[1:n] are
@@ -355,15 +358,15 @@ clara()'s bswap2(*, s=82.2326):     new repr. 24
  --> sky = sum_j D_j= 526.744
    swp new 30 <-> 24 old; decreasing diss. by -110.942
   Last swap: new 30 <-> 24 old; decreasing diss. by 1
-end{bswap2}: sky = 415.802
+ end{bswap2}: sky = 415.802
 new best obj= 9.77929
-C clara(): sample 3  if (kall && nunfs...): 
+- clara sample  3  if (kall && nunfs...): 
 .. kall: T, 
 ... nrx [0:1]= 1019 999 
 ... nsel[0:1]= 999 1019 
- [ntt=44, nunfs=0] .. nsel[1:44]= 10 15 23 46 85 90 94 105 112 225 278 313 485 486 502 513 529 639 641 660 681 757 796 812 814 865 876 896 954 959 973 999 1019 1032 1045 1249 1264 1269 1273 1296 1297 1336 1361 1399  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2209;
-clara()'s bswap2(*, s=82.2209):     new repr. 9
+ [ntt=44, nunfs=0] .. nsel[1:44]= 10 15 23 46 85 90 94 105 112 225 278 313 485 486 502 513 529 639 641 660 681 757 796 812 814 865 876 896 954 959 973 999 1019 1032 1045 1249 1264 1269 1273 1296 1297 1336 1361 1399  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2209;
+ bswap2(*, s=82.2209), 1. BUILD:     new repr. 9
     new repr. 33
   after build: medoids are  9 33
   and min.dist dysma[1:n] are
@@ -375,15 +378,15 @@ clara()'s bswap2(*, s=82.2209):     new repr. 9
  --> sky = sum_j D_j= 533.592
    swp new 16 <-> 9 old; decreasing diss. by -161.129
   Last swap: new 28 <-> 33 old; decreasing diss. by 0.438978
-end{bswap2}: sky = 372.463
+ end{bswap2}: sky = 372.463
  obj= 9.78523
-C clara(): sample 4  if (kall && nunfs...): 
+- clara sample  4  if (kall && nunfs...): 
 .. kall: T, 
 ... nrx [0:1]= 1019 999 
 ... nsel[0:1]= 999 1019 
- [ntt=44, nunfs=0] .. nsel[1:44]= 17 46 61 152 201 223 254 263 268 291 313 331 479 508 528 542 543 601 655 681 746 778 792 888 951 957 999 1010 1019 1081 1085 1105 1110 1122 1136 1231 1265 1272 1307 1342 1365 1393 1395 1467  -> dysta2().
- clara(): s:= max{dys[1..946]} = 77.6857;
-clara()'s bswap2(*, s=77.6857):     new repr. 24
+ [ntt=44, nunfs=0] .. nsel[1:44]= 17 46 61 152 201 223 254 263 268 291 313 331 479 508 528 542 543 601 655 681 746 778 792 888 951 957 999 1010 1019 1081 1085 1105 1110 1122 1136 1231 1265 1272 1307 1342 1365 1393 1395 1467  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 77.6857;
+ bswap2(*, s=77.6857), 1. BUILD:     new repr. 24
     new repr. 28
   after build: medoids are 24 28
   and min.dist dysma[1:n] are
@@ -395,15 +398,15 @@ clara()'s bswap2(*, s=77.6857):     new repr. 24
  --> sky = sum_j D_j= 403.513
    swp new 14 <-> 24 old; decreasing diss. by -35.3245
   Last swap: new 38 <-> 14 old; decreasing diss. by 0.398398
-end{bswap2}: sky = 368.188
+ end{bswap2}: sky = 368.188
  obj= 9.95647
-C clara(): sample 5  if (kall && nunfs...): 
+- clara sample  5  if (kall && nunfs...): 
 .. kall: T, 
 ... nrx [0:1]= 1019 999 
 ... nsel[0:1]= 999 1019 
- [ntt=44, nunfs=0] .. nsel[1:44]= 7 38 134 140 282 283 311 329 363 461 496 539 572 585 631 655 665 695 758 792 820 823 912 919 962 999 1019 1121 1140 1166 1189 1192 1202 1204 1260 1297 1315 1321 1326 1422 1431 1432 1463 1488  -> dysta2().
- clara(): s:= max{dys[1..946]} = 73.7802;
-clara()'s bswap2(*, s=73.7802):     new repr. 40
+ [ntt=44, nunfs=0] .. nsel[1:44]= 7 38 134 140 282 283 311 329 363 461 496 539 572 585 631 655 665 695 758 792 820 823 912 919 962 999 1019 1121 1140 1166 1189 1192 1202 1204 1260 1297 1315 1321 1326 1422 1431 1432 1463 1488  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 73.7802;
+ bswap2(*, s=73.7802), 1. BUILD:     new repr. 40
     new repr. 26
   after build: medoids are 26 40
   and min.dist dysma[1:n] are
@@ -415,10 +418,12 @@ clara()'s bswap2(*, s=73.7802):     new repr. 40
  --> sky = sum_j D_j= 548.29
    swp new 17 <-> 40 old; decreasing diss. by -133.064
   Last swap: new 17 <-> 40 old; decreasing diss. by 1
-end{bswap2}: sky = 415.226
+ end{bswap2}: sky = 415.226
 new best obj= 9.66316
-C clara(): best sample _found_ ; nbest[1:44] =
- c(7,38,134,140,282,283,311,329,363,461,496,539,572,585,631,655,665,695,758,792,820,823,912,919,962,999,1019,1121,1140,1166,1189,1192,1202,1204,1260,1297,1315,1321,1326,1422,1431,1432,1463,1488)
+C clara() -> best sample _found_ ; nbest[1:44] =
+ c(7,38,134,140,282,283,311,329,363,461,496,539,572,585,631,655,665,695,758,792,
+  820,823,912,919,962,999,1019,1121,1140,1166,1189,1192,1202,1204,1260,1297,1315,1321,1326,1422,
+  1431,1432,1463,1488)
  resul(),  black() and return() from C.
 $objective
 [1] 9.663163
@@ -439,458 +444,460 @@ $clusinfo
 > 
 > print(clara(xx, 2, samples=50, trace = 2)[clInd])
 C clara(): (nsam,nran,n) = (44,50,1500);
-C clara(): sample 1  finding 1st... new k{ran}:
+- clara sample  1  finding 1st... new k{ran}:
 .. kall: FALSE, nsel[ntt=1] = 0
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 84.6494;
- bswap2(): 13 6  after build: medoids are  6 13
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 84.6494;
+ bswap2(), 1. BUILD: 13 6  after build: medoids are  6 13
  --> sky = sum_j D_j= 541.2
   Last swap: new 11 <-> 13 old; decreasing diss. by 1
-end{bswap2}: sky = 436.824
+ end{bswap2}: sky = 436.824
 1st proper sample obj= 10.1407
-C clara(): sample 2  if (kall && nunfs...): 
+- clara sample  2  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2326;
- bswap2(): 24 27  after build: medoids are 24 27
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2326;
+ bswap2(), 1. BUILD: 24 27  after build: medoids are 24 27
  --> sky = sum_j D_j= 526.744
   Last swap: new 30 <-> 24 old; decreasing diss. by 1
-end{bswap2}: sky = 415.802
+ end{bswap2}: sky = 415.802
 new best obj= 9.77929
-C clara(): sample 3  if (kall && nunfs...): 
+- clara sample  3  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 97
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2209;
- bswap2(): 9 33  after build: medoids are  9 33
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2209;
+ bswap2(), 1. BUILD: 9 33  after build: medoids are  9 33
  --> sky = sum_j D_j= 533.592
   Last swap: new 28 <-> 33 old; decreasing diss. by 0.438978
-end{bswap2}: sky = 372.463
+ end{bswap2}: sky = 372.463
  obj= 9.78523
-C clara(): sample 4  if (kall && nunfs...): 
+- clara sample  4  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 77.6857;
- bswap2(): 24 28  after build: medoids are 24 28
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 77.6857;
+ bswap2(), 1. BUILD: 24 28  after build: medoids are 24 28
  --> sky = sum_j D_j= 403.513
   Last swap: new 38 <-> 14 old; decreasing diss. by 0.398398
-end{bswap2}: sky = 368.188
+ end{bswap2}: sky = 368.188
  obj= 9.95647
-C clara(): sample 5  if (kall && nunfs...): 
+- clara sample  5  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 61
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 73.7802;
- bswap2(): 40 26  after build: medoids are 26 40
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 73.7802;
+ bswap2(), 1. BUILD: 40 26  after build: medoids are 26 40
  --> sky = sum_j D_j= 548.29
   Last swap: new 17 <-> 40 old; decreasing diss. by 1
-end{bswap2}: sky = 415.226
+ end{bswap2}: sky = 415.226
 new best obj= 9.66316
-C clara(): sample 6  if (kall && nunfs...): 
+- clara sample  6  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 134
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 76.4132;
- bswap2(): 24 40  after build: medoids are 24 40
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 76.4132;
+ bswap2(), 1. BUILD: 24 40  after build: medoids are 24 40
  --> sky = sum_j D_j= 493.892
   Last swap: new 16 <-> 24 old; decreasing diss. by 1
-end{bswap2}: sky = 382.8
+ end{bswap2}: sky = 382.8
  obj= 10.2053
-C clara(): sample 7  if (kall && nunfs...): 
+- clara sample  7  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 179
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 91.2407;
- bswap2(): 18 39  after build: medoids are 18 39
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 91.2407;
+ bswap2(), 1. BUILD: 18 39  after build: medoids are 18 39
  --> sky = sum_j D_j= 559.095
   Last swap: new 41 <-> 20 old; decreasing diss. by 0.410198
-end{bswap2}: sky = 413.093
+ end{bswap2}: sky = 413.093
  obj= 9.68805
-C clara(): sample 8  if (kall && nunfs...): 
+- clara sample  8  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 78.2768;
- bswap2(): 37 24  after build: medoids are 24 37
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 78.2768;
+ bswap2(), 1. BUILD: 37 24  after build: medoids are 24 37
  --> sky = sum_j D_j= 526.826
   Last swap: new 14 <-> 29 old; decreasing diss. by 0.887381
-end{bswap2}: sky = 431.746
+ end{bswap2}: sky = 431.746
  obj= 9.66316
-C clara(): sample 9  if (kall && nunfs...): 
+- clara sample  9  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 59
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 85.1138;
- bswap2(): 42 24  after build: medoids are 24 42
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 85.1138;
+ bswap2(), 1. BUILD: 42 24  after build: medoids are 24 42
  --> sky = sum_j D_j= 524.654
   Last swap: new 11 <-> 42 old; decreasing diss. by 1
-end{bswap2}: sky = 397.695
+ end{bswap2}: sky = 397.695
  obj= 10.3746
-C clara(): sample 10  if (kall && nunfs...): 
+- clara sample 10  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 119
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 91.3475;
- bswap2(): 23 17  after build: medoids are 17 23
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 91.3475;
+ bswap2(), 1. BUILD: 23 17  after build: medoids are 17 23
  --> sky = sum_j D_j= 606.383
   Last swap: new 21 <-> 17 old; decreasing diss. by 0.597088
-end{bswap2}: sky = 452.021
+ end{bswap2}: sky = 452.021
  obj= 9.75314
-C clara(): sample 11  if (kall && nunfs...): 
+- clara sample 11  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 93
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 88.9424;
- bswap2(): 5 37  after build: medoids are  5 37
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 88.9424;
+ bswap2(), 1. BUILD: 5 37  after build: medoids are  5 37
  --> sky = sum_j D_j= 510.544
   Last swap: new 30 <-> 5 old; decreasing diss. by 1
-end{bswap2}: sky = 419.179
+ end{bswap2}: sky = 419.179
 new best obj= 9.65359
-C clara(): sample 12  if (kall && nunfs...): 
+- clara sample 12  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 44
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 80.4915;
- bswap2(): 23 25  after build: medoids are 23 25
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 80.4915;
+ bswap2(), 1. BUILD: 23 25  after build: medoids are 23 25
  --> sky = sum_j D_j= 423.319
   Last swap: new 1 <-> 23 old; decreasing diss. by 1
-end{bswap2}: sky = 369.493
+ end{bswap2}: sky = 369.493
  obj= 9.78288
-C clara(): sample 13  if (kall && nunfs...): 
+- clara sample 13  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 92
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 76.1143;
- bswap2(): 22 30  after build: medoids are 22 30
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 76.1143;
+ bswap2(), 1. BUILD: 22 30  after build: medoids are 22 30
  --> sky = sum_j D_j= 538.28
   Last swap: new 14 <-> 22 old; decreasing diss. by 1
-end{bswap2}: sky = 419.593
+ end{bswap2}: sky = 419.593
  obj= 9.80239
-C clara(): sample 14  if (kall && nunfs...): 
+- clara sample 14  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 108
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 79.6275;
- bswap2(): 31 35  after build: medoids are 31 35
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 79.6275;
+ bswap2(), 1. BUILD: 31 35  after build: medoids are 31 35
  --> sky = sum_j D_j= 501.393
   Last swap: new 34 <-> 30 old; decreasing diss. by 0.371241
-end{bswap2}: sky = 404.715
+ end{bswap2}: sky = 404.715
  obj= 9.99603
-C clara(): sample 15  if (kall && nunfs...): 
+- clara sample 15  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 41
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 85.1226;
- bswap2(): 42 25  after build: medoids are 25 42
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 85.1226;
+ bswap2(), 1. BUILD: 42 25  after build: medoids are 25 42
  --> sky = sum_j D_j= 479.866
   Last swap: new 10 <-> 42 old; decreasing diss. by 1
-end{bswap2}: sky = 397.846
+ end{bswap2}: sky = 397.846
  obj= 9.91509
-C clara(): sample 16  if (kall && nunfs...): 
+- clara sample 16  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 221
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.6708;
- bswap2(): 7 32  after build: medoids are  7 32
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.6708;
+ bswap2(), 1. BUILD: 7 32  after build: medoids are  7 32
  --> sky = sum_j D_j= 430.691
   Last swap: new 40 <-> 19 old; decreasing diss. by 0.967002
-end{bswap2}: sky = 385.483
+ end{bswap2}: sky = 385.483
  obj= 9.75954
-C clara(): sample 17  if (kall && nunfs...): 
+- clara sample 17  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 75.4038;
- bswap2(): 23 35  after build: medoids are 23 35
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 75.4038;
+ bswap2(), 1. BUILD: 23 35  after build: medoids are 23 35
  --> sky = sum_j D_j= 405.816
   Last swap: new 4 <-> 23 old; decreasing diss. by 1
-end{bswap2}: sky = 332.314
+ end{bswap2}: sky = 332.314
 new best obj= 9.65233
-C clara(): sample 18  if (kall && nunfs...): 
+- clara sample 18  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 79.3412;
- bswap2(): 19 4  after build: medoids are  4 19
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 79.3412;
+ bswap2(), 1. BUILD: 19 4  after build: medoids are  4 19
  --> sky = sum_j D_j= 523.479
   Last swap: new 17 <-> 19 old; decreasing diss. by 1
-end{bswap2}: sky = 391.149
+ end{bswap2}: sky = 391.149
  obj= 9.76199
-C clara(): sample 19  if (kall && nunfs...): 
+- clara sample 19  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 135
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 81.6923;
- bswap2(): 5 4  after build: medoids are  4  5
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 81.6923;
+ bswap2(), 1. BUILD: 5 4  after build: medoids are  4  5
  --> sky = sum_j D_j= 429.005
   Last swap: new 37 <-> 5 old; decreasing diss. by 1
-end{bswap2}: sky = 391.347
+ end{bswap2}: sky = 391.347
  obj= 9.65233
-C clara(): sample 20  if (kall && nunfs...): 
+- clara sample 20  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 84
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 74.6473;
- bswap2(): 13 36  after build: medoids are 13 36
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 74.6473;
+ bswap2(), 1. BUILD: 13 36  after build: medoids are 13 36
  --> sky = sum_j D_j= 397.89
   Last swap: new 16 <-> 36 old; decreasing diss. by 0.311398
-end{bswap2}: sky = 354.641
+ end{bswap2}: sky = 354.641
 new best obj= 9.63025
-C clara(): sample 21  if (kall && nunfs...): 
+- clara sample 21  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2868;
- bswap2(): 35 34  after build: medoids are 34 35
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2868;
+ bswap2(), 1. BUILD: 35 34  after build: medoids are 34 35
  --> sky = sum_j D_j= 508.413
   Last swap: new 31 <-> 35 old; decreasing diss. by 1
-end{bswap2}: sky = 362.906
+ end{bswap2}: sky = 362.906
  obj= 9.65359
-C clara(): sample 22  if (kall && nunfs...): 
+- clara sample 22  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 105
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 75.1174;
- bswap2(): 41 29  after build: medoids are 29 41
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 75.1174;
+ bswap2(), 1. BUILD: 41 29  after build: medoids are 29 41
  --> sky = sum_j D_j= 493.584
   Last swap: new 23 <-> 41 old; decreasing diss. by 1
-end{bswap2}: sky = 353.321
+ end{bswap2}: sky = 353.321
  obj= 9.63025
-C clara(): sample 23  if (kall && nunfs...): 
+- clara sample 23  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 204
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 73.7656;
- bswap2(): 13 11  after build: medoids are 11 13
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 73.7656;
+ bswap2(), 1. BUILD: 13 11  after build: medoids are 11 13
  --> sky = sum_j D_j= 705.978
   Last swap: new 26 <-> 13 old; decreasing diss. by 1
-end{bswap2}: sky = 441.528
+ end{bswap2}: sky = 441.528
  obj= 9.64875
-C clara(): sample 24  if (kall && nunfs...): 
+- clara sample 24  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 87.1927;
- bswap2(): 13 7  after build: medoids are  7 13
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 87.1927;
+ bswap2(), 1. BUILD: 13 7  after build: medoids are  7 13
  --> sky = sum_j D_j= 509.62
   Last swap: new 4 <-> 7 old; decreasing diss. by 0.692058
-end{bswap2}: sky = 417.527
+ end{bswap2}: sky = 417.527
  obj= 9.95795
-C clara(): sample 25  if (kall && nunfs...): 
+- clara sample 25  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 140
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 72.5392;
- bswap2(): 7 31  after build: medoids are  7 31
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 72.5392;
+ bswap2(), 1. BUILD: 7 31  after build: medoids are  7 31
  --> sky = sum_j D_j= 420.983
   Last swap: new 27 <-> 7 old; decreasing diss. by 1
-end{bswap2}: sky = 405.433
+ end{bswap2}: sky = 405.433
  obj= 9.63025
-C clara(): sample 26  if (kall && nunfs...): 
+- clara sample 26  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 273
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 83.0823;
- bswap2(): 34 39  after build: medoids are 34 39
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 83.0823;
+ bswap2(), 1. BUILD: 34 39  after build: medoids are 34 39
  --> sky = sum_j D_j= 633.387
   Last swap: new 6 <-> 34 old; decreasing diss. by 1
-end{bswap2}: sky = 471.03
+ end{bswap2}: sky = 471.03
 new best obj= 9.61429
-C clara(): sample 27  if (kall && nunfs...): 
+- clara sample 27  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 79.4914;
- bswap2(): 43 37  after build: medoids are 37 43
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 79.4914;
+ bswap2(), 1. BUILD: 43 37  after build: medoids are 37 43
  --> sky = sum_j D_j= 524.694
   Last swap: new 6 <-> 43 old; decreasing diss. by 1
-end{bswap2}: sky = 426.746
+ end{bswap2}: sky = 426.746
  obj= 9.61429
-C clara(): sample 28  if (kall && nunfs...): 
+- clara sample 28  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 74
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 99.9366;
- bswap2(): 40 11  after build: medoids are 11 40
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 99.9366;
+ bswap2(), 1. BUILD: 40 11  after build: medoids are 11 40
  --> sky = sum_j D_j= 515.562
   Last swap: new 38 <-> 34 old; decreasing diss. by 0.898884
-end{bswap2}: sky = 403.623
+ end{bswap2}: sky = 403.623
  obj= 9.70784
-C clara(): sample 29  if (kall && nunfs...): 
+- clara sample 29  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 95
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 89.4153;
- bswap2(): 2 35  after build: medoids are  2 35
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 89.4153;
+ bswap2(), 1. BUILD: 2 35  after build: medoids are  2 35
  --> sky = sum_j D_j= 518.835
   Last swap: new 7 <-> 6 old; decreasing diss. by 0.00389548
-end{bswap2}: sky = 423
+ end{bswap2}: sky = 423
  obj= 9.61429
-C clara(): sample 30  if (kall && nunfs...): 
+- clara sample 30  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 160
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 75.5398;
- bswap2(): 17 11  after build: medoids are 11 17
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 75.5398;
+ bswap2(), 1. BUILD: 17 11  after build: medoids are 11 17
  --> sky = sum_j D_j= 464.06
   Last swap: new 13 <-> 11 old; decreasing diss. by 0.230267
-end{bswap2}: sky = 398.565
+ end{bswap2}: sky = 398.565
  obj= 9.61429
-C clara(): sample 31  if (kall && nunfs...): 
+- clara sample 31  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 78.2302;
- bswap2(): 40 19  after build: medoids are 19 40
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 78.2302;
+ bswap2(), 1. BUILD: 40 19  after build: medoids are 19 40
  --> sky = sum_j D_j= 580.438
   Last swap: new 13 <-> 40 old; decreasing diss. by 1
-end{bswap2}: sky = 367.223
+ end{bswap2}: sky = 367.223
  obj= 9.91942
-C clara(): sample 32  if (kall && nunfs...): 
+- clara sample 32  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 56
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 84.5005;
- bswap2(): 12 32  after build: medoids are 12 32
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 84.5005;
+ bswap2(), 1. BUILD: 12 32  after build: medoids are 12 32
  --> sky = sum_j D_j= 444.913
   Last swap: new 27 <-> 7 old; decreasing diss. by 0.228504
-end{bswap2}: sky = 363.142
+ end{bswap2}: sky = 363.142
  obj= 9.77547
-C clara(): sample 33  if (kall && nunfs...): 
+- clara sample 33  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 50
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 76.488;
- bswap2(): 25 26  after build: medoids are 25 26
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 76.488;
+ bswap2(), 1. BUILD: 25 26  after build: medoids are 25 26
  --> sky = sum_j D_j= 419.591
   Last swap: new 38 <-> 5 old; decreasing diss. by 0.631655
-end{bswap2}: sky = 357.699
+ end{bswap2}: sky = 357.699
  obj= 9.61429
-C clara(): sample 34  if (kall && nunfs...): 
+- clara sample 34  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 165
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 78.0499;
- bswap2(): 40 37  after build: medoids are 37 40
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 78.0499;
+ bswap2(), 1. BUILD: 40 37  after build: medoids are 37 40
  --> sky = sum_j D_j= 424.572
   Last swap: new 9 <-> 10 old; decreasing diss. by 0.233331
-end{bswap2}: sky = 354.223
+ end{bswap2}: sky = 354.223
  obj= 10.2203
-C clara(): sample 35  if (kall && nunfs...): 
+- clara sample 35  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 79.8045;
- bswap2(): 5 42  after build: medoids are  5 42
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 79.8045;
+ bswap2(), 1. BUILD: 5 42  after build: medoids are  5 42
  --> sky = sum_j D_j= 515.209
   Last swap: new 41 <-> 42 old; decreasing diss. by 0.913161
-end{bswap2}: sky = 397.716
+ end{bswap2}: sky = 397.716
  obj= 9.6157
-C clara(): sample 36  if (kall && nunfs...): 
+- clara sample 36  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 58
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 83.3107;
- bswap2(): 10 34  after build: medoids are 10 34
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 83.3107;
+ bswap2(), 1. BUILD: 10 34  after build: medoids are 10 34
  --> sky = sum_j D_j= 503.551
   Last swap: new 16 <-> 7 old; decreasing diss. by 0.893467
-end{bswap2}: sky = 402.752
+ end{bswap2}: sky = 402.752
  obj= 9.61429
-C clara(): sample 37  if (kall && nunfs...): 
+- clara sample 37  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 94
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.2963;
- bswap2(): 1 31  after build: medoids are  1 31
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.2963;
+ bswap2(), 1. BUILD: 1 31  after build: medoids are  1 31
  --> sky = sum_j D_j= 712.371
   Last swap: new 7 <-> 1 old; decreasing diss. by 1
-end{bswap2}: sky = 447.183
+ end{bswap2}: sky = 447.183
  obj= 9.61429
-C clara(): sample 38  if (kall && nunfs...): 
+- clara sample 38  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 117
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 95.8048;
- bswap2(): 26 1  after build: medoids are  1 26
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 95.8048;
+ bswap2(), 1. BUILD: 26 1  after build: medoids are  1 26
  --> sky = sum_j D_j= 516.385
   Last swap: new 15 <-> 1 old; decreasing diss. by 0.188094
-end{bswap2}: sky = 425.344
+ end{bswap2}: sky = 425.344
  obj= 9.86458
-C clara(): sample 39  if (kall && nunfs...): 
+- clara sample 39  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 86.6027;
- bswap2(): 37 6  after build: medoids are  6 37
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 86.6027;
+ bswap2(), 1. BUILD: 37 6  after build: medoids are  6 37
  --> sky = sum_j D_j= 481.819
   Last swap: new 23 <-> 6 old; decreasing diss. by 0.242997
-end{bswap2}: sky = 417.783
+ end{bswap2}: sky = 417.783
  obj= 9.96942
-C clara(): sample 40  if (kall && nunfs...): 
+- clara sample 40  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 96
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 86.7782;
- bswap2(): 27 21  after build: medoids are 21 27
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 86.7782;
+ bswap2(), 1. BUILD: 27 21  after build: medoids are 21 27
  --> sky = sum_j D_j= 724.939
   Last swap: new 10 <-> 27 old; decreasing diss. by 1
-end{bswap2}: sky = 428.52
+ end{bswap2}: sky = 428.52
  obj= 10.8484
-C clara(): sample 41  if (kall && nunfs...): 
+- clara sample 41  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 125
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 82.3384;
- bswap2(): 2 29  after build: medoids are  2 29
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 82.3384;
+ bswap2(), 1. BUILD: 2 29  after build: medoids are  2 29
  --> sky = sum_j D_j= 714.103
   Last swap: new 6 <-> 2 old; decreasing diss. by 1
-end{bswap2}: sky = 411.244
+ end{bswap2}: sky = 411.244
  obj= 10.3511
-C clara(): sample 42  if (kall && nunfs...): 
+- clara sample 42  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 74.2665;
- bswap2(): 3 30  after build: medoids are  3 30
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 74.2665;
+ bswap2(), 1. BUILD: 3 30  after build: medoids are  3 30
  --> sky = sum_j D_j= 541.34
   Last swap: new 21 <-> 30 old; decreasing diss. by 0.0870194
-end{bswap2}: sky = 413.299
+ end{bswap2}: sky = 413.299
  obj= 10.5262
-C clara(): sample 43  if (kall && nunfs...): 
+- clara sample 43  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 112
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 70.5586;
- bswap2(): 41 31  after build: medoids are 31 41
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 70.5586;
+ bswap2(), 1. BUILD: 41 31  after build: medoids are 31 41
  --> sky = sum_j D_j= 383.305
   Last swap: new 14 <-> 41 old; decreasing diss. by 1
-end{bswap2}: sky = 323.571
+ end{bswap2}: sky = 323.571
  obj= 10.2205
-C clara(): sample 44  if (kall && nunfs...): 
+- clara sample 44  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 100
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 81.0334;
- bswap2(): 28 13  after build: medoids are 13 28
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 81.0334;
+ bswap2(), 1. BUILD: 28 13  after build: medoids are 13 28
  --> sky = sum_j D_j= 695.34
   Last swap: new 8 <-> 13 old; decreasing diss. by 0.260756
-end{bswap2}: sky = 393.903
+ end{bswap2}: sky = 393.903
  obj= 11.2797
-C clara(): sample 45  if (kall && nunfs...): 
+- clara sample 45  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 186
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 80.4615;
- bswap2(): 2 39  after build: medoids are  2 39
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 80.4615;
+ bswap2(), 1. BUILD: 2 39  after build: medoids are  2 39
  --> sky = sum_j D_j= 488.193
   Last swap: new 9 <-> 39 old; decreasing diss. by 0.396945
-end{bswap2}: sky = 422.85
+ end{bswap2}: sky = 422.85
  obj= 9.97243
-C clara(): sample 46  if (kall && nunfs...): 
+- clara sample 46  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 72
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 90.7292;
- bswap2(): 22 37  after build: medoids are 22 37
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 90.7292;
+ bswap2(), 1. BUILD: 22 37  after build: medoids are 22 37
  --> sky = sum_j D_j= 559.363
   Last swap: new 34 <-> 22 old; decreasing diss. by 1
-end{bswap2}: sky = 423.583
+ end{bswap2}: sky = 423.583
  obj= 9.75509
-C clara(): sample 47  if (kall && nunfs...): 
+- clara sample 47  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 141
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 81.6717;
- bswap2(): 41 2  after build: medoids are  2 41
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 81.6717;
+ bswap2(), 1. BUILD: 41 2  after build: medoids are  2 41
  --> sky = sum_j D_j= 463.14
   Last swap: new 34 <-> 2 old; decreasing diss. by 0.879526
-end{bswap2}: sky = 391.527
+ end{bswap2}: sky = 391.527
  obj= 9.86629
-C clara(): sample 48  if (kall && nunfs...): 
+- clara sample 48  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 67
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 75.0878;
- bswap2(): 42 31  after build: medoids are 31 42
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 75.0878;
+ bswap2(), 1. BUILD: 42 31  after build: medoids are 31 42
  --> sky = sum_j D_j= 570.247
   Last swap: new 37 <-> 31 old; decreasing diss. by 0.844474
-end{bswap2}: sky = 408.073
+ end{bswap2}: sky = 408.073
  obj= 9.92563
-C clara(): sample 49  if (kall && nunfs...): 
+- clara sample 49  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 121
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 87.5173;
- bswap2(): 13 34  after build: medoids are 13 34
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 87.5173;
+ bswap2(), 1. BUILD: 13 34  after build: medoids are 13 34
  --> sky = sum_j D_j= 504.821
   Last swap: new 35 <-> 13 old; decreasing diss. by 1
-end{bswap2}: sky = 408.675
+ end{bswap2}: sky = 408.675
  obj= 9.76274
-C clara(): sample 50  if (kall && nunfs...): 
+- clara sample 50  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 78
- [ntt=44, nunfs=0]  -> dysta2().
- clara(): s:= max{dys[1..946]} = 87.7511;
- bswap2(): 23 30  after build: medoids are 23 30
+ [ntt=44, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..946]} = 87.7511;
+ bswap2(), 1. BUILD: 23 30  after build: medoids are 23 30
  --> sky = sum_j D_j= 502.458
   Last swap: new 12 <-> 23 old; decreasing diss. by 1
-end{bswap2}: sky = 400.127
+ end{bswap2}: sky = 400.127
  obj= 9.64357
-C clara(): best sample _found_ ; nbest[1:44] =
- c(65,126,128,136,211,219,340,413,420,421,432,433,463,498,528,546,558,565,606,615,621,705,715,722,744,754,788,840,842,935,964,1001,1010,1011,1082,1105,1106,1138,1147,1239,1242,1326,1347,1385)
+C clara() -> best sample _found_ ; nbest[1:44] =
+ c(65,126,128,136,211,219,340,413,420,421,432,433,463,498,528,546,558,565,606,615,
+  621,705,715,722,744,754,788,840,842,935,964,1001,1010,1011,1082,1105,1106,1138,1147,1239,
+  1242,1326,1347,1385)
  resul(),  black() and return() from C.
 $objective
 [1] 9.61429
@@ -1334,12 +1341,594 @@ Available components:
 > ## ./clara-ex.R
 > ## ~~~~~~~~~~~~
 > 
+> ## trace output checking
+> RNGversion("4.3"); RNGkind()
+[1] "Mersenne-Twister" "Inversion"        "Rejection"       
+> set.seed(144)
+> xc120 <- xclara[sort(sample.int(nrow(xclara), 120)), ]
+> cx3.1 <- clara(xc120, 3, trace = 1)
+C clara(): (nsam,nran,n) = (46,5,120);
+- clara sample  1  [ntt=46, nunfs=0]  -> dysta2();  obj= 13.4142
+- clara sample  2  [ntt=46, nunfs=0]  -> dysta2();  obj= 13.349
+- clara sample  3  [ntt=46, nunfs=0]  -> dysta2();  obj= 12.8491
+- clara sample  4  [ntt=46, nunfs=0]  -> dysta2();  obj= 12.6975
+- clara sample  5  [ntt=46, nunfs=0]  -> dysta2();  obj= 13.7493
+C clara() -> best sample _found_  resul(),  black() and return() from C.
+> cx3.2 <- clara(xc120, 3, trace = 2)
+C clara(): (nsam,nran,n) = (46,5,120);
+- clara sample  1  finding 1st... new k{ran}:
+.. kall: FALSE, nsel[ntt=1] = 0
+ [ntt=46, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(), 1. BUILD: 7 20 44  after build: medoids are  7 20 44
+ --> sky = sum_j D_j= 711.359
+  Last swap: new 3 <-> 7 old; decreasing diss. by 1
+ end{bswap2}: sky = 570.725
+1st proper sample obj= 13.4142
+- clara sample  2  if (kall && nunfs...): 
+.. kall: T, nsel[ntt=3] = 9
+ [ntt=46, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 114.718;
+ bswap2(), 1. BUILD: 17 44 9  after build: medoids are  9 17 44
+ --> sky = sum_j D_j= 786.108
+  Last swap: new 33 <-> 17 old; decreasing diss. by 1
+ end{bswap2}: sky = 617.268
+new best obj= 13.349
+- clara sample  3  if (kall && nunfs...): 
+.. kall: T, nsel[ntt=3] = 8
+ [ntt=46, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 109.395;
+ bswap2(), 1. BUILD: 27 11 44  after build: medoids are 11 27 44
+ --> sky = sum_j D_j= 774.014
+  Last swap: new 5 <-> 11 old; decreasing diss. by 1
+ end{bswap2}: sky = 532.229
+new best obj= 12.8491
+- clara sample  4  if (kall && nunfs...): 
+.. kall: T, nsel[ntt=3] = 5
+ [ntt=46, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 111.407;
+ bswap2(), 1. BUILD: 15 41 9  after build: medoids are  9 15 41
+ --> sky = sum_j D_j= 702.577
+  Last swap: new 31 <-> 41 old; decreasing diss. by 0.561914
+ end{bswap2}: sky = 590.348
+new best obj= 12.6975
+- clara sample  5  if (kall && nunfs...): 
+.. kall: T, nsel[ntt=3] = 11
+ [ntt=46, nunfs=0]  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(), 1. BUILD: 27 12 45  after build: medoids are 12 27 45
+ --> sky = sum_j D_j= 810.101
+  Last swap: new 21 <-> 33 old; decreasing diss. by 0.313188
+ end{bswap2}: sky = 559.796
+ obj= 13.7493
+C clara() -> best sample _found_ ; nbest[1:46] =
+ c(1,3,8,11,12,20,23,25,27,29,32,37,40,41,44,46,47,48,51,52,
+  53,54,56,61,64,66,74,77,81,88,90,92,94,95,96,97,101,104,106,107,
+  110,114,115,116,118,120)
+ resul(),  black() and return() from C.
+> cx3.3 <- clara(xc120, 3, trace = 3)
+C clara(): (nsam,nran,n) = (46,5,120);
+- clara sample  1  finding 1st... new k{ran}:
+.. kall: FALSE, 
+... nrx [0:2]= 0 0 0 
+... nsel[0:0]= 2 
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 5 7 9 12 14 16 20 25 26 27 32 33 34 35 37 38 42 48 52 58 64 65 69 72 73 78 81 83 84 87 90 92 93 96 99 100 103 104 105 106 108 109 110 111 120  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(*, s=115.819), 1. BUILD:     new repr. 7
+    new repr. 20
+    new repr. 44
+  after build: medoids are  7 20 44
+  and min.dist dysma[1:n] are
+   35.4   25.1   17.2   45.5   31.6   22.8      0   14.5     13   40.7
+   17.1   13.8     34   4.46   26.3   16.7   22.8   15.2   5.33      0
+   8.82   28.1   28.7   18.1   8.11   5.51   6.57   8.57   2.58   6.01
+   9.96   11.2   24.1   21.3   12.9   5.18   6.63   8.49   20.3   4.64
+   12.1   3.79   13.9      0   13.1   21.1
+ --> sky = sum_j D_j= 711.359
+   swp new 3 <-> 7 old; decreasing diss. by -140.634
+  Last swap: new 3 <-> 7 old; decreasing diss. by 1
+ end{bswap2}: sky = 570.725
+1st proper sample obj= 13.4142
+- clara sample  2  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 7 52 110 
+... nsel[0:2]= 7 52 110 
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 4 7 8 9 12 16 18 23 26 35 37 38 39 41 52 53 57 58 61 64 67 71 73 74 75 77 78 80 81 82 83 84 87 91 92 97 100 102 104 105 107 109 110 112 115  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 114.718;
+ bswap2(*, s=114.718), 1. BUILD:     new repr. 17
+    new repr. 44
+    new repr. 9
+  after build: medoids are  9 17 44
+  and min.dist dysma[1:n] are
+   7.72     10   11.9   5.68   26.6   10.8   28.2   20.3      0   14.5
+   10.9   31.1   11.7   34.8   22.4   21.6      0   18.9   21.2   8.36
+   10.6   24.9   28.9     26   29.2   18.8   14.4   18.6   31.7   13.5
+   21.9   21.1   15.6   31.5   14.7   24.1   19.8   6.63   13.8   20.3
+   4.64   16.6   13.9      0   10.3   17.8
+ --> sky = sum_j D_j= 786.108
+   swp new 33 <-> 17 old; decreasing diss. by -168.839
+  Last swap: new 33 <-> 17 old; decreasing diss. by 1
+ end{bswap2}: sky = 617.268
+new best obj= 13.349
+- clara sample  3  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 23 84 110 
+... nsel[0:2]= 23 84 110 
+ [ntt=46, nunfs=0] .. nsel[1:46]= 1 2 4 5 8 9 13 17 18 21 22 23 24 26 27 39 41 43 44 49 52 53 55 60 63 64 65 66 70 72 73 77 81 84 87 89 90 91 99 102 104 105 108 110 112 118  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 109.395;
+ bswap2(*, s=109.395), 1. BUILD:     new repr. 27
+    new repr. 11
+    new repr. 44
+  after build: medoids are 11 27 44
+  and min.dist dysma[1:n] are
+   12.6   18.9     16    8.1   6.03   31.1   15.1   5.77   9.37   16.9
+      0   11.3   10.7     25   1.54   38.7   22.1   34.8   4.99   17.1
+   28.7   12.9   21.6   17.7   27.1   21.6      0   38.5   15.9   23.4
+     34     25   20.3   23.5   37.5     28   11.2   14.7   5.18   13.8
+   20.3   4.64   3.79      0   10.3   8.28
+ --> sky = sum_j D_j= 774.014
+   swp new 33 <-> 27 old; decreasing diss. by -218.738
+   swp new 5 <-> 11 old; decreasing diss. by -23.0466
+  Last swap: new 5 <-> 11 old; decreasing diss. by 1
+ end{bswap2}: sky = 532.229
+new best obj= 12.8491
+- clara sample  4  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 8 81 110 
+... nsel[0:2]= 8 81 110 
+ [ntt=46, nunfs=0] .. nsel[1:46]= 1 3 8 11 12 20 23 25 27 29 32 37 40 41 44 46 47 48 51 52 53 54 56 61 64 66 74 77 81 88 90 92 94 95 96 97 101 104 106 107 110 114 115 116 118 120  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 111.407;
+ bswap2(*, s=111.407), 1. BUILD:     new repr. 15
+    new repr. 41
+    new repr. 9
+  after build: medoids are  9 15 41
+  and min.dist dysma[1:n] are
+   12.8      9   6.37   10.4   16.7   5.34   11.1   9.52      0   4.43
+   15.8   36.9   10.6   19.5      0   14.1   13.9   29.1   17.9   24.2
+   8.48   7.37     14   8.44   18.2   36.4   24.5     20   15.7   37.6
+   11.2   24.1     27   17.9   12.9   19.8   1.78   20.3   12.1   16.6
+      0   22.9   17.8   10.2   8.28   21.1
+ --> sky = sum_j D_j= 702.577
+   swp new 29 <-> 15 old; decreasing diss. by -112.229
+  Last swap: new 31 <-> 41 old; decreasing diss. by 0.561914
+ end{bswap2}: sky = 590.348
+new best obj= 12.6975
+- clara sample  5  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 27 81 110 
+... nsel[0:2]= 27 81 110 
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 3 4 6 9 10 11 15 18 19 21 27 28 30 31 35 38 42 45 46 50 51 52 53 56 61 62 64 69 70 73 77 81 83 87 91 96 103 104 107 110 111 112 116 118 119  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(*, s=115.819), 1. BUILD:     new repr. 27
+    new repr. 12
+    new repr. 45
+  after build: medoids are 12 27 45
+  and min.dist dysma[1:n] are
+   18.5      9   14.9   2.66   32.3   10.7   10.4   12.8   9.21   11.6
+   18.3      0   19.7   24.9   2.77   12.7   15.4   46.5   16.8   25.2
+   22.6   27.9     33   11.7   15.3   17.9      0   14.4   47.4   24.1
+   37.6   26.1   24.5   32.2   42.8   18.2     16   2.98   12.2    8.3
+   8.28   13.3     10   7.83      0   20.9
+ --> sky = sum_j D_j= 810.101
+   swp new 33 <-> 27 old; decreasing diss. by -247.879
+   swp new 8 <-> 12 old; decreasing diss. by -2.42584
+  Last swap: new 21 <-> 33 old; decreasing diss. by 0.313188
+ end{bswap2}: sky = 559.796
+ obj= 13.7493
+C clara() -> best sample _found_ ; nbest[1:46] =
+ c(1,3,8,11,12,20,23,25,27,29,32,37,40,41,44,46,47,48,51,52,
+  53,54,56,61,64,66,74,77,81,88,90,92,94,95,96,97,101,104,106,107,
+  110,114,115,116,118,120)
+ resul(),  black() and return() from C.
+> cx3.4 <- clara(xc120, 3, trace = 4)
+C clara(): (nsam,nran,n) = (46,5,120);
+- clara sample  1  finding 1st... new k{ran}:
+... {180}nrun=  999 -> k{ran}=2
+.. kall: FALSE, 
+... nrx [0:2]= 0 0 0 
+... nsel[0:0]= 2 
+... {210}nrun=54606 -> k{ran}=100
+... {210}nrun=13365 -> k{ran}=25
+... {210}nrun=57500 -> k{ran}=106
+... {210}nrun=39555 -> k{ran}=73
+... {210}nrun= 8682 -> k{ran}=16
+... {210}nrun=14033 -> k{ran}=26
+... {210}nrun=39224 -> k{ran}=72
+... {210}nrun= 2335 -> k{ran}=5
+... {210}nrun=18054 -> k{ran}=34
+... {210}nrun= 4461 -> k{ran}=9
+... {210}nrun=10708 -> k{ran}=20
+... {210}nrun=20411 -> k{ran}=38
+... {210}nrun=17186 -> k{ran}=32
+... {210}nrun=50185 -> k{ran}=92
+... {210}nrun=37488 -> k{ran}=69
+... {210}nrun=28247 -> k{ran}=52
+... {210}nrun= 6078 -> k{ran}=12
+... {210}nrun=20133 -> k{ran}=37
+... {210}nrun=54028 -> k{ran}=99
+... {210}nrun=25843 -> k{ran}=48
+... {210}nrun=50266 -> k{ran}=93
+... {210}nrun=45377 -> k{ran}=84
+... {210}nrun=60328 -> k{ran}=111
+... {210}nrun=13199 -> k{ran}=25
+... {210}nrun=18678 -> k{ran}=35
+... {210}nrun=60381 -> k{ran}=111
+... {210}nrun=56388 -> k{ran}=104
+... {210}nrun=55851 -> k{ran}=103
+... {210}nrun=42386 -> k{ran}=78
+... {210}nrun=65145 -> k{ran}=120
+... {210}nrun=42208 -> k{ran}=78
+... {210}nrun=22727 -> k{ran}=42
+... {210}nrun=55854 -> k{ran}=103
+... {210}nrun=59669 -> k{ran}=110
+... {210}nrun=17788 -> k{ran}=33
+... {210}nrun=44899 -> k{ran}=83
+... {210}nrun=59082 -> k{ran}=109
+... {210}nrun=43953 -> k{ran}=81
+... {210}nrun=48664 -> k{ran}=90
+... {210}nrun=56831 -> k{ran}=105
+... {210}nrun=52070 -> k{ran}=96
+... {210}nrun=17997 -> k{ran}=33
+... {210}nrun= 3764 -> k{ran}=7
+... {210}nrun=58523 -> k{ran}=108
+... {210}nrun=34818 -> k{ran}=64
+... {210}nrun=47337 -> k{ran}=87
+... {210}nrun=14160 -> k{ran}=26
+... {210}nrun=49975 -> k{ran}=92
+... {210}nrun= 7326 -> k{ran}=14
+... {210}nrun=  901 -> k{ran}=2
+... {210}nrun=14316 -> k{ran}=27
+... {210}nrun=31187 -> k{ran}=58
+... {210}nrun=35130 -> k{ran}=65
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 5 7 9 12 14 16 20 25 26 27 32 33 34 35 37 38 42 48 52 58 64 65 69 72 73 78 81 83 84 87 90 92 93 96 99 100 103 104 105 106 108 109 110 111 120  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(*, s=115.819), 1. BUILD:     new repr. 7
+    new repr. 20
+    new repr. 44
+  after build: medoids are  7 20 44
+  and min.dist dysma[1:n] are
+   35.4   25.1   17.2   45.5   31.6   22.8      0   14.5     13   40.7
+   17.1   13.8     34   4.46   26.3   16.7   22.8   15.2   5.33      0
+   8.82   28.1   28.7   18.1   8.11   5.51   6.57   8.57   2.58   6.01
+   9.96   11.2   24.1   21.3   12.9   5.18   6.63   8.49   20.3   4.64
+   12.1   3.79   13.9      0   13.1   21.1
+ --> sky = sum_j D_j= 711.359
+   swp new 3 <-> 7 old; decreasing diss. by -140.634
+  Last swap: new 3 <-> 7 old; decreasing diss. by 1
+ end{bswap2}: sky = 570.725
+1st proper sample obj= 13.4142
+- clara sample  2  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 7 52 110 
+... nsel[0:2]= 7 52 110 
+... {210}nrun= 9761 -> k{ran}=18
+... {210}nrun= 4232 -> k{ran}=8
+... {210}nrun= 2159 -> k{ran}=4
+... {210}nrun=52694 -> k{ran}=97
+... {210}nrun= 8381 -> k{ran}=16
+... {210}nrun=49444 -> k{ran}=91
+... {210}nrun=28427 -> k{ran}=53
+... {210}nrun=60018 -> k{ran}=110
+... {210}nrun=62297 -> k{ran}=115
+... {210}nrun=18880 -> k{ran}=35
+... {210}nrun=44455 -> k{ran}=82
+... {210}nrun=57102 -> k{ran}=105
+... {210}nrun=40437 -> k{ran}=75
+... {210}nrun=43612 -> k{ran}=80
+... {210}nrun=50243 -> k{ran}=92
+... {210}nrun=43946 -> k{ran}=81
+... {210}nrun= 8337 -> k{ran}=16
+... {210}nrun=58104 -> k{ran}=107
+... {210}nrun=45791 -> k{ran}=84
+... {210}nrun=20550 -> k{ran}=38
+... {210}nrun=31533 -> k{ran}=58
+... {210}nrun=62356 -> k{ran}=115
+... {210}nrun=31099 -> k{ran}=57
+... {210}nrun=52450 -> k{ran}=97
+... {210}nrun=44489 -> k{ran}=82
+... {210}nrun=56368 -> k{ran}=104
+... {210}nrun= 6167 -> k{ran}=12
+... {210}nrun= 8574 -> k{ran}=16
+... {210}nrun=47205 -> k{ran}=87
+... {210}nrun=40140 -> k{ran}=74
+... {210}nrun=36531 -> k{ran}=67
+... {210}nrun=19994 -> k{ran}=37
+... {210}nrun=39681 -> k{ran}=73
+... {210}nrun=13672 -> k{ran}=26
+... {210}nrun=56655 -> k{ran}=104
+... {210}nrun=21174 -> k{ran}=39
+... {210}nrun=21917 -> k{ran}=41
+... {210}nrun=42500 -> k{ran}=78
+... {210}nrun= 1003 -> k{ran}=2
+... {210}nrun=12114 -> k{ran}=23
+... {210}nrun=59449 -> k{ran}=109
+... {210}nrun=61088 -> k{ran}=112
+... {210}nrun=  647 -> k{ran}=2
+... {210}nrun=58350 -> k{ran}=107
+... {210}nrun=21205 -> k{ran}=39
+... {210}nrun= 3900 -> k{ran}=8
+... {210}nrun=55587 -> k{ran}=102
+... {210}nrun=28810 -> k{ran}=53
+... {210}nrun=38257 -> k{ran}=71
+... {210}nrun= 2008 -> k{ran}=4
+... {210}nrun=34751 -> k{ran}=64
+... {210}nrun=54566 -> k{ran}=100
+... {210}nrun=45069 -> k{ran}=83
+... {210}nrun=55412 -> k{ran}=102
+... {210}nrun= 3675 -> k{ran}=7
+... {210}nrun= 4546 -> k{ran}=9
+... {210}nrun=41641 -> k{ran}=77
+... {210}nrun=33040 -> k{ran}=61
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 4 7 8 9 12 16 18 23 26 35 37 38 39 41 52 53 57 58 61 64 67 71 73 74 75 77 78 80 81 82 83 84 87 91 92 97 100 102 104 105 107 109 110 112 115  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 114.718;
+ bswap2(*, s=114.718), 1. BUILD:     new repr. 17
+    new repr. 44
+    new repr. 9
+  after build: medoids are  9 17 44
+  and min.dist dysma[1:n] are
+   7.72     10   11.9   5.68   26.6   10.8   28.2   20.3      0   14.5
+   10.9   31.1   11.7   34.8   22.4   21.6      0   18.9   21.2   8.36
+   10.6   24.9   28.9     26   29.2   18.8   14.4   18.6   31.7   13.5
+   21.9   21.1   15.6   31.5   14.7   24.1   19.8   6.63   13.8   20.3
+   4.64   16.6   13.9      0   10.3   17.8
+ --> sky = sum_j D_j= 786.108
+   swp new 33 <-> 17 old; decreasing diss. by -168.839
+  Last swap: new 33 <-> 17 old; decreasing diss. by 1
+ end{bswap2}: sky = 617.268
+new best obj= 13.349
+- clara sample  3  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 23 84 110 
+... nsel[0:2]= 23 84 110 
+... {210}nrun=27895 -> k{ran}=52
+... {210}nrun= 9822 -> k{ran}=18
+... {210}nrun=27973 -> k{ran}=52
+... {210}nrun=  428 -> k{ran}=1
+... {210}nrun=41875 -> k{ran}=77
+... {210}nrun= 4858 -> k{ran}=9
+... {210}nrun= 4065 -> k{ran}=8
+... {210}nrun=23112 -> k{ran}=43
+... {210}nrun=45615 -> k{ran}=84
+... {210}nrun=55190 -> k{ran}=102
+... {210}nrun=35453 -> k{ran}=65
+... {210}nrun=35556 -> k{ran}=66
+... {210}nrun=39115 -> k{ran}=72
+... {210}nrun=29746 -> k{ran}=55
+... {210}nrun=56601 -> k{ran}=104
+... {210}nrun=37760 -> k{ran}=70
+... {210}nrun=22375 -> k{ran}=41
+... {210}nrun=59598 -> k{ran}=110
+... {210}nrun= 1973 -> k{ran}=4
+... {210}nrun=29724 -> k{ran}=55
+... {210}nrun=60931 -> k{ran}=112
+... {210}nrun=13674 -> k{ran}=26
+... {210}nrun= 2641 -> k{ran}=5
+... {210}nrun=11448 -> k{ran}=21
+... {210}nrun=23711 -> k{ran}=44
+... {210}nrun=23046 -> k{ran}=43
+... {210}nrun=58605 -> k{ran}=108
+... {210}nrun=48468 -> k{ran}=89
+... {210}nrun=41787 -> k{ran}=77
+... {210}nrun=22178 -> k{ran}=41
+... {210}nrun=38793 -> k{ran}=72
+... {210}nrun= 9712 -> k{ran}=18
+... {210}nrun=49623 -> k{ran}=91
+... {210}nrun=11070 -> k{ran}=21
+... {210}nrun= 8741 -> k{ran}=17
+... {210}nrun=26252 -> k{ran}=49
+... {210}nrun=47219 -> k{ran}=87
+... {210}nrun=55258 -> k{ran}=102
+... {210}nrun=33985 -> k{ran}=63
+... {210}nrun=32552 -> k{ran}=60
+... {210}nrun=34575 -> k{ran}=64
+... {210}nrun=23670 -> k{ran}=44
+... {210}nrun=48989 -> k{ran}=90
+... {210}nrun=28612 -> k{ran}=53
+... {210}nrun=11691 -> k{ran}=22
+... {210}nrun=47378 -> k{ran}=87
+... {210}nrun=53753 -> k{ran}=99
+... {210}nrun=14432 -> k{ran}=27
+... {210}nrun=44103 -> k{ran}=81
+... {210}nrun=60846 -> k{ran}=112
+... {210}nrun=48277 -> k{ran}=89
+... {210}nrun=55548 -> k{ran}=102
+... {210}nrun=  739 -> k{ran}=2
+... {210}nrun=64074 -> k{ran}=118
+... {210}nrun=32561 -> k{ran}=60
+... {210}nrun=20888 -> k{ran}=39
+... {210}nrun=12671 -> k{ran}=24
+... {210}nrun=57062 -> k{ran}=105
+... {210}nrun= 6605 -> k{ran}=13
+... {210}nrun=41524 -> k{ran}=77
+... {210}nrun=14363 -> k{ran}=27
+... {210}nrun=39810 -> k{ran}=73
+ [ntt=46, nunfs=0] .. nsel[1:46]= 1 2 4 5 8 9 13 17 18 21 22 23 24 26 27 39 41 43 44 49 52 53 55 60 63 64 65 66 70 72 73 77 81 84 87 89 90 91 99 102 104 105 108 110 112 118  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 109.395;
+ bswap2(*, s=109.395), 1. BUILD:     new repr. 27
+    new repr. 11
+    new repr. 44
+  after build: medoids are 11 27 44
+  and min.dist dysma[1:n] are
+   12.6   18.9     16    8.1   6.03   31.1   15.1   5.77   9.37   16.9
+      0   11.3   10.7     25   1.54   38.7   22.1   34.8   4.99   17.1
+   28.7   12.9   21.6   17.7   27.1   21.6      0   38.5   15.9   23.4
+     34     25   20.3   23.5   37.5     28   11.2   14.7   5.18   13.8
+   20.3   4.64   3.79      0   10.3   8.28
+ --> sky = sum_j D_j= 774.014
+   swp new 33 <-> 27 old; decreasing diss. by -218.738
+   swp new 5 <-> 11 old; decreasing diss. by -23.0466
+  Last swap: new 5 <-> 11 old; decreasing diss. by 1
+ end{bswap2}: sky = 532.229
+new best obj= 12.8491
+- clara sample  4  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 8 81 110 
+... nsel[0:2]= 8 81 110 
+... {210}nrun=35945 -> k{ran}=66
+... {210}nrun=51920 -> k{ran}=96
+... {210}nrun= 5815 -> k{ran}=11
+... {210}nrun=12318 -> k{ran}=23
+... {210}nrun=55045 -> k{ran}=101
+... {210}nrun=52076 -> k{ran}=96
+... {210}nrun=52563 -> k{ran}=97
+... {210}nrun=40122 -> k{ran}=74
+... {210}nrun=63905 -> k{ran}=118
+... {210}nrun=41992 -> k{ran}=77
+... {210}nrun=23535 -> k{ran}=44
+... {210}nrun=57686 -> k{ran}=106
+... {210}nrun=62525 -> k{ran}=115
+... {210}nrun=21668 -> k{ran}=40
+... {210}nrun=49803 -> k{ran}=92
+... {210}nrun=65010 -> k{ran}=120
+... {210}nrun=50905 -> k{ran}=94
+... {210}nrun=56640 -> k{ran}=104
+... {210}nrun=  295 -> k{ran}=1
+... {210}nrun=62094 -> k{ran}=114
+... {210}nrun=29045 -> k{ran}=54
+... {210}nrun=15836 -> k{ran}=29
+... {210}nrun= 6083 -> k{ran}=12
+... {210}nrun=48938 -> k{ran}=90
+... {210}nrun=62481 -> k{ran}=115
+... {210}nrun=30328 -> k{ran}=56
+... {210}nrun= 1631 -> k{ran}=3
+... {210}nrun=25542 -> k{ran}=47
+... {210}nrun=20141 -> k{ran}=37
+... {210}nrun=34580 -> k{ran}=64
+... {210}nrun=52475 -> k{ran}=97
+... {210}nrun=57442 -> k{ran}=106
+... {210}nrun=33097 -> k{ran}=61
+... {210}nrun=28592 -> k{ran}=53
+... {210}nrun=27543 -> k{ran}=51
+... {210}nrun=13566 -> k{ran}=25
+... {210}nrun=35813 -> k{ran}=66
+... {210}nrun=12364 -> k{ran}=23
+... {210}nrun=57907 -> k{ran}=107
+... {210}nrun=24986 -> k{ran}=46
+... {210}nrun=28289 -> k{ran}=52
+... {210}nrun=51432 -> k{ran}=95
+... {210}nrun=12495 -> k{ran}=23
+... {210}nrun=26166 -> k{ran}=48
+... {210}nrun=10525 -> k{ran}=20
+... {210}nrun=14724 -> k{ran}=27
+... {210}nrun=22379 -> k{ran}=41
+... {210}nrun=17106 -> k{ran}=32
+... {210}nrun=48057 -> k{ran}=88
+... {210}nrun=33312 -> k{ran}=61
+... {210}nrun=22023 -> k{ran}=41
+... {210}nrun=63342 -> k{ran}=116
+ [ntt=46, nunfs=0] .. nsel[1:46]= 1 3 8 11 12 20 23 25 27 29 32 37 40 41 44 46 47 48 51 52 53 54 56 61 64 66 74 77 81 88 90 92 94 95 96 97 101 104 106 107 110 114 115 116 118 120  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 111.407;
+ bswap2(*, s=111.407), 1. BUILD:     new repr. 15
+    new repr. 41
+    new repr. 9
+  after build: medoids are  9 15 41
+  and min.dist dysma[1:n] are
+   12.8      9   6.37   10.4   16.7   5.34   11.1   9.52      0   4.43
+   15.8   36.9   10.6   19.5      0   14.1   13.9   29.1   17.9   24.2
+   8.48   7.37     14   8.44   18.2   36.4   24.5     20   15.7   37.6
+   11.2   24.1     27   17.9   12.9   19.8   1.78   20.3   12.1   16.6
+      0   22.9   17.8   10.2   8.28   21.1
+ --> sky = sum_j D_j= 702.577
+   swp new 29 <-> 15 old; decreasing diss. by -112.229
+  Last swap: new 31 <-> 41 old; decreasing diss. by 0.561914
+ end{bswap2}: sky = 590.348
+new best obj= 12.6975
+- clara sample  5  if (kall && nunfs...): 
+.. kall: T, 
+... nrx [0:2]= 27 81 110 
+... nsel[0:2]= 27 81 110 
+... {210}nrun= 9813 -> k{ran}=18
+... {210}nrun=41660 -> k{ran}=77
+... {210}nrun=11427 -> k{ran}=21
+... {210}nrun=33802 -> k{ran}=62
+... {210}nrun=26865 -> k{ran}=50
+... {210}nrun=39768 -> k{ran}=73
+... {210}nrun=56127 -> k{ran}=103
+... {210}nrun=59558 -> k{ran}=110
+... {210}nrun=33677 -> k{ran}=62
+... {210}nrun=27636 -> k{ran}=51
+... {210}nrun=25051 -> k{ran}=46
+... {210}nrun= 9538 -> k{ran}=18
+... {210}nrun=30249 -> k{ran}=56
+... {210}nrun= 5264 -> k{ran}=10
+... {210}nrun=49271 -> k{ran}=91
+... {210}nrun=14814 -> k{ran}=28
+... {210}nrun=16581 -> k{ran}=31
+... {210}nrun=38188 -> k{ran}=70
+... {210}nrun=63251 -> k{ran}=116
+... {210}nrun= 9850 -> k{ran}=19
+... {210}nrun=58209 -> k{ran}=107
+... {210}nrun=60872 -> k{ran}=112
+... {210}nrun= 1455 -> k{ran}=3
+... {210}nrun=60182 -> k{ran}=111
+... {210}nrun=24061 -> k{ran}=45
+... {210}nrun= 7780 -> k{ran}=15
+... {210}nrun=60491 -> k{ran}=111
+... {210}nrun=34738 -> k{ran}=64
+... {210}nrun=45209 -> k{ran}=83
+... {210}nrun= 9984 -> k{ran}=19
+... {210}nrun=43751 -> k{ran}=81
+... {210}nrun=64590 -> k{ran}=119
+... {210}nrun=56117 -> k{ran}=103
+... {210}nrun= 1948 -> k{ran}=4
+... {210}nrun=16771 -> k{ran}=31
+... {210}nrun=18666 -> k{ran}=35
+... {210}nrun=56785 -> k{ran}=104
+... {210}nrun=49208 -> k{ran}=91
+... {210}nrun=45087 -> k{ran}=83
+... {210}nrun=28038 -> k{ran}=52
+... {210}nrun=47213 -> k{ran}=87
+... {210}nrun=20692 -> k{ran}=38
+... {210}nrun=63163 -> k{ran}=116
+... {210}nrun=27170 -> k{ran}=50
+... {210}nrun=27401 -> k{ran}=51
+... {210}nrun=47472 -> k{ran}=87
+... {210}nrun= 5463 -> k{ran}=11
+... {210}nrun=16062 -> k{ran}=30
+... {210}nrun=62885 -> k{ran}=116
+... {210}nrun=64012 -> k{ran}=118
+... {210}nrun= 3059 -> k{ran}=6
+... {210}nrun=60250 -> k{ran}=111
+... {210}nrun=22593 -> k{ran}=42
+... {210}nrun= 4776 -> k{ran}=9
+... {210}nrun=55951 -> k{ran}=103
+... {210}nrun=28662 -> k{ran}=53
+... {210}nrun=37597 -> k{ran}=69
+... {210}nrun=  836 -> k{ran}=2
+... {210}nrun=33067 -> k{ran}=61
+... {210}nrun=52370 -> k{ran}=96
+ [ntt=46, nunfs=0] .. nsel[1:46]= 2 3 4 6 9 10 11 15 18 19 21 27 28 30 31 35 38 42 45 46 50 51 52 53 56 61 62 64 69 70 73 77 81 83 87 91 96 103 104 107 110 111 112 116 118 119  -> dysta2();
+ clara -> s:= max{dys[1..1035]} = 115.819;
+ bswap2(*, s=115.819), 1. BUILD:     new repr. 27
+    new repr. 12
+    new repr. 45
+  after build: medoids are 12 27 45
+  and min.dist dysma[1:n] are
+   18.5      9   14.9   2.66   32.3   10.7   10.4   12.8   9.21   11.6
+   18.3      0   19.7   24.9   2.77   12.7   15.4   46.5   16.8   25.2
+   22.6   27.9     33   11.7   15.3   17.9      0   14.4   47.4   24.1
+   37.6   26.1   24.5   32.2   42.8   18.2     16   2.98   12.2    8.3
+   8.28   13.3     10   7.83      0   20.9
+ --> sky = sum_j D_j= 810.101
+   swp new 33 <-> 27 old; decreasing diss. by -247.879
+   swp new 8 <-> 12 old; decreasing diss. by -2.42584
+  Last swap: new 21 <-> 33 old; decreasing diss. by 0.313188
+ end{bswap2}: sky = 559.796
+ obj= 13.7493
+C clara() -> best sample _found_ ; nbest[1:46] =
+ c(1,3,8,11,12,20,23,25,27,29,32,37,40,41,44,46,47,48,51,52,
+  53,54,56,61,64,66,74,77,81,88,90,92,94,95,96,97,101,104,106,107,
+  110,114,115,116,118,120)
+ resul(),  black() and return() from C.
+> if(FALSE) # no change
++ cx3.5 <- clara(xc120, 3, trace = 5)
+> 
 > ###--- End version of example(clara) -------
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.348 0.026 0.39 0 0 
+Time elapsed:  0.36 0.02 0.397 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  0.475   0.063   0.592 
+  0.476   0.072   0.581 

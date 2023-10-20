@@ -114,7 +114,7 @@ void cl_clara(int *n,  /* = number of objects */
     int nunfs = 0;
     for (int jran = 1; jran <= *nran; ++jran) {
 	if (!full_sample) {/* `real' case: sample size < n */
-	    if(*trace_lev) Rprintf("C clara(): sample %d ", jran);
+	    if(*trace_lev) Rprintf("- clara sample %2d ", jran);
 	    int rand_k, ntt = 0;
 	    if (kall && nunfs+1 != jran && !lrg_sam) {
 		/* Have had (at least) one valid sample; use its representatives
@@ -222,24 +222,28 @@ void cl_clara(int *n,  /* = number of objects */
 	    for (j = 0; j < *nsam; ++j)
 		nsel[j] = j+1;/* <- uses 1-indices for its *values*! */
 	}
-	if(*trace_lev) Rprintf(" -> dysta2()");
+	char nl[] = " ";
+	if(*trace_lev) {
+	    Rprintf(" -> dysta2()");
+	    if(*trace_lev >= 2) nl[0] = '\n';
+	}
 
 	dysta2(*nsam, *jpp, nsel, x, *n, dys, *diss_kind,
 	       jtmd, valmd, has_NA, &dyst_toomany_NA);
 	if(dyst_toomany_NA) {
 	    if(*trace_lev)
-		Rprintf(" gave dyst_toomany_NA --> new sample.\n");
+		Rprintf(" gave dyst_toomany_NA --> new sample.%s", nl);
 	    dyst_toomany_NA = FALSE;
 	    ++nunfs;
 	    continue;/* random sample*/
-	} else if(*trace_lev) Rprintf(".\n");
+	} else if(*trace_lev) Rprintf(";%s", nl);
 
 	double s = 0., sky;
 	for(l = 1; l <= n_dys; l++) /* dys[0] is not used here */
 	    if (s < dys[l])
 		s = dys[l];
 	if(*trace_lev >= 2)
-	    Rprintf(" clara(): s:= max{dys[1..%d]} = %g;", n_dys,s);
+	    Rprintf(" clara -> s:= max{dys[1..%d]} = %g;", n_dys,s);
 
 	bswap2(*kk, *nsam, s, dys, *pam_like, *trace_lev,
 	       /* --> */ &sky, nrepr,
@@ -247,7 +251,7 @@ void cl_clara(int *n,  /* = number of objects */
 	       /* beter[], only used here */&tmp[nsamb]);
 
 	if(*trace_lev >= 2)
-	    Rprintf("end{bswap2}: sky = %g\n", sky);
+	    Rprintf(" end{bswap2}: sky = %g\n", sky);
 
 	Rboolean nafs;
 	double zb;
@@ -275,7 +279,8 @@ void cl_clara(int *n,  /* = number of objects */
 		nbest[js] = nsel[js];
 	    sx = s;
 	}
-	if(*trace_lev) Rprintf("%sobj= %g\n", (*trace_lev < 2) ?", " :" ",  zb/rnn);
+	/* if(*trace_lev) Rprintf("%sobj= %g\n", (*trace_lev < 2) ?", " :" ",  zb/rnn); */
+	if(*trace_lev) Rprintf(" obj= %g\n", zb/rnn);
 
 	if(full_sample) break; /* out of resampling */
     }
@@ -284,12 +289,12 @@ void cl_clara(int *n,  /* = number of objects */
 	PutRNGstate();
 
     if(*trace_lev && !full_sample) {
-	Rprintf("C clara(): best sample _found_ ");
+	Rprintf("C clara() -> best sample _found_ ");
 	if(*trace_lev >= 2) {
 	    Rprintf("; nbest[1:%d] =\n c(", *nsam);
-	    for (js = 0; js < *nsam; ++js) {
+	    for (js = 0; js < *nsam; ) {
 		Rprintf("%d", nbest[js]);
-		if(js+1 < *nsam) Rprintf(",");
+		if(++js < *nsam) Rprintf((js % 20) ? "," : ",\n  ");
 	    }
 	    Rprintf(")\n");
 	}
@@ -458,9 +463,9 @@ void bswap2(int kk, int n, /* == nsam == 'sampsize', here in clara */
 
     if(trace_lev >= 2) {
 	if(trace_lev == 2)
-	    Rprintf("\n bswap2():");
+	    Rprintf("\n bswap2(), 1. BUILD:");
 	else
-	    Rprintf("\nclara()'s bswap2(*, s=%g): ", s);
+	    Rprintf("\n bswap2(*, s=%g), 1. BUILD: ", s);
     }
 
     s = s * 1.1 + 1.;/* value larger than all dissimilarities */
@@ -604,7 +609,7 @@ L60:
 /* selec() : called once [per random sample] from clara() */
 void selec(int kk, int n, int jpp, DISS_KIND diss_kind,
 	   double *zb, int nsam, Rboolean has_NA, int *jtmd, double *valmd,
-	   int trace_lev,
+	   int trace_lev, // currently unused -- FIXME !?
 	   int *nrepr, int *nsel, double *dys, double *x, int *nr,
 	   Rboolean *nafs, /* := TRUE if a distance cannot be calculated */
 	   double *ttd, double *radus, double *ratt,
@@ -815,34 +820,32 @@ void selec(int kk, int n, int jpp, DISS_KIND diss_kind,
 } /* End selec() -----------------------------------------------------------*/
 
 void resul(int kk, int n, int jpp, DISS_KIND diss_kind, Rboolean has_NA,
-	   int *jtmd, double *valmd, double *x, int *nrx, int *mtt, int correct_d)
-{
-    /* correct_d : option for dist.computation:
+	   int *jtmd, double *valmd, double *x, int *nrx, int *mtt,
+	   int correct_d) /* option for dist.computation:
               if (0), use the "fishy" formula to update distances in the NA-case,
  	      if (1), use a dysta2()-compatible formula */
-
+{
 // __FIXME__  "Jaccard" not yet supported ! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-    /* Local variables */
-    int j, jk, i, ka, na, nb, njnb, nrjk, jksky = -1/* Wall */;
-    double pp = (double) (jpp), dsum, dnull = -9./* Wall */;
 
 /* clustering vector is incorporated into x, and ``printed''. */
 
-    for(i = 0; i < n; i++) {
+    for(int i = 0; i < n; i++) {
 
-	for (jk = 0; jk < kk; ++jk) {
+	for (int jk = 0; jk < kk; ++jk) {
 	    if (nrx[jk] == i + 1)/* 1-indexing */
 		goto L220; /* continue next i (i.e., outer loop) */
 	}
-	njnb = i;
-
+	int njnb = i, nrjk, /* = nrx[jk -1 */
+	    jksky = -1/* Wall */;
+	double dnull = -9./* Wall */;
 	if (!has_NA) {
-	    for (jk = 0; jk < kk; ++jk) {
-		dsum = 0.;
+	    for (int jk = 0; jk < kk; ++jk) {
+		double dsum = 0.;
 		nrjk = (nrx[jk] - 1);
-		for (j = 0; j < jpp; ++j) {
-		    double tra = fabs(x[nrjk + j * n] - x[njnb + j * n]);
+		for (int j = 0; j < jpp; ++j) {
+		    double tra = fabs(x[nrjk + j * n] -
+				      x[njnb + j * n]);
 		    if (diss_kind == EUCLIDEAN)
 			tra *= tra;
 		    dsum += tra;
@@ -856,13 +859,14 @@ void resul(int kk, int n, int jpp, DISS_KIND diss_kind, Rboolean has_NA,
 	    }
 	}
 	else { /* _has_ missing data */
-	    for (jk = 0; jk < kk; ++jk) {
-		dsum = 0.;
+	    double pp = (double) jpp;
+	    for (int jk = 0; jk < kk; ++jk) {
+		double dsum = 0.;
 		nrjk = (nrx[jk] - 1);
 		int nobs = 0;
-		for (j = 0; j < jpp; ++j) {
-		    na = nrjk + j * n;
-		    nb = njnb + j * n;
+		for (int j = 0; j < jpp; ++j) {
+		    int na = nrjk + j * n,
+			nb = njnb + j * n;
 		    if (jtmd[j] < 0) {
 			if (x[na] == valmd[j] || x[nb] == valmd[j])
 			    continue /* next j */;
@@ -892,13 +896,13 @@ void resul(int kk, int n, int jpp, DISS_KIND diss_kind, Rboolean has_NA,
 	;
     } /* for(i = 0; i < n ..)*/
 
-    for (jk = 0; jk < kk; ++jk)
+    for (int jk = 0; jk < kk; ++jk)
 	x[nrx[jk] - 1] = (double) jk + 1;/* 1-indexing */
 
     /* mtt[k] := size(k-th cluster) : */
-    for (ka = 0; ka < kk; ++ka) {
+    for (int ka = 0; ka < kk; ++ka) {
 	mtt[ka] = 0;
-	for(i = 0; i < n; i++) {
+	for(int i = 0; i < n; i++) {
 	    if (((int) x[i]) == ka + 1)/* 1-indexing */
 		++mtt[ka];
 	}

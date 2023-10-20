@@ -1,7 +1,7 @@
 
-R version 3.5.3 Patched (2019-03-11 r76305) -- "Great Truth"
-Copyright (C) 2019 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
+R Under development (unstable) (2023-10-19 r85356) -- "Unsuffered Consequences"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -16,8 +16,9 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > ### Clara with really LARGE data set --- CPU testing
-> library(cluster)
+> if(!cluster:::doExtras()) q("no")
 > 
+> library(cluster)
 > 
 > ## generate 15*N objects, divided into 2 clusters.
 > N <- 10000
