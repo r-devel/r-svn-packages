@@ -1,6 +1,6 @@
 
-R version 3.5.0 alpha (2018-03-28 r74481)
-Copyright (C) 2018 The R Foundation for Statistical Computing
+R version 4.3.1 Patched (2023-10-18 r85356) -- "Beagle Scouts"
+Copyright (C) 2023 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -16,8 +16,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > .libPaths() # show full library tree {also as check of R CMD check!}
-[1] "/tmp/Rtmp82y88k/RLIBS_7eca5adde498"                 
-[2] "/sfs/u/maechler/R/D/r-pre-rel/64-linux-inst/library"
+[1] "/tmp/RtmpeWFqQT/RLIBS_28dee75f47fb34"         
+[2] "/u/maechler/R/D/r-patched/F38-64-inst/library"
 > library(cluster)
 > 
 > ####---------- Tests for FANNY  i.e., fanny() --------------------------
@@ -208,7 +208,7 @@ Fuzzy Clustering object of class 'fanny' :
 m.ship.expon.        2
 objective      9.39325
 tolerance        1e-15
-iterations          43
+iterations          45
 converged            1
 maxit              500
 n                   28
@@ -1061,21 +1061,21 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.047 0.012 0.066 0 0 
+Time elapsed:  0.042 0.008 0.052 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are "completely fuzzy" -- and now give a warnings
 > f4.20 <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 8277.57
-Converged after 46 iterations,  obj =             2665.982
+Converged after 44 iterations,  obj =             2665.982
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
 In fanny(chorSub, k = 4, trace.lev = 1) :
   the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
   dunn_coeff   normalized 
-2.500000e-01 1.850372e-15 
+2.500000e-01 3.330669e-15 
 > f4.18  <- fanny(chorSub, k = 4,   memb.exp = 1.8) # same problem
 Warning message:
 In fanny(chorSub, k = 4, memb.exp = 1.8) :
@@ -1094,13 +1094,394 @@ fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 4641.75
 	    ef[]= ( 15405.8, 15405.8, 15405.8, 15405.8)
 	    esp[]= ( 6.63795, 6.63795, 6.63795, 6.63795)
-  m == n:  obj =      4641.7451124068
-Converged after 1 iterations,  obj = 4641.7451124068084027
+  m == n:  obj =      4641.7451124068  not converged: it = 1
+  m == n:  obj =      4641.7451124068  not converged: it = 2
+  m == n:  obj =      4641.7451124067  not converged: it = 3
+  m == n:  obj =      4641.7451124067  not converged: it = 4
+  m == n:  obj =      4641.7451124066  not converged: it = 5
+  m == n:  obj =      4641.7451124065  not converged: it = 6
+  m == n:  obj =      4641.7451124064  not converged: it = 7
+  m == n:  obj =      4641.7451124062  not converged: it = 8
+  m == n:  obj =      4641.7451124059  not converged: it = 9
+  m == n:  obj =      4641.7451124055  not converged: it = 10
+  m == n:  obj =      4641.7451124048  not converged: it = 11
+  m == n:  obj =      4641.7451124038  not converged: it = 12
+  m == n:  obj =      4641.7451124024  not converged: it = 13
+  m == n:  obj =      4641.7451124002  not converged: it = 14
+  m == n:  obj =      4641.7451123969  not converged: it = 15
+  m == n:  obj =      4641.7451123920  not converged: it = 16
+  m == n:  obj =      4641.7451123848  not converged: it = 17
+  m == n:  obj =      4641.7451123740  not converged: it = 18
+  m == n:  obj =      4641.7451123580  not converged: it = 19
+  m == n:  obj =      4641.7451123342  not converged: it = 20
+  m == n:  obj =      4641.7451122987  not converged: it = 21
+  m == n:  obj =      4641.7451122458  not converged: it = 22
+  m == n:  obj =      4641.7451121672  not converged: it = 23
+  m == n:  obj =      4641.7451120502  not converged: it = 24
+  m == n:  obj =      4641.7451118760  not converged: it = 25
+  m == n:  obj =      4641.7451116168  not converged: it = 26
+  m == n:  obj =      4641.7451112310  not converged: it = 27
+  m == n:  obj =      4641.7451106568  not converged: it = 28
+  m == n:  obj =      4641.7451098021  not converged: it = 29
+  m == n:  obj =      4641.7451085301  not converged: it = 30
+  m == n:  obj =      4641.7451066368  not converged: it = 31
+  m == n:  obj =      4641.7451038188  not converged: it = 32
+  m == n:  obj =      4641.7450996246  not converged: it = 33
+  m == n:  obj =      4641.7450933819  not converged: it = 34
+  m == n:  obj =      4641.7450840901  not converged: it = 35
+  m == n:  obj =      4641.7450702597  not converged: it = 36
+  m == n:  obj =      4641.7450496738  not converged: it = 37
+  m == n:  obj =      4641.7450190318  not converged: it = 38
+  m == n:  obj =      4641.7449734207  not converged: it = 39
+  m == n:  obj =      4641.7449055260  not converged: it = 40
+  m == n:  obj =      4641.7448044581  not converged: it = 41
+  m == n:  obj =      4641.7446540036  not converged: it = 42
+  m == n:  obj =      4641.7444300216  not converged: it = 43
+  m == n:  obj =      4641.7440965647  not converged: it = 44
+  m == n:  obj =      4641.7436001025  not converged: it = 45
+  m == n:  obj =      4641.7428609171  not converged: it = 46
+  m == n:  obj =      4641.7417602891  not converged: it = 47
+  m == n:  obj =      4641.7401214217  not converged: it = 48
+  m == n:  obj =      4641.7376810561  not converged: it = 49
+  m == n:  obj =      4641.7340472856  not converged: it = 50
+  m == n:  obj =      4641.7286369629  not converged: it = 51
+  m == n:  obj =      4641.7205831038  not converged: it = 52
+  m == n:  obj =      4641.7085985379  not converged: it = 53
+  m == n:  obj =      4641.6907766285  not converged: it = 54
+  m == n:  obj =      4641.6643034513  not converged: it = 55
+  m == n:  obj =      4641.6250499545  not converged: it = 56
+  m == n:  obj =      4641.5670118398  not converged: it = 57
+  m == n:  obj =      4641.4815802745  not converged: it = 58
+  m == n:  obj =      4641.3566816476  not converged: it = 59
+  m == n:  obj =      4641.1759631584  not converged: it = 60
+  m == n:  obj =      4640.9184870127  not converged: it = 61
+  m == n:  obj =      4640.5598748380  not converged: it = 62
+  m == n:  obj =      4640.0763951643  not converged: it = 63
+  m == n:  obj =      4639.4535091538  not converged: it = 64
+  m == n:  obj =      4638.6985627477  not converged: it = 65
+  m == n:  obj =      4637.8525223026  not converged: it = 66
+  m == n:  obj =      4636.9902717889  not converged: it = 67
+  m == n:  obj =      4636.2011348287  not converged: it = 68
+  m == n:  obj =      4635.5562138862  not converged: it = 69
+  m == n:  obj =      4635.0841061959  not converged: it = 70
+  m == n:  obj =      4634.7709393872  not converged: it = 71
+  m == n:  obj =      4634.5791836454  not converged: it = 72
+  m == n:  obj =      4634.4681223189  not converged: it = 73
+  m == n:  obj =      4634.4053264338  not converged: it = 74
+  m == n:  obj =      4634.3691581286  not converged: it = 75
+  m == n:  obj =      4634.3467429052  not converged: it = 76
+  m == n:  obj =      4634.3309831621  not converged: it = 77
+  m == n:  obj =      4634.3181561250  not converged: it = 78
+  m == n:  obj =      4634.3063657101  not converged: it = 79
+  m == n:  obj =      4634.2946565359  not converged: it = 80
+  m == n:  obj =      4634.2825420462  not converged: it = 81
+  m == n:  obj =      4634.2697644380  not converged: it = 82
+  m == n:  obj =      4634.2561761591  not converged: it = 83
+  m == n:  obj =      4634.2416826439  not converged: it = 84
+  m == n:  obj =      4634.2262151364  not converged: it = 85
+  m == n:  obj =      4634.2097180825  not converged: it = 86
+  m == n:  obj =      4634.1921435378  not converged: it = 87
+  m == n:  obj =      4634.1734489659  not converged: it = 88
+  m == n:  obj =      4634.1535967048  not converged: it = 89
+  m == n:  obj =      4634.1325542860  not converged: it = 90
+  m == n:  obj =      4634.1102952171  not converged: it = 91
+  m == n:  obj =      4634.0868000400  not converged: it = 92
+  m == n:  obj =      4634.0620575623  not converged: it = 93
+  m == n:  obj =      4634.0360661965  not converged: it = 94
+  m == n:  obj =      4634.0088353517  not converged: it = 95
+  m == n:  obj =      4633.9803868188  not converged: it = 96
+  m == n:  obj =      4633.9507560809  not converged: it = 97
+  m == n:  obj =      4633.9199934721  not converged: it = 98
+  m == n:  obj =      4633.8881650953  not converged: it = 99
+  m == n:  obj =      4633.8553534087  not converged: it = 100
+  m == n:  obj =      4633.8216573862  not converged: it = 101
+  m == n:  obj =      4633.7871921716  not converged: it = 102
+  m == n:  obj =      4633.7520881605  not converged: it = 103
+  m == n:  obj =      4633.7164894758  not converged: it = 104
+  m == n:  obj =      4633.6805518354  not converged: it = 105
+  m == n:  obj =      4633.6444398582  not converged: it = 106
+  m == n:  obj =      4633.6083238934  not converged: it = 107
+  m == n:  obj =      4633.5723765040  not converged: it = 108
+  m == n:  obj =      4633.5367687642  not converged: it = 109
+  m == n:  obj =      4633.5016665539  not converged: it = 110
+  m == n:  obj =      4633.4672270359  not converged: it = 111
+  m == n:  obj =      4633.4335954897  not converged: it = 112
+  m == n:  obj =      4633.4009026493  not converged: it = 113
+  m == n:  obj =      4633.3692626504  not converged: it = 114
+  m == n:  obj =      4633.3387716507  not converged: it = 115
+  m == n:  obj =      4633.3095071322  not converged: it = 116
+  m == n:  obj =      4633.2815278568  not converged: it = 117
+  m == n:  obj =      4633.2548744046  not converged: it = 118
+  m == n:  obj =      4633.2295702011  not converged: it = 119
+  m == n:  obj =      4633.2056229217  not converged: it = 120
+  m == n:  obj =      4633.1830261616  not converged: it = 121
+  m == n:  obj =      4633.1617612597  not converged: it = 122
+  m == n:  obj =      4633.1417991795  not converged: it = 123
+  m == n:  obj =      4633.1231023655  not converged: it = 124
+  m == n:  obj =      4633.1056265122  not converged: it = 125
+  m == n:  obj =      4633.0893221975  not converged: it = 126
+  m == n:  obj =      4633.0741363541  not converged: it = 127
+  m == n:  obj =      4633.0600135613  not converged: it = 128
+  m == n:  obj =      4633.0468971544  not converged: it = 129
+  m == n:  obj =      4633.0347301568  not converged: it = 130
+  m == n:  obj =      4633.0234560452  not converged: it = 131
+  m == n:  obj =      4633.0130193623  not converged: it = 132
+  m == n:  obj =      4633.0033661946  not converged: it = 133
+  m == n:  obj =      4632.9944445330  not converged: it = 134
+  m == n:  obj =      4632.9862045316  not converged: it = 135
+  m == n:  obj =      4632.9785986833  not converged: it = 136
+  m == n:  obj =      4632.9715819245  not converged: it = 137
+  m == n:  obj =      4632.9651116845  not converged: it = 138
+  m == n:  obj =      4632.9591478893  not converged: it = 139
+  m == n:  obj =      4632.9536529294  not converged: it = 140
+  m == n:  obj =      4632.9485916022  not converged: it = 141
+  m == n:  obj =      4632.9439310334  not converged: it = 142
+  m == n:  obj =      4632.9396405840  not converged: it = 143
+  m == n:  obj =      4632.9356917488  not converged: it = 144
+  m == n:  obj =      4632.9320580478  not converged: it = 145
+  m == n:  obj =      4632.9287149149  not converged: it = 146
+  m == n:  obj =      4632.9256395866  not converged: it = 147
+  m == n:  obj =      4632.9228109913  not converged: it = 148
+  m == n:  obj =      4632.9202096409  not converged: it = 149
+  m == n:  obj =      4632.9178175259  not converged: it = 150
+  m == n:  obj =      4632.9156180154  not converged: it = 151
+  m == n:  obj =      4632.9135957603  not converged: it = 152
+  m == n:  obj =      4632.9117366027  not converged: it = 153
+  m == n:  obj =      4632.9100274892  not converged: it = 154
+  m == n:  obj =      4632.9084563902  not converged: it = 155
+  m == n:  obj =      4632.9070122233  not converged: it = 156
+  m == n:  obj =      4632.9056847824  not converged: it = 157
+  m == n:  obj =      4632.9044646710  not converged: it = 158
+  m == n:  obj =      4632.9033432401  not converged: it = 159
+  m == n:  obj =      4632.9023125305  not converged: it = 160
+  m == n:  obj =      4632.9013652195  not converged: it = 161
+  m == n:  obj =      4632.9004945707  not converged: it = 162
+  m == n:  obj =      4632.8996943886  not converged: it = 163
+  m == n:  obj =      4632.8989589752  not converged: it = 164
+  m == n:  obj =      4632.8982830915  not converged: it = 165
+  m == n:  obj =      4632.8976619203  not converged: it = 166
+  m == n:  obj =      4632.8970910330  not converged: it = 167
+  m == n:  obj =      4632.8965663585  not converged: it = 168
+  m == n:  obj =      4632.8960841547  not converged: it = 169
+  m == n:  obj =      4632.8956409819  not converged: it = 170
+  m == n:  obj =      4632.8952336787  not converged: it = 171
+  m == n:  obj =      4632.8948593394  not converged: it = 172
+  m == n:  obj =      4632.8945152937  not converged: it = 173
+  m == n:  obj =      4632.8941990874  not converged: it = 174
+  m == n:  obj =      4632.8939084654  not converged: it = 175
+  m == n:  obj =      4632.8936413550  not converged: it = 176
+  m == n:  obj =      4632.8933958517  not converged: it = 177
+  m == n:  obj =      4632.8931702052  not converged: it = 178
+  m == n:  obj =      4632.8929628073  not converged: it = 179
+  m == n:  obj =      4632.8927721801  not converged: it = 180
+  m == n:  obj =      4632.8925969653  not converged: it = 181
+  m == n:  obj =      4632.8924359151  not converged: it = 182
+  m == n:  obj =      4632.8922878825  not converged: it = 183
+  m == n:  obj =      4632.8921518138  not converged: it = 184
+  m == n:  obj =      4632.8920267405  not converged: it = 185
+  m == n:  obj =      4632.8919117727  not converged: it = 186
+  m == n:  obj =      4632.8918060926  not converged: it = 187
+  m == n:  obj =      4632.8917089487  not converged: it = 188
+  m == n:  obj =      4632.8916196505  not converged: it = 189
+  m == n:  obj =      4632.8915375633  not converged: it = 190
+  m == n:  obj =      4632.8914621038  not converged: it = 191
+  m == n:  obj =      4632.8913927362  not converged: it = 192
+  m == n:  obj =      4632.8913289678  not converged: it = 193
+  m == n:  obj =      4632.8912703460  not converged: it = 194
+  m == n:  obj =      4632.8912164548  not converged: it = 195
+  m == n:  obj =      4632.8911669118  not converged: it = 196
+  m == n:  obj =      4632.8911213658  not converged: it = 197
+  m == n:  obj =      4632.8910794937  not converged: it = 198
+  m == n:  obj =      4632.8910409987  not converged: it = 199
+  m == n:  obj =      4632.8910056082  not converged: it = 200
+  m == n:  obj =      4632.8909730713  not converged: it = 201
+  m == n:  obj =      4632.8909431577  not converged: it = 202
+  m == n:  obj =      4632.8909156555  not converged: it = 203
+  m == n:  obj =      4632.8908903701  not converged: it = 204
+  m == n:  obj =      4632.8908671226  not converged: it = 205
+  m == n:  obj =      4632.8908457484  not converged: it = 206
+  m == n:  obj =      4632.8908260965  not converged: it = 207
+  m == n:  obj =      4632.8908080279  not converged: it = 208
+  m == n:  obj =      4632.8907914148  not converged: it = 209
+  m == n:  obj =      4632.8907761399  not converged: it = 210
+  m == n:  obj =      4632.8907620952  not converged: it = 211
+  m == n:  obj =      4632.8907491815  not converged: it = 212
+  m == n:  obj =      4632.8907373077  not converged: it = 213
+  m == n:  obj =      4632.8907263899  not converged: it = 214
+  m == n:  obj =      4632.8907163510  not converged: it = 215
+  m == n:  obj =      4632.8907071202  not converged: it = 216
+  m == n:  obj =      4632.8906986324  not converged: it = 217
+  m == n:  obj =      4632.8906908277  not converged: it = 218
+  m == n:  obj =      4632.8906836511  not converged: it = 219
+  m == n:  obj =      4632.8906770519  not converged: it = 220
+  m == n:  obj =      4632.8906709837  not converged: it = 221
+  m == n:  obj =      4632.8906654037  not converged: it = 222
+  m == n:  obj =      4632.8906602726  not converged: it = 223
+  m == n:  obj =      4632.8906555542  not converged: it = 224
+  m == n:  obj =      4632.8906512153  not converged: it = 225
+  m == n:  obj =      4632.8906472254  not converged: it = 226
+  m == n:  obj =      4632.8906435563  not converged: it = 227
+  m == n:  obj =      4632.8906401822  not converged: it = 228
+  m == n:  obj =      4632.8906370794  not converged: it = 229
+  m == n:  obj =      4632.8906342261  not converged: it = 230
+  m == n:  obj =      4632.8906316021  not converged: it = 231
+  m == n:  obj =      4632.8906291891  not converged: it = 232
+  m == n:  obj =      4632.8906269700  not converged: it = 233
+  m == n:  obj =      4632.8906249293  not converged: it = 234
+  m == n:  obj =      4632.8906230526  not converged: it = 235
+  m == n:  obj =      4632.8906213267  not converged: it = 236
+  m == n:  obj =      4632.8906197395  not converged: it = 237
+  m == n:  obj =      4632.8906182798  not converged: it = 238
+  m == n:  obj =      4632.8906169374  not converged: it = 239
+  m == n:  obj =      4632.8906157028  not converged: it = 240
+  m == n:  obj =      4632.8906145675  not converged: it = 241
+  m == n:  obj =      4632.8906135233  not converged: it = 242
+  m == n:  obj =      4632.8906125630  not converged: it = 243
+  m == n:  obj =      4632.8906116798  not converged: it = 244
+  m == n:  obj =      4632.8906108675  not converged: it = 245
+  m == n:  obj =      4632.8906101205  not converged: it = 246
+  m == n:  obj =      4632.8906094335  not converged: it = 247
+  m == n:  obj =      4632.8906088016  not converged: it = 248
+  m == n:  obj =      4632.8906082205  not converged: it = 249
+  m == n:  obj =      4632.8906076860  not converged: it = 250
+  m == n:  obj =      4632.8906071945  not converged: it = 251
+  m == n:  obj =      4632.8906067424  not converged: it = 252
+  m == n:  obj =      4632.8906063266  not converged: it = 253
+  m == n:  obj =      4632.8906059441  not converged: it = 254
+  m == n:  obj =      4632.8906055924  not converged: it = 255
+  m == n:  obj =      4632.8906052689  not converged: it = 256
+  m == n:  obj =      4632.8906049714  not converged: it = 257
+  m == n:  obj =      4632.8906046977  not converged: it = 258
+  m == n:  obj =      4632.8906044460  not converged: it = 259
+  m == n:  obj =      4632.8906042145  not converged: it = 260
+  m == n:  obj =      4632.8906040016  not converged: it = 261
+  m == n:  obj =      4632.8906038058  not converged: it = 262
+  m == n:  obj =      4632.8906036257  not converged: it = 263
+  m == n:  obj =      4632.8906034600  not converged: it = 264
+  m == n:  obj =      4632.8906033076  not converged: it = 265
+  m == n:  obj =      4632.8906031675  not converged: it = 266
+  m == n:  obj =      4632.8906030386  not converged: it = 267
+  m == n:  obj =      4632.8906029200  not converged: it = 268
+  m == n:  obj =      4632.8906028110  not converged: it = 269
+  m == n:  obj =      4632.8906027106  not converged: it = 270
+  m == n:  obj =      4632.8906026184  not converged: it = 271
+  m == n:  obj =      4632.8906025335  not converged: it = 272
+  m == n:  obj =      4632.8906024555  not converged: it = 273
+  m == n:  obj =      4632.8906023837  not converged: it = 274
+  m == n:  obj =      4632.8906023176  not converged: it = 275
+  m == n:  obj =      4632.8906022569  not converged: it = 276
+  m == n:  obj =      4632.8906022010  not converged: it = 277
+  m == n:  obj =      4632.8906021496  not converged: it = 278
+  m == n:  obj =      4632.8906021024  not converged: it = 279
+  m == n:  obj =      4632.8906020589  not converged: it = 280
+  m == n:  obj =      4632.8906020189  not converged: it = 281
+  m == n:  obj =      4632.8906019821  not converged: it = 282
+  m == n:  obj =      4632.8906019483  not converged: it = 283
+  m == n:  obj =      4632.8906019171  not converged: it = 284
+  m == n:  obj =      4632.8906018885  not converged: it = 285
+  m == n:  obj =      4632.8906018622  not converged: it = 286
+  m == n:  obj =      4632.8906018379  not converged: it = 287
+  m == n:  obj =      4632.8906018157  not converged: it = 288
+  m == n:  obj =      4632.8906017952  not converged: it = 289
+  m == n:  obj =      4632.8906017763  not converged: it = 290
+  m == n:  obj =      4632.8906017590  not converged: it = 291
+  m == n:  obj =      4632.8906017430  not converged: it = 292
+  m == n:  obj =      4632.8906017284  not converged: it = 293
+  m == n:  obj =      4632.8906017149  not converged: it = 294
+  m == n:  obj =      4632.8906017025  not converged: it = 295
+  m == n:  obj =      4632.8906016911  not converged: it = 296
+  m == n:  obj =      4632.8906016806  not converged: it = 297
+  m == n:  obj =      4632.8906016709  not converged: it = 298
+  m == n:  obj =      4632.8906016620  not converged: it = 299
+  m == n:  obj =      4632.8906016539  not converged: it = 300
+  m == n:  obj =      4632.8906016463  not converged: it = 301
+  m == n:  obj =      4632.8906016394  not converged: it = 302
+  m == n:  obj =      4632.8906016331  not converged: it = 303
+  m == n:  obj =      4632.8906016272  not converged: it = 304
+  m == n:  obj =      4632.8906016218  not converged: it = 305
+  m == n:  obj =      4632.8906016169  not converged: it = 306
+  m == n:  obj =      4632.8906016123  not converged: it = 307
+  m == n:  obj =      4632.8906016081  not converged: it = 308
+  m == n:  obj =      4632.8906016043  not converged: it = 309
+  m == n:  obj =      4632.8906016007  not converged: it = 310
+  m == n:  obj =      4632.8906015975  not converged: it = 311
+  m == n:  obj =      4632.8906015945  not converged: it = 312
+  m == n:  obj =      4632.8906015917  not converged: it = 313
+  m == n:  obj =      4632.8906015892  not converged: it = 314
+  m == n:  obj =      4632.8906015868  not converged: it = 315
+  m == n:  obj =      4632.8906015847  not converged: it = 316
+  m == n:  obj =      4632.8906015827  not converged: it = 317
+  m == n:  obj =      4632.8906015809  not converged: it = 318
+  m == n:  obj =      4632.8906015792  not converged: it = 319
+  m == n:  obj =      4632.8906015777  not converged: it = 320
+  m == n:  obj =      4632.8906015762  not converged: it = 321
+  m == n:  obj =      4632.8906015749  not converged: it = 322
+  m == n:  obj =      4632.8906015737  not converged: it = 323
+  m == n:  obj =      4632.8906015726  not converged: it = 324
+  m == n:  obj =      4632.8906015716  not converged: it = 325
+  m == n:  obj =      4632.8906015707  not converged: it = 326
+  m == n:  obj =      4632.8906015698  not converged: it = 327
+  m == n:  obj =      4632.8906015691  not converged: it = 328
+  m == n:  obj =      4632.8906015683  not converged: it = 329
+  m == n:  obj =      4632.8906015677  not converged: it = 330
+  m == n:  obj =      4632.8906015671  not converged: it = 331
+  m == n:  obj =      4632.8906015665  not converged: it = 332
+  m == n:  obj =      4632.8906015660  not converged: it = 333
+  m == n:  obj =      4632.8906015655  not converged: it = 334
+  m == n:  obj =      4632.8906015650  not converged: it = 335
+  m == n:  obj =      4632.8906015646  not converged: it = 336
+  m == n:  obj =      4632.8906015643  not converged: it = 337
+  m == n:  obj =      4632.8906015639  not converged: it = 338
+  m == n:  obj =      4632.8906015636  not converged: it = 339
+  m == n:  obj =      4632.8906015633  not converged: it = 340
+  m == n:  obj =      4632.8906015630  not converged: it = 341
+  m == n:  obj =      4632.8906015628  not converged: it = 342
+  m == n:  obj =      4632.8906015626  not converged: it = 343
+  m == n:  obj =      4632.8906015624  not converged: it = 344
+  m == n:  obj =      4632.8906015622  not converged: it = 345
+  m == n:  obj =      4632.8906015620  not converged: it = 346
+  m == n:  obj =      4632.8906015618  not converged: it = 347
+  m == n:  obj =      4632.8906015617  not converged: it = 348
+  m == n:  obj =      4632.8906015615  not converged: it = 349
+  m == n:  obj =      4632.8906015614  not converged: it = 350
+  m == n:  obj =      4632.8906015613  not converged: it = 351
+  m == n:  obj =      4632.8906015612  not converged: it = 352
+  m == n:  obj =      4632.8906015611  not converged: it = 353
+  m == n:  obj =      4632.8906015610  not converged: it = 354
+  m == n:  obj =      4632.8906015609  not converged: it = 355
+  m == n:  obj =      4632.8906015608  not converged: it = 356
+  m == n:  obj =      4632.8906015608  not converged: it = 357
+  m == n:  obj =      4632.8906015607  not converged: it = 358
+  m == n:  obj =      4632.8906015606  not converged: it = 359
+  m == n:  obj =      4632.8906015606  not converged: it = 360
+  m == n:  obj =      4632.8906015605  not converged: it = 361
+  m == n:  obj =      4632.8906015605  not converged: it = 362
+  m == n:  obj =      4632.8906015604  not converged: it = 363
+  m == n:  obj =      4632.8906015604  not converged: it = 364
+  m == n:  obj =      4632.8906015603  not converged: it = 365
+  m == n:  obj =      4632.8906015603  not converged: it = 366
+  m == n:  obj =      4632.8906015603  not converged: it = 367
+  m == n:  obj =      4632.8906015602  not converged: it = 368
+  m == n:  obj =      4632.8906015602  not converged: it = 369
+  m == n:  obj =      4632.8906015602  not converged: it = 370
+  m == n:  obj =      4632.8906015602  not converged: it = 371
+  m == n:  obj =      4632.8906015602  not converged: it = 372
+  m == n:  obj =      4632.8906015601  not converged: it = 373
+  m == n:  obj =      4632.8906015601  not converged: it = 374
+  m == n:  obj =      4632.8906015601  not converged: it = 375
+  m == n:  obj =      4632.8906015601  not converged: it = 376
+  m == n:  obj =      4632.8906015601  not converged: it = 377
+  m == n:  obj =      4632.8906015601  not converged: it = 378
+  m == n:  obj =      4632.8906015600  not converged: it = 379
+  m == n:  obj =      4632.8906015600  not converged: it = 380
+  m == n:  obj =      4632.8906015600  not converged: it = 381
+  m == n:  obj =      4632.8906015600  not converged: it = 382
+  m == n:  obj =      4632.8906015600  not converged: it = 383
+  m == n:  obj =      4632.8906015600  not converged: it = 384
+  m == n:  obj =      4632.8906015600
+Converged after 385 iterations,  obj = 4632.8906015599995953
 fanny()'s caddy(*, k = 4):
- -> k_true (crisp) = 2 < k (= 4) !!
-Warning message:
-In fanny(chorSub, k = 4, memb.exp = 1.6, iniMem.p = f4.18$membership,  :
-  the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
+ -> k_true (crisp) = 4
 > f4.16.2 <- fanny(chorSub, k = 4, memb.exp = 1.6,
 +                  iniMem.p = cluster:::as.membership(p4cl),
 +                  tol = 1e-10, trace.lev = 2)## looks much better:
@@ -1156,18 +1537,18 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8953786491  not converged: it = 46
   m == n:  obj =      4632.8949171027  not converged: it = 47
   m == n:  obj =      4632.8945003975  not converged: it = 48
-  m == n:  obj =      4632.8941241248  not converged: it = 49
+  m == n:  obj =      4632.8941241249  not converged: it = 49
   m == n:  obj =      4632.8937843232  not converged: it = 50
   m == n:  obj =      4632.8934774285  not converged: it = 51
   m == n:  obj =      4632.8932002321  not converged: it = 52
   m == n:  obj =      4632.8929498430  not converged: it = 53
-  m == n:  obj =      4632.8927236555  not converged: it = 54
+  m == n:  obj =      4632.8927236556  not converged: it = 54
   m == n:  obj =      4632.8925193198  not converged: it = 55
   m == n:  obj =      4632.8923347162  not converged: it = 56
   m == n:  obj =      4632.8921679323  not converged: it = 57
   m == n:  obj =      4632.8920172421  not converged: it = 58
   m == n:  obj =      4632.8918810877  not converged: it = 59
-  m == n:  obj =      4632.8917580628  not converged: it = 60
+  m == n:  obj =      4632.8917580629  not converged: it = 60
   m == n:  obj =      4632.8916468978  not converged: it = 61
   m == n:  obj =      4632.8915464462  not converged: it = 62
   m == n:  obj =      4632.8914556728  not converged: it = 63
@@ -1180,7 +1561,7 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8910230905  not converged: it = 70
   m == n:  obj =      4632.8909826870  not converged: it = 71
   m == n:  obj =      4632.8909461670  not converged: it = 72
-  m == n:  obj =      4632.8909131563  not converged: it = 73
+  m == n:  obj =      4632.8909131564  not converged: it = 73
   m == n:  obj =      4632.8908833169  not converged: it = 74
   m == n:  obj =      4632.8908563432  not converged: it = 75
   m == n:  obj =      4632.8908319595  not converged: it = 76
@@ -1197,34 +1578,34 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8906779259  not converged: it = 87
   m == n:  obj =      4632.8906706472  not converged: it = 88
   m == n:  obj =      4632.8906640647  not converged: it = 89
-  m == n:  obj =      4632.8906581116  not converged: it = 90
+  m == n:  obj =      4632.8906581117  not converged: it = 90
   m == n:  obj =      4632.8906527276  not converged: it = 91
   m == n:  obj =      4632.8906478581  not converged: it = 92
   m == n:  obj =      4632.8906434537  not converged: it = 93
   m == n:  obj =      4632.8906394699  not converged: it = 94
   m == n:  obj =      4632.8906358664  not converged: it = 95
   m == n:  obj =      4632.8906326068  not converged: it = 96
-  m == n:  obj =      4632.8906296581  not converged: it = 97
-  m == n:  obj =      4632.8906269906  not converged: it = 98
+  m == n:  obj =      4632.8906296582  not converged: it = 97
+  m == n:  obj =      4632.8906269907  not converged: it = 98
   m == n:  obj =      4632.8906245774  not converged: it = 99
-  m == n:  obj =      4632.8906223941  not converged: it = 100
-  m == n:  obj =      4632.8906204188  not converged: it = 101
+  m == n:  obj =      4632.8906223942  not converged: it = 100
+  m == n:  obj =      4632.8906204189  not converged: it = 101
   m == n:  obj =      4632.8906186316  not converged: it = 102
   m == n:  obj =      4632.8906170145  not converged: it = 103
   m == n:  obj =      4632.8906155512  not converged: it = 104
   m == n:  obj =      4632.8906142271  not converged: it = 105
   m == n:  obj =      4632.8906130289  not converged: it = 106
-  m == n:  obj =      4632.8906119445  not converged: it = 107
+  m == n:  obj =      4632.8906119446  not converged: it = 107
   m == n:  obj =      4632.8906109632  not converged: it = 108
   m == n:  obj =      4632.8906100750  not converged: it = 109
   m == n:  obj =      4632.8906092711  not converged: it = 110
   m == n:  obj =      4632.8906085435  not converged: it = 111
   m == n:  obj =      4632.8906078849  not converged: it = 112
   m == n:  obj =      4632.8906072887  not converged: it = 113
-  m == n:  obj =      4632.8906067489  not converged: it = 114
+  m == n:  obj =      4632.8906067490  not converged: it = 114
   m == n:  obj =      4632.8906062603  not converged: it = 115
   m == n:  obj =      4632.8906058180
-Converged after 116 iterations,  obj = 4632.8906058179682077
+Converged after 116 iterations,  obj = 4632.8906058179836691
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 4
 > stopifnot(f4.16$clustering == f4.16.2$clustering,
@@ -1328,8 +1709,8 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.151 0.015 0.174 0 0 
+Time elapsed:  0.153 0.01 0.166 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  0.287   0.044   0.383 
+  0.262   0.042   0.323 
