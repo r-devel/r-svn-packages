@@ -47,9 +47,6 @@ src/twins\.f
 src/SAFE
 tests/.*\.Rout-?$
 tests/.*\.Rout_
-tests/clara-151\.R(out.save)?$
-tests/clara-2\.R(out.save)?$
-tests/clara-Large\.R(out.save)?$
 tests/dysta-ex
 tests/.*\.Rout.save-[3264]
 tests/.*\.Rout-[3264]
