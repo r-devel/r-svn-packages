@@ -146,13 +146,14 @@ Acomp <- function(A,ortho=TRUE) {
 } ## Acomp
 
 
-dg <- function(m,f0=1.5) {
+dg <- function(m,f0=1.1) { ## changed from 1.5
 ## inla hyperparameter design point generator...
-  D <- FFdes(m,ccd=TRUE)*f0
-  if (f0<sqrt(2)) warning("modal weight <=0 in integration step!!")
+  D <- FFdes(m,ccd=TRUE)*f0 ## design points excluding central
+  #if (f0<sqrt(2)) warning("modal weight <=0 in integration step!!")
   ## the Rue et al (2009) weights
-  delta <- 1/((f0^2-1)*(1 + exp(-m*f0^2/2)))
-  k0 <- 1 - delta
+  ##delta <- 1/((f0^2-1)*(1 + exp(-m*f0^2/2))) ## turns out was typo
+  delta <- 1/(1 + exp(-m*f0^2/2)*(f0^2-1)) ## corrected
+  k0 <- 1 - delta ## central point weight
   k1 <- delta/nrow(D)
   k1 <- rep(k1,nrow(D))
   list(D=D,k0=k0,k1=k1)

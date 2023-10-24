@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 * Correction of ziplss residual computation - incorrect probability of non
   zero used. Thanks to Xiao Liang. 
 
+* correction of ginla integration weights (correcting typo from Rue et al. 
+  2009). Thanks to Paul Van Dam-Bates. 
+
 1.9-0
 
 *** NCV smoothing parameter estimation now available for most models. See ?NCV.
