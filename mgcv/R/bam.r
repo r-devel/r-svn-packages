@@ -1,4 +1,4 @@
-## routines for very large dataset generalized additive modelling.
+# routines for very large dataset generalized additive modelling.
 ## (c) Simon N. Wood 2009-2023
 
 
@@ -938,6 +938,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
            wt <- G$y
            for (b in 1:n.block) {
              ind <- start[b]:stop[b]
+	     if (!is.null(family$setInd)) family$setInd(ind) ## family may need to know ind - e.g. gfam
              X <- predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
              rownames(X) <- NULL
              if (is.null(coef)) eta1 <- eta[ind] else eta[ind] <- eta1 <- drop(X%*%coef) + offset[ind]
@@ -1173,6 +1174,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
           break
       }
     } ## end fitting iteration
+
+    if (!is.null(family$setInd)) family$setInd(NULL) ## reset family to state before indexing
 
     if (method=="fREML") { ## do expensive cov matrix cal only at end
       res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale,L=G$L,nt=npt)

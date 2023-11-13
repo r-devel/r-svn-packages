@@ -26,6 +26,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.9-1
 
+* Revised gfam to work correctly with bam(...,discrete=FALSE). Subsetting 
+  in bgam.fit was incorrect for gfam. Thanks to Dave Miller for reporting it. 
+
 * Correction of ziplss residual computation - incorrect probability of non
   zero used. Thanks to Xiao Liang. 
 
