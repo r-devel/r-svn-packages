@@ -73,11 +73,14 @@ gfam <- function(fl) {
       i0 <- i0 + nth
     }
   } ## putTheta gfam
-  ## functions needed by bam to subset data.
+  
+  ## function needed by bam and predict.gam to subset data...
   setInd <- function(ind) {
   ## enable the fi index to be subsetted by ind, and restored is ind==NULL
     fl <- get(".fl")
-    if (is.null(attr(fl,"fifull"))) attr(fl,"fifull") <- attr(fl,"fi") ## store full fi 
+    if (is.null(attr(fl,"fifull"))) {
+      if (is.null(ind)) return() else attr(fl,"fifull") <- attr(fl,"fi") ## store full fi
+    }  
     attr(fl,"fi") <- if (is.null(ind)) attr(fl,"fifull") else attr(fl,"fifull")[ind]
     assign(".fl", fl, envir=environment(sys.function()))
   }  
