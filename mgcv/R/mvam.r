@@ -208,14 +208,14 @@ mvn <- function(d=2) {
         nsp = 0;d1b <- dH <- 0
       } else {
         nsp = ncol(d1b)
-        dH = rep(0,nsp*nb*nb)
+        dH = rep(0,nsp*nb^2)
       }
       #cat("\nderiv=",deriv,"  lpstart=",lpstart," dim(y) = ",dim(y),
       #    "\ndim(XX)=",dim(attr(X,"XX"))," m=",m," nsp=",nsp,"\n")
       oo <- .C("mvn_ll",y=as.double(t(y)),X=as.double(X),XX=as.double(attr(X,"XX")),
                beta=as.double(coef),n=as.integer(nrow(X)),
                lpi=as.integer(lpstart-1),m=as.integer(m),ll=as.double(0),lb=as.double(coef*0),
-               lbb=as.double(rep(0,nb*nb)), dbeta = as.double(d1b), dH = as.double(dH), 
+               lbb=as.double(rep(0,nb^2)), dbeta = as.double(d1b), dH = as.double(dH), 
                deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1),PACKAGE="mgcv")
       lb <- oo$lb;lbb <- matrix(oo$lbb,nb,nb)
       if (overlap) { ## need to apply lpi contraction
@@ -225,21 +225,21 @@ mvn <- function(d=2) {
       }
       if (nsp==0) d1H <- NULL else if (deriv==2) {
         d1H <- rep(0,nsp) #matrix(0,nb,nsp)
-	ind <- 1:(nb*nb)
+	ind <- 1:(nb^2)
         for (i in 1:nsp) { 
           dH <- matrix(oo$dH[ind],nb,nb)
           if (overlap) dH <- lpi.contract(dH,lpi0)
           # d1H[,i] <- diag(dH)
 	  d1H[i] <- sum(fh*dH)
-          ind <- ind + nb*nb
+          ind <- ind + nb^2
         }
       } else { ## deriv==3
-        d1H <- list();ind <- 1:(nb*nb)
+        d1H <- list();ind <- 1:(nb^2)
         for (i in 1:nsp) { 
           dH <- matrix(oo$dH[ind],nb,nb)
           if (overlap) dH <- lpi.contract(dH,lpi0)
           d1H[[i]] <- dH
-          ind <- ind + nb*nb
+          ind <- ind + nb^2
         }
       }
       list(l=oo$ll,lb=lb,lbb=lbb,d1H=d1H)
