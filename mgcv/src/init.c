@@ -38,6 +38,7 @@ R_CallMethodDef CallMethods[] = {
   {"nei_cov",(DL_FUNC)&nei_cov,4},
   {"dpdev",(DL_FUNC)&dpdev,1},
   {"spdev",(DL_FUNC)&spdev,1},
+  {"mvnll",(DL_FUNC)&mvnll,13},
   {NULL, NULL, 0}
 };
 
@@ -46,7 +47,6 @@ R_CMethodDef CEntries[] = {
     {"davies",(DL_FUNC) davies,10},
     {"tri_chol",(DL_FUNC) tri_chol,4},
     {"diagXVXt", (DL_FUNC) &diagXVXt,21},
-    //    {"XWXd", (DL_FUNC) &XWXd,18},
     {"XWXd0", (DL_FUNC) &XWXd0,18},
     {"XWXd1", (DL_FUNC) &XWXd1,22},
     {"XWyd", (DL_FUNC) &XWyd,21},
@@ -58,7 +58,7 @@ R_CMethodDef CEntries[] = {
     {"coxpred", (DL_FUNC) &coxpred, 14},
     {"coxpp", (DL_FUNC) &coxpp, 10},
     {"coxlpl", (DL_FUNC) &coxlpl, 17},
-    {"mvn_ll", (DL_FUNC) &mvn_ll,15},
+    // {"mvn_ll", (DL_FUNC) &mvn_ll,15},
     {"RMonoCon", (DL_FUNC) &RMonoCon, 7},
     {"RuniqueCombs", (DL_FUNC) &RuniqueCombs, 4},
     {"RPCLS", (DL_FUNC) &RPCLS, 13},

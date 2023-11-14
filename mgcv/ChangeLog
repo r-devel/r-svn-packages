@@ -15,7 +15,7 @@ Issues:
    0.2.20 appears to be OK. For 0.3.x x>6 make USE_THREAD=0 USE_LOCKING=1
    to make openblas ensures thread safety.
 
-* .C can't use R's long vectors, which can lead to bam failing on very large
+* .C can't use R's longVectors, which can lead to bam failing on very large
   datasets. Probably requires extensive re-writing using .Call.
 
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
@@ -25,6 +25,9 @@ present, and reparameterization needs checking (also for bam).
   discretizaton to that used in fitting when predicting.
 
 1.9-1
+
+* Revised C code underlying mvn family to allow larger problems, via use of 
+  R long vectors. 
 
 * Revised gfam to work correctly with bam(...,discrete=FALSE). Subsetting 
   in bgam.fit was incorrect for gfam. Thanks to Dave Miller for reporting it. 

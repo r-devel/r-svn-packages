@@ -212,12 +212,15 @@ mvn <- function(d=2) {
       }
       #cat("\nderiv=",deriv,"  lpstart=",lpstart," dim(y) = ",dim(y),
       #    "\ndim(XX)=",dim(attr(X,"XX"))," m=",m," nsp=",nsp,"\n")
-      oo <- .C("mvn_ll",y=as.double(t(y)),X=as.double(X),XX=as.double(attr(X,"XX")),
-               beta=as.double(coef),n=as.integer(nrow(X)),
-               lpi=as.integer(lpstart-1),m=as.integer(m),ll=as.double(0),lb=as.double(coef*0),
-               lbb=as.double(rep(0,nb^2)), dbeta = as.double(d1b), dH = as.double(dH), 
-               deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1),PACKAGE="mgcv")
-      lb <- oo$lb;lbb <- matrix(oo$lbb,nb,nb)
+      ll <- 0;lb <- coef*0;lbb <- rep(0,nb^2)
+    #  oo <- .C("mvn_ll",y=as.double(t(y)),X=as.double(X),XX=as.double(attr(X,"XX")),
+    #           beta=as.double(coef),n=as.integer(nrow(X)),
+    #           lpi=as.integer(lpstart-1),m=as.integer(m),ll=as.double(ll),lb=as.double(lb),
+    #           lbb=as.double(lbb), dbeta = as.double(d1b), dH = as.double(dH), 
+    #           deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1),PACKAGE="mgcv")
+    #  lb <- oo$lb;lbb <- matrix(oo$lbb,nb,nb);ll <- oo$ll;dH1 <- oo$dH
+      .Call("mvnll",t(y),X,attr(X,"XX"),coef,as.integer(lpstart-1),ll,lb,lbb,d1b,dH,as.integer(nsp>0),nsp,1,PACKAGE="mgcv")
+      dH1 <- dH;lbb <- matrix(lbb,nb,nb)
       if (overlap) { ## need to apply lpi contraction
         lb <- lpi.contract(lb,lpi0)
         ## lpi.contract will automatically carry across the R coef related stuff 
@@ -227,7 +230,7 @@ mvn <- function(d=2) {
         d1H <- rep(0,nsp) #matrix(0,nb,nsp)
 	ind <- 1:(nb^2)
         for (i in 1:nsp) { 
-          dH <- matrix(oo$dH[ind],nb,nb)
+          dH <- matrix(dH1[ind],nb,nb)
           if (overlap) dH <- lpi.contract(dH,lpi0)
           # d1H[,i] <- diag(dH)
 	  d1H[i] <- sum(fh*dH)
@@ -236,13 +239,13 @@ mvn <- function(d=2) {
       } else { ## deriv==3
         d1H <- list();ind <- 1:(nb^2)
         for (i in 1:nsp) { 
-          dH <- matrix(oo$dH[ind],nb,nb)
+          dH <- matrix(dH1[ind],nb,nb)
           if (overlap) dH <- lpi.contract(dH,lpi0)
           d1H[[i]] <- dH
           ind <- ind + nb^2
         }
       }
-      list(l=oo$ll,lb=lb,lbb=lbb,d1H=d1H)
+      list(l=ll,lb=lb,lbb=lbb,d1H=d1H)
     } ## ll
 
     # environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 

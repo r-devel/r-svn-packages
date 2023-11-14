@@ -121,9 +121,12 @@ void coxlpl(double *eta,double *X,int *r, int *d,double *tr,
             double *d2H,int *n_sp,int *deriv);
 
 /* MVN smooth additive */
-void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,
+/*void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,
             int *m,double *ll,double *lb,double *lbb,double *dbeta,
-            double *dH,int *deriv,int *nsp,int *nt);
+            double *dH,int *deriv,int *nsp,int *nt);*/
+
+SEXP mvnll(SEXP Y,SEXP x,SEXP xx,SEXP BETA,SEXP LPI, SEXP LL, SEXP LB,
+	   SEXP LBB, SEXP DBETA, SEXP Dh, SEXP DERIV,SEXP NSP, SEXP NT);
 
 /* discretized covariate methods */
 //void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, 
