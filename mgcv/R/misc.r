@@ -441,11 +441,15 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
       rpi <- unlist(lpip[rt])
       V <- V[lpi,rpi,drop=FALSE] ## select part of V required in correct order
     }
-    oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
-           ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
-	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(nrow(V)),as.integer(ncol(V)),
-	   as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
-    D <- oo$diag
+#   oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
+#           ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
+#	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(nrow(V)),
+#           as.integer(ncol(V)),as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
+#    D <- oo$diag
+    D <- numeric(n)
+    .Call(C_CdiagXVXt,D,V,as.double(unlist(X)),as.integer(k-1),as.integer(ks-1),as.integer(m),as.integer(p),
+          as.integer(ts-1), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
+	  as.integer(lt-1),as.integer(rt-1))
   }
   D
 } ## diagXVXd

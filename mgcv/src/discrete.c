@@ -607,27 +607,27 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
 
 SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
 	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS) {
-/* .Call wrapper for diagXVXt allowing R long vector storage for k.
+/* .Call wrapper for diagXVXt allowing R long vector storage for k. Note that 
+  this does not allow more than maxint data - that would require re-writting R code 
+  to avoid storing k in a matrix (which is only allowed maxint rows).
 
   n is length of diag, nx is length of m or p, nt is the length of ts or dt, pv is the
   number of rows of V, cv the number of cols. ncs and nrs are length of cs/rs.
 */
   double *diag,*V,*X,*v;
-  int *k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,pv,cv,ncs,nrs;
-  ptrdiff_t n;
-  n = (ptrdiff_t) xlength(DIAG); diag = REAL(DIAG);
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,pv,cv,ncs,nrs;
+  n = length(DIAG); diag = REAL(DIAG);
   V = REAL(Vp);pv = nrows(Vp);cv = ncols(Vp);
   X = REAL(x);
   k = INTEGER(K); ks = INTEGER(KS);
   m = INTEGER(M); nx = length(M);
   p = INTEGER(P);
   ts = INTEGER(TS); dt = INTEGER(DT); nt = length(TS);
-  v = REAL(vp);qc = INTEGER(qc);
+  v = REAL(vp);qc = INTEGER(QC);
   nthreads = INTEGER(NTHREADS);
   cs = INTEGER(CS); rs = INTEGER(RS);
   nrs = length(RS); ncs = length(CS);
-  diagXVXt(diag,V,X,k,ks,m,p, int &n, 
-	      &nx,ts,dt,&nt,v,qc,&pv,&cv,&nthreads,cs,&ncs,rs,&nrs);
+  diagXVXt(diag,V,X,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,&pv,&cv,nthreads,cs,&ncs,rs,&nrs);
   return(R_NilValue);
 } /*  CdiagXVXt */
 
