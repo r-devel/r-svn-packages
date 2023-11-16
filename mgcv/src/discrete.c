@@ -419,7 +419,6 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
   }
   md = m[*dt - 1];
   pd = p[*dt -1];
-  //kd = k + (*dt-1) * (ptrdiff_t) *n; /* index vector for final term */
   kd = k + kstart[*dt-1] * (ptrdiff_t) *n;
   /* form work = M B, where vec(B) = beta */
   if (*qc==0) { /* no constraint supplied */
@@ -428,15 +427,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
   } else { /* there is a constraint matrix */
     /* first map supplied beta to unconstrained parameterization */ 
     j = pb * pd; /* total number of coeffs - length of unconstrained beta */
-    
-    //*work = 0.0;x=0.0;
-    //for (p0=work+1,p1=p0+j-1,p2=beta,p3=v+1;p0<p1;p0++,p2++,p3++) { 
-    //  *p0 = *p2; 
-    //  x += *p0 * *p3; /* v'beta where beta padded with extra zero at start */ 
-    //}
-    //for (p0=work,p1=p0+j,p2=v;p0<p1;p0++,p2++) *p0 -= *p2 * x; /* (I-vv')(0,beta')' */
     Zb(work,beta,v,qc,&j,work+j);
-    /*F77_CALL(dgemv)(&trans, &j, qc,&done,Q,&j,beta,&one,&dzero,work,&one); old when Q full matrix */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
 		    M,&md,work,&pd,&dzero,C,&md FCONE FCONE);
   }
@@ -613,16 +604,45 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
   }
 } /* Xb */
 
+
+SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
+	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS) {
+/* .Call wrapper for diagXVXt allowing R long vector storage for k.
+
+  n is length of diag, nx is length of m or p, nt is the length of ts or dt, pv is the
+  number of rows of V, cv the number of cols. ncs and nrs are length of cs/rs.
+*/
+  double *diag,*V,*X,*v;
+  int *k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,pv,cv,ncs,nrs;
+  ptrdiff_t n;
+  n = (ptrdiff_t) xlength(DIAG); diag = REAL(DIAG);
+  V = REAL(Vp);pv = nrows(Vp);cv = ncols(Vp);
+  X = REAL(x);
+  k = INTEGER(K); ks = INTEGER(KS);
+  m = INTEGER(M); nx = length(M);
+  p = INTEGER(P);
+  ts = INTEGER(TS); dt = INTEGER(DT); nt = length(TS);
+  v = REAL(vp);qc = INTEGER(qc);
+  nthreads = INTEGER(NTHREADS);
+  cs = INTEGER(CS); rs = INTEGER(RS);
+  nrs = length(RS); ncs = length(CS);
+  diagXVXt(diag,V,X,k,ks,m,p, int &n, 
+	      &nx,ts,dt,&nt,v,qc,&pv,&cv,&nthreads,cs,&ncs,rs,&nrs);
+  return(R_NilValue);
+} /*  CdiagXVXt */
+
 void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,
 	      int *cs,int *ncs,int *rs,int *nrs) {
 /* Forms diag(XVX') where X is stored in the compact form described in XWXd.
-   V is a pv by pv matrix. 
+   V is a pv by pv matrix, if all terms are selected, otherwise pv by cv; 
+   
    Parallelization is by splitting the columns of V into nthreads subsets.
    Currently inefficient. Could be speeded up by a factor of 2, by supplying a
    square root of V in place of V.
+   
    cs and rs are ncs and nrs vectors specifying which terms should be included 
-   in the cross product. negative ncs or nrs signals to include all. 
+   in the cross product. zero or negative ncs or nrs signals to include all. 
 
    Basic algorithm is to compute XV and then the row sums of XV.X. 
    In practice this is done by computing one column of XV and X at a time.
@@ -1546,6 +1566,36 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
+
+
+   Forms Xt'WXt when Xt is divided into blocks of columns, each stored in compact form
+   using arguments X and k. 
+   * 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix containing the unique rows of 
+     the ith marginal model matrix. 
+   * There are 'nt' model terms. Each term is made up of one or more maginal model matrices.
+   * The jth term starts at block ts[j] of X, and has dt[j] marginal matrices. The terms model
+     matrix is the row tensor product of its full (n row) marginals.
+   * The index vectors converting the unique row matrices to full marginal matrices are in 
+     'k', an n-row matrix of integers. Conceptually if Xj and kj represent the jth unique 
+      row matrix and index vector then the ith row of the corresponding full marginal matrix 
+      is Xj[kj[i],], but things are more complicated when each full term matrix is actually 
+      the sum of several matrices (summation convention).
+   * To handle the summation convention, each marginal matrix can have several index vectors. 
+     'ks' is an nx by 2 matrix giving the columns of k corresponding to the ith marginal 
+     model matrix. Specifically columns ks[i,1]:(ks[i,2]-1) of k are the index vectors for the ith 
+     marginal. All marginals corresponding to one term must have the same number of index columns.
+     The full model matrix for the jth term is constucted by summing over q the full 
+     model matrices corresponding to the qth index vectors for each of its marginals.    
+   * For example the exression for the full model matrix of the jth term is...
+  
+     X^full_j = sum_q prod_i X_{ts[j]+i}[k[,ks[i]+q],]  
+
+     - q runs from 0 to ks[i,2] - ks[i,1] - 1; i runs from 0 to dt[j] - 1.
+         
+   Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
+   (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
+   dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
+
 */   
   int *pt, *pd,i,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,
     kk,kb,tid=0,nxwx=0,qi=0,*worki,one=1;
