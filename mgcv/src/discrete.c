@@ -1,4 +1,4 @@
-/* (c) Simon N. Wood (2015-2019) Released under GPL2 */
+/* (c) Simon N. Wood (2015-2023) Released under GPL2 */
 
 /* Routines to work with discretized covariate models 
    Data structures:
@@ -1779,6 +1779,35 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 } /* XWXd0 */ 
 
 
+SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,
+	    SEXP csr, SEXP rsr) {
+/* .Call wrapper for XWXd1 allowing R long vector storage for k. Note that 
+  this does not allow more than maxint data - that would require re-writting R code 
+  to avoid storing k in a matrix (which is only allowed maxint rows).
+
+  n is length of diag, nx is length of m or p, nt is the length of ts or dt, 
+  ncs and nrs are length of cs/rs.
+*/
+  double *XWX,*X,*v,*w,*ar_weights;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop,*ar_row;
+  n = nrows(kr); XWX = REAL(XWXr);
+  X = REAL(Xr);
+  X = REAL(Xr);w = REAL(wr);
+  k = INTEGER(kr); ks = INTEGER(ksr);
+  m = INTEGER(mr); nx = length(mr);
+  p = INTEGER(pr);
+  ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
+  ar_weights = REAL(ar_weightsr);
+  ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
+  v = REAL(vr);qc = INTEGER(qcr);
+  nthreads = INTEGER(nthreadsr);
+  cs = INTEGER(csr); rs = INTEGER(rsr);
+  nrs = length(rsr); ncs = length(csr);
+  XWXd1(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_row,ar_weights,
+	rs,cs,&nrs,&ncs);
+  return(R_NilValue);
+} /*  CdiagXVXt */
 
 
 
@@ -1831,9 +1860,9 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 
 
 */   
-  int *pt, *pd,i,j,ri,ci,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
-    *b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki,symmetric=1,one=1;
-  ptrdiff_t *off,*voff,mmp,q;
+  int *pt, *pd,ri,ci,si,maxp=0,nxwx=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
+    *b,*B,*C,*R,*sb,N,kk,kb,tid=0,qi=0,*worki,symmetric=1,one=1;
+  ptrdiff_t *off,*voff,mmp,q,i,j;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
   unsigned long long ht[256];
   SM **sm,*SMstack;

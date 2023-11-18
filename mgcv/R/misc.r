@@ -447,9 +447,9 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
 #           as.integer(ncol(V)),as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
 #    D <- oo$diag
     D <- numeric(n)
-    .Call(C_CdiagXVXt,D,V,as.double(unlist(X)),as.integer(k-1),as.integer(ks-1),as.integer(m),as.integer(p),
-          as.integer(ts-1), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
-	  as.integer(lt-1),as.integer(rt-1))
+    .Call(C_CdiagXVXt,D,V,as.double(unlist(X)),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
+          as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
+	  as.integer(lt-1L),as.integer(rt-1L))
   }
   D
 } ## diagXVXd

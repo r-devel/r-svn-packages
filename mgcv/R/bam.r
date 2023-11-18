@@ -176,7 +176,8 @@ compress.df <- function(dat,m=NULL) {
   k <- ii[k]     ## correct k index accordingly
   ## ... finished shuffle
   ## if arguments were matrices, then return matrix index
-  if (length(k)>n) k <- matrix(k,nrow=n) 
+  if (length(k)>n) k <- matrix(k,nrow=n)
+  storage.mode(k) <- "integer"
   k -> attr(xu,"index")
   xu
 } ## compress.df
@@ -243,7 +244,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   names.pmf <- names.pmf[names.pmf %in% names(mf)] ## drop names.pmf not in mf (usually response)
  
   nk <- nk + length(names.pmf)
-  k <- matrix(0,nrow(mf),nk) ## each column is an index vector
+  k <- matrix(0L,nrow(mf),nk) ## each column is an index vector
   ks <- matrix(NA,nk,2,dimnames=list(rep("",nk)))
   ik <- 0 ## index counter i.e. counts marginal smooths and their indices
   nr <- rep(0,nk) ## number of rows for marginal term
@@ -276,7 +277,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 	  ks[ik,1] <- if (ik==1) 1 else ks[ik-1,2] 
           if (is.matrix(ki)) {
 	     ks[ik,2] <- ks[ik,1] + ncol(ki)
-             k <- cbind(k,matrix(0,nrow(k),ncol(ki)-1)) ## extend index matrix
+             k <- cbind(k,matrix(0L,nrow(k),ncol(ki)-1)) ## extend index matrix
              ind <- ks[ik,1]:(ks[ik,2]-1) 
              k[,ind] <- ki 
            } else {
@@ -372,7 +373,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## multiple arguments, so drop these here...
   ks <- ks[!is.na(ks[,1]),,drop=FALSE]
   if (ncol(k)>max(ks)-1) k <- k[,1:(max(ks)-1),drop=FALSE] 
-  k <- cbind(k,1) ## add an intercept index column
+  k <- cbind(k,1L) ## add an intercept index column
   nk <- ncol(k)
   ks <- rbind(ks,c(nk,nk+1)) ## add intercept row to ks
   nr <- c(nr,1) ## and intercept entry to nr
