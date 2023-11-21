@@ -550,6 +550,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
 	    ## get deviance at step start, with current theta if efam
 	    dev0 <- if (efam) sum(family$dev.resids(G$y,mu0,G$w,theta)) else
 	                 sum(family$dev.resids(G$y,mu0,G$w))
+	    
           }
         }
 	kk <- 1
@@ -558,12 +559,16 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
 	  dev <- if (efam) sum(family$dev.resids(G$y,mu,G$w,theta)) else
 	                 sum(family$dev.resids(G$y,mu,G$w))
           if (iter>2) { ## coef step length control
-	    bSb <- sum(rSb^2) ## penalty at end of beta step 
+	    bSb <- sum(rSb^2) ## penalty at end of beta step
+	    #stepr <- max(abs(coef-coef0))/(max(abs(coef0)))
+	    #if (stepr<2)
+	    stepr <- 2
+	    istepr <- 1-1/stepr
             if ((!is.finite(dev) || dev0 + bSb0 < dev + bSb) && kk < 30) { ## beta step not improving current pen dev
-              coef <- (coef0 + coef)/2 ## halve the step
-	      rSb <- (rSb0 + rSb)/2
-	      eta <- (eta0 + eta)/2
-	      prop$beta <- (b0 + prop$beta)/2
+              coef <- coef0*istepr + coef/stepr ## reduce the step
+	      rSb <- rSb0*istepr + rSb/stepr
+	      eta <- eta0*istepr + eta/stepr
+	      prop$beta <- b0*istepr + prop$beta/stepr
 	      kk <- kk + 1
             } else break
           } else break
@@ -2036,7 +2041,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
                 cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,coef=NULL,
-                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,in.out=NULL,...)
+                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,in.out=NULL,...) {
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
@@ -2046,7 +2051,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## If cluster is a parallel package cluster uses parallel QR build on cluster. 
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
-{ control <- do.call("gam.control",control)
+  control <- do.call("gam.control",control)
   if (control$trace) t3 <- t2 <- t1 <- t0 <- proc.time()
   if (length(nthreads)==1) nthreads <- rep(nthreads,2)
   if (is.null(G)) { ## need to set up model!

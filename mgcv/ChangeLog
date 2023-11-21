@@ -26,6 +26,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.9-1
 
+* Revised bam discrete code to allow indexing vectors to be long vectors, 
+  thereby allowing much larger datasets to be used. n limit is still 
+  .Machine$integer.max.
+
 * Revised C code underlying mvn family to allow larger problems, via use of 
   R long vectors. 
 

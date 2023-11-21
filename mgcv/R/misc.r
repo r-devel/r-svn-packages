@@ -247,12 +247,18 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   }
   ## block oriented code...
   if (is.null(lt)&&is.null(lt)) {
-    oo <- .C(C_XWXd0,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
-           k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
-           ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
-           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
-           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w))
-    XWX <- if (is.null(drop)) matrix(oo$XWX[1:pt^2],pt,pt) else matrix(oo$XWX[1:pt^2],pt,pt)[-drop,-drop]
+    #oo <- .C(C_XWXd0,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
+    #       k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
+    #       ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
+    #       v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
+    #       ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w))
+    #XWX <- if (is.null(drop)) matrix(oo$XWX[1:pt^2],pt,pt) else matrix(oo$XWX[1:pt^2],pt,pt)[-drop,-drop]
+    
+    XWX <- numeric(ptfull^2)
+    .Call(C_CXWXd0,XWX,as.double(unlist(X)),w,k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),as.integer(ts-1L), as.integer(dt),
+           as.double(unlist(v)),as.integer(qc),as.integer(nthreads),as.integer(ar.stop-1L),as.integer(ar.row-1L),as.double(ar.w))
+    XWX <- if (is.null(drop)) matrix(XWX[1:pt^2],pt,pt) else matrix(XWX[1:pt^2],pt,pt)[-drop,-drop]
+    
   } else {
     lpip <- attr(X,"lpip") ## list of coefs for each term
     rpi <- unlist(lpip[rt])
@@ -269,13 +275,18 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
       } else ncs <- length(rt)
     }  
     #t0 <- system.time(
-    oo <- .C(C_XWXd1,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
-           k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
-           ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
-           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
-           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),rs=as.integer(lt-1),
-	   cs=as.integer(rt-1),nrs=as.integer(nrs),ncs=as.integer(ncs))#)
-    XWX <- matrix(oo$XWX[1:(length(lpi)*length(rpi))],length(lpi),length(rpi))
+    #oo <- .C(C_XWXd1,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
+    #       k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
+    #       ns=as.integer(nx), ts=as.integer(ts-1), dt=as.integer(dt), nt=as.integer(nt),
+    #       v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
+    #       ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),rs=as.integer(lt-1),
+    #	   cs=as.integer(rt-1),nrs=as.integer(nrs),ncs=as.integer(ncs))#)	   
+    #XWX <- matrix(oo$XWX[1:(length(lpi)*length(rpi))],length(lpi),length(rpi))
+    XWX <- numeric(ptfull^2)
+    .Call(C_CXWXd1,XWX,as.double(unlist(X)),w,k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),as.integer(ts-1L), as.integer(dt),
+           as.double(unlist(v)),as.integer(qc),as.integer(nthreads),as.integer(ar.stop-1L),as.integer(ar.row-1L),as.double(ar.w),
+	   as.integer(lt-1L),as.integer(rt-1L))
+    XWX <- matrix(XWX[1:(length(lpi)*length(rpi))],length(lpi),length(rpi))	  
     if (!is.null(drop)) {
       ldrop <- which(lpi %in% drop)
       rdrop <- which(lpi %in% drop)
@@ -331,14 +342,20 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
     if (cy>1) XWy <- matrix(XWy,ncol=cy)
     if (!is.null(drop)) XWy <- if (cy>1) XWy[-drop,] else XWy[-drop]
   } else { ## dense marginals case  
-    oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
-           ks=as.integer(ks-1),
-           m=as.integer(m),p=as.integer(p),n=as.integer(n),cy=as.integer(cy), nx=as.integer(nx), ts=as.integer(ts-1), 
-           dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc),
-           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),
-	   cs=as.integer(lt-1),ncs=as.integer(length(lt)))
-    if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
-    XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop] 
+    #oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
+    #       ks=as.integer(ks-1),
+    #       m=as.integer(m),p=as.integer(p),n=as.integer(n),cy=as.integer(cy), nx=as.integer(nx), ts=as.integer(ts-1), 
+    #       dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc),
+    #       ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),
+    #	   cs=as.integer(lt-1),ncs=as.integer(length(lt)))
+    #if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
+    #XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop]
+    XWy <- numeric(pt*cy)
+    .Call(C_CXWyd,XWy,as.double(y),as.double(unlist(X)),as.double(w),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
+          as.integer(cy),as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(ar.stop-1L),
+	  as.integer(ar.row-1L),as.double(ar.w),as.integer(lt-1L))
+    if (cy>1) { XWy <- if (is.null(drop)) matrix(XWy,pt,cy) else matrix(XWy,pt,cy)[-drop,] } else {
+      XWy <- if (is.null(drop)) XWy else XWy[-drop]}	  
   }
   XWy
 } ## XWyd 
@@ -383,11 +400,15 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
     if (bc>1) Xb <- matrix(Xb,ncol=bc)
   } else { ## dense marginals case
   
-    oo <- .C(C_Xbd,f=as.double(rep(0,n*bc)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1),
-           ks = as.integer(ks-1), 
-           m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
-           as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(bc),as.integer(lt-1),as.integer(length(lt)))
-    Xb <- if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
+    #oo <- .C(C_Xbd,f=as.double(rep(0,n*bc)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1),
+    #       ks = as.integer(ks-1), 
+    #       m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
+    #       as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(bc),as.integer(lt-1),as.integer(length(lt)))
+    #Xb <- if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
+    f <- numeric(n*bc)
+    .Call(C_CXbd,f,beta,as.double(unlist(X)),k-1L, as.integer(ks-1L),as.integer(m),as.integer(p),
+          as.integer(ts-1L),as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(bc), as.integer(lt-1L))
+    Xb <- if (is.matrix(beta)) matrix(f,n,bc) else f	  
   }
   return(Xb)
 } ## Xbd

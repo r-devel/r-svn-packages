@@ -512,6 +512,33 @@ void Xbd0(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n
   }
 } /* Xb0 */
 
+
+SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
+	  SEXP tsr, SEXP dtr,SEXP vr,SEXP qcr,SEXP bcr,SEXP csr) {
+/* .Call wrapper for Xbd allowing R long vector storage for k. Note that 
+  this does not allow more than maxint data - that would require re-writting R code 
+  to avoid storing k in a matrix (which is only allowed maxint rows).
+
+  n is length of diag, nx is length of m or p, nt is the length of ts or dt, 
+  ncs is length of cs.
+*/
+  double *f,*X,*v,*ar_weights,*beta;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*bc;
+  n = nrows(kr); f = REAL(fr);
+  beta = REAL(betar);
+  X = REAL(Xr);
+  k = INTEGER(kr); ks = INTEGER(ksr);
+  m = INTEGER(mr); nx = length(mr);
+  p = INTEGER(pr);
+  ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
+  v = REAL(vr);qc = INTEGER(qcr);
+  bc = INTEGER(bcr);
+  cs = INTEGER(csr);ncs = length(csr);
+  Xbd(f,beta,X,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,bc,cs,&ncs);
+  return(R_NilValue);
+} /*  CXbd */
+
+
 void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n, 
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs) {
 /* Forms f = X beta for X stored in the packed form described in function XWX
@@ -803,6 +830,33 @@ void XWyd0(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int 
   FREE(Wy); FREE(Xy0); FREE(work); FREE(work1); 
   FREE(pt); FREE(off); FREE(voff); FREE(tps);
 } /* XWy0 */
+
+SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP cyr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,
+	    SEXP csr) {
+/* .Call wrapper for XWyd allowing R long vector storage for k. Note that 
+  this does not allow more than maxint data - that would require re-writting R code 
+  to avoid storing k in a matrix (which is only allowed maxint rows).
+
+  n is number of rows of k, nx is length of m or p, nt is the length of ts or dt, 
+  ncs and nrs are length of cs/rs.
+*/
+  double *XWy,*X,*v,*w,*ar_weights,*y;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop,*ar_row,*cy;
+  n = nrows(kr); XWy = REAL(XWyr);
+  X = REAL(Xr);w = REAL(wr);y = REAL(yr);
+  k = INTEGER(kr); ks = INTEGER(ksr);
+  m = INTEGER(mr); nx = length(mr);
+  p = INTEGER(pr);cy=INTEGER(cyr);
+  ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
+  ar_weights = REAL(ar_weightsr);
+  ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
+  v = REAL(vr);qc = INTEGER(qcr);
+  cs = INTEGER(csr);  ncs = length(csr);
+  XWyd(XWy,y,X,w,k,ks,m,p,&n,cy,&nx,ts,dt,&nt,v,qc,ar_stop,ar_row,ar_weights,cs,&ncs);
+  return(R_NilValue);
+} /*  CXWyd */
+
 
 
 void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *cy,
@@ -1222,8 +1276,8 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
     for (ii=0;ii<pim;ii++) for (jj=0;jj<pjm;jj++)  XWX[ii + (ptrdiff_t)nxwx * jj] = 0.0;   
     for (s=0;s<si;s++) for (t=0;t<sj;t++) {
-      Ki = k + (ks[im]+s) * n; /* index for i */
-      Kj = k + (ks[jm]+t) * n; /* index for j */
+      Ki = k +  (ptrdiff_t)(ks[im]+s) * n; /* index for i */
+      Kj = k +  (ptrdiff_t)(ks[jm]+t) * n; /* index for j */
       for (ii=0;ii<pim;ii++) {
         Xi = X + off[im] + mim * ii;
         if (i==j) for (jj=ii;jj<pjm;jj++) { /* symmetric case */
@@ -1291,7 +1345,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     /* Clear work space to zero... */
     for (ii=0;ii<mim;ii++) wb[ii]=0.0;
    
-    K = k + ks[im] * n; /* index for final margin */
+    K = k +  (ptrdiff_t)ks[im] * n; /* index for final margin */
     /* Accumulate the weights ... */
     if (dt[i]>1) {
       for (kk=0;kk<n;kk++) wb[K[kk]] += dXi[kk]*dXj[kk]*w[kk];
@@ -1362,8 +1416,8 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
         tensorXj(dXj, X + off[ts[j]], m + ts[j], p + ts[j],&ddtj, 
 		 k, &n, &c, ks + ts[j],&t);
       }
-      Ki = k + (ks[im]+s) * n; /* index for final margin of i */
-      Kj = k + (ks[jm]+t) * n; /* index for final margin of j */
+      Ki = k +  (ptrdiff_t)(ks[im]+s) * n; /* index for final margin of i */
+      Kj = k +  (ptrdiff_t)(ks[jm]+t) * n; /* index for final margin of j */
       if (acc_w) { /* weight accumulation */    
         if (tensi&&tensj) { /* i and j are tensors */
 	  if (tri) {
@@ -1555,6 +1609,30 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 } /* XWXijs */  
 
 
+SEXP CXWXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr) {
+/* .Call wrapper for XWXd0 allowing R long vector storage for k. Note that 
+  this does not allow more than maxint data - that would require re-writting R code 
+  to avoid storing k in a matrix (which is only allowed maxint rows).
+
+  n is number of rows of k, nx is length of m or p, nt is the length of ts or dt.
+*/
+  double *XWX,*X,*v,*w,*ar_weights;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,nx,nt,*ar_stop,*ar_row;
+  n = nrows(kr); XWX = REAL(XWXr);
+  X = REAL(Xr);w = REAL(wr);
+  k = INTEGER(kr); ks = INTEGER(ksr);
+  m = INTEGER(mr); nx = length(mr);
+  p = INTEGER(pr);
+  ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
+  ar_weights = REAL(ar_weightsr);
+  ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
+  v = REAL(vr);qc = INTEGER(qcr);
+  nthreads = INTEGER(nthreadsr);
+  XWXd0(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_row,ar_weights);
+  return(R_NilValue);
+} /*  CXWXd0 */
+
 void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
           int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
 /* This version is the original without allowing the selection of sub-blocks
@@ -1597,9 +1675,9 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
 
 */   
-  int *pt, *pd,i,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,
-    kk,kb,tid=0,nxwx=0,qi=0,*worki,one=1;
-  ptrdiff_t *off,*voff,mmp,q;
+  int *pt, *pd,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,
+    kk,kb,tid=0,nxwx=0,*worki,one=1;
+  ptrdiff_t *off,*voff,mmp,q,qi=0,i,j;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
   unsigned long long ht[256];
   SM **sm,*SMstack;
@@ -1634,7 +1712,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     }  
     tpsu[i+1] = tpsu[i] + pt[i]; /* where ith term starts in unconstrained param vector */ 
   }
-  qi = 6 * *n; /* integer work space */
+  qi = (ptrdiff_t) 6 * *n; /* integer work space */
   // maxm and maxmp only used here...
   //q = 6 * *n + maxm + maxm * maxmp; /* note that we never allocate a W accumulation matrix with more than n elements */
 
@@ -1786,13 +1864,12 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   this does not allow more than maxint data - that would require re-writting R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
 
-  n is length of diag, nx is length of m or p, nt is the length of ts or dt, 
+  n is number of rows of k, nx is length of m or p, nt is the length of ts or dt, 
   ncs and nrs are length of cs/rs.
 */
   double *XWX,*X,*v,*w,*ar_weights;
   int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop,*ar_row;
   n = nrows(kr); XWX = REAL(XWXr);
-  X = REAL(Xr);
   X = REAL(Xr);w = REAL(wr);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
@@ -1807,7 +1884,7 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   XWXd1(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_row,ar_weights,
 	rs,cs,&nrs,&ncs);
   return(R_NilValue);
-} /*  CdiagXVXt */
+} /*  CXWXd1 */
 
 
 
@@ -1861,8 +1938,8 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 
 */   
   int *pt, *pd,ri,ci,si,maxp=0,nxwx=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
-    *b,*B,*C,*R,*sb,N,kk,kb,tid=0,qi=0,*worki,symmetric=1,one=1;
-  ptrdiff_t *off,*voff,mmp,q,i,j;
+    *b,*B,*C,*R,*sb,N,kk,kb,tid=0,*worki,symmetric=1,one=1;
+  ptrdiff_t *off,*voff,mmp,q,i,j,qi=0;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
   unsigned long long ht[256];
   SM **sm,*SMstack;
@@ -1935,7 +2012,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   //Rprintf("\n tpsc:");for (i=0;i<*nt;i++) Rprintf(" %d",tpsc[i]);
   //Rprintf("\n tpsr:");for (i=0;i<*nt;i++) Rprintf(" %d",tpsr[i]);
   
-  qi = 6 * *n; /* integer work space */
+  qi = (ptrdiff_t) 6 * *n; /* integer work space */
   // maxm and maxmp only used here...
   //q = 6 * *n + maxm + maxm * maxmp; /* note that we never allocate a W accumulation matrix with more than n elements */
   //work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double));
