@@ -522,8 +522,8 @@ SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
   n is length of diag, nx is length of m or p, nt is the length of ts or dt, 
   ncs is length of cs.
 */
-  double *f,*X,*v,*ar_weights,*beta;
-  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*bc;
+  double *f,*X,*v,*beta;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*bc;
   n = nrows(kr); f = REAL(fr);
   beta = REAL(betar);
   X = REAL(Xr);
@@ -916,7 +916,7 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
     if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
       rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&zero,work);
       rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&one,work); /* transpose of transform applied */
-      for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
+      for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* square weights again */
     }
     /* now loop through terms applying the components of X'...*/
     for (kk=0;kk<*ncs;kk++) {
@@ -1610,7 +1610,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 
 
 SEXP CXWXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
-	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr) {
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr) {
 /* .Call wrapper for XWXd0 allowing R long vector storage for k. Note that 
   this does not allow more than maxint data - that would require re-writting R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
@@ -1618,23 +1618,23 @@ SEXP CXWXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   n is number of rows of k, nx is length of m or p, nt is the length of ts or dt.
 */
   double *XWX,*X,*v,*w,*ar_weights;
-  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,nx,nt,*ar_stop,*ar_row;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,nx,nt,*ar_stop;
   n = nrows(kr); XWX = REAL(XWXr);
   X = REAL(Xr);w = REAL(wr);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
   p = INTEGER(pr);
-  ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
+  ar_stop = INTEGER(ar_stopr); 
   ar_weights = REAL(ar_weightsr);
   ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
   v = REAL(vr);qc = INTEGER(qcr);
   nthreads = INTEGER(nthreadsr);
-  XWXd0(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_row,ar_weights);
+  XWXd0(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_weights);
   return(R_NilValue);
 } /*  CXWXd0 */
 
 void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
-          int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
+          int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,double *ar_weights) {
 /* This version is the original without allowing the selection of sub-blocks
 
    essentially a driver routine for XWXij implementing block oriented cross products
@@ -1647,7 +1647,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 
 
    Forms Xt'WXt when Xt is divided into blocks of columns, each stored in compact form
-   using arguments X and k. 
+   using arguments X and k.  
    * 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix containing the unique rows of 
      the ith marginal model matrix. 
    * There are 'nt' model terms. Each term is made up of one or more maginal model matrices.
@@ -1721,9 +1721,11 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   ptot = tps[*nt]; /* total number of parameters */
   nxwx = tpsu[*nt];
   if (*ar_stop>=0) { /* model has AR component*/
-    for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0); /* sqrt weights */
     /* ar_weights[0,2,4,6,...,2*n-2] is the ld of the square root of the tri-diagonal AR weight matrix
-       ar_weights[1,3,5,...,2*n-1] is the sub-diagonal. */ 
+       ar_weights[1,3,5,...,2*n-1] is the sub-diagonal. */
+    ws = w; /* input weights (pointer) */
+    w = (double *)CALLOC((size_t) *n,sizeof(double)); /* need to avoid over-writing weights - so re-allocate */
+    for (p0 = w,p1 = w + *n;p0<p1;p0++,ws++) *p0 = sqrt(*ws); /* sqrt weights */
     ws = (double *)CALLOC((size_t) 2 * *n -2,sizeof(double)); /* super and sub diagonals */
     for (i=0;i<*n-1;i++) ws[i+*n-1] = ws[i] = ar_weights[2*i+1] * ar_weights[2*i+2] * w[i+1] * w[i];
     for (i=0;i<*n-1;i++) w[i] *= (ar_weights[2*i+1]*ar_weights[2*i+1]+ar_weights[2*i]*ar_weights[2*i])*w[i]; 
@@ -1852,13 +1854,13 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   if (ptot<nxwx) row_squash(XWX,ptot,nxwx,ptot); /* drop the now redundant trailing rows */
   up2lo(XWX,ptot); /* copy upper triangle to lower */
   
-  FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(tpsu);FREE(work); if (tri) FREE(ws);//FREE(xwx);FREE(xwx0);
+  FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(tpsu);FREE(work); if (tri) {FREE(ws);free(w);}//FREE(xwx);FREE(xwx0);
   FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);FREE(worki);
 } /* XWXd0 */ 
 
 
 SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
-	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr,
 	    SEXP csr, SEXP rsr) {
 /* .Call wrapper for XWXd1 allowing R long vector storage for k. Note that 
   this does not allow more than maxint data - that would require re-writting R code 
@@ -1868,20 +1870,20 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   ncs and nrs are length of cs/rs.
 */
   double *XWX,*X,*v,*w,*ar_weights;
-  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop,*ar_row;
+  int n,*k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop;
   n = nrows(kr); XWX = REAL(XWXr);
   X = REAL(Xr);w = REAL(wr);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
   p = INTEGER(pr);
-  ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
+  ar_stop = INTEGER(ar_stopr);
   ar_weights = REAL(ar_weightsr);
   ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
   v = REAL(vr);qc = INTEGER(qcr);
   nthreads = INTEGER(nthreadsr);
   cs = INTEGER(csr); rs = INTEGER(rsr);
   nrs = length(rsr); ncs = length(csr);
-  XWXd1(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_row,ar_weights,
+  XWXd1(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_weights,
 	rs,cs,&nrs,&ncs);
   return(R_NilValue);
 } /*  CXWXd1 */
@@ -1889,7 +1891,7 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
 
 
 void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
-	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights,
+	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,double *ar_weights,
 	   int *rs, int *cs, int *nrs, int *ncs) {
 /* essentially a driver routine for XWXij implementing block oriented cross products
 
@@ -2020,9 +2022,11 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   mmp = maxp;mmp = mmp*mmp;
  
   if (*ar_stop>=0) { /* model has AR component*/
-    for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0); /* sqrt weights */
     /* ar_weights[0,2,4,6,...,2*n-2] is the ld of the square root of the tri-diagonal AR weight matrix
-       ar_weights[1,3,5,...,2*n-1] is the sub-diagonal. */ 
+       ar_weights[1,3,5,...,2*n-1] is the sub-diagonal. */
+    ws = w; /* input weights (pointer) */
+    w = (double *)CALLOC((size_t) *n,sizeof(double)); /* need to avoid over-writing weights - so re-allocate */
+    for (p0 = w,p1 = w + *n;p0<p1;p0++,ws++) *p0 = sqrt(*ws); /* sqrt weights */
     ws = (double *)CALLOC((size_t) 2 * *n -2,sizeof(double)); /* super and sub diagonals */
     for (i=0;i<*n-1;i++) ws[i+*n-1] = ws[i] = ar_weights[2*i+1] * ar_weights[2*i+2] * w[i+1] * w[i];
     for (i=0;i<*n-1;i++) w[i] *= (ar_weights[2*i+1]*ar_weights[2*i+1]+ar_weights[2*i]*ar_weights[2*i])*w[i]; 
@@ -2159,7 +2163,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   if (symmetric) up2lo(XWX,ptot); /* copy upper triangle to lower */
   
   FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tpsr);FREE(tpsur);FREE(tpsc);FREE(tpsuc);
-  FREE(work); if (tri) FREE(ws);//FREE(xwx);FREE(xwx0);
+  FREE(work); if (tri) {FREE(ws);FREE(w);}//FREE(xwx);FREE(xwx0);
   FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);FREE(worki);
 } /* XWXd1 */ 
 
