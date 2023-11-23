@@ -100,11 +100,11 @@ The routine is written for relatively expert users.
   X1[,1:20] <- 0
   A <- rbind(X0,X1) ## A maps coefs to required function values
 
-  ## call ginla. Set int to 1 for integrated version.
+  ## call ginla. Set integ to 1 for integrated version.
   ## Set interactive = 1 or 2 to plot marginal posterior distributions
   ## (red) and simple Gaussian approximation (black).
  
-  inla <- ginla(G,A,int=0)
+  inla <- ginla(G,A,integ=0)
 
   par(mfrow=c(1,2),mar=c(5,5,1,1))
   fv <- predict(b,se=TRUE) ## usual Gaussian approximation, for comparison
