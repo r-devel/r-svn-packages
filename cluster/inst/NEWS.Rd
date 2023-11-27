@@ -6,7 +6,7 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.5 (2023-11-27, svn r8276)}{
+\section{Changes in version 2.1.5 (2023-11-27, svn r8301)}{
   \subsection{New Features}{
     \itemize{
       \item \code{pam()} and \code{clara()} also accept a

@@ -490,6 +490,9 @@ Available components:
  [1] "membership"  "coeff"       "memb.exp"    "clustering"  "k.crisp"    
  [6] "objective"   "convergence" "diss"        "call"        "silinfo"    
 [11] "data"       
+> ## for subsetting, when compairing:
+> not.conv <- setdiff(names(fannyx),               c("convergence", "call"))
+> notMconv <- setdiff(names(fannyx), c("membership", "convergence", "call"))
 > 
 > data(ruspini) # < to run under R 1.9.1
 > summary(fanny(ruspini, 3), digits = 9)
@@ -1065,7 +1068,7 @@ Time elapsed:  0.042 0.008 0.052 0 0
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are "completely fuzzy" -- and now give a warnings
-> f4.20 <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
+> f4.20  <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 8277.57
 Converged after 44 iterations,  obj =             2665.982
@@ -1085,11 +1088,12 @@ In fanny(chorSub, k = 4, memb.exp = 1.8) :
 Warning message:
 In fanny(chorSub, k = 4, memb.exp = 1.8, iniMem.p = f4.20$membership) :
   the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
-> stopifnot(all.equal(f4.18[-c(7,9)], f4.18.[-c(7,9)], tol = 5e-7))
+> stopifnot(all.equal(f4.18[not.conv], f4.18.[not.conv], tol = 5e-7))
 > 
 > f4.16  <- fanny(chorSub, k = 4, memb.exp = 1.6) # now gives 4 crisp clusters
+> ## IGNORE_RDIFF_BEGIN
 > f4.16. <- fanny(chorSub, k = 4, memb.exp = 1.6,
-+                 iniMem.p = f4.18$membership, trace.lev = 2)# "converges" immediately - WRONGLY!
++                 iniMem.p = f4.18$membership, trace.lev = 2)# "converged" immediately - wrongly; no longer!
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 4641.75
 	    ef[]= ( 15405.8, 15405.8, 15405.8, 15405.8)
@@ -1482,9 +1486,8 @@ fuzzy(): initial obj = 4641.75
 Converged after 385 iterations,  obj = 4632.8906015599995953
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 4
-> f4.16.2 <- fanny(chorSub, k = 4, memb.exp = 1.6,
-+                  iniMem.p = cluster:::as.membership(p4cl),
-+                  tol = 1e-10, trace.lev = 2)## looks much better:
+> f4.16.2<- fanny(chorSub, k = 4, memb.exp = 1.6,
++                 iniMem.p = cluster:::as.membership(p4cl), tol = 1e-10, trace.lev = 2)
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 7365.64
 	    ef[]= ( 46750.7, 97854, 64737.8, 24170.1)
@@ -1608,10 +1611,18 @@ fuzzy(): initial obj = 7365.64
 Converged after 116 iterations,  obj = 4632.8906058179836691
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 4
-> stopifnot(f4.16$clustering == f4.16.2$clustering,
-+           all.equal(f4.16[-c(1,7,9)], f4.16.2[-c(1,7,9)], tol = 1e-7),
-+           all.equal(f4.16$membership, f4.16.2$membership, tol = 0.001))
-> ## the memberships are quite close but have only converged to precision 0.000228
+> all.equal((m1 <- f4.16  $membership),
++           (m2 <- f4.16.2$membership))
+[1] "Mean relative difference: 0.0002281145"
+> ## IGNORE_RDIFF_END
+> stopifnot(identical(dimnames(m1), dimnames(m2)),
++           0 < m1,m1 < 1,  0 < m2,m2 < 1,
++           ## the memberships are quite close but have only converged to precision 0.000228
++           all.equal(m1, m2, tol = 0.001))
+> stopifnot(exprs = {
++     f4.16$clustering == f4.16.2$clustering
++     all.equal(f4.16[notMconv],  f4.16.2[notMconv],  tol = 1e-7)
++ })
 > 
 > f4.14 <- fanny(chorSub, k = 4,                memb.exp = 1.4)
 > f4.12 <- fanny(chorSub, k = 4,                memb.exp = 1.2)
@@ -1623,7 +1634,7 @@ fanny()'s caddy(*, k = 4):
   2  1 14  0  2
   3  0  0 12  5
   4  0  0  0  5
-> table(f4.16$clustering, f4.14$clustering)# dito
+> table(f4.16$clustering, f4.14$clustering)# ditto
    
      1  2  3  4
   1  2  0  1  5
