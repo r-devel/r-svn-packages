@@ -311,9 +311,8 @@ void cl_clara(int *n,  /* = number of objects */
     dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd,
 	   has_NA, &dyst_toomany_NA);
     if(dyst_toomany_NA) {
-	error(_(
-	  "clara()'s C level dysta2(nsam=%d, p=%d, nbest=%d, n=%d) gave 'toomany_NA'"),
-	      *nsam, *jpp, nbest, *n );
+	error(_("clara()'s C level dysta2(nsam=%d, p=%d, n=%d) gave 'toomany_NA'"),
+	      *nsam, *jpp, *n);
     }
     if(*trace_lev) Rprintf(" resul(), ");
     resul(*kk, *n, *jpp, *diss_kind, has_NA, jtmd, valmd, x, nrx, mtt, *correct_d);
