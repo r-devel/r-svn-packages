@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foreign 0.8-60\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-12 09:19+0000\n"
+"POT-Creation-Date: 2023-11-28 20:09+0000\n"
 "PO-Revision-Date: 2014-03-24 17:30+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -18,14 +18,14 @@ msgstr ""
 # foreign/src/R_systat.c: 132
 # sprintf(msg, _("not a rectangular data file (%s mtype is %d)"),
 # 		CHAR(STRING_ELT(file, 0)), getmtype(use))
-#: R_systat.c:131
+#: R_systat.c:132
 #, c-format
 msgid "not a rectangular data file (%s mtype is %d)"
 msgstr "nieprostokątny plik z danymi (mtype %s wynosi %d)"
 
 # foreign/src/R_systat.c: 138
 # error(_("mismatch in numbers of variables"))
-#: R_systat.c:137
+#: R_systat.c:138
 msgid "mismatch in numbers of variables"
 msgstr "niezgodność w liczbie zmiennych"
 
@@ -43,21 +43,21 @@ msgstr "niezgodność w liczbie zmiennych"
 # error(_("file access error"))
 # foreign/src/R_systat.c: 738
 # error(_("file access error"))
-#: R_systat.c:173 R_systat.c:684 R_systat.c:689 R_systat.c:695 R_systat.c:698
-#: R_systat.c:717 R_systat.c:737
+#: R_systat.c:174 R_systat.c:687 R_systat.c:692 R_systat.c:698 R_systat.c:701
+#: R_systat.c:720 R_systat.c:740
 msgid "file access error"
 msgstr "błąd dostępu do pliku"
 
 # foreign/src/R_systat.c: 237
 # error(_("cannot open file '%s'"), fname)
-#: R_systat.c:236
+#: R_systat.c:237
 #, c-format
 msgid "cannot open file '%s'"
 msgstr "nie można otworzyć pliku '%s'"
 
 # foreign/src/R_systat.c: 257
 # error(_("getuse: Failure in variable unpacking"))
-#: R_systat.c:256
+#: R_systat.c:257
 msgid "getuse: Failure in variable unpacking"
 msgstr "getuse: Niepowodzenie podczas rozpakowywania zmiennej"
 
@@ -73,33 +73,33 @@ msgstr "getuse: Niepowodzenie podczas rozpakowywania zmiennej"
 # error(_("getuse: File access error"))
 # foreign/src/R_systat.c: 339
 # error(_("getuse: File access error"))
-#: R_systat.c:258 R_systat.c:270 R_systat.c:273 R_systat.c:323 R_systat.c:329
-#: R_systat.c:338
+#: R_systat.c:259 R_systat.c:271 R_systat.c:274 R_systat.c:324 R_systat.c:330
+#: R_systat.c:339
 msgid "getuse: File access error"
 msgstr "getuse: Błąd dostępu do pliku"
 
 # foreign/src/R_systat.c: 320
 # sprintf(tmp, _("getuse: byte counter %o octal"), k)
-#: R_systat.c:319
+#: R_systat.c:320
 #, c-format
 msgid "getuse: byte counter %o octal"
 msgstr "getuse: licznik bajtów %o ósemkowo"
 
 # foreign/src/R_systat.c: 341
 # error(_("getuse: terminal null block"))
-#: R_systat.c:340
+#: R_systat.c:341
 msgid "getuse: terminal null block"
 msgstr "getuse: końcowy pusty blok"
 
 # foreign/src/R_systat.c: 353
 # error(_("getuse: non-integer number of observations"))
-#: R_systat.c:352
+#: R_systat.c:353
 msgid "getuse: non-integer number of observations"
 msgstr "getuse: niecałkowita liczba obserwacji"
 
 # foreign/src/R_systat.c: 414
 #  _("getlab: File format unknown")
-#: R_systat.c:413
+#: R_systat.c:414
 msgid "getlab: File format unknown"
 msgstr "getlab: Nieznany format pliku"
 
@@ -119,98 +119,98 @@ msgstr "getlab: Nieznany format pliku"
 # error(_("getlab: File access error"))
 # foreign/src/R_systat.c: 510
 # error(_("getlab: File access error"))
-#: R_systat.c:417 R_systat.c:431 R_systat.c:433 R_systat.c:435 R_systat.c:482
-#: R_systat.c:484 R_systat.c:486 R_systat.c:509
+#: R_systat.c:418 R_systat.c:432 R_systat.c:434 R_systat.c:436 R_systat.c:483
+#: R_systat.c:485 R_systat.c:487 R_systat.c:510
 msgid "getlab: File access error"
 msgstr "getlab: Błąd dostępu do pliku"
 
 # foreign/src/R_systat.c: 422
 # sprintf(tmp1, _("getlab: byte 0 = %o octal"), o)
-#: R_systat.c:421
+#: R_systat.c:422
 #, c-format
 msgid "getlab: byte 0 = %o octal"
 msgstr "getlab: bajt 0 = %o ósemkowo"
 
 # foreign/src/R_systat.c: 426
 # sprintf(tmp1, _("getlab: byte 1 = %o octal"), o)
-#: R_systat.c:425
+#: R_systat.c:426
 #, c-format
 msgid "getlab: byte 1 = %o octal"
 msgstr "getlab: bajt 1 = %o ósemkowo"
 
 # foreign/src/R_systat.c: 438
 # sprintf(tmp1, _("getlab: byte 9 = %o octal"), o)
-#: R_systat.c:437
+#: R_systat.c:438
 #, c-format
 msgid "getlab: byte 9 = %o octal"
 msgstr "getlab: bajt 9 = %o ósemkowo"
 
 # foreign/src/R_systat.c: 449
 # sprintf(tmp1, _("getlab: comment begin byte = %o"), o)
-#: R_systat.c:448
+#: R_systat.c:449
 #, c-format
 msgid "getlab: comment begin byte = %o"
 msgstr "getlab: bajt rozpoczęcia komentarza = %o"
 
 # foreign/src/R_systat.c: 455
 # sprintf(tmp1, _("getlab: comment = %c"), o)
-#: R_systat.c:454
+#: R_systat.c:455
 #, c-format
 msgid "getlab: comment = %c"
 msgstr "getlab: komentarz = %c"
 
 # foreign/src/R_systat.c: 460
 # sprintf(tmp1, _("getlab: comment end byte = %o"), o)
-#: R_systat.c:459
+#: R_systat.c:460
 #, c-format
 msgid "getlab: comment end byte = %o"
 msgstr "getlab: bajt końca komentarza = %o"
 
 # foreign/src/R_systat.c: 478
 # sprintf(tmp1, _("getlab: byte nv0 = %o octal"), o)
-#: R_systat.c:477
+#: R_systat.c:478
 #, c-format
 msgid "getlab: byte nv0 = %o octal"
 msgstr "getlab: bajt nv0 = %o ósemkowo"
 
 # foreign/src/R_systat.c: 489
 # sprintf(tmp1, _("getlab: byte nv$ = %o octal"), o)
-#: R_systat.c:488
+#: R_systat.c:489
 #, c-format
 msgid "getlab: byte nv$ = %o octal"
 msgstr "getlab: bajt nv$ = %o ósemkowo"
 
 # foreign/src/R_systat.c: 497
 # error(_("file has more variables than this function can read"))
-#: R_systat.c:496
+#: R_systat.c:497
 msgid "file has more variables than this function can read"
 msgstr "plik ma więcej zmiennych niż ta funkcja może przeczytać"
 
 # foreign/src/R_systat.c: 504
 # sprintf(tmp1, _("getlab: byte lab[%d]0 = %o, nv=%d"),
 # 		    j, o, u->h.nv)
-#: R_systat.c:503
+#: R_systat.c:504
 #, c-format
 msgid "getlab: byte lab[%d]0 = %o, nv=%d"
 msgstr "getlab: bajt lab[%d]0 = %o, nv=%d"
 
 # foreign/src/R_systat.c: 517
 # sprintf(mes, _("$ not in variable label column 9: %s"), label)
-#: R_systat.c:516
+#: R_systat.c:518
 #, c-format
 msgid "$ not in variable label column 9: %s"
 msgstr "$ nie jest w kolumnie 9 etykiety zmiennej: %s"
 
 # foreign/src/R_systat.c: 537
 # sprintf(tmp1, _("getlab: byte lab[%d]$ = %o octal"), j, o)
-#: R_systat.c:536
+#: R_systat.c:539
 #, c-format
 msgid "getlab: byte lab[%d]$ = %o octal"
 msgstr "getlab: bajt lab[%d]$ = %o ósemkowo"
 
 # foreign/src/R_systat.c: 715
 # error(_("string variable"))
-#: R_systat.c:714
+#: R_systat.c:717
 msgid "string variable"
 msgstr "zmienna tekstowa"
 
@@ -589,8 +589,8 @@ msgstr "Nierozpoznany kod wersji %d"
 # foreign/src/pfm-read.c: 552
 # (_("Bad date string length %d"), strlen (date))
 #: pfm-read.c:552
-#, c-format
-msgid "Bad date string length %d"
+#, fuzzy, c-format
+msgid "Bad date string length %lu"
 msgstr "Niepoprawna długość %d łańcucha daty "
 
 # foreign/src/pfm-read.c: 559
@@ -602,8 +602,8 @@ msgstr "Niepoprawny znak w dacie"
 # foreign/src/pfm-read.c: 579
 # (_("Bad time string length %d"), strlen (time))
 #: pfm-read.c:579
-#, c-format
-msgid "Bad time string length %d"
+#, fuzzy, c-format
+msgid "Bad time string length %lu"
 msgstr "Niepoprawna długość %d łańcucha czasu"
 
 # foreign/src/pfm-read.c: 586
@@ -670,8 +670,8 @@ msgstr "Niepoprawna szerokość %d zmiennej"
 # (_("position %d: Variable name has %u characters"),
 # 	       i, strlen ((char *) name))
 #: pfm-read.c:754
-#, c-format
-msgid "position %d: Variable name has %u characters"
+#, fuzzy, c-format
+msgid "position %d: Variable name has %lu characters"
 msgstr "pozycja %d: Nazwa zmiennej ma %u znaków"
 
 # foreign/src/pfm-read.c: 767
@@ -876,10 +876,10 @@ msgstr "błąd podczas odczytywania nagłówka pliku systemowego"
 # (_("%s: Bad size (%d) or count (%d) field on record type 7, subtype 3. Expected size %d, count 8"),
 # 	h->fn, size, count, sizeof (R_int32))
 #: sfm-read.c:554
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: Bad size (%d) or count (%d) field on record type 7, subtype 3.\tExpected "
-"size %d, count 8"
+"%s: Bad size (%d or count (%u) field on record type 7, subtype 3.\tExpected "
+"size %ld, count 8"
 msgstr ""
 "%s: Niepoprawne pole rozmiaru (%d) lub zliczenia (%d) na rekordzie tpyu 7, "
 "podtyp 3.\tOczekiwano rozmiaru %d oraz 8 zliczeń"
@@ -930,10 +930,10 @@ msgstr "%s: Wskazany przez plik kod reprezentacji znaków (%d) jest nieznany"
 # (_("%s: Bad size (%d) or count (%d) field on record type 7, subtype 4. Expected size %d, count 8"),
 # 	   h->fn, size, count, sizeof (R_flt64))
 #: sfm-read.c:621
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: Bad size (%d) or count (%d) field on record type 7, subtype 4.\tExpected "
-"size %d, count 8"
+"%s: Bad size (%d) or count (%u) field on record type 7, subtype 4.\tExpected "
+"size %lu, count 8"
 msgstr ""
 "%s: Niepoprawne pole rozmiaru (%d) lub zliczenia (%d) na rekordzie tpyu 7, "
 "podtyp 4.\tOczekiwano rozmiaru %d oraz 8 zliczeń"
@@ -982,8 +982,8 @@ msgstr ""
 # (_("%s: Number of elements per case (%d) is not between 1 and %d"),
 # 	   h->fn, hdr.case_size, INT_MAX / sizeof (union value) / 2)
 #: sfm-read.c:802
-#, c-format
-msgid "%s: Number of elements per case (%d) is not between 1 and %d"
+#, fuzzy, c-format
+msgid "%s: Number of elements per case (%d) is not between 1 and %ld"
 msgstr "%s: Liczba elementów na przypadek (%d) nie jest pomiędzy 1 a %d"
 
 # foreign/src/sfm-read.c: 754

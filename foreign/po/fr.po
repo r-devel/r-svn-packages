@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: foreign 0.8-10\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-12 09:19+0000\n"
+"POT-Creation-Date: 2023-11-28 20:09+0000\n"
 "PO-Revision-Date: 2021-02-06 16:20+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -18,117 +18,117 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Poedit 2.4.2\n"
 
-#: R_systat.c:131
+#: R_systat.c:132
 #, c-format
 msgid "not a rectangular data file (%s mtype is %d)"
 msgstr "ceci n'est pas un fichier de données rectangulaire (%s mtype is %d)"
 
-#: R_systat.c:137
+#: R_systat.c:138
 msgid "mismatch in numbers of variables"
 msgstr "erreur dans le nombre de variables"
 
-#: R_systat.c:173 R_systat.c:684 R_systat.c:689 R_systat.c:695 R_systat.c:698
-#: R_systat.c:717 R_systat.c:737
+#: R_systat.c:174 R_systat.c:687 R_systat.c:692 R_systat.c:698 R_systat.c:701
+#: R_systat.c:720 R_systat.c:740
 msgid "file access error"
 msgstr "erreur d'accès fichier"
 
-#: R_systat.c:236
+#: R_systat.c:237
 #, c-format
 msgid "cannot open file '%s'"
 msgstr "impossible d'ouvrir le fichier '%s'"
 
-#: R_systat.c:256
+#: R_systat.c:257
 msgid "getuse: Failure in variable unpacking"
 msgstr "getuse : erreur lors de la décompaction de la variable"
 
-#: R_systat.c:258 R_systat.c:270 R_systat.c:273 R_systat.c:323 R_systat.c:329
-#: R_systat.c:338
+#: R_systat.c:259 R_systat.c:271 R_systat.c:274 R_systat.c:324 R_systat.c:330
+#: R_systat.c:339
 msgid "getuse: File access error"
 msgstr "getuse : erreur d'accès fichier"
 
-#: R_systat.c:319
+#: R_systat.c:320
 #, c-format
 msgid "getuse: byte counter %o octal"
 msgstr "getuse : décompteur d'octets %o octal"
 
-#: R_systat.c:340
+#: R_systat.c:341
 msgid "getuse: terminal null block"
 msgstr "getuse : bloc nul terminal"
 
-#: R_systat.c:352
+#: R_systat.c:353
 msgid "getuse: non-integer number of observations"
 msgstr "getuse : nombre non entier d'observations"
 
-#: R_systat.c:413
+#: R_systat.c:414
 msgid "getlab: File format unknown"
 msgstr "getlab : format de fichier inconnu"
 
-#: R_systat.c:417 R_systat.c:431 R_systat.c:433 R_systat.c:435 R_systat.c:482
-#: R_systat.c:484 R_systat.c:486 R_systat.c:509
+#: R_systat.c:418 R_systat.c:432 R_systat.c:434 R_systat.c:436 R_systat.c:483
+#: R_systat.c:485 R_systat.c:487 R_systat.c:510
 msgid "getlab: File access error"
 msgstr "getlab : erreur d'accès fichier"
 
-#: R_systat.c:421
+#: R_systat.c:422
 #, c-format
 msgid "getlab: byte 0 = %o octal"
 msgstr "getlab : octet 0 = %o octal"
 
-#: R_systat.c:425
+#: R_systat.c:426
 #, c-format
 msgid "getlab: byte 1 = %o octal"
 msgstr "getlab : octet 1 = %o octal"
 
-#: R_systat.c:437
+#: R_systat.c:438
 #, c-format
 msgid "getlab: byte 9 = %o octal"
 msgstr "getlab : octet 9 = %o octal"
 
-#: R_systat.c:448
+#: R_systat.c:449
 #, c-format
 msgid "getlab: comment begin byte = %o"
 msgstr "getlab : octet de début de commentaire = %o"
 
-#: R_systat.c:454
+#: R_systat.c:455
 #, c-format
 msgid "getlab: comment = %c"
 msgstr "getlab : commentaire = %c"
 
-#: R_systat.c:459
+#: R_systat.c:460
 #, c-format
 msgid "getlab: comment end byte = %o"
 msgstr "getlab : octet de fin de commentaire = %o"
 
-#: R_systat.c:477
+#: R_systat.c:478
 #, c-format
 msgid "getlab: byte nv0 = %o octal"
 msgstr "getlab : octet nv0 = %o octal"
 
-#: R_systat.c:488
+#: R_systat.c:489
 #, c-format
 msgid "getlab: byte nv$ = %o octal"
 msgstr "getlab : octet nv$ = %o octal"
 
-#: R_systat.c:496
+#: R_systat.c:497
 msgid "file has more variables than this function can read"
 msgstr ""
 "le fichier possède plus de variables que cette fonction ne peut en lire"
 
-#: R_systat.c:503
+#: R_systat.c:504
 #, c-format
 msgid "getlab: byte lab[%d]0 = %o, nv=%d"
 msgstr "getlab : octet lab[%d]0 = %o ; nv = %d"
 
-#: R_systat.c:516
+#: R_systat.c:518
 #, c-format
 msgid "$ not in variable label column 9: %s"
 msgstr "$ n'est pas dans l'étiquette de variable à la colonne 9 : %s"
 
-#: R_systat.c:536
+#: R_systat.c:539
 #, c-format
 msgid "getlab: byte lab[%d]$ = %o octal"
 msgstr "getlab : octet lab[%d]$ = %o octal"
 
-#: R_systat.c:714
+#: R_systat.c:717
 msgid "string variable"
 msgstr "variable chaîne de caractères"
 
@@ -360,8 +360,8 @@ msgid "Unrecognized version code %d"
 msgstr "Code de version inconnu %d"
 
 #: pfm-read.c:552
-#, c-format
-msgid "Bad date string length %d"
+#, fuzzy, c-format
+msgid "Bad date string length %lu"
 msgstr "Mauvaise longueur de chaîne de date %d"
 
 #: pfm-read.c:559
@@ -369,8 +369,8 @@ msgid "Bad character in date"
 msgstr "Mauvais caractère dans une date"
 
 #: pfm-read.c:579
-#, c-format
-msgid "Bad time string length %d"
+#, fuzzy, c-format
+msgid "Bad time string length %lu"
 msgstr "Mauvaise longueur de chaîne de temps %d"
 
 #: pfm-read.c:586
@@ -411,8 +411,8 @@ msgid "Invalid variable width %d"
 msgstr "Largeur de variable %d incorrecte"
 
 #: pfm-read.c:754
-#, c-format
-msgid "position %d: Variable name has %u characters"
+#, fuzzy, c-format
+msgid "position %d: Variable name has %lu characters"
 msgstr "position %d : le nom de la variable a %u caractères"
 
 #: pfm-read.c:758
@@ -574,10 +574,10 @@ msgid "error reading system-file header"
 msgstr "erreur à la lecture de l'entête du fichier système"
 
 #: sfm-read.c:554
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: Bad size (%d) or count (%d) field on record type 7, subtype 3.\tExpected "
-"size %d, count 8"
+"%s: Bad size (%d or count (%u) field on record type 7, subtype 3.\tExpected "
+"size %ld, count 8"
 msgstr ""
 "%s : mauvaise taille (%d) ou dénombrement (%d) de champs dans les "
 "enregistrement de type 7, sous-type 3.\tUne taille %d et un dénombrement de "
@@ -617,10 +617,10 @@ msgstr ""
 "est inconnu"
 
 #: sfm-read.c:621
-#, c-format
+#, fuzzy, c-format
 msgid ""
-"%s: Bad size (%d) or count (%d) field on record type 7, subtype 4.\tExpected "
-"size %d, count 8"
+"%s: Bad size (%d) or count (%u) field on record type 7, subtype 4.\tExpected "
+"size %lu, count 8"
 msgstr ""
 "%s : mauvaise taille (%d) ou dénombrement (%d) de champ d'enregistrement de "
 "type 7, sous-type 4.\tUne taille %d et un dénombrement de 8 étaient attendus"
@@ -655,8 +655,8 @@ msgstr ""
 "2 ou 3, en format 'big endian' ou 'little endian'"
 
 #: sfm-read.c:802
-#, c-format
-msgid "%s: Number of elements per case (%d) is not between 1 and %d"
+#, fuzzy, c-format
+msgid "%s: Number of elements per case (%d) is not between 1 and %ld"
 msgstr "%s : le nombre d'éléments par cas (%d) n'est pas compris entre 1 et %d"
 
 #: sfm-read.c:809
