@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 4.0.0 / nlme-3.1-145\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2021-02-12 09:19\n"
+"POT-Creation-Date: 2023-11-28 20:13\n"
 "PO-Revision-Date: 2020-04-01 15:18+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -233,6 +233,9 @@ msgstr "Anfangswert für Parameter \"corSpher\" hat falsche Dimension"
 msgid "model must be a formula of the form \"resp ~ pred\""
 msgstr "Modell muss eine Formel der Form \"resp ~ pred\" sein."
 
+msgid "offset() terms are not supported"
+msgstr ""
+
 msgid "no coefficients to fit"
 msgstr "keine Koeffizienten anzupassen"
 
@@ -305,9 +308,6 @@ msgstr "'params' müssen eine Formel oder eine Liste von Formeln sein."
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr "Formeln in 'params' müssen die Form \"parameter ~ expr\" haben."
 
-msgid "starting values for parameters are not of the correct length"
-msgstr "Startwerte für Parameter haben nicht die richtige Länge."
-
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
 msgstr "REML Log-likelihood für \"gnls\"-Objekte kann nicht berechnet werden"
 
@@ -366,10 +366,6 @@ msgstr "'asTable' kann nicht mit mehrstufig gruppierten Daten benutzt werden"
 msgid "'asTable' can only be used with balanced 'groupedData' objects"
 msgstr ""
 "'asTable' kann nur mit balancierten 'groupedData'-Objekten benutzt werden"
-
-msgid "%d errors caught in %s.  The error messages and their frequencies are"
-msgstr ""
-"%d Fehler abgefangen in %s. Die Fehlermeldungen und ihre Häufigkeiten sind"
 
 msgid "'data' argument not used, but taken from groupedData object"
 msgstr "'data' Argument nicht benutzt, aber vom groupedData Objekt genommen"
@@ -1190,7 +1186,6 @@ msgstr "%s kann nur eine Liste oder numerisch sein."
 msgid "%s must have group names in 'varConstPower'"
 msgstr "%s muss Gruppennamen in 'varConstPower' haben."
 
-#, fuzzy
 msgid "constant in \"varConstProp\" structure must be > 0"
 msgstr "Konstante in \"varConstPower\"-Struktur muss > 0 sein."
 
@@ -1200,11 +1195,9 @@ msgstr "Startwert sollte Länge %d haben."
 msgid "nonexistent group names for initial values"
 msgstr "Nicht existierende Gruppenamen für Startwerte"
 
-#, fuzzy
 msgid "%s can only have names \"const\" and \"prop\""
 msgstr "%s kann nur die Namen \"const\" und \"power\" haben."
 
-#, fuzzy
 msgid "%s must have group names in 'varConstProp'"
 msgstr "%s muss Gruppennamen in 'varConstPower' haben."
 
@@ -1215,18 +1208,6 @@ msgid "cannot change parameter length of initialized \"varComb\" object"
 msgstr ""
 "Parameterlänge eines initialisierten \"varComb\"-Objekts kann nicht geändert "
 "werden"
-
-msgid "Package"
-msgstr "Paket"
-
-msgid "installed with old R version"
-msgstr "installiert mit alter R Version"
-
-msgid "should not be used with R version"
-msgstr "sollte nicht benutzt werden mit R Version"
-
-msgid "Rather re-install it with this version of R."
-msgstr "Besser mit dieser R Version erneut installieren."
 
 msgid "deviance undefined for REML fit"
 msgstr "Devianz für REML Anpassung nicht definiert"
@@ -1256,15 +1237,10 @@ msgid_plural "effects %s not matched"
 msgstr[0] "Effekt %s nicht übereinstimmend"
 msgstr[1] "Effekte %s nicht übereinstimmend"
 
-msgid "level %s not allowed for %s"
-msgid_plural "levels %s not allowed for %s"
-msgstr[0] "Stufe %s nicht für %s erlaubt"
-msgstr[1] "Stufen %s nicht für %s erlaubt"
-
-msgid "%d error caught in %s: %s"
-msgid_plural "%d times caught the same error in %s: %s"
-msgstr[0] "%d Fehler abgefangen in %s: %s"
-msgstr[1] "%d Mal denselben Fehler abgefangen in %s: %s"
+msgid "supplied %d starting value, need %d"
+msgid_plural "supplied %d starting values, need %d"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "%s not found in data"
 msgid_plural "%s not found in data"
@@ -1291,6 +1267,36 @@ msgid_plural ""
 "group names not matched in starting values for random effects: %s"
 msgstr[0] "Gruppenname nicht zu Startwerten für Zufallseffekte passend: %s"
 msgstr[1] "Gruppennamen nicht zu Startwerten für Zufallseffekte passend: %s"
+
+#~ msgid "starting values for parameters are not of the correct length"
+#~ msgstr "Startwerte für Parameter haben nicht die richtige Länge."
+
+#~ msgid ""
+#~ "%d errors caught in %s.  The error messages and their frequencies are"
+#~ msgstr ""
+#~ "%d Fehler abgefangen in %s. Die Fehlermeldungen und ihre Häufigkeiten sind"
+
+#~ msgid "Package"
+#~ msgstr "Paket"
+
+#~ msgid "installed with old R version"
+#~ msgstr "installiert mit alter R Version"
+
+#~ msgid "should not be used with R version"
+#~ msgstr "sollte nicht benutzt werden mit R Version"
+
+#~ msgid "Rather re-install it with this version of R."
+#~ msgstr "Besser mit dieser R Version erneut installieren."
+
+#~ msgid "level %s not allowed for %s"
+#~ msgid_plural "levels %s not allowed for %s"
+#~ msgstr[0] "Stufe %s nicht für %s erlaubt"
+#~ msgstr[1] "Stufen %s nicht für %s erlaubt"
+
+#~ msgid "%d error caught in %s: %s"
+#~ msgid_plural "%d times caught the same error in %s: %s"
+#~ msgstr[0] "%d Fehler abgefangen in %s: %s"
+#~ msgstr[1] "%d Mal denselben Fehler abgefangen in %s: %s"
 
 #~ msgid "step halving factor reduced below minimum in NLS step"
 #~ msgstr ""

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-115\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2021-02-12 09:19\n"
+"POT-Creation-Date: 2023-11-28 20:13\n"
 "PO-Revision-Date: 2014-03-25 17:00+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -301,6 +301,9 @@ msgstr ""
 "argument 'model' musi być formułą o formie \"zmienna zależna ~ zmienna "
 "niezależna\""
 
+msgid "offset() terms are not supported"
+msgstr ""
+
 # nlme/R/gls.R: 93
 # stop("no coefficients to fit")
 msgid "no coefficients to fit"
@@ -425,11 +428,6 @@ msgstr "argument 'params' musi być formułą lub listą formuł"
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr "formuły w argumencie 'param' muszą mieć formę \"parametr ~ wyrażenie\""
 
-# nlme/R/gnls.R: 273
-# stop ("starting values for parameters are not of the correct length")
-msgid "starting values for parameters are not of the correct length"
-msgstr "wartości początkowe parametrów nie mają poprawnej długości"
-
 # nlme/R/gnls.R: 654
 # stop("cannot calculate REML log-likelihood for \"gnls\" objects")
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
@@ -530,9 +528,6 @@ msgid "'asTable' can only be used with balanced 'groupedData' objects"
 msgstr ""
 "funkcja 'asTable()' może być użyta jedynie ze zbalansowanymi obiektami klasy "
 "\"groupedData\""
-
-msgid "%d errors caught in %s.  The error messages and their frequencies are"
-msgstr ""
 
 # nlme/R/nlsList.R: 31
 # stop("second argument must be a groupedData object")
@@ -1819,18 +1814,6 @@ msgid "cannot change parameter length of initialized \"varComb\" object"
 msgstr ""
 "nie można zmienić długości parametru zainicjalizowanego obiektu \"varComb\""
 
-msgid "Package"
-msgstr ""
-
-msgid "installed with old R version"
-msgstr ""
-
-msgid "should not be used with R version"
-msgstr ""
-
-msgid "Rather re-install it with this version of R."
-msgstr ""
-
 msgid "deviance undefined for REML fit"
 msgstr ""
 
@@ -1893,14 +1876,8 @@ msgstr[0] "efekt %s nie został dopasowany"
 msgstr[1] "efekty %s nie zostały dopasowane"
 msgstr[2] "efekty %s nie zostały dopasowane"
 
-msgid "level %s not allowed for %s"
-msgid_plural "levels %s not allowed for %s"
-msgstr[0] "poziom %s nie jest dozwolony dla %s"
-msgstr[1] "poziomy %s nie są dozwolone dla %s"
-msgstr[2] "poziomy %s nie są dozwolone dla %s"
-
-msgid "%d error caught in %s: %s"
-msgid_plural "%d times caught the same error in %s: %s"
+msgid "supplied %d starting value, need %d"
+msgid_plural "supplied %d starting values, need %d"
 msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
@@ -1978,6 +1955,17 @@ msgstr[1] ""
 msgstr[2] ""
 "nazwy grup nie zgadzają się z początkowymi wartościami dla efektów losowych: "
 "%s"
+
+# nlme/R/gnls.R: 273
+# stop ("starting values for parameters are not of the correct length")
+#~ msgid "starting values for parameters are not of the correct length"
+#~ msgstr "wartości początkowe parametrów nie mają poprawnej długości"
+
+#~ msgid "level %s not allowed for %s"
+#~ msgid_plural "levels %s not allowed for %s"
+#~ msgstr[0] "poziom %s nie jest dozwolony dla %s"
+#~ msgstr[1] "poziomy %s nie są dozwolone dla %s"
+#~ msgstr[2] "poziomy %s nie są dozwolone dla %s"
 
 # nlme/R/gnls.R: 419
 # warning("step halving factor reduced below minimum in NLS step")

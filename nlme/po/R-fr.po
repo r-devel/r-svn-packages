@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-65\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2021-02-12 09:19\n"
+"POT-Creation-Date: 2023-11-28 20:13\n"
 "PO-Revision-Date: 2014-03-30 08:37+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -234,6 +234,9 @@ msgstr ""
 msgid "model must be a formula of the form \"resp ~ pred\""
 msgstr "le modèle doit être une formule de la forme \"resp ~ pred\""
 
+msgid "offset() terms are not supported"
+msgstr ""
+
 msgid "no coefficients to fit"
 msgstr "pas de coefficients à ajuster"
 
@@ -312,9 +315,6 @@ msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr ""
 "les formules dans 'params' doivent être de la forme \"parameter ~ expr\""
 
-msgid "starting values for parameters are not of the correct length"
-msgstr "les valeurs initiales pour les paramètres n'ont pas la taille correcte"
-
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
 msgstr ""
 "impossible de calculer la log-vraissemblance REML pour les objets \"gnls\""
@@ -381,9 +381,6 @@ msgstr ""
 msgid "'asTable' can only be used with balanced 'groupedData' objects"
 msgstr ""
 "'asTable' ne peut être utilisé qu'avec des objets 'groupedData' balancés"
-
-msgid "%d errors caught in %s.  The error messages and their frequencies are"
-msgstr ""
 
 #, fuzzy
 msgid "'data' argument not used, but taken from groupedData object"
@@ -508,7 +505,7 @@ msgstr ""
 
 #, fuzzy
 msgid "objects must inherit from classes %s, or %s"
-msgstr "l'objet doit hériter de la classe \"gls\""
+msgstr "l'objet doit hériter de la classe %s ou %s"
 
 msgid ""
 "some fitted objects deleted because response differs from the first model"
@@ -778,7 +775,7 @@ msgstr ""
 #, fuzzy
 msgid "maximum number of iterations (maxIter = %d) reached without convergence"
 msgstr ""
-"le nombre maximum d'itérations (lmeControl(maxIter)) est atteint, mais pas "
+"le nombre maximum d'itérations (maxIter = %d) est atteint, mais pas "
 "la convergence"
 
 msgid "second argument must be a groupedData object"
@@ -1231,7 +1228,6 @@ msgstr "%s ne peut qu'être une liste, ou un nombre"
 msgid "%s must have group names in 'varConstPower'"
 msgstr "%s doit avoir des noms de groupes dans 'varConstPower'"
 
-#, fuzzy
 msgid "constant in \"varConstProp\" structure must be > 0"
 msgstr "la constante dans la structure \"varConstPower\" doit être > O"
 
@@ -1243,11 +1239,11 @@ msgstr "noms de groupes inexistants pour les valeurs initiales"
 
 #, fuzzy
 msgid "%s can only have names \"const\" and \"prop\""
-msgstr "%s ne peut avoir que les noms \"const\" et \"power\""
+msgstr "%s ne peut avoir que les noms \"const\" et \"prop\""
 
 #, fuzzy
 msgid "%s must have group names in 'varConstProp'"
-msgstr "%s doit avoir des noms de groupes dans 'varConstPower'"
+msgstr "%s doit avoir des noms de groupes dans 'varConstProp'"
 
 msgid "all arguments to 'varComb' must be of class \"varFunc\"."
 msgstr "tous les arguments de 'varComb' doivent être de classe \"varFunc\"."
@@ -1256,18 +1252,6 @@ msgid "cannot change parameter length of initialized \"varComb\" object"
 msgstr ""
 "impossible de modifier la longueur du paramètre pour des objets \"varComb\" "
 "initialisés"
-
-msgid "Package"
-msgstr ""
-
-msgid "installed with old R version"
-msgstr ""
-
-msgid "should not be used with R version"
-msgstr ""
-
-msgid "Rather re-install it with this version of R."
-msgstr ""
 
 msgid "deviance undefined for REML fit"
 msgstr ""
@@ -1295,13 +1279,8 @@ msgid_plural "effects %s not matched"
 msgstr[0] "effet %s incohérent"
 msgstr[1] "effets %s incohérent"
 
-msgid "level %s not allowed for %s"
-msgid_plural "levels %s not allowed for %s"
-msgstr[0] "le niveau %s non autorisés pour %s"
-msgstr[1] "les niveaux %s sont non autorisés pour %s"
-
-msgid "%d error caught in %s: %s"
-msgid_plural "%d times caught the same error in %s: %s"
+msgid "supplied %d starting value, need %d"
+msgid_plural "supplied %d starting values, need %d"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1334,6 +1313,15 @@ msgstr[0] ""
 msgstr[1] ""
 "les noms des groupes ne correspondent pas aux valeurs de départ pour les "
 "effets aléatoires : %s"
+
+#~ msgid "starting values for parameters are not of the correct length"
+#~ msgstr ""
+#~ "les valeurs initiales pour les paramètres n'ont pas la taille correcte"
+
+#~ msgid "level %s not allowed for %s"
+#~ msgid_plural "levels %s not allowed for %s"
+#~ msgstr[0] "le niveau %s non autorisés pour %s"
+#~ msgstr[1] "les niveaux %s sont non autorisés pour %s"
 
 #~ msgid "step halving factor reduced below minimum in NLS step"
 #~ msgstr ""

@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: nlme 3.1-152\n"
+"Project-Id-Version: nlme 3.1-164\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-12 09:19+0000\n"
+"POT-Creation-Date: 2023-11-28 20:13+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,57 +17,57 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: corStruct.c:423
+#: corStruct.c:424
 msgid "All parameters must be less than 1 in absolute value"
 msgstr ""
 
-#: corStruct.c:533
+#: corStruct.c:535
 msgid "Coefficient matrix not invertible"
 msgstr ""
 
-#: corStruct.c:870 corStruct.c:925 corStruct.c:985 corStruct.c:1027
+#: corStruct.c:872 corStruct.c:927 corStruct.c:987 corStruct.c:1029
 msgid "Unknown spatial correlation class"
 msgstr ""
 
-#: nlme.c:464
+#: nlme.c:468
 msgid "First observation on an individual must have a dose"
 msgstr ""
 
-#: nlmefit.c:424
+#: nlmefit.c:426
 #, c-format
 msgid "Singularity in backsolve at level %ld, block %ld"
 msgstr ""
 
-#: nlmefit.c:464
+#: nlmefit.c:466
 #, c-format
 msgid ""
 "Too many parameters for finite-difference Hessian; npar = %d, nTot = %g."
 msgstr ""
 
-#: nlmefit.c:575 nlmefit.c:756
+#: nlmefit.c:577 nlmefit.c:758
 msgid "Overfitted model!"
 msgstr ""
 
-#: nlmefit.c:601
+#: nlmefit.c:603
 msgid "analytic gradient is not available with matrix logarithm"
 msgstr ""
 
-#: nlmefit.c:624
+#: nlmefit.c:626
 msgid "analytic gradient is not available with compound symmetry"
 msgstr ""
 
-#: nlmefit.c:917
+#: nlmefit.c:919
 #, c-format
 msgid "Unable to form eigenvalue-eigenvector decomposition [RS(.) ierr = %d]"
 msgstr ""
 
-#: nlmefit.c:949
+#: nlmefit.c:951
 #, c-format
 msgid ""
 "Unable to form Cholesky decomposition: the leading minor of order %d is not "
 "pos.def."
 msgstr ""
 
-#: nlmefit.c:981
+#: nlmefit.c:983
 msgid "Haven't written the compound symmetry case for this yet"
 msgstr ""
