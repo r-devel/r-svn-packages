@@ -6,7 +6,7 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.6 (2023-11-30, svn r8310)}{
+\section{Changes in version 2.1.6 (2023-11-30, svn r8311)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{clara(*, metric="gower")} is too buggy, and hence
@@ -15,7 +15,7 @@
   }
   \subsection{Misc}{
     \itemize{
-      \item tweak \file{tests/fanny-ex.R} for less "diffs".
+      \item tweak \file{tests/fanny-ex.\{R,Rout.save\}} for less "diffs".
     }
   }
 }
