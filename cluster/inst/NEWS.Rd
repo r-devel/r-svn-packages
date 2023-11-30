@@ -6,11 +6,16 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.6 (2023-11-30, svn r830x)}{
+\section{Changes in version 2.1.6 (2023-11-30, svn r8310)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{clara(*, metric="gower")} is too buggy, and hence
       \bold{removed} for now, see below (2.1.5).
+    }
+  }
+  \subsection{Misc}{
+    \itemize{
+      \item tweak \file{tests/fanny-ex.R} for less "diffs".
     }
   }
 }
