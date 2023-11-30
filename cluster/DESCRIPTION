@@ -1,6 +1,6 @@
 Package: cluster
-Version: 2.1.5
-Date: 2023-11-27
+Version: 2.1.6
+Date: 2023-11-30
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
@@ -24,7 +24,7 @@ Authors@R: c(person("Martin","Maechler", role = c("aut","cre"),
  ,person("Erich",  "Schubert", role="ctb", comment = c("fastpam options for pam()",
                                                        ORCID = "0000-0001-9143-4880"))
  ,person("Keefe",  "Murphy", role="ctb", comment = "volume.ellipsoid({d >= 3})")
- ,person("Fischer-Rasmussen", "Kasper", role = "ctb", comment = "Gower distance for CLARA")
+ #not yet ,person("Fischer-Rasmussen", "Kasper", role = "ctb", comment = "Gower distance for CLARA")
  )
 Depends: R (>= 3.5.0)
 Imports: graphics, grDevices, stats, utils
