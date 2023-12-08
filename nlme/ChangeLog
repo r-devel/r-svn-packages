@@ -1,3 +1,13 @@
+2023-12-08  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/augPred_lab.R: manually do Hmisc  label(.) <- ..
+	* DESCRIPTION (Version): 3.1-165; no longer suggesting 'Hmisc'.
+
+2023-11-27  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/nlmefit.c: 2 x format 'int': s/%ld/%d/
+	* DESCRIPTION (Version): 3.1-164
+
 2023-07-31  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/nlme.R (nlme.formula, formula.nlme):
