@@ -75,7 +75,7 @@ corMatrix(cs2ARMA)
 fm1Ovar.lme <- lme(follicles ~ sin(2*pi*Time) + cos(2*pi*Time),
                    data = Ovary, random = pdDiag(~sin(2*pi*Time)))
 fm5Ovar.lme <- update(fm1Ovar.lme,
-                corr = corARMA(p = 1, q = 1))
+                correlation = corARMA(p = 1, q = 1))
 # p. 396
 fm1Ovar.nlme <- nlme(follicles~
      A+B*sin(2*pi*w*Time)+C*cos(2*pi*w*Time),
@@ -84,6 +84,6 @@ fm1Ovar.nlme <- nlme(follicles~
    start=c(fixef(fm5Ovar.lme), 1) )
 # p. 397
 fm3Ovar.nlme <- update(fm1Ovar.nlme,
-         corr=corARMA(p=0, q=2) )
+         correlation=corARMA(p=0, q=2) )
 }
 \keyword{models}
