@@ -21,6 +21,12 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
   discretizaton to that used in fitting when predicting.
 
+1.9-2
+
+* Added sparse matrix Cholesky routine, mchol, a wrapper for 
+  Matrix::Cholesky, giving the same functionality as Matrix::chol prior 
+  to the decision for this not to return the pivot sequence. 
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 

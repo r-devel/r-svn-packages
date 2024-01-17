@@ -1,6 +1,16 @@
 ## (c) Simon N. Wood 2011-2023
 ## Many of the following are simple wrappers for C functions
 
+mchol <- function(A) {
+## Simple wrapper for Matrix sparse Cholesky routine. Basically restores the
+## functionality of Matrix::chol that vanished when the maintainers decided
+## not to return the pivot sequence from Matrix::chol(foo, pivot=TRUE) (?!)
+  cha <- Matrix::Cholesky(A,perm=TRUE,super=NA)
+  R <- Matrix::expand1(cha,"L.")  
+  attr(R,"pivot") <- cha@perm+1
+  R ## R'R = H[pivot,pivot]
+} ## mchol
+
 dpnorm <- function(x0,x1) {
   ## Cancellation avoiding evaluation of pnorm(x1)-pnorm(x0) 
   ## first avoid 1-1 problems by exchanging and changing sign of double +ve
