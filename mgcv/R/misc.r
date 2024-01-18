@@ -5,9 +5,15 @@ mchol <- function(A) {
 ## Simple wrapper for Matrix sparse Cholesky routine. Basically restores the
 ## functionality of Matrix::chol that vanished when the maintainers decided
 ## not to return the pivot sequence from Matrix::chol(foo, pivot=TRUE) (?!)
-  cha <- Matrix::Cholesky(A,perm=TRUE,super=NA)
-  R <- Matrix::expand1(cha,"L.")  
-  attr(R,"pivot") <- cha@perm+1
+  cha <- suppressWarnings(try(Matrix::Cholesky(A,perm=TRUE,super=NA),silent=TRUE))
+  if (inherits(cha,"try-error")) {
+    R <- -1;attr(R,"rank") <- -1 ## signal rank deficient
+  } else { 
+    R <- Matrix::expand1(cha,"L.")
+    p <- ncol(A);
+    attr(R,"pivot") <- if (length(cha@perm)==0) 1:p else cha@perm+1
+    attr(R,"rank") <- p
+  }  
   R ## R'R = H[pivot,pivot]
 } ## mchol
 
