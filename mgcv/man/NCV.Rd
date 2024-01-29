@@ -10,8 +10,8 @@ In detail, suppose that a model is estimated by minimizing a penalized loss
 where \eqn{D}{D} is a loss (such as a negative log likelihood), dependent on response \eqn{y_i}{y_i} and parameter vector \eqn{\theta_i}{t_i}, which in turn depends on covariates via one or more smooth linear predictors with coefficients \eqn{\beta}{b}. The quadratic penalty terms penalize model complexity: \eqn{S_j}{S_j} is a known matrix and \eqn{\lambda_j}{v_j} an unknown smoothing parameter. Given smoothing parameters the penalized loss is readily minimized to estimate \eqn{\beta}{b}.
 
 The smoothing parameters also have to be estimated. To this end, choose \eqn{k = 1,\ldots,m}{k=1...m} subsets \eqn{\alpha(k)\subset \{1,\ldots,n\}}{a(k) in \{1...n\}} and \eqn{\delta(k)\subset \{1,\ldots,n\}}{d(k) in \{1...n\}}. Usually \eqn{\delta(k)}{d(k)} is a subset of (or equal to) \eqn{\alpha(k)}{a(k)}. Let \eqn{\theta_i^{\alpha(k)}}{t_i^a(k)} denote the estimate of \eqn{\theta_i}{t_i} when the points indexed by \eqn{\alpha(k)}{a(k)} are omitted from fitting. Then the NCV criterion
-\deqn{V = \sum_{k=1}^m \sum_{i \in \alpha(k)} D(y_i,\theta_i^{\alpha(k)})}{V = sum_k sum_\{i in a(k)\}D(y_i,t_i^a(k)) }
-is minimized w.r.t. the smoothing parameters, \eqn{\lambda_j}{v_j}. If \eqn{m=n}{m=n} and \eqn{\alpha(k)=\delta(k)=k} then ordinary leave-one-out cross validation is recovered. This formulation covers many of the variants of cross validation reviewed in Arlot and Celisse (2010), for example.
+\deqn{V = \sum_{k=1}^m \sum_{i \in \delta(k)} D(y_i,\theta_i^{\alpha(k)})}{V = sum_k sum_\{i in d(k)\}D(y_i,t_i^a(k)) }
+is minimized w.r.t. the smoothing parameters, \eqn{\lambda_j}{v_j}. If \eqn{m=n}{m=n} and \eqn{\alpha(k)=\delta(k)=k}{a(k)=d(k)=k} then ordinary leave-one-out cross validation is recovered. This formulation covers many of the variants of cross validation reviewed in Arlot and Celisse (2010), for example.
 
 Except for a quadratic loss, \eqn{V}{V} can not be computed exactly, but it can be computed to \eqn{O(n^{-2})}{O(n^-2)} accuracy (fixed basis size), by taking single Newton optimization steps from the full data \eqn{\beta}{b} estimates to the equivalent when each \eqn{\alpha(k)}{a(k)} is dropped. This is what \code{mgcv} does. The Newton steps require update of the full model Hessian to the equivalent when each datum is dropped. This can be achieved at \eqn{O(p^2)}{O(p^2)} cost, where \eqn{p}{p} is the dimension of \eqn{\beta}{b}. Hence, for example, the ordinary cross validation criterion is computable at the \eqn{O(np^2)}{O(np^2)} cost of estimating the model given smoothing parameters.
 
@@ -55,7 +55,7 @@ Arlot, S. and A. Celisse (2010). A survey of cross-validation procedures for mod
 Roberts et al. (2017) Cross-validation strategies for data with temporal,
 spatial, hierarchical, or phylogenetic structure. Ecography 40(8), 913-929.
 
-Wood S.N. (2023) On Neighbourhood Cross Validation. in prep.
+Wood S.N. (2023) On Neighbourhood Cross Validation. Submitted.
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}

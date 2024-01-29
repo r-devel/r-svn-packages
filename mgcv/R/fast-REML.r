@@ -740,7 +740,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
 ## a re-parameterization object supplied in the returned object.
 ## rho contains log smoothing parameters, fixed is an array indicating whether they 
 ## are fixed (or free). np is the number of coefficients. root indicates
-## whether or not to return E, and sparse whethr or not it should be sparse. 
+## whether or not to return E, and sparse whether or not it should be sparse. 
 ## Returns: Sl, with modified rS terms, if needed and rho added to each block
 ##          rp, a re-parameterization list
 ##          E a total penalty square root such that E'E = S_tot (if root==TRUE)
