@@ -16,7 +16,7 @@ mchol(A)
 If \code{A} is positive definite then the upper triangular Cholesky factor matrix, with \code{"pivot"} attribute and \code{"rank"} attribute which is the diminsion of \code{A}. Otherwise \code{-1} with \code{"rank"} attribute \code{-1}.
 }
 
-\details{The \code{Matrix} version of \code{chol} performs sparse Cholesky decomposition with sparsity maintaining pivoting, but no longer returns the pivot vector, rendering the returned factor useless for many purposes. This wrapper function simply fixes this.  
+\details{The \code{Matrix} version of \code{chol} performs sparse Cholesky decomposition with sparsity maintaining pivoting, but no longer returns the pivot vector, rendering the returned factor useless for many purposes. This wrapper function simply fixes this. It also ensures that there are no numerical zeroes below the leading diagonal (not the default behaviour of \code{expand1}, which can put some numerical zeroes there, in place of structutal ones, at least at version 1.6-5).
 }
 
 %- maybe also `usage' for other objects documented here.

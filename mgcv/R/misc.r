@@ -9,7 +9,7 @@ mchol <- function(A) {
   if (inherits(cha,"try-error")) {
     R <- -1;attr(R,"rank") <- -1 ## signal rank deficient
   } else { 
-    R <- Matrix::expand1(cha,"L.")
+    R <- Matrix::triu(Matrix::expand1(cha,"L."))
     p <- ncol(A);
     attr(R,"pivot") <- if (length(cha@perm)==0) 1:p else cha@perm+1
     attr(R,"rank") <- p
