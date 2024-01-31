@@ -4306,7 +4306,7 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     } ## finished rescaling
   }
   ## variance components (original scale)
-  vc <- c(scale/x$sp)
+  vc <-  scale/x$sp
   names(vc) <- names(x$sp)
 
   if (is.null(x$full.sp)) vc.full <- NULL else { 
@@ -4316,8 +4316,8 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   ## If a Hessian exists, get CI's for variance components...
 
   if (x$method%in%c("ML","P-ML","REML","P-REML","fREML")&&!is.null(x$outer.info$hess)) {
-    if (is.null(x$family$n.theta)||x$family$n.theta<=0) H <- x$outer.info$hess ## the hessian w.r.t. log sps and log scale
-    else {
+    if (is.null(x$family$n.theta)||x$family$n.theta<=0||"perf" %in% x$optimizer) H <- x$outer.info$hess ## the hessian w.r.t. log sps and log scale
+    else { ## first rows and cols of Hessian relate to extra log lik params
       ind <- 1:x$family$n.theta
       H <- x$outer.info$hess[-ind,-ind,drop=FALSE]
     }

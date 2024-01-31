@@ -27,6 +27,9 @@ present, and reparameterization needs checking (also for bam).
   Matrix::Cholesky, giving the same functionality as Matrix::chol prior 
   to the decision for this not to return the pivot sequence. 
 
+* fixed gam.vcomp to avoid failure with extended families and bam. Thanks to
+  Nathan LaSpina for reporting.
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 

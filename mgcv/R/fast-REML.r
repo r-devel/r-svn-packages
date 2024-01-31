@@ -45,7 +45,7 @@ iniStrans <- function(S,rank = NULL,trans.ldet=FALSE) {
   piv <- attr(R,"pivot")
   ipiv <- piv; ipiv[piv] <- 1:p
   if (rank==p) { ## nothing to do - penalty is full rank
-    return(list(S=S,T=diag(p),Ti=diag(p),trans.ldet=0))
+    return(list(S=S,T=diag(p),Ti=diag(p),rank=p,trans.ldet=0))
   }
   ind <- (rank+1):p
   R[ind,ind] <- diag(length(ind))
