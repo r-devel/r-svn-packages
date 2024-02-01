@@ -2946,23 +2946,31 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 
   if (new.data.ok) {
     ## check factor levels are right ...
-    names(newdata)->nn # new data names
-    colnames(object$model)->mn # original names
+    names(newdata) -> nn # new data names
+    colnames(object$model) -> mn # original names
     for (i in 1:length(newdata)) 
     if (nn[i]%in%mn && is.factor(object$model[,nn[i]])) { # then so should newdata[[i]] be 
       levm <- levels(object$model[,nn[i]]) ## original levels
-      ## need to avoid dropping NAs if they are a factor level in origianl model
+      ## need to avoid dropping NAs if they are a factor level in original model
       levn <- if (any(is.na(levm))) levels(factor(newdata[[i]],exclude=NULL)) else levels(factor(newdata[[i]])) ## new levels
       if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
         msg <- paste("factor levels",paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
         warning(msg)
-      }
+	xlev <- !(newdata[[i]] %in% levm) & !is.na(newdata[[i]]) ## attribute marking extra (non-NA) levels in factor 
+      } else xlev <- NULL
       ## set prediction levels to fit levels...
       if (is.matrix(newdata[[i]])) {
         dum <- factor(newdata[[i]],levels=levm,exclude=NULL)
 	dim(dum) <- dim(newdata[[i]])
 	newdata[[i]] <- dum
-      } else newdata[[i]] <- factor(newdata[[i]],levels=levm,exclude=NULL)
+	if (!is.null(xlev)) {
+	  dim(xlev) <- dim(dum)
+	  attr(newdata[[i]],"xlev") <- xlev
+	}  
+      } else {
+        newdata[[i]] <- factor(newdata[[i]],levels=levm,exclude=NULL)
+	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev
+      }
     }
     if (type=="newdata") return(newdata)
 

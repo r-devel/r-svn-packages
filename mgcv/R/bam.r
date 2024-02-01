@@ -1680,6 +1680,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
             na.action=na.action,...) 
   if (nrow(newd)>0) {
     newdata <- newd;rm(newd)
+    for (i in which(sapply(newdata,function(x) !is.null(attr(x,"xlev")))) { 
+      newdata[[i]][attr(newdata[[i]],"xlev")] <- levels(newdata[[i]])[1] ## reset extra levels to first level
+    }
   } else { ## no non NA data, might as well call predict.gam
     return(predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
             block.size=block.size,newdata.guaranteed=newdata.guaranteed,
