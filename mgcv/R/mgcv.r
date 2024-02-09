@@ -2969,7 +2969,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 	}  
       } else {
         newdata[[i]] <- factor(newdata[[i]],levels=levm,exclude=NULL)
-	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev
+	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev ## not used in this routine
       }
     }
     if (type=="newdata") return(newdata)
