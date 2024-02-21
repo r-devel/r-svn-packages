@@ -1677,6 +1677,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   newterms <- attr(newdata,"terms") ## non NULL for model frame
 
+  ## for discretization to work, we need the model frame names, not data frame ones...
+  object$pred.formula <- reformulate(object$dinfo$gp$fake.names)
+
   newd <- predict.gam(object,newdata=newdata,type="newdata",se.fit=se.fit,terms=terms,exclude=exclude,
             block.size=block.size,newdata.guaranteed=newdata.guaranteed,
             na.action=na.action,...) 
