@@ -175,7 +175,7 @@ uniquecombs <- function(x,ordered=FALSE) {
     #x <- data.matrix(xo) ## ensure all data are numeric
   } else xo <- NULL
   if (ncol(x)==1) { ## faster to use R 
-     xu <- if (ordered) sort(unique(x[,1])) else unique(x[,1])
+     xu <- if (ordered) sort(unique(x[,1]),na.last=TRUE) else unique(x[,1])
      ind <- match(x[,1],xu)
      if (is.null(xo)) x <- matrix(xu,ncol=1,nrow=length(xu)) else {
         x <-  data.frame(xu)

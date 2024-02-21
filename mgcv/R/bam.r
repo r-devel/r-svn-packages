@@ -1651,6 +1651,8 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
                          block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
 			 n.threads=1,gc.level=0,...) {
 ## function for prediction from a bam object, by discrete methods
+## Note that behaviour with factor levels not in fit differs from predict.gam - the dummies
+## for the factor all get set to zero (there is a warning). 
 
   ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
@@ -1659,7 +1661,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   if (gc.level>0) gc()
   if (missing(newdata)) newdata <- object$model
    
-  convert2mf <- is.null(attr(newdata,"terms"))
+  #convert2mf <- is.null(attr(newdata,"terms")) ### ??? Why, when predict.gam call already does this?
 
   if (type=="iterms") {
     type <- "terms"
@@ -1682,7 +1684,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     newdata <- newd;rm(newd)
     for (i in which(sapply(newdata,function(x) !is.null(attr(x,"xlev"))))) {
       ## EXPERIMENTAL: problem is that "xlev" lost at model frame stage...
-      newdata[[i]][attr(newdata[[i]],"xlev")] <- levels(newdata[[i]])[1] ## reset extra levels to first level
+      #newdata[[i]][attr(newdata[[i]],"xlev")] <- levels(newdata[[i]])[1] ## reset extra levels to first level
     }
   } else { ## no non NA data, might as well call predict.gam
     return(predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
@@ -1710,7 +1712,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0) ## note: needed in terms branch below
 
   ## now discretize covariates...
-  if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata)
+  
+  #if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata) ## Why??
+  
   dk <- discrete.mf(object$dinfo$gp,mf=newdata,names.pmf=object$dinfo$pmf.names,full=TRUE)
   Xd <- list() ### list of discrete model matrices...
   n <- if (is.matrix(newdata[[1]])) nrow(newdata[[1]]) else length(newdata[[1]])
