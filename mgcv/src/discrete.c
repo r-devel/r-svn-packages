@@ -560,7 +560,7 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
 SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
 	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS) {
 /* .Call wrapper for diagXVXt allowing R long vector storage for k. Note that 
-  this does not allow more than maxint data - that would require re-writting R code 
+  this does not allow more than maxint data - that would require re-writing R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
 
   n is length of diag, nx is length of m or p, nt is the length of ts or dt, pv is the
@@ -599,7 +599,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
    Basic algorithm is to compute XV and then the row sums of XV.X. 
    In practice this is done by computing one column of XV and X at a time.
    When only some terms are selected then only those columns of XV corresponding 
-   to selected columns of X need to be computed. the terms selected in rs determine
+   to selected columns of X need to be computed. The terms selected in rs determine
    which columns of X are required. 
 
    Called using diagXVXd in R

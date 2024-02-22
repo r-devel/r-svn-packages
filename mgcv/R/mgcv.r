@@ -304,6 +304,8 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
   }
   fake.formula <- as.formula(fake.formula,p.env)
   if (length(av)) {
+    ## need original variable names (without any transforms) for checking purposes
+    ## when predicting. This facilitates...
     pred.formula <- as.formula(paste("~",paste(av,collapse="+")))
     pav <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
     pred.formula <- reformulate(pav,env=p.env) 
@@ -2956,20 +2958,20 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
         msg <- paste("factor levels",paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
         warning(msg)
-#	xlev <- !(newdata[[i]] %in% levm) & !is.na(newdata[[i]]) ## attribute marking extra (non-NA) levels in factor 
-      } # else xlev <- NULL
+	xlev <- !(newdata[[i]] %in% levm) & !is.na(newdata[[i]]) ## attribute marking extra (non-NA) levels in factor 
+      } else xlev <- NULL
       ## set prediction levels to fit levels...
       if (is.matrix(newdata[[i]])) {
         dum <- factor(newdata[[i]],levels=levm,exclude=NULL)
 	dim(dum) <- dim(newdata[[i]])
 	newdata[[i]] <- dum
-#	if (!is.null(xlev)) {
-#	  dim(xlev) <- dim(dum)
-#	  attr(newdata[[i]],"xlev") <- xlev
-#	}  
+	if (!is.null(xlev)) {
+	  dim(xlev) <- dim(dum)
+	  attr(newdata[[i]],"xlev") <- xlev
+	}  
       } else {
         newdata[[i]] <- factor(newdata[[i]],levels=levm,exclude=NULL)
-#	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev ## not used in this routine
+	if (!is.null(xlev)) attr(newdata[[i]],"xlev") <- xlev ## not used in this routine
       }
     }
     if (type=="newdata") return(newdata)

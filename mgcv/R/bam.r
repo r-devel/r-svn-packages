@@ -1661,7 +1661,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   if (gc.level>0) gc()
   if (missing(newdata)) newdata <- object$model
    
-  #convert2mf <- is.null(attr(newdata,"terms")) ### ??? Why, when predict.gam call already does this?
+  #convert2mf <- is.null(attr(newdata,"terms")) ### was needed to get variables post any transform for discretization
 
   if (type=="iterms") {
     type <- "terms"
@@ -1677,7 +1677,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   newterms <- attr(newdata,"terms") ## non NULL for model frame
 
-  ## for discretization to work, we need the model frame names, not data frame ones...
+  ## for discretization to work, we need the model frame names, not data frame ones. i.e. variables post any transform
   object$pred.formula <- reformulate(object$dinfo$gp$fake.names)
 
   newd <- predict.gam(object,newdata=newdata,type="newdata",se.fit=se.fit,terms=terms,exclude=exclude,
@@ -1685,10 +1685,13 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
             na.action=na.action,...) 
   if (nrow(newd)>0) {
     newdata <- newd;rm(newd)
-    for (i in which(sapply(newdata,function(x) !is.null(attr(x,"xlev"))))) {
+    ## could use xlev indicator of extra factor levels to attach xlev attributes to Xd below,
+    ## then modify Xbd to use these to insert NA at extra level positions - seems convoluted
+    ## for the tiny gain (NAs when term not excluded. )
+    #for (i in which(sapply(newdata,function(x) !is.null(attr(x,"xlev"))))) {
       ## EXPERIMENTAL: problem is that "xlev" lost at model frame stage...
       #newdata[[i]][attr(newdata[[i]],"xlev")] <- levels(newdata[[i]])[1] ## reset extra levels to first level
-    }
+    #}
   } else { ## no non NA data, might as well call predict.gam
     return(predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
             block.size=block.size,newdata.guaranteed=newdata.guaranteed,

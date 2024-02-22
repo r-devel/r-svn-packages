@@ -30,6 +30,10 @@ present, and reparameterization needs checking (also for bam).
 * fixed gam.vcomp to avoid failure with extended families and bam. Thanks to
   Nathan LaSpina for reporting.
 
+* modification of discrete bam prediction method function to better deal with
+  extra factor levels in prediction. Slightly differs from predict.gam, in 
+  setting effect to zero, rather than NA.
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 
