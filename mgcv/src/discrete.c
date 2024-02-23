@@ -579,14 +579,44 @@ SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP
   nthreads = INTEGER(NTHREADS);
   cs = INTEGER(CS); rs = INTEGER(RS);
   nrs = length(RS); ncs = length(CS);
-  diagXVXt(diag,V,X,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,&pv,&cv,nthreads,cs,&ncs,rs,&nrs);
+  diagXVXt(diag,V,X,k,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,&pv,&cv,nthreads,cs,&ncs,rs,&nrs);
   return(R_NilValue);
 } /*  CdiagXVXt */
 
-void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
+SEXP CijXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K,SEXP K1, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
+	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS) {
+/* .Call wrapper for diagXVXt called for computing scattered elements XWX[i,j] allowing R long 
+  vector storage for k and k1. Note that this does not allow more than maxint data - that would 
+  require re-writing R code to avoid storing k in a matrix (which is only allowed maxint rows).
+
+  n is length of diag, nx is length of m or p, nt is the length of ts or dt, pv is the
+  number of rows of V, cv the number of cols. ncs and nrs are length of cs/rs.
+*/
+  double *diag,*V,*X,*v;
+  int n,*k,*k1,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,pv,cv,ncs,nrs;
+  n = length(DIAG); diag = REAL(DIAG);
+  V = REAL(Vp);pv = nrows(Vp);cv = ncols(Vp);
+  X = REAL(x);
+  k = INTEGER(K); k1 = INTEGER(K1); ks = INTEGER(KS);
+  m = INTEGER(M); nx = length(M);
+  p = INTEGER(P);
+  ts = INTEGER(TS); dt = INTEGER(DT); nt = length(TS);
+  v = REAL(vp);qc = INTEGER(QC);
+  nthreads = INTEGER(NTHREADS);
+  cs = INTEGER(CS); rs = INTEGER(RS);
+  nrs = length(RS); ncs = length(CS);
+  diagXVXt(diag,V,X,k,k1,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,&pv,&cv,nthreads,cs,&ncs,rs,&nrs);
+  return(R_NilValue);
+} /*  CdiagXVXt */
+
+void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,int *p, int *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,
 	      int *cs,int *ncs,int *rs,int *nrs) {
-/* Forms diag(XVX') where X is stored in the compact form described in XWXd.
+/* If k1 and k2 are identical and k1[i] is storage row for ith obs, forms diag(XVX') where 
+   X is stored in the compact form described in XWXd. Otherwise used to form selected elements
+   of XVX'. e.g. k1[l] might be storage location of row/obs i and k2[l] the storage location 
+   for row/obs j. Then lth element computed is XVX'[i,j].  
+
    V is a pv by pv matrix, if all terms are selected, otherwise pv by cv; 
    
    Parallelization is by splitting the columns of V into nthreads subsets.
@@ -619,8 +649,19 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
    mt <- as.numeric(1:3 %in% rt)
    X2 <- cbind(X[[1]][k[,1],]*mt[1],X[[2]][k[,2],]*mt[2],X[[3]][k[,3],]*mt[3])
    
-   diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3),lt=lt,rt=rt)
-   rowSums((X1%*%V)*X2)
+   d1 <- diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3),lt=lt,rt=rt)
+   d2 <- rowSums((X1%*%V)*X2)
+   range(d1-d2)
+
+   (X1%*%V)%*%t(X2) -> XVX
+   i <- c(2,4,8,25);j <- c(1,7,4,56)
+   XVX[i+(j-1)*100]
+   mgcv:::ijXVXd(i,j,X,V,k,ks,ts,dt,v=NULL,qc=rep(0,3),lt=lt,rt=rt)
+
+   i <- sample(1:100,150,replace=TRUE);j <- sample(1:100,150,replace=TRUE)
+   d1 <- XVX[i+(j-1)*100]
+   d2 <- mgcv:::ijXVXd(i,j,X,V,k,ks,ts,dt,v=NULL,qc=rep(0,3),lt=lt,rt=rt)
+   range(d1-d2)
 
    ## check Xbd
    beta <- runif(9)
@@ -632,14 +673,14 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
 
    ## check out XWXd
    w <- runif(100)-.1
-   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(-1,3))
+   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(0,3))
    XWXf <- t(Xf)%*%(w*Xf)
    range(XWXf-XWX)
    
    ## XWXd with selection
    X1 <- matrix(0,100,0) 
    for (i in 1:length(X)) if (mt[i]>0) X1 <- cbind(X1,X[[i]][k[,i],]) 
-   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(-1,3),lt=lt,rt=lt)
+   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(0,3),lt=rt,rt=rt)
    XWXf <- t(X1)%*%(w*X1)
    range(XWXf-XWX)
 */
@@ -672,8 +713,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
       kk = j * bs + i; /* column being worked on */
       ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
       /* Note thread safety of XBd means this must be only memory allocator in this section*/
-      Xbd(xv + j * *n,V + kk * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* XV[:,kk] */
-      Xbd(xi + j * *n,ei + j * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,rs,nrs); /* X[:,kk] inefficient, but deals with constraint*/
+      Xbd(xv + j * *n,V + kk * *pv,X,k1,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* XV[:,kk] */
+      Xbd(xi + j * *n,ei + j * *pv,X,k2,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,rs,nrs); /* X[:,kk] inefficient, but deals with constraint*/
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
       for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* element-wise product of XV[:,kk] X[:,kk] */
     } 

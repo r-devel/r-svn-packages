@@ -392,6 +392,21 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
 
 diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
 ## discrete computation of diag(XVX')
+  workXVXd(X,V,k,k1=NULL,ks,ts,dt,v,qc,drop,nthreads,lt,rt)
+} ## diagXVXd
+
+ijXVXd <- function(i,j,X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
+## discrete computation of scattered elements XVX'[i,j]. i and j are vectors of indices
+  if (is.matrix(k)) {
+    ki <- k[i,];kj <- k[j,]
+  } else {
+    ki <- k[i];kj <- k[j]
+  }
+  workXVXd(X,V,ki,kj,ks,ts,dt,v,qc,drop,nthreads,lt,rt)
+} ## ijXVXd
+
+workXVXd <- function(X,V,k,k1,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
+## discrete computation of diag(XVX') or scattered elements of XWX'
 
   n <- if (is.matrix(k)) nrow(k) else length(k)
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
@@ -401,6 +416,7 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
   }  
   if (is.null(rt)) rt <- 1:nt
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
+    if (!is.null(k1)) stop("scattered XVX computation not yet implemented") 
     ## create list for passing to C
     m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
@@ -440,12 +456,15 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
       V <- V[lpi,rpi,drop=FALSE] ## select part of V required in correct order
     }
     D <- numeric(n)
-    .Call(C_CdiagXVXt,D,V,as.double(unlist(X)),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
+    if (is.null(k1)) .Call(C_CdiagXVXt,D,V,as.double(unlist(X)),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
           as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
-	  as.integer(lt-1L),as.integer(rt-1L))
+	  as.integer(lt-1L),as.integer(rt-1L)) else
+    .Call(C_CijXVXt,D,V,as.double(unlist(X)),k-1L,k1-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
+          as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
+	  as.integer(lt-1L),as.integer(rt-1L))	  
   }
   D
-} ## diagXVXd
+} ## workXVXd
 
 dchol <- function(dA,R) {
 ## if dA contains matrix dA/dx where R is chol factor s.t. R'R = A

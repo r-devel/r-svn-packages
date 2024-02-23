@@ -76,7 +76,7 @@ export("%.%",anova.gam, bam, bam.update,bandchol, betar,
        t2,te,ti,tensor.prod.model.matrix,tensor.prod.penalties,
        totalPenaltySpace,trichol,trind.generator,
        Tweedie,tw,twlss,uniquecombs, vcov.gam, vis.gam, 
-       XWXd,XWyd,Xbd,diagXVXd,
+       XWXd,XWyd,Xbd,diagXVXd,ijXVXd,
        ziP, ziplss,zipll)
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,

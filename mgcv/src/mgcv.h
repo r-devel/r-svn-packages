@@ -152,11 +152,12 @@ void Xbd(double *f,double *beta,double *X,int *k, int *ks, int *m,int *p, int *n
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs);
 SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
 	  SEXP tsr, SEXP dtr,SEXP vr,SEXP qcr,SEXP bcr,SEXP csr);
-void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
+void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,int *p, int *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,int *cs,int *ncs,int *rs,int *nrs);
 SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
 	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS);
-
+SEXP CijXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K,SEXP K1, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
+	     SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS);
 
 /* various service routines */
 void davies(double *lb,double *nc,int *n,int *r,double *sigma,double *c,int *lim,
