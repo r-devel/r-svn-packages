@@ -2005,3 +2005,28 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);FREE(worki);
 } /* XWXd1 */ 
 
+
+void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,
+	  double *X,int *k1,int *k2,int *mk,int *ks,int *m,int *p, int *n, ptrdiff_t *nk,
+	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
+/* computes the NCV criterion and its first two derivatives for the working linear regression of 
+   a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
+   full model residuals. k1 and k2 are the indexing nk-vectors required to extract the required 
+   influence matrix blocks. mk gives the block-ends, nn the number of neighbourhood blocks.   
+*/
+  double *A;
+  int nrs=0,dum,i,kk;
+  /* extract the influence matrix blocks */
+  A = (double *)CALLOC(*nk,sizeof(double));
+  diagXVXt(A,V,X,k1,k2,ks,m,p,nk,nx,ts,dt,nt,v,qc,
+	   pg,pg,nthreads,&dum,&nrs,&dum,&nrs); // pg could be computed rather than an argument
+  IA = (double *)CALLOC(*nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A */
+  for (kk=0,i=0;i<*nn;i++) { /* loop over neighbourhoods */
+    // dpotri, DPOTRF and DPSTRF (piv)
+
+  }  
+
+  
+  FREE(A);
+} /* ncvd */
+
