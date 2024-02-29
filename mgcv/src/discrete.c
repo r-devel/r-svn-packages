@@ -2019,11 +2019,16 @@ void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d
    a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
    full model residuals. k1 and k2 are the indexing nk-vectors required to extract the required 
    influence matrix blocks. mk gives the block-ends, nn the number of neighbourhood blocks.
-   d is the array of indices to predict, md is the nn-vector of block ends (d[md[i-1]-1:md[i]]
-   is index of predictions to be made for ith neighbourhood). 
+   a is the array of data rows to drop, ma is the  nn-vector of block ends (a[ma[i-1]-1:ma[i]]
+   is index rows to drop for the ith neighbourhood). 
+   d is the array of data rows to predict, md is the nn-vector of block ends (d[md[i-1]-1:md[i]]
+   is index of predictions to be made for ith neighbourhood).
+   NOTE: both a and d are assumed to have row indices sorted into ascending order within 
+   neighbourhoods: see mgcv.r:onei for a suitable fast routine to do this up front. This is
+   needed to facilitate matching of dropped and predicted points. 
 */
-  double *A,*Aaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0;
-  int nrs=0,dum,dum1,i,j,ck,kk,M,q,info=1,ii,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,*p1,*p2,ione=1;
+  double *A,*Aaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,NCV;
+  int nrs=0,dum,dum1,i1,i,j,ck,kk,M,q,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,*p1,*p2,ione=1;
   ptrdiff_t nb,nk;
   char uplo='U';
   /* create indices for extracting A_aa blocks of influence matrix */
@@ -2051,14 +2056,19 @@ void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d
   diagXVXt(A,G,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,&dum,&nrs,&dum,&nrs); // pg could be computed rather than an argument
   /* Get NCV and (I-A_aa)^-1... */
-  for (nb=j=kk=i=0;i<*nn;i++) {
+ 
+  for (M=nb=j=kk=i=0;i<*nn;i++) {
     dum = mk[i]-kk; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
-    nb += (int)sqrt(8*dum+1)/2; /* total storage for adjusted residuals */
+    dum = (int)sqrt(8*dum+1)/2;
+    if (j<dum) j = dum; /* largest dimension of A_aa */
+    nb += dum; /* total storage for adjusted residuals */
   }
-  Aaa = (double *)CALLOC(j*2,sizeof(double)); /* oversized by leading diagonal */
+  Aaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
   IA = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A */
   ba = (double *)CALLOC(nb,sizeof(double)); /* storage adjusted residuals for each neighbourhood */
-  for (rp=rsd,bp=ba,Ap=A,kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+  rp = (double *)CALLOC(j,sizeof(double)); /* storage for residuals left out */
+  NCV=0.0;
+  for (bp=ba,Ap=A,jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
     // dpotri, DPOTRF and DPSTRF (piv)
     M = (int)sqrt(8*(mk[i]-kk)+1)/2; /* current Aaa is M by M */
     /* Fill upper triangle of I-Aaa */
@@ -2066,27 +2076,36 @@ void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d
     for (Aaap=Aaa,j=0;j<M;j++,Aaap += M) *Aaap += 1;
     if (M==1) { /* unit neighbourhood - trivial computation */
       *IAp = 1 / *Aaa;  /*1/(1-A_aa)*/
-      *bp = *IAp * *rp; /* adjusted residual */
+      *bp = *IAp * rsd[a[ii]]; /* adjusted residual */
       IAp++;
     } else { /* bigger neighbourhood - need matrix inversion */
       /* now invert I-Aaa */
       F77_CALL(dpotrf)(&uplo,&M,Aaa,&M,&info FCONE); /* LAPACK cholesky*/
       F77_CALL(dpotri)(&uplo,&M,Aaa,&M,&info FCONE); /* LAPACK chol to inv - upper triangle only returned */
       /* compute adjusted residuals ba = (I-Aaa)^-1 rsd_aa */
+      for (j=0;j<M;j++) rp[j] = rsd[a[ii+j]]; /* rsd_aa */
       F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&zero,bp,&ione FCONE);
       /* repack into AI as A is packed, for use in derivative computation */
       for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) {
         *IAp = *Aaap; *Aaap = 0.0; /* store and clear */
       }
     }
-    /* Now compute NCV itself */
-    
-    ii += M;
-    rp += M; // WRONG!!!! update needs to be to start of neighbourhood (in dsymv call)
+    /* Now compute NCV itself  */
+    q = md[i]-jj; /* size of predict neighbourhood */
+    for (dum=j=0;j<q;j++) { /* loop over predict indices */
+      i1 = d[jj+j]; /* need to match predict index to a dropped index */
+      while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
+      NCV += w[i1] * bp[dum]*bp[dum];
+    }
+    kk = mk[i]+1; /* start index of next neighbourhood in A */
+    ii = ma[i]+1; /* start index of next drop neighbourhood in a */
+    jj = md[i]+1; /* start index of next predict neighbourhood in d */
     bp += M;
   } /* neighbourhood, i loop */
 
   
-  FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IA);FREE(ba);
+  
+  
+  FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IA);FREE(ba);FREE(rp);
 } /* ncvd */
 

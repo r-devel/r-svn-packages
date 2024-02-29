@@ -2046,6 +2046,20 @@ nanei <- function(nb,k) {
   nb 
 } ## nanei
 
+onei <- function(nb) {
+## orders the neighbourhood indices into ascending order within each neighbourhood.
+## this makes some matching tasks easier especially for bam.
+  if (is.null(nb$k)||is.null(nb$m)) return() ## LOOCV - nothing to do
+  nn <- length(nb$m) ## number of neighbourhoods
+  b <- rep(1:nn,each=diff(c(0,nb$m))) ## neighbourhood indices/labels
+  nb$k <- nb$k[order(b,nb$k)] ## order drop indices within neighbourhood.
+  if (!is.null(nb$mi)) {
+    b <- rep(1:nn,each=diff(c(0,nb$mi))) ## neighbourhood indices/labels
+    nb$i <- nb$i[order(b,nb$i)] ## order predict indices within neighbourhood.
+  }
+  nb
+} ## onei
+
 ## don't be tempted to change to control=list(...) --- messes up passing on other stuff via ...
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
