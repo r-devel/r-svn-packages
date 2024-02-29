@@ -4293,7 +4293,8 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
       if (ok) { 
        if (length(x$smooth[[i]]$S.scale)!=length(x$smooth[[i]]$S))
          warning("S.scale vector doesn't match S list - please report to maintainer")
-        for (j in 1:length(x$smooth[[i]]$S.scale)) {
+	n.s <- length(x$smooth[[i]]$S.scale)
+        if (n.s>0) for (j in 1:n.s) {
           if (x$smooth[[i]]$sp[j]<0) { ## sp not supplied
             x$sp[k] <- x$sp[k] / x$smooth[[i]]$S.scale[j]
             k <- k + 1
@@ -4308,7 +4309,8 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
         }
       } else { ## this id already dealt with, but full.sp not scaled yet 
         ii <- idxi[idx%in%x$smooth[[i]]$id] ## smooth prototype
-        for (j in 1:length(x$smooth[[ii]]$S.scale)) {
+	n.s <- length(x$smooth[[ii]]$S.scale)
+        for (j in 1:n.s) {
           x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[ii]]$S.scale[j]
           kf <- kf + 1
         }
