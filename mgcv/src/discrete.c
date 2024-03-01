@@ -2012,8 +2012,8 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 } /* XWXd1 */ 
 
 
-void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
-	  double *X,int *k,int *ks,int *m,int *p, int *n,
+void ncvd(double *beta,double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
+	  double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,int *soff,double *sp,
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
 /* computes the NCV criterion and its first two derivatives for the working linear regression of 
    a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
@@ -2026,11 +2026,13 @@ void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d
    NOTE: both a and d are assumed to have row indices sorted into ascending order within 
    neighbourhoods: see mgcv.r:onei for a suitable fast routine to do this up front. This is
    needed to facilitate matching of dropped and predicted points. 
+   S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first elelemnt penalized soff[i]
+   if sr[i] < 0 then S[i] is an identity matrix -sr[i] by -sr[i], but is not actually supplied.
 */
-  double *A,*Aaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,NCV;
-  int nrs=0,dum,dum1,i1,i,j,ck,kk,M,q,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,*p1,*p2,ione=1;
+  double *A,*Aaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,NCV,*dp1,*dp2,xx;
+  int nrs=0,dum,dum1,i1,i,j,ck,kk,M,q,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,*p1,*p2,ione=1,l;
   ptrdiff_t nb,nk;
-  char uplo='U';
+  char uplo='U',trans='N';
   /* create indices for extracting A_aa blocks of influence matrix */
   mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of ka,k2 blocks defining each A_aa */
   for (ii=kk=i=0;i<*nn;i++) { /* create mk */
@@ -2103,9 +2105,25 @@ void ncvd(double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,int *d
     bp += M;
   } /* neighbourhood, i loop */
 
-  
-  
-  
+  /* Compute the derivatives... */
+  P = (double **)CALLOC(ns,sizeof(double));
+  b1 = (double **)CALLOC(ns,sizeof(double));mu1 = (double **)CALLOC(ns,sizeof(double));
+  for (l=0;l<ns;l++) {
+    q = sr[l]; if (q<0) q = -q;
+    P[l] = (double *)CALLOC(q * *pg,sizeof(double));
+    if (sr[l]>0) {
+      F77_CALL(dgemm)(&trans,&trans,pg,sr+l,sr+l,&one,G+soff[l] * *pg,pg,S[l],sr+l,&zero,P[l],pg FCONE); /* [G]^l S_l */
+    } else { /* S[l] = I so P[l] = [G]^l */
+      for (dp1=G+soff[l] * *pg,dp2=P[l],dp3=dp2 + *pg * q;dp2<dp3;dp2++) *dp2 = * dp3;
+    }  
+    b1[l]  = (double *)CALLOC(*pg,sizeof(double));
+    mu1[l]  = (double *)CALLOC(*n,sizeof(double));
+    xx = -sp[l];
+    F77_CALL(dgemv)(&trans,pg,sr+l,&xx,P[l],pg,beta+soff[l],&ione,&zero,b1[l],&ione FCONE); /* dbeta/d rho_l */
+    Xbd(mu1[l],b1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,int *bc,int *cs,int *ncs); /* note limited thread safety */
+  } /* l sp loop */ 
+
+  for (l=0;l<ns;l++) { FREE(P[l]);FREE(b1[l]);} FREE(P); FREE(b1);
   FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IA);FREE(ba);FREE(rp);
 } /* ncvd */
 
