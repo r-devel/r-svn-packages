@@ -238,7 +238,9 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
 SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
 	    SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV,SEXP EPS,SEXP NT);
 SEXP nei_cov(SEXP v,SEXP d, SEXP M, SEXP K);
-
+void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,
+	  int *d,int *md,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,int *soff,double *sp,
+	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads);
 void chol_up(double *R,double *u, int *n,int *up,double *eps);
 void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work);
 
@@ -251,7 +253,8 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT);
 SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
 SEXP AddBVB(SEXP A,SEXP bt, SEXP vbt);
 SEXP spdev(SEXP A);
-
+SEXP getListEl(SEXP list, const char *str);
+  
 /* basis constructor/prediction routines*/
 
 void crspl(double *x,int *n,double *xk, int *nk,double *X,double *S, double *F,int *Fsupplied);

@@ -1,4 +1,4 @@
-/* (c) Simon N. Wood (2015-2023) Released under GPL2 */
+/* (c) Simon N. Wood (2015-2024) Released under GPL2 */
 
 /* Routines to work with discretized covariate models 
    Data structures:
@@ -2012,6 +2012,9 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 } /* XWXd1 */ 
 
 
+
+
+
 void fill_lt(double *A,int k) {
 /* fill lower triangle of symmetric A from upper triangle */
   int i;
@@ -2020,6 +2023,59 @@ void fill_lt(double *A,int k) {
   for (Al0=Au0=A,i=0;i<k;i++,Au0+=k,Al0++) for (Au=Au0,Au1=Au+i,Al=Al0;Au<Au1;Au++,Al+=k) *Al = *Au;
 } /* fill_lt */  
 
+SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEXP wr,SEXP spr,
+	    SEXP Xr,SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP nei, SEXP Sr) {
+/* wrapper function for ncvd() suitable for .Call-ing from R. */
+  double *NCV,*NCV1,*NCV2,*w,*X,*v,*beta,*G,*rsd,*sp,**S;
+  int *a,*ma,*d,*md,*k,*ks,*m,nx,*p,*ts,*dt,nt,*qc,*nthreads,nprot=0,nS,ns,nsp,*sr,*soff,i,j,q,pg,nn;
+  SEXP K,M,I,MI,Sl,Si;
+  ptrdiff_t n;
+  n = (ptrdiff_t)nrows(kr);
+  pg = (int) nrows(Gr);
+  G = REAL(Gr); X = REAL(Xr);w = REAL(wr);
+  beta = REAL(betar);rsd= REAL(rsdr);
+  k = INTEGER(kr); ks = INTEGER(ksr);
+  m = INTEGER(mr); nx = length(mr);
+  p = INTEGER(pr);sp = REAL(spr);nsp=length(spr);
+  ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
+  v = REAL(vr);qc = INTEGER(qcr);
+  nthreads = INTEGER(nthreadsr);
+  NCV = REAL(NCVr);NCV1 = REAL(NCV1r);NCV2 = REAL(NCV2r);
+  /* unpack neighbourhood list, nei */
+  K = getListEl(nei,"k"); K = PROTECT(coerceVector(K,INTSXP));nprot++;
+  a = INTEGER(K);nn = length(K);
+  M = getListEl(nei,"m"); M = PROTECT(coerceVector(M,INTSXP));nprot++;
+  ma = INTEGER(M);
+  I = getListEl(nei,"i"); I = PROTECT(coerceVector(I,INTSXP));nprot++;
+  d = INTEGER(I);
+  MI = getListEl(nei,"mi"); M = PROTECT(coerceVector(MI,INTSXP));nprot++;
+  md = INTEGER(MI);
+  /* now get the smoothing penalty matrix structure, Sr */
+  nS = length(Sr);
+  S = (double **)CALLOC(nsp,sizeof(double *));
+  soff = (int *)CALLOC(nsp,sizeof(int));
+  sr = (int*) CALLOC(nsp,sizeof(int));
+  for (ns=i=0;i<nS;i++) {
+    Sl = VECTOR_ELT(Sr, i);
+    soff[ns] = asInteger(getListEl(Sl,"start"));
+    sr[ns] = 1 + asInteger(getListEl(Sl,"stop")) - soff[ns];
+    Si = getListEl(Sl,"S");
+    q = length(Si);
+    if (q>1) for (j=0;j<q;j++,ns++) {
+      K = VECTOR_ELT(Sr, i);K = PROTECT(coerceVector(K,REALSXP));nprot++;
+      S[ns] = REAL(K);
+      if (j>0) { soff[ns] = soff[ns-1]; sr[ns] = sr[ns-1];}
+      } else { sr[ns] = -sr[ns];ns++;} /* signals identity penalty */ 
+  }
+  // NOTE: should throw error if ns != nsp
+  ncvd(NCV,NCV1,NCV2,beta,G,rsd,w,&pg,&nn,a,ma,d,md,X,k,ks,m,p,&n,
+       S,&ns,sr,soff,sp,&nx,ts,dt,&nt,v,qc,nthreads);
+  FREE(S);FREE(soff);FREE(sr);
+  UNPROTECT(nprot);return(R_NilValue);
+} /* CNCV */
+
+  
 void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,
 	  int *d,int *md,
 	  double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,int *soff,double *sp,
@@ -2035,7 +2091,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
    NOTE: both a and d are assumed to have row indices sorted into ascending order within 
    neighbourhoods: see mgcv.r:onei for a suitable fast routine to do this up front. This is
    needed to facilitate matching of dropped and predicted points. 
-   S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first elelemnt penalized soff[i]
+   S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first element penalized soff[i]
    if sr[i] < 0 then S[i] is an identity matrix -sr[i] by -sr[i], but is not actually supplied.
 */
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
@@ -2126,9 +2182,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
   } /* neighbourhood, i loop */
 
   /* Compute the derivatives... */
-  P = (double **)CALLOC(ns,sizeof(double));A1 = (double **)CALLOC(ns,sizeof(double));
-  beta1 = (double **)CALLOC(ns,sizeof(double));mu1 = (double **)CALLOC(ns,sizeof(double));
-  IAdAIA = (double **)CALLOC(ns,sizeof(double));ba1 = (double **)CALLOC(ns,sizeof(double));
+  P = (double **)CALLOC(ns,sizeof(double *));A1 = (double **)CALLOC(ns,sizeof(double *));
+  beta1 = (double **)CALLOC(ns,sizeof(double *));mu1 = (double **)CALLOC(ns,sizeof(double *));
+  IAdAIA = (double **)CALLOC(ns,sizeof(double *));ba1 = (double **)CALLOC(ns,sizeof(double *));
  
   beta2 = (double *)CALLOC(*pg,sizeof(double)); /* second derivative storage - transient */
   V2 = (double *)CALLOC(*pg * *pg,sizeof(double));
@@ -2148,7 +2204,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
     V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
     xx = -sp[l];
     F77_CALL(dgemv)(&ntrans,pg,sr+l,&xx,P[l],pg,beta+soff[l],&ione,&zero,beta1[l],&ione FCONE); /* beta1[l] = dbeta/d rho_l */
-    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,sr+l,&xx,P[l],pg,G+sr[l],pg,&zero,V[l],pg FCONE FCONE); /* [G]^l S_l */
+    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,sr+l,&xx,P[l],pg,G+sr[l],pg,&zero,V[l],pg FCONE FCONE); /* P[l] [G]_l  */
     Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&izero); /* dmu/d rho_l note limited thread safety */
     A1[l] = (double *)CALLOC(nk,sizeof(double)); /* dA_aa/d rho_l packed as A */ 
     diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
