@@ -246,7 +246,7 @@ predict(b,newdata=data.frame(x0=xn[1],x1=xn[2],
 
 ##############################################################
 ## Example of producing a prediction interval for non Gaussian
-## data
+## data...
 ##############################################################
 
 f <- function(x) 0.2 * x^11 * (10 * (1 - x))^6 + 10 * 
