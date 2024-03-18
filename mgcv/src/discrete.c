@@ -2133,7 +2133,7 @@ int upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
 } /* upair */  
 
 
-void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+void ncvd1(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
 	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
 	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
 	  int *soff,double *sp,
@@ -2189,7 +2189,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   upair(a1,a2,ind,&nu);
   /* now first nu elements of a1 and a2 are unique pairs, while a1[ind[i]], a2[ind[i]] is
      original a1[i],a2[i]. This enables everything to be based only on unique elements
-     of A etc, rather than repeating element extractions many times for each neighbourhood*/
+     of A etc, rather than repeating element extractions many times for each neighbourhood
+     so mk now contains block ends for ind elements defining each A_aa
+  */
   
   k1 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
   k2 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
@@ -2238,7 +2240,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   Aaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
   IAaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
   B = (double *)CALLOC(j*(j+1)/2,sizeof(double));
-  IA = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A */
+  IA = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A without unique removal */
   ba = (double *)CALLOC(nb,sizeof(double)); /* storage adjusted residuals for each neighbourhood */
   rp = (double *)CALLOC(j,sizeof(double)); /* storage for residuals left out */
   //AIr = (double *)CALLOC(j,sizeof(double)); /* ((I-A_aa)^-1)(y_a -\mu_a ) */
@@ -2247,7 +2249,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     // dpotri, DPOTRF and DPSTRF (piv)
     M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
     /* Fill upper triangle of I-Aaa */
-    for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = - *Ap; /* fill upper triangle */
+    //for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = - *Ap; /* fill upper triangle of current Aaa*/
+    //for (Aaap=Aaa,j=0;j<M;j++,Aaap += M+1) *Aaap += 1;
+    for (p1 = ind+kk,Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = -A[*p1]; /* fill upper triangle of current Aaa*/
     for (Aaap=Aaa,j=0;j<M;j++,Aaap += M+1) *Aaap += 1;
     if (M==1) { /* unit neighbourhood - trivial computation */
       *IAp = 1 / *Aaa;  /*1/(1-A_aa)*/
@@ -2312,16 +2316,18 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,&srl,&xx,P[l],pg,G+soff[l],pg,&zero,V[l],pg FCONE FCONE); /* - sp[l] P[l] [G]_l  */
     ncs=0;
     Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* dmu/d rho_l note limited thread safety */
-    A1[l] = (double *)CALLOC(nk,sizeof(double)); /* dA_aa/d rho_l packed as A */ 
+    A1[l] = (double *)CALLOC(nu,sizeof(double)); /* dA_aa/d rho_l packed as A */ 
     nrs=ncs=0;
  
-    diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
+    diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
- 
-    for (wp=wij,dp1=A1[l],dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */ 
+    for (wp=wij,dp1=A1[l],dp2=dp1+nu;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
+    
     for (ba1p=ba1[l],bp=ba,Ap=A1[l],IAp=IA,IAdAIAp = IAdAIA[l],jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
      M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
-     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = *Ap; /* current A1_aa to upper tri Aaa */
+     //for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = *Ap; /* current A1_aa to upper tri Aaa */
+     for (p1 = ind+kk,Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Ap[*p1]; /* current A1_aa to upper tri Aaa */
+     
      fill_lt(Aaa,M); /* fill in lower triangle */
      for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
      side = 'L';
@@ -2371,10 +2377,10 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
       if (l==r) for (bp=V[r],dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
       ncs=nrs=0;
   
-      diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
+      diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
    
-      for (wp=wij,dp1=A2,dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
+      for (wp=wij,dp1=A2,dp2=dp1+nu;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
        
       /* Compute the second derivative of NCV w.r.t. rho_l and rho_r */
       ba1p=ba1[l];ba2p=ba1[r];bp=ba;A2p=A2;Alp=A1[l];Arp=A1[r];IAp=IA;IAdAIAp = IAdAIA[l];IAdAIArp = IAdAIA[r];
@@ -2382,7 +2388,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
 	/*  need second derivative of b_a wrt rho_l and rho_r... */
         for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j)  for (q=0;q<=j;q++,A2p++,Aaap++) *Aaap = *A2p; /* Aaa =  d2A_aa/drho_l drho_r */
+	//for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j)  for (q=0;q<=j;q++,A2p++,Aaap++) *Aaap = *A2p; /* Aaa =  d2A_aa/drho_l drho_r */
+        for (p1 = ind+kk,Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = A2p[*p1]; /* Aaa =  d2A_aa/drho_l drho_r */
+
 	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B =  d2 A_aa/drho_l drho_r  (I-A_aa)^{-1}  (y_a - mu_a) */
 	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,B,&ione,&zero,ba2,&ione FCONE);
 	for (dp1=mu2,j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -d2mu/d rho_l d rho_r */
@@ -2442,12 +2450,12 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 
 
 
-void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
 	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
 	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
 	  int *soff,double *sp,
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
-/* original refernce code. tested but inefficient in terms of memory use and over extraction of
+/* original reference code. tested but inefficient in terms of memory use and over extraction of
    A elements.
 
    computes the NCV criterion and its first two derivatives for the working linear regression of 
@@ -2480,7 +2488,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of k1,k2 blocks defining each A_aa */
   for (kk = -1,ii=i=0;i<*nn;i++) { /* create mk */
     q = ma[i]-kk; kk = ma[i];
-    ii = mk[i] = ii + q*(q+1)/2;
+    ii = mk[i] = ii + q*(q+1)/2; // BUG: mk[i] is start of next block in 0 based indexing
   }
   nk = mk[*nn-1]+1; /* number of rows of k */
   k1 = (int *)CALLOC(nk*(ptrdiff_t) *ck,sizeof(int));
@@ -2569,6 +2577,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   mu2 = (double *)CALLOC(*n,sizeof(double));
   ba2 = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
   for (l=0;l<ns;l++) {
+    srl = sr[l]; if (srl<0) srl = -srl; 
     P[l] = (double *)CALLOC(srl * *pg,sizeof(double));
     mu1[l] = (double *)CALLOC(*n,sizeof(double));
     V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
