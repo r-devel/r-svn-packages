@@ -1344,29 +1344,18 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
        d1b=db ,rss1=rss1,rss2=rss2)
 } ## end Sl.iftChol
 
-
-Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
-                       nobs=0,Mp=0,nt=c(1,1),tol=0,gamma=1) {
+Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=0,drop=NULL,tol=0,nthreads=1) {
 ## given X'WX in XX and f=X'Wy solves the penalized least squares problem
-## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
-## gradient and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
-## yy = y'Wy in order to get derivsatives w.r.t. phi.
-## NOTE: with an optimized BLAS nt==1 is likely to be much faster than
-##       nt > 1
-  tol <- as.numeric(tol)
+## with penalty defined by Sl and rho, and evaluates an NCV Newton step, the NCV 
+## gradient and the estimated coefs beta.
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
-  if (length(rho)<length(rho0)) rho <- rho0 ## ncol(L)==0 or length(rho)==0
-  ## get log|S|_+ without stability transform... 
-  fixed <- rep(FALSE,length(rho))
-  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE,nt=nt[1])
-  
-  ## now the Cholesky factor of the penalized Hessian... 
-  #XXp <- XX+crossprod(ldS$E) ## penalized Hessian
-  XXp <- Sl.addS(Sl,XX,rho)
+  if (length(rho)<length(rho0)) rho <- rho0
+  sp <- exp(rho)
+  XXp <- Sl.addS(Sl,XX,rho) ## penalized Hessian
 
   d <- diag(XXp);ind <- d<=0
-  d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
-  #XXp <- t(XXp/d)/d ## diagonally precondition
+  d[ind] <- 1;d[!ind] <- sqrt(d[!ind]) ## diagonal pre-conditioner
+  ## get preconditioned Cholesky factor
   R <- if (nt[2]>1) pchol(t(XXp/d)/d,nt[2]) else suppressWarnings(chol(t(XXp/d)/d,pivot=TRUE))
   r <- min(attr(R,"rank"),Rrank(R))
   p <- ncol(XXp)
@@ -1377,7 +1366,105 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
   }
   beta <- rep(0,p)
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
+  mu <- Xbd(Xd,beta,k,ks,ts,dt,v,qc,drop)
+  rsd <- y-mu
+  G <- matrix(0,p,p)
+  if (nt[2]>1) {
+    P <- pbsi(R,nt=nt[2],copy=TRUE) ## invert R 
+    G[piv,piv] <-  pRRt(P,nt[2]) ## PP'
+  } else G[piv,piv] <- chol2inv(R)
+  G <- t(G/d)/d ## inverse of penalized (scaled) Hessian
+
+  NCV <- 0; nsp <- length(rho)
+  NCV1 <- numeric(nsp); NCV2 <- numeric(nsp*nsp)
+  m <- as.integer(unlist(lapply(Xd,nrow)));p <- as.integer(unlist(lapply(Xd,ncol)))
+  beta1 <- numeric(length(beta)*nsp)
+
+  .Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, beta, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
+        as.integer(ts-1L), as.integer(dt), as.double(unlist(v)), as.integer(qc), as.integer(nthreads), nei, Sl)
+  NCV2 <- matrix(NCV2,nsp,nsp)
+  beta1 <- matrix(beta1,length(beta),nsp)
+  ## NOTE: should modify to pass back dbeta/drho from CNCV
+
+  ## DEBUG code to check NCV score + deriv correct in loocv case
+  db <- FALSE
+  if (db) {
+    dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w
+    rcv <- rsd/(1-dA)
+    NCV0 <- sum(rcv^2*w)
+    mu1 <- Xbd(Xd,beta1,k,ks,ts,dt,v,qc)
+    b1 <-  matrix(0,length(y),length(sp))
+    NCV10 <- rep(0,length(sp))
+    for (i in 1:length(sp)) {
+      ii <- (Sl[[i]]$start:Sl[[i]]$stop)[Sl[[i]]$ind]
+      A1 <- diagXVXd(Xd,-sp[i]*G[,ii]%*%G[ii,],k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w
+      b1[,i] <- A1/(1-dA)^2*rsd-mu1[,i]/(1-dA) ## C code for first term suspicious
+      NCV10[i] <- 2*sum(w*b1[,i]*rcv)
+    }
+  }
+  ## DEBUG end
+
+  if (!is.null(L)) {
+    NCV1 <- t(L) %*% NCV1
+    NCV2 <- t(L) %*% NCV2 %*% L
+  }
+  uconv.ind <- (abs(NCV1) > tol)|(abs(diag(NCV2))>tol)
+
+  if (length(NCV1)>0 && sum(uconv.ind)>0) {
+    if (sum(uconv.ind)!=ncol(NCV2)) { 
+      NCV1 <- NCV1[uconv.ind]
+      NCV2 <- NCV2[uconv.ind,uconv.ind]
+    }
+
+    er <- eigen(NCV2,symmetric=TRUE)
+    er$values <- abs(er$values)
+    me <- max(er$values)*.Machine$double.eps^.5
+    er$values[er$values<me] <- me
+    step <- rep(0,length(uconv.ind))
+    step[uconv.ind] <- -er$vectors %*% ((t(er$vectors) %*% NCV1)/er$values)
+
+    ## limit the step length...
+    ms <- max(abs(step))
+    if (ms>4) step <- 4*step/ms
+  } else step <- 0
+  
+  list(beta=beta,grad=NCV1,step=step,db=beta1,PP=G,R=R,piv=piv,rank=r,
+       hess=NCV2,NCV=NCV)
  
+} ## Sl.ncv
+
+Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
+                       nobs=0,Mp=0,nt=c(1,1),tol=0,gamma=1) {
+## given X'WX in XX and f=X'Wy solves the penalized least squares problem
+## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
+## gradient and the estimated coefs beta. If phi.fixed=FALSE then we need 
+## yy = y'Wy in order to get derivatives w.r.t. phi.
+## NOTE: with an optimized BLAS nt==1 is likely to be much faster than
+##       nt > 1
+  tol <- as.numeric(tol)
+  rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
+  if (length(rho)<length(rho0)) rho <- rho0 ## ncol(L)==0 or length(rho)==0
+  ## get log|S|_+ without stability transform... 
+  fixed <- rep(FALSE,length(rho))
+  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE,nt=nt[1])
+  
+  ## now the Cholesky factor of the penalized Hessian... 
+  XXp <- Sl.addS(Sl,XX,rho) ## penalized Hessian
+
+  d <- diag(XXp);ind <- d<=0
+  d[ind] <- 1;d[!ind] <- sqrt(d[!ind]) ## diagonal pre-conditioner
+  ## get preconditioned Cholesky factor
+  R <- if (nt[2]>1) pchol(t(XXp/d)/d,nt[2]) else suppressWarnings(chol(t(XXp/d)/d,pivot=TRUE))
+  r <- min(attr(R,"rank"),Rrank(R))
+  p <- ncol(XXp)
+  piv <- attr(R,"pivot") #;rp[rp] <- 1:p
+  if (r<p) { ## drop rank deficient terms...
+    R <- R[1:r,1:r]
+    piv <- piv[1:r]
+  }
+  beta <- rep(0,p)
+  beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
+
   ## get component derivatives based on IFT (noting that ldS$Sl has s.p.s updated to current)
   dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv,nt=nt[1])
  

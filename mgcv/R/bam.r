@@ -429,7 +429,7 @@ mini.mf <-function(mf,chunk.size) {
 
 bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     mustart = NULL, offset = rep(0, nobs),rho=0, control = gam.control(), intercept = TRUE, 
-    gc.level=0,nobs.extra=0,npt=c(1,1),gamma=1,in.out=NULL,...) {
+    gc.level=0,nobs.extra=0,npt=c(1,1),gamma=1,in.out=NULL,method="fREML",nei=NULL,...) {
 ## This is a version of bgam.fit designed for use with discretized covariates. 
 ## Difference to bgam.fit is that XWX, XWy and Xbeta are computed in C
 ## code using compressed versions of X. Parallelization of XWX formation
@@ -668,9 +668,45 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
       ## get beta, grad and proposed Newton step... 
       repeat { ## Take a Newton step to update log sp and phi
         lsp <- lsp0 + Nstep
-        if (scale<=0) log.phi <- lsp[n.sp+1] 
-        prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
-                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5,gamma=gamma)
+        if (scale<=0) log.phi <- lsp[n.sp+1]
+	if (method=="NCV") {
+	  ## NOTE: scale param, tol based on 'reml' + nthreads!!
+	  ## basically only here for testing at the moment - not fully plumbed in
+	  prop2 <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+                  phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5,gamma=gamma)
+          prop <- Sl.ncv(z,G$Xd,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nei=nei,Sl=Sl,XX=qrx$XX,w=w,f=qrx$Xy,rho=lsp[1:n.sp],
+	                 nt=npt,L=G$L,rho0=G$lsp0,drop=G$drop,tol=abs(reml)*.Machine$double.eps^.5,nthreads=1)
+          deriv.check <- TRUE
+          if (deriv.check) { ## for debug derivative testing
+            Hd <- prop$hess; eps <- 1e-7 ;fd <- prop$grad
+	    bfd <- prop$db
+            for (i in 1:n.sp) {
+              lspfd <- lsp; lspfd[i] <- lsp[i] + eps
+	      prop1 <- Sl.ncv(z,G$Xd,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nei=nei,Sl=Sl,XX=qrx$XX,w=w,f=qrx$Xy,rho=lspfd[1:n.sp],
+	                      nt=npt,L=G$L,rho0=G$lsp0,drop=G$drop,tol=abs(reml)*.Machine$double.eps^.5,nthreads=1)
+	      fd[i] <- (prop1$NCV - prop$NCV)/eps
+	      Hd[,i] <- (prop1$grad - prop$grad)/eps
+	      bfd[,i] <- (prop1$beta - prop$beta)/eps
+            }
+	    Hd <- 0.5 * (Hd + t(Hd))
+          }
+        } else { ## method is REML
+          prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+                  phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5,gamma=gamma)
+	  deriv.check <- TRUE
+          if (deriv.check) { ## for debug derivative testing
+            Hd <- prop$hess; eps <- 1e-7
+	    bfd <- prop$db
+            for (i in 1:n.sp) {
+              lspfd <- lsp; lspfd[i] <- lsp[i] + eps
+	      prop1 <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lspfd[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+                  phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5,gamma=gamma)
+	      Hd[,i] <- (prop1$grad - prop$grad)/eps
+	      bfd[,i] <- (prop1$beta - prop$beta)/eps
+            }
+	    Hd <- 0.5 * (Hd + t(Hd))
+          }	  
+        }
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
           break 
@@ -2055,7 +2091,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
                 cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,coef=NULL,
-                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,in.out=NULL,...) {
+                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,in.out=NULL,nei=NULL,...) {
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
@@ -2079,17 +2115,27 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family %in% c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","GACV.Cp","GCV.Cp","REML",
-                    "ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
+                    "ML","P-REML","P-ML","NCV")) stop("un-supported smoothness selection method")
     if (is.logical(discrete)) {
       discretize <- discrete
       discrete <- NULL ## use default discretization, if any
     } else {
       discretize <- if (is.numeric(discrete)) TRUE else FALSE
     }
+    if (method=="NCV") {
+      if (!discretize) {
+        discretize <- TRUE
+	warning("NCV only available with discrete=TRUE - resetting")
+      }
+      if (rho!=0) {
+        rho <- 0
+	warning("AR1 residuals not available with NCV, resetting rho=0")
+      }
+    } ## NCV pre-processing
     if (discretize) { 
-      if (method!="fREML") { 
+      if (!method %in% c("fREML","NCV")) { 
         discretize <- FALSE
-        warning("discretization only available with fREML")
+        warning("discretization only available with fREML or NCV")
       } else {
         if (!is.null(cluster)) warning("discrete method does not use parallel cluster - use nthreads instead")
 	if (all(is.finite(nthreads)) && any(nthreads>1) && !mgcv.omp()) warning("openMP not available: single threaded computation only")
@@ -2099,9 +2145,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       family <- fix.family.link(family); efam <- TRUE
     } else efam <- FALSE
     
-    if (method%in%c("fREML")&&!is.null(min.sp)) {
+    if (method%in%c("fREML","NCV")&&!is.null(min.sp)) {
       min.sp <- NULL
-      warning("min.sp not supported with fast REML computation, and ignored.")
+      warning("min.sp not supported with fast REML and NCV computation, and ignored.")
     }
    
     gp <- interpret.gam(formula) # interpret the formula
@@ -2149,7 +2195,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <- mf$gc.level <-
     mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho  <- mf$cluster <- mf$discrete <-
     mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$drop.intercept <-
-    mf$coef <- mf$in.out <- mf$... <-NULL
+    mf$coef <- mf$in.out <- mf$nei <- mf$... <-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
 
@@ -2190,6 +2236,20 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     terms <- attr(mf,"terms")
     if (gc.level>0) gc()  
     if (rho!=0&&!is.null(mf$"(AR.start)")) if (!is.logical(mf$"(AR.start)")) stop("AR.start must be logical")
+
+    if (method=="NCV") { ## pre-process the neighbourhood structure 'nei'
+      n <- nrow(mf)
+      if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) {
+        nei <- list(k=1:n,m=1:n,i=1:n,mi=1:n) ## LOOCV  
+      } else if (is.null(nei$i)||is.null(nei$mi)) {
+        if (length(nei$m)!=n) stop("nei$i and nei$mi must be supplied if number of neighbourhoods is not number of data")
+	nei$i <- 1:n; nei$mi <- 1:n
+      }
+      if (max(nei$m)>length(nei$k)||min(nei$m)<1) stop("nei$m does not match nei$k")
+      if (max(nei$mi)>length(nei$i)||min(nei$mi)<1) stop("nei$mi does not match nei$i")
+      if (max(nei$i)>n||min(nei$i)<1||max(nei$k)>n||min(nei$k)<1) stop("supplied nei index out of range")
+      nei <- onei(nei,TRUE) ## order indices within neighbourhoods and chnage to C indexing - needed for discrete NCV C code
+    } ## nei pre-processing
     
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
@@ -2449,9 +2509,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       G$offset <- model.offset(mf)
       if (is.null(G$offset)) G$offset <- rep(0,n)
     }
-   
-##    if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
-  
+     
     if (ncol(G$X) > chunk.size && !discretize) { ## no sense having chunk.size < p
       chunk.size <- 4*ncol(G$X)
       warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))    
@@ -2515,7 +2573,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                       gc.level=gc.level,use.chol=use.chol,in.out=in.out,npt=nthreads[1])
   } else if (G$discretize) {
     object <- bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,coef=coef,
-                       control = control,npt=nthreads,gc.level=gc.level,gamma=gamma,in.out=in.out,...)
+                       control = control,npt=nthreads,gc.level=gc.level,
+		       gamma=gamma,in.out=in.out,method=method,nei=nei,...)
                        
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc()

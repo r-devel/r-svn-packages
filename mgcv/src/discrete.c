@@ -627,7 +627,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
    square root of V in place of V.
    
    cs and rs are ncs and nrs vectors specifying which terms should be included 
-   in the cross product. zero or negative ncs or nrs signals to include all. 
+   in the cross product. zero or negative ncs or nrs signals to include all, but then
+   cs and rs must both be of length nt (Xbd requires this).
 
    Basic algorithm is to compute XV and then the row sums of XV.X. 
    In practice this is done by computing one column of XV and X at a time.
@@ -2012,9 +2013,6 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 } /* XWXd1 */ 
 
 
-
-
-
 void fill_lt(double *A,int k) {
 /* fill lower triangle of symmetric A from upper triangle */
   int i;
@@ -2023,18 +2021,19 @@ void fill_lt(double *A,int k) {
   for (Al0=Au0=A,i=0;i<k;i++,Au0+=k,Al0++) for (Au=Au0,Au1=Au+i,Al=Al0;Au<Au1;Au++,Al+=k) *Al = *Au;
 } /* fill_lt */  
 
-SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEXP wr,SEXP spr,
+SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEXP beta1r, SEXP wr,SEXP spr,
 	    SEXP Xr,SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP nei, SEXP Sr) {
 /* wrapper function for ncvd() suitable for .Call-ing from R. */
-  double *NCV,*NCV1,*NCV2,*w,*X,*v,*beta,*G,*rsd,*sp,**S;
-  int *a,*ma,*d,*md,*k,*ks,*m,nx,*p,*ts,*dt,nt,*qc,*nthreads,nprot=0,nS,ns,nsp,*sr,*soff,i,j,q,pg,nn;
+  double *NCV,*NCV1,*NCV2,*w,*X,*v,*beta,*G,*rsd,*sp,**S,*db;
+  int *a,*ma,*d,*md,*k,*ks,*m,nx,*p,*ts,*dt,nt,*qc,*nthreads,nprot=0,nS,ns,nsp,*sr,*soff,i,j,q,pg,nn,ck;
   SEXP K,M,I,MI,Sl,Si;
   ptrdiff_t n;
   n = (ptrdiff_t)nrows(kr);
+  ck = (int) ncols(kr);
   pg = (int) nrows(Gr);
   G = REAL(Gr); X = REAL(Xr);w = REAL(wr);
-  beta = REAL(betar);rsd= REAL(rsdr);
+  beta = REAL(betar);rsd= REAL(rsdr);db = REAL(beta1r);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
   p = INTEGER(pr);sp = REAL(spr);nsp=length(spr);
@@ -2044,9 +2043,9 @@ SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEX
   NCV = REAL(NCVr);NCV1 = REAL(NCV1r);NCV2 = REAL(NCV2r);
   /* unpack neighbourhood list, nei */
   K = getListEl(nei,"k"); K = PROTECT(coerceVector(K,INTSXP));nprot++;
-  a = INTEGER(K);nn = length(K);
+  a = INTEGER(K);
   M = getListEl(nei,"m"); M = PROTECT(coerceVector(M,INTSXP));nprot++;
-  ma = INTEGER(M);
+  ma = INTEGER(M);nn = length(M);
   I = getListEl(nei,"i"); I = PROTECT(coerceVector(I,INTSXP));nprot++;
   d = INTEGER(I);
   MI = getListEl(nei,"mi"); M = PROTECT(coerceVector(MI,INTSXP));nprot++;
@@ -2058,100 +2057,198 @@ SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEX
   sr = (int*) CALLOC(nsp,sizeof(int));
   for (ns=i=0;i<nS;i++) {
     Sl = VECTOR_ELT(Sr, i);
-    soff[ns] = asInteger(getListEl(Sl,"start"));
-    sr[ns] = 1 + asInteger(getListEl(Sl,"stop")) - soff[ns];
+    soff[ns] = asInteger(getListEl(Sl,"start")) - 1;
+    sr[ns] = asInteger(getListEl(Sl,"stop")) - soff[ns];
     Si = getListEl(Sl,"S");
     q = length(Si);
     if (q>1) for (j=0;j<q;j++,ns++) {
       K = VECTOR_ELT(Sr, i);K = PROTECT(coerceVector(K,REALSXP));nprot++;
       S[ns] = REAL(K);
       if (j>0) { soff[ns] = soff[ns-1]; sr[ns] = sr[ns-1];}
-      } else { sr[ns] = -sr[ns];ns++;} /* signals identity penalty */ 
+    } else {
+      sr[ns] = -sr[ns];
+      /* diagonal of Si - one or zero */
+      S[ns] = REAL(PROTECT(coerceVector(getListEl(Sl,"ind"),REALSXP)));nprot++;
+      ns++;
+    } /* signals identity penalty */ 
   }
   // NOTE: should throw error if ns != nsp
-  ncvd(NCV,NCV1,NCV2,beta,G,rsd,w,&pg,&nn,a,ma,d,md,X,k,ks,m,p,&n,
-       S,&ns,sr,soff,sp,&nx,ts,dt,&nt,v,qc,nthreads);
+  ncvd(NCV,NCV1,NCV2,beta,db,G,rsd,w,&pg,&nn,a,ma,d,md,X,k,&ck,ks,m,p,&n,
+       S,ns,sr,soff,sp,&nx,ts,dt,&nt,v,qc,nthreads);
   FREE(S);FREE(soff);FREE(sr);
   UNPROTECT(nprot);return(R_NilValue);
 } /* CNCV */
 
-  
-void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,
-	  int *d,int *md,
-	  double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,int *soff,double *sp,
+
+void tad(double *M,int p) {
+/* Forms M + t(M) in situ, where M is p by p */
+  int i;
+  double *Md,*Ms,*M1;
+  for (i=0;i<p;i++) {
+    Md = M+i; Ms = M + i*p; M1 = Ms + i;
+    for (; Ms<=M1; Md+= p, Ms++) { *Md += *Ms;*Ms = *Md; }
+  }  
+}  /* tad */
+
+static int ucomp(const void *a, const void *b) {
+  /* comparison function for qsort as used in upair. a and b are pointers to integer pointers. Each points in particular to an
+     integer triplet to sort, on the basis of the first pair (the third element is an index tracker).
+  */   
+  int k;
+  k = *(*(int **)a) - *(*(int **)b); /* difference between first elements pointed to */
+  if (k==0) k = *(*(int **)a + 1) - *(*(int **)b + 1); /* difference between second elements pointed to, if needed */
+  return(k);
+} /* ucomp */  
+
+int upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
+/* finds the unique integer pairs in k1, k2, returning the number of these in *n (which is array length on entry).
+   The pairs are returned in the early elements of k1 and k2 and ind[i] gives the elements of these unique pair arrays
+   giving the ith input pair. i.e. k1[i], k2[i] on input is located in k1[ind[i]],k2[ind[i]] on output.
+   - could be optimized once tested.
+*/
+  int **a,*ap,*a0,*ii,i,j;
+  a = (int **)CALLOC(*n,sizeof(int *));
+  a0 = ap = (int *)CALLOC(*n * 3,sizeof(int));
+  for (i=0;i<*n;i++,ap += 3) { /* a[i] points to an integer triplet (k1[i],k2[i],i) */
+    a[i] = ap;ap[0] = k1[i];
+    ap[1] = k2[i];ap[2] = i;
+  }  
+  qsort(a,*n,sizeof(int *),ucomp); /* sort the triplet pointers to order k1,k2 */
+  /* read sorted back into k1, k2 and ii */
+  for (i=0;i<*n;i++,ap += 3) {
+    ap = a[i];
+    k1[i] = *ap;k2[i] = ap[1];ind[i] = ap[2];
+  }
+  for (i=0;i<*n;i++) a0[i] = ind[i]; /* need a copy for re-arranging into ind */
+  /* now compress unique into k1 and k2, while recording index into ind */
+  j = 0;ind[*a0] = j;
+  for (i=1;i<*n;i++) {
+    if (k1[i]!=k1[i-1]||k2[i]!=k2[i-1]) { /* k1,k2 change from previous */
+      j++; k1[j] = k1[i]; k2[j] = k2[i];
+    }
+    ind[a0[i]] = j; /* record that original index maps to unique row j */
+  }
+  *n = j+1; /* unique pair count */
+  FREE(a0);FREE(a);
+} /* upair */  
+
+
+void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
+	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
+	  int *soff,double *sp,
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
 /* computes the NCV criterion and its first two derivatives for the working linear regression of 
    a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
-   full model residuals. k1 and k2 are the indexing nk-vectors required to extract the required 
-   influence matrix blocks. mk gives the block-ends, nn the number of neighbourhood blocks.
-   a is the array of data rows to drop, ma is the  nn-vector of block ends (a[ma[i-1]-1:ma[i]]
+   full model residuals.  nn is the number of neighbourhood blocks.
+   a is the array of data rows to drop, ma is the  nn-vector of block ends (a[ma[i-1]+1:ma[i]]
    is index rows to drop for the ith neighbourhood). 
-   d is the array of data rows to predict, md is the nn-vector of block ends (d[md[i-1]-1:md[i]]
+   d is the array of data rows to predict, md is the nn-vector of block ends (d[md[i-1]+1:md[i]]
    is index of predictions to be made for ith neighbourhood).
    NOTE: both a and d are assumed to have row indices sorted into ascending order within 
    neighbourhoods: see mgcv.r:onei for a suitable fast routine to do this up front. This is
    needed to facilitate matching of dropped and predicted points. 
    S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first element penalized soff[i]
    if sr[i] < 0 then S[i] is an identity matrix -sr[i] by -sr[i], but is not actually supplied.
+
+   Created below, k1 and k2 are the indexing nk-vectors required to extract the required 
+   influence matrix blocks. mk gives the block-ends,
 */
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
-    **beta1,**mu1,**P,*wij,*wp,**V1,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,*beta2,*mu2,*AIr,*V2,*ba2,
-    *ba2p,*A2p,*Arp,*Alp,*IAdAIArp,*IAr;
-  int nrs=0,dum,dum1,i1,i,j,ck,kk,M,q,r,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,
-    *p1,*p2,ione=1,izero=0,l,*cs;
-  ptrdiff_t nb,nk;
+    **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,*beta2,*mu2,//*AIr,
+    *V2,*ba2,
+    *ba2p,*A2p,*Arp,*Alp,*IAdAIArp;
+  int ncs=0,nrs=0,dum,dum1,i1,i,j,kk,M,q,r,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,
+    *p1,*p2,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2;
+  ptrdiff_t nb,nk,nu;
   char uplo='U',ntrans='N',trans='T',side='L';
   cs =  (int *)CALLOC(*nt,sizeof(int));
+  *NCV=0.0;
   /* create indices for extracting A_aa blocks of influence matrix */
-  mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of ka,k2 blocks defining each A_aa */
-  for (ii=kk=i=0;i<*nn;i++) { /* create mk */
-    q = ma[i]-kk; kk = ma[i] + 1;
+  mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of k1,k2 blocks defining each A_aa */
+  for (kk = -1,ii=i=0;i<*nn;i++) { /* create mk */
+    q = ma[i]-kk; kk = ma[i];
     ii = mk[i] = ii + q*(q+1)/2;
   }
-  nk = mk[*nn-1]; /* number of rows of k */
-  ck = ks[2 * *nx - 1] - 1; /* number of cols of k */
-  k1 = (int *)CALLOC(nk*(ptrdiff_t)ck,sizeof(int));
-  k2 = (int *)CALLOC(nk*(ptrdiff_t)ck,sizeof(int));
-  wij = (double *)CALLOC(nk,sizeof(double)); /* weight multiplier for Aij elements */
-  for (k1i=k2i=kk=i=0;i<*nn;i++) {
-    M = ma[i]-kk; kk = ma[i] + 1;
-    for (j=0;j<M;j++) for (q=0;q<=j;q++,k1i++,k2i++,wp++) {
-      p1 = k + a[kk+j];dum = a[kk+q];p2 = k + dum;*wp = w[dum];
-      for (k1p=k1+k1i,k2p=k2+k2i,ii=0;ii<=ck;ii++,k1p+=nk,k2p+=nk,p1 += *n,p2 += *n) {
-	*k1p = *p1; /* k1[k1i,] = k[a[kk+j],] */ 
-        *k2p = *p2; /* k2[k2i,] = k[a[kk+q],] */
-      }  
-    }    
+  nk = mk[*nn-1]+1; /* number of rows of k */
+  /* obtain the unique i,j elements of A required to produce the A_aa submatrix for each
+     neighbourhood along with an index vector for extracting each neighbourhood's lower
+     triangle from the nunique elements */
+  a1 = (int *)CALLOC(nk,sizeof(int));
+  a2 = (int *)CALLOC(nk,sizeof(int));ind = (int *)CALLOC(nk,sizeof(int));
+  for (k1p=a1,k2p=a2,kk=0,i=0;i<*nn;i++) { /* loop over neighbourhoods */
+    M = ma[i]-kk+1; /* size of neighbourhood i */
+    k1 = a + kk; 
+    for (j=0;j<M;j++,k1++) for (k2 = a+kk,q=0;q<=j;q++,k1p++,k2p++,k2++) {
+	*k1p = *k1; /* a[kk+j] */
+	*k2p = *k2; /* a[kk+q] */
+    }
+    kk = ma[i] + 1; 
+  }
+  nu = nk;
+  upair(a1,a2,ind,&nu);
+  /* now first nu elements of a1 and a2 are unique pairs, while a1[ind[i]], a2[ind[i]] is
+     original a1[i],a2[i]. This enables everything to be based only on unique elements
+     of A etc, rather than repeating element extractions many times for each neighbourhood*/
+  
+  k1 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
+  k2 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
+  wp = wij = (double *)CALLOC(nu,sizeof(double)); /* weight multiplier for Aij elements */
+  for (i=0;i<nu;i++,wp++) {
+    p1 = k + a1[i]; p2 = k + a2[i];
+    *wp = w[a2[i]];
+    for (k1p=k1+i,k2p=k2+i,j=0;j<*ck;j++,k1p+=nu,k2p+=nu,p1+= *n,p2 += *n) {
+      *k1p = *p1;
+      *k2p = *p2;
+    }  
   }  
+  
+  //  for (k1i=k2i=kk=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+  //  M = ma[i]-kk+1; /* size of neighbourhood i */
+  //  for (j=0;j<M;j++) for (q=0;q<=j;q++,k1i++,k2i++,wp++) {
+  //    p1 = k + a[kk+j];
+  //    dum = a[kk+q];
+  //    p2 = k + dum;
+  //    *wp = w[dum];
+  //    for (k1p=k1+k1i,k2p=k2+k2i,ii=0;ii< *ck;ii++,k1p+=nk,k2p+=nk,p1 += *n,p2 += *n) {
+  //	*k1p = *p1; /* k1[k1i,] = k[a[kk+j],] */ 
+  //    *k2p = *p2; /* k2[k2i,] = k[a[kk+q],] */
+  //   }  
+  //  }
+  //  kk = ma[i] + 1;  
+  //} /* neighbourhood loop */
   /* extract the influence matrix blocks */
-  A = (double *)CALLOC(nk,sizeof(double));A2 = (double *)CALLOC(nk,sizeof(double));
-  diagXVXt(A,G,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,&dum,&nrs,&dum,&nrs); // pg could be computed rather than an argument
-  for (wp=wij,dp1=A,dp2=A+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp;
+  A = (double *)CALLOC(nu,sizeof(double));A2 = (double *)CALLOC(nu,sizeof(double));
+ 
+  diagXVXt(A,G,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+ 
+  for (wp=wij,dp1=A,dp2=A+nu;dp1<dp2;dp1++,wp++) *dp1 *= *wp;
+
+  // TO HERE: mk and ind let A be unpacked to submatrices - needs writing  
   
   /* Get NCV and (I-A_aa)^-1... */
  
   for (M=nb=j=kk=i=0;i<*nn;i++) {
-    dum = mk[i]-kk; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
-    dum = (int)sqrt(8*dum+1)/2;
+    dum = mk[i]-kk+1; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
+    dum = (int)(sqrt(8*dum+1)-1)/2;
     if (j<dum) j = dum; /* largest dimension of A_aa */
     nb += dum; /* total storage for adjusted residuals */
   }
   Aaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
   IAaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
-  IAr = (double *)CALLOC(j,sizeof(double));
   B = (double *)CALLOC(j*(j+1)/2,sizeof(double));
   IA = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A */
   ba = (double *)CALLOC(nb,sizeof(double)); /* storage adjusted residuals for each neighbourhood */
   rp = (double *)CALLOC(j,sizeof(double)); /* storage for residuals left out */
-  AIr = (double *)CALLOC(j,sizeof(double)); /* ((I-A_aa)^-1)(y_a -\mu_a ) */
-  *NCV=0.0;
-  for (bp=ba,Ap=A,jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+  //AIr = (double *)CALLOC(j,sizeof(double)); /* ((I-A_aa)^-1)(y_a -\mu_a ) */
+  
+  for (bp=ba,IAp=IA,Ap=A,jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
     // dpotri, DPOTRF and DPSTRF (piv)
-    M = (int)sqrt(8*(mk[i]-kk)+1)/2; /* current Aaa is M by M */
+    M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
     /* Fill upper triangle of I-Aaa */
     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = - *Ap; /* fill upper triangle */
-    for (Aaap=Aaa,j=0;j<M;j++,Aaap += M) *Aaap += 1;
+    for (Aaap=Aaa,j=0;j<M;j++,Aaap += M+1) *Aaap += 1;
     if (M==1) { /* unit neighbourhood - trivial computation */
       *IAp = 1 / *Aaa;  /*1/(1-A_aa)*/
       *bp = *IAp * rsd[a[ii]]; /* adjusted residual */
@@ -2163,16 +2260,16 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
       /* compute adjusted residuals ba = (I-Aaa)^-1 rsd_aa */
       for (j=0;j<M;j++) rp[j] = rsd[a[ii+j]]; /* rsd_aa */
       F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&zero,bp,&ione FCONE);
-      /* repack into AI as A is packed, for use in derivative computation */
+      /* repack into IA as A is packed, for use in derivative computation */
       for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) {
         *IAp = *Aaap; *Aaap = 0.0; /* store and clear */
       }
     }
     /* Now compute NCV itself  */
-    q = md[i]-jj; /* size of predict neighbourhood */
+    q = md[i]-jj+1; /* size of predict neighbourhood */
     for (dum=j=0;j<q;j++) { /* loop over predict indices */
       i1 = d[jj+j]; /* need to match predict index to a dropped index */
-      while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
+      while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
       *NCV += w[i1] * bp[dum]*bp[dum];
     }
     kk = mk[i]+1; /* start index of next neighbourhood in A */
@@ -2185,56 +2282,65 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
   P = (double **)CALLOC(ns,sizeof(double *));A1 = (double **)CALLOC(ns,sizeof(double *));
   beta1 = (double **)CALLOC(ns,sizeof(double *));mu1 = (double **)CALLOC(ns,sizeof(double *));
   IAdAIA = (double **)CALLOC(ns,sizeof(double *));ba1 = (double **)CALLOC(ns,sizeof(double *));
- 
+  V = (double **)CALLOC(ns,sizeof(double *));
   beta2 = (double *)CALLOC(*pg,sizeof(double)); /* second derivative storage - transient */
   V2 = (double *)CALLOC(*pg * *pg,sizeof(double));
   mu2 = (double *)CALLOC(*n,sizeof(double));
   ba2 = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
-  // Probably a good idea to move all allocation out of the loop - cleaner OMP
   for (l=0;l<ns;l++) {
-    q = sr[l]; if (q<0) q = -q;
-    P[l] = (double *)CALLOC(q * *pg,sizeof(double));
+    srl = sr[l]; if (srl<0) srl = -srl; 
+    P[l] = (double *)CALLOC(srl * *pg,sizeof(double));
+    mu1[l] = (double *)CALLOC(*n,sizeof(double));
+    V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
+    IAdAIA[l]  = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^{-1} dA_aa/rho_l (I-A_aa)^&{-1} */
+    ba1[l] = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+  } /* l loop - allocation */
+  
+  for (l=0;l<ns;l++) { /* loop over smoothing parameters */
+    srl = sr[l]; if (srl<0) srl = -srl; 
     if (sr[l]>0) {
       F77_CALL(dgemm)(&ntrans,&ntrans,pg,sr+l,sr+l,&one,G+soff[l] * *pg,pg,S[l],sr+l,&zero,P[l],pg FCONE FCONE); /* P[l] = [G]^l S_l */
     } else { /* S[l] = I so P[l] = [G]^l */
-      for (dp1=G+soff[l] * *pg,dp2=P[l],dp3=dp2 + *pg * q;dp2<dp3;dp2++) *dp2 = * dp3;
+      for (dp1=G+soff[l] * *pg,dp2=P[l],j=0;j<srl;j++) {
+	xx = S[l][j];
+	for (dp3=dp2 + *pg;dp2<dp3;dp2++,dp1++) *dp2 = *dp1 * xx;
+      }	
     }  
-    beta1[l] = (double *)CALLOC(*pg,sizeof(double));
-    mu1[l] = (double *)CALLOC(*n,sizeof(double));
-    V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
+    beta1[l] = db + l * *pg;
     xx = -sp[l];
-    F77_CALL(dgemv)(&ntrans,pg,sr+l,&xx,P[l],pg,beta+soff[l],&ione,&zero,beta1[l],&ione FCONE); /* beta1[l] = dbeta/d rho_l */
-    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,sr+l,&xx,P[l],pg,G+sr[l],pg,&zero,V[l],pg FCONE FCONE); /* P[l] [G]_l  */
-    Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&izero); /* dmu/d rho_l note limited thread safety */
+    F77_CALL(dgemv)(&ntrans,pg,&srl,&xx,P[l],pg,beta+soff[l],&ione,&zero,beta1[l],&ione FCONE); /* beta1[l] = dbeta/d rho_l */
+    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,&srl,&xx,P[l],pg,G+soff[l],pg,&zero,V[l],pg FCONE FCONE); /* - sp[l] P[l] [G]_l  */
+    ncs=0;
+    Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* dmu/d rho_l note limited thread safety */
     A1[l] = (double *)CALLOC(nk,sizeof(double)); /* dA_aa/d rho_l packed as A */ 
+    nrs=ncs=0;
+ 
     diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,&dum,&nrs,&dum,&nrs);
-    for (wp=wij,dp1=A1[l],dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
-    IAdAIA[l]  = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^{-1} dA_aa/rho_l (I-A_aa)^&{-1} */
-    ba1[l] = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+ 
+    for (wp=wij,dp1=A1[l],dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */ 
     for (ba1p=ba1[l],bp=ba,Ap=A1[l],IAp=IA,IAdAIAp = IAdAIA[l],jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
-     M = (int)sqrt(8*(mk[i]-kk)+1)/2; /* current Aaa is M by M */
-     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = - *Ap; /* current A1_aa to upper tri Aaa */
+     M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = *Ap; /* current A1_aa to upper tri Aaa */
      fill_lt(Aaa,M); /* fill in lower triangle */
-     for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = - *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
+     for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
      side = 'L';
      F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,Aaa,&M,&zero,B,&M FCONE FCONE); /* B = (I-A_aa)^{-1} dA */
      side = 'R';
      F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,B,&M,&zero,Aaa,&M FCONE FCONE); /* Aaa =  (I-A_aa)^{-1} dA (I-A_aa)^{-1} */
      for (dp1=mu1[l],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* -d mu_a / d rho_l */
-     F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&zero,ba1[l],&ione FCONE); /* ba1[l] = -(I-A_aa)^{-1}dmu_a/drho_l */ 
-     for (j=0;j<M;j++) rp[j] = rsd[a[ii+j]]; /* rsd_aa */
-     F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba1p,&ione FCONE); /* ba1p = db^a/drho_l */
-     /* store (I-A_aa)^{-1} dA (I-A_aa)^{-1} upper tri fro future use */
+     F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&zero,ba1p,&ione FCONE); /* ba1[l] = -(I-A_aa)^{-1}dmu_a/drho_l */ 
+     F77_CALL(dgemv)(&ntrans,&M,&M,&one,B,&M,bp,&ione,&one,ba1p,&ione FCONE); /* ba1p = db^a/drho_l */
+     /* store (I-A_aa)^{-1} dA (I-A_aa)^{-1} upper tri for future use */
      /* repack into AI as A is packed, for use in derivative computation */
      for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) {
        *IAdAIAp = *Aaap; /* store - no need to clear only upper tri written actually accessed */
      }
      /* compute the NCV derivative w.r.t. rho_l... */
-     q = md[i]-jj; /* size of predict neighbourhood */
+     q = md[i]-jj+1; /* size of predict neighbourhood */
      for (dum=j=0;j<q;j++) { /* loop over predict indices */
        i1 = d[jj+j]; /* need to match predict index to a dropped index */
-       while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
+       while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
        NCV1[l] += 2*w[i1] * ba1p[dum] * bp[dum]; /* deriv of NCV wrt rho_l */
      }
      kk = mk[i]+1; /* start index of next neighbourhood in A */
@@ -2248,39 +2354,44 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
     for (r=0;r<=l;r++) {
       /* get d2beta/drho_l drho_r */
       xx = -sp[l];
-      F77_CALL(dgemv)(&ntrans,pg,sr+l,&xx,P[l],pg,beta1[r]+soff[l],&ione,&zero,beta2,&ione FCONE);
+      F77_CALL(dgemv)(&ntrans,pg,&srl,&xx,P[l],pg,beta1[r]+soff[l],&ione,&zero,beta2,&ione FCONE);
       xx = -sp[r];
-      F77_CALL(dgemv)(&ntrans,pg,sr+r,&xx,P[r],pg,beta1[l]+soff[r],&ione,&one,beta2,&ione FCONE);
+      q = sr[r]; if (q<0) q = -q;
+      F77_CALL(dgemv)(&ntrans,pg,&q,&xx,P[r],pg,beta1[l]+soff[r],&ione,&one,beta2,&ione FCONE);
       if (l==r) for (bp=beta1[r],dp1=beta2,dp2=dp1 + *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
-      Xbd(mu2,beta2,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&izero); /* d2mu/drho_l drho_r note limited thread safety */
+      ncs=0;
+      Xbd(mu2,beta2,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* d2mu/drho_l drho_r note limited thread safety */
+
       /* get second deriv of A w.r.t. rho_l and rho_r ... */
       xx = -sp[l];
-      F77_CALL(dgemm)(&ntrans,&trans,pg,pg,sr+l,&xx,V[r]+sr[l]* *pg,pg,P[l],pg,&zero,V2,pg FCONE FCONE); 
-      xx = -sp[r];
-      F77_CALL(dgemm)(&ntrans,&trans,pg,pg,sr+r,&xx,V[l]+sr[r]* *pg,pg,P[r],pg,&one,V2,pg FCONE FCONE);
-      if (l==r) for (bp=V1[r],dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
+      F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&srl,&xx,V[r]+soff[l] * *pg,pg,P[l],pg,&zero,V2,pg FCONE FCONE);
+      tad(V2,*pg); /* add to own transpose */
+      //xx = -sp[r];
+      //F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&q,&xx,V[l] + soff[r] * *pg,pg,P[r],pg,&one,V2,pg FCONE FCONE);
+      if (l==r) for (bp=V[r],dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
+      ncs=nrs=0;
+  
       diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,&dum,&nrs,&dum,&nrs);
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+   
       for (wp=wij,dp1=A2,dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
        
       /* Compute the second derivative of NCV w.r.t. rho_l and rho_r */
       ba1p=ba1[l];ba2p=ba1[r];bp=ba;A2p=A2;Alp=A1[l];Arp=A1[r];IAp=IA;IAdAIAp = IAdAIA[l];IAdAIArp = IAdAIA[r];
       for (jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
-	M = (int)sqrt(8*(mk[i]-kk)+1)/2; /* current Aaa is M by M */
+	M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
 	/*  need second derivative of b_a wrt rho_l and rho_r... */
-	for (dp1=rsd,j=0;j<M;j++) rp[j] = dp1[a[ii+j]]; /* residuals for this neighbourhood */
-        for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = - *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
-	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&zero,IAr,&ione FCONE); /* IAr = (I-A_aa)^{-1}  (y_a - \mu_a) */ 
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j)  for (q=0;q<=j;q++,A2p++,Aaap++) *Aaap = -(*A2p); /* Aaa = d2A_aa/drho_l drho_r */ 
-	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,IAr,&ione,&zero,B,&ione FCONE); /* B = d2 A_aa/drho_l drho_r  (I-A_aa)^{-1}  (y_a - mu_a) */
+        for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j)  for (q=0;q<=j;q++,A2p++,Aaap++) *Aaap = *A2p; /* Aaa =  d2A_aa/drho_l drho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B =  d2 A_aa/drho_l drho_r  (I-A_aa)^{-1}  (y_a - mu_a) */
 	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,B,&ione,&zero,ba2,&ione FCONE);
 	for (dp1=mu2,j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -d2mu/d rho_l d rho_r */
 	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&one,ba2,&ione FCONE); /* ba2 has 2nd deriv based terms - now add first deriv based */
 
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Alp++,Aaap++) *Aaap = - *Alp; /* Aaa = dA_aa/drho_l */
-        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,IAr,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_l (I-A_aa)^{-1} (y_a - \mu_a) */
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Alp++,Aaap++) *Aaap =  *Alp; /* Aaa = dA_aa/drho_l */
+        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_l (I-A_aa)^{-1} (y_a - \mu_a) */
 
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIArp++,Aaap++) *Aaap = - *IAdAIArp; 
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIArp++,Aaap++) *Aaap =  *IAdAIArp; 
         F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
 	/* ...added (I-A_aa)^{-1}dA_aa/drho_r (I-A_aa)^{-1} dA_aa/drho_l (I-A_aa)^{-1} (y_a - \mu_a) */
 
@@ -2288,36 +2399,319 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *r
 	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -(I-A_aa)^{-1}dA_aa/drho_r (I-A_aa)^{-1} d mu_a / drho_l */
 
         /* now r <-> l for last two terms added to ba2 */
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Arp++,Aaap++) *Aaap = - *Arp; /* Aaa = dA_aa/drho_r */
-	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,IAr,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_r (I-A_aa)^{-1} (y_a - \mu_a) */
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Arp++,Aaap++) *Aaap =  *Arp; /* Aaa = dA_aa/drho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_r (I-A_aa)^{-1} (y_a - \mu_a) */
 
-	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) *Aaap = - *IAdAIAp; 
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) *Aaap =  *IAdAIAp; 
         F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
 	/* ...added (I-A_aa)^{-1}dA_aa/drho_l (I-A_aa)^{-1} dA_aa/drho_r (I-A_aa)^{-1} (y_a - \mu_a) */
 
 	for (dp1=mu1[r],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -dmu/d rho_r */
 	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -(I-A_aa)^{-1}dA_aa/drho_l (I-A_aa)^{-1} d mu_a / drho_r */
 
-	q = md[i]-jj; /* size of predict neighbourhood */
+	q = md[i]-jj+1; /* size of predict neighbourhood */
         for (dum=j=0;j<q;j++) { /* loop over predict indices */
           i1 = d[jj+j]; /* need to match predict index to a dropped index */
           while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
-          NCV2[l+(r-1)*ns] += 2*w[i1] * ( ba1p[dum] * ba2p[dum] + bp[dum]*ba2[dum]); /* deriv of NCV wrt rho_l */
+          NCV2[l+r*ns] += 2*w[i1] * ( ba1p[dum] * ba2p[dum] + bp[dum]*ba2[dum]); /* deriv of NCV wrt rho_l */
         }
 	kk = mk[i]+1; /* start index of next neighbourhood in A */
         ii = ma[i]+1; /* start index of next drop neighbourhood in a */
         jj = md[i]+1; /* start index of next predict neighbourhood in d */
 	bp += M;ba2p += M;ba1p += M;
       } /* neighbourhood i loop */
-      NCV2[r+(l-1)*ns] = NCV2[l+(r-1)*ns];
+      NCV2[r+l*ns] = NCV2[l+r*ns];
     } /* r sp loop */   
   } /* l sp loop */ 
   for (l=0;l<ns;l++) {
-    FREE(P[l]);FREE(beta1[l]);FREE(V[l]);FREE(A1[l]);FREE(ba1[l]);
+    FREE(P[l]);FREE(V[l]);FREE(A1[l]);FREE(ba1[l]);
     FREE(mu1[l]);FREE(IAdAIA[l]);
   }
   FREE(P); FREE(beta1);FREE(V);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);
   FREE(B);FREE(cs);FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
-  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);FREE(AIr);
+  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);
 } /* ncvd */
 
+
+
+
+
+
+
+
+
+
+
+void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
+	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
+	  int *soff,double *sp,
+	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
+/* original refernce code. tested but inefficient in terms of memory use and over extraction of
+   A elements.
+
+   computes the NCV criterion and its first two derivatives for the working linear regression of 
+   a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
+   full model residuals.  nn is the number of neighbourhood blocks.
+   a is the array of data rows to drop, ma is the  nn-vector of block ends (a[ma[i-1]+1:ma[i]]
+   is index rows to drop for the ith neighbourhood). 
+   d is the array of data rows to predict, md is the nn-vector of block ends (d[md[i-1]+1:md[i]]
+   is index of predictions to be made for ith neighbourhood).
+   NOTE: both a and d are assumed to have row indices sorted into ascending order within 
+   neighbourhoods: see mgcv.r:onei for a suitable fast routine to do this up front. This is
+   needed to facilitate matching of dropped and predicted points. 
+   S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first element penalized soff[i]
+   if sr[i] < 0 then S[i] is an identity matrix -sr[i] by -sr[i], but is not actually supplied.
+
+   Created below, k1 and k2 are the indexing nk-vectors required to extract the required 
+   influence matrix blocks. mk gives the block-ends,
+*/
+  double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
+    **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,*beta2,*mu2,//*AIr,
+    *V2,*ba2,
+    *ba2p,*A2p,*Arp,*Alp,*IAdAIArp;
+  int ncs=0,nrs=0,dum,dum1,i1,i,j,kk,M,q,r,info=1,ii,jj,*k1,*k2,*mk,k1i,k2i,*k1p,*k2p,
+    *p1,*p2,ione=1,izero=0,l,*cs,srl;
+  ptrdiff_t nb,nk;
+  char uplo='U',ntrans='N',trans='T',side='L';
+  cs =  (int *)CALLOC(*nt,sizeof(int));
+  *NCV=0.0;
+  /* create indices for extracting A_aa blocks of influence matrix */
+  mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of k1,k2 blocks defining each A_aa */
+  for (kk = -1,ii=i=0;i<*nn;i++) { /* create mk */
+    q = ma[i]-kk; kk = ma[i];
+    ii = mk[i] = ii + q*(q+1)/2;
+  }
+  nk = mk[*nn-1]+1; /* number of rows of k */
+  k1 = (int *)CALLOC(nk*(ptrdiff_t) *ck,sizeof(int));
+  k2 = (int *)CALLOC(nk*(ptrdiff_t) *ck,sizeof(int));
+  wp = wij = (double *)CALLOC(nk,sizeof(double)); /* weight multiplier for Aij elements */
+  for (k1i=k2i=kk=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+    M = ma[i]-kk+1; /* size of neighbourhood i */
+    for (j=0;j<M;j++) for (q=0;q<=j;q++,k1i++,k2i++,wp++) {
+      p1 = k + a[kk+j];
+      dum = a[kk+q];
+      p2 = k + dum;
+      *wp = w[dum];
+      for (k1p=k1+k1i,k2p=k2+k2i,ii=0;ii< *ck;ii++,k1p+=nk,k2p+=nk,p1 += *n,p2 += *n) {
+	*k1p = *p1; /* k1[k1i,] = k[a[kk+j],] */ 
+        *k2p = *p2; /* k2[k2i,] = k[a[kk+q],] */
+      }  
+    }
+    kk = ma[i] + 1;  
+  } /* neighbourhood loop */
+  /* extract the influence matrix blocks */
+  A = (double *)CALLOC(nk,sizeof(double));A2 = (double *)CALLOC(nk,sizeof(double));
+ 
+  diagXVXt(A,G,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+ 
+  for (wp=wij,dp1=A,dp2=A+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp;
+  
+  /* Get NCV and (I-A_aa)^-1... */
+ 
+  for (M=nb=j=kk=i=0;i<*nn;i++) {
+    dum = mk[i]-kk+1; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
+    dum = (int)(sqrt(8*dum+1)-1)/2;
+    if (j<dum) j = dum; /* largest dimension of A_aa */
+    nb += dum; /* total storage for adjusted residuals */
+  }
+  Aaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
+  IAaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
+  B = (double *)CALLOC(j*(j+1)/2,sizeof(double));
+  IA = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^-1 - same format as A */
+  ba = (double *)CALLOC(nb,sizeof(double)); /* storage adjusted residuals for each neighbourhood */
+  rp = (double *)CALLOC(j,sizeof(double)); /* storage for residuals left out */
+  //AIr = (double *)CALLOC(j,sizeof(double)); /* ((I-A_aa)^-1)(y_a -\mu_a ) */
+  
+  for (bp=ba,IAp=IA,Ap=A,jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+    // dpotri, DPOTRF and DPSTRF (piv)
+    M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+    /* Fill upper triangle of I-Aaa */
+    for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = - *Ap; /* fill upper triangle */
+    for (Aaap=Aaa,j=0;j<M;j++,Aaap += M+1) *Aaap += 1;
+    if (M==1) { /* unit neighbourhood - trivial computation */
+      *IAp = 1 / *Aaa;  /*1/(1-A_aa)*/
+      *bp = *IAp * rsd[a[ii]]; /* adjusted residual */
+      IAp++;
+    } else { /* bigger neighbourhood - need matrix inversion */
+      /* now invert I-Aaa */
+      F77_CALL(dpotrf)(&uplo,&M,Aaa,&M,&info FCONE); /* LAPACK cholesky*/
+      F77_CALL(dpotri)(&uplo,&M,Aaa,&M,&info FCONE); /* LAPACK chol to inv - upper triangle only returned */
+      /* compute adjusted residuals ba = (I-Aaa)^-1 rsd_aa */
+      for (j=0;j<M;j++) rp[j] = rsd[a[ii+j]]; /* rsd_aa */
+      F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&zero,bp,&ione FCONE);
+      /* repack into IA as A is packed, for use in derivative computation */
+      for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) {
+        *IAp = *Aaap; *Aaap = 0.0; /* store and clear */
+      }
+    }
+    /* Now compute NCV itself  */
+    q = md[i]-jj+1; /* size of predict neighbourhood */
+    for (dum=j=0;j<q;j++) { /* loop over predict indices */
+      i1 = d[jj+j]; /* need to match predict index to a dropped index */
+      while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
+      *NCV += w[i1] * bp[dum]*bp[dum];
+    }
+    kk = mk[i]+1; /* start index of next neighbourhood in A */
+    ii = ma[i]+1; /* start index of next drop neighbourhood in a */
+    jj = md[i]+1; /* start index of next predict neighbourhood in d */
+    bp += M;
+  } /* neighbourhood, i loop */
+
+  /* Compute the derivatives... */
+  P = (double **)CALLOC(ns,sizeof(double *));A1 = (double **)CALLOC(ns,sizeof(double *));
+  beta1 = (double **)CALLOC(ns,sizeof(double *));mu1 = (double **)CALLOC(ns,sizeof(double *));
+  IAdAIA = (double **)CALLOC(ns,sizeof(double *));ba1 = (double **)CALLOC(ns,sizeof(double *));
+  V = (double **)CALLOC(ns,sizeof(double *));
+  beta2 = (double *)CALLOC(*pg,sizeof(double)); /* second derivative storage - transient */
+  V2 = (double *)CALLOC(*pg * *pg,sizeof(double));
+  mu2 = (double *)CALLOC(*n,sizeof(double));
+  ba2 = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+  for (l=0;l<ns;l++) {
+    P[l] = (double *)CALLOC(srl * *pg,sizeof(double));
+    mu1[l] = (double *)CALLOC(*n,sizeof(double));
+    V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
+    IAdAIA[l]  = (double *)CALLOC(nk,sizeof(double)); /* storage for (I-A_aa)^{-1} dA_aa/rho_l (I-A_aa)^&{-1} */
+    ba1[l] = (double *)CALLOC(nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+  } /* l loop - allocation */
+  
+  for (l=0;l<ns;l++) { /* loop over smoothing parameters */
+    srl = sr[l]; if (srl<0) srl = -srl; 
+    if (sr[l]>0) {
+      F77_CALL(dgemm)(&ntrans,&ntrans,pg,sr+l,sr+l,&one,G+soff[l] * *pg,pg,S[l],sr+l,&zero,P[l],pg FCONE FCONE); /* P[l] = [G]^l S_l */
+    } else { /* S[l] = I so P[l] = [G]^l */
+      for (dp1=G+soff[l] * *pg,dp2=P[l],j=0;j<srl;j++) {
+	xx = S[l][j];
+	for (dp3=dp2 + *pg;dp2<dp3;dp2++,dp1++) *dp2 = *dp1 * xx;
+      }	
+    }  
+    beta1[l] = db + l * *pg;
+    xx = -sp[l];
+    F77_CALL(dgemv)(&ntrans,pg,&srl,&xx,P[l],pg,beta+soff[l],&ione,&zero,beta1[l],&ione FCONE); /* beta1[l] = dbeta/d rho_l */
+    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,&srl,&xx,P[l],pg,G+soff[l],pg,&zero,V[l],pg FCONE FCONE); /* - sp[l] P[l] [G]_l  */
+    ncs=0;
+    Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* dmu/d rho_l note limited thread safety */
+    A1[l] = (double *)CALLOC(nk,sizeof(double)); /* dA_aa/d rho_l packed as A */ 
+    nrs=ncs=0;
+ 
+    diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+ 
+    for (wp=wij,dp1=A1[l],dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */ 
+    for (ba1p=ba1[l],bp=ba,Ap=A1[l],IAp=IA,IAdAIAp = IAdAIA[l],jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+     M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Ap++,Aaap++) *Aaap = *Ap; /* current A1_aa to upper tri Aaa */
+     fill_lt(Aaa,M); /* fill in lower triangle */
+     for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
+     side = 'L';
+     F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,Aaa,&M,&zero,B,&M FCONE FCONE); /* B = (I-A_aa)^{-1} dA */
+     side = 'R';
+     F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,B,&M,&zero,Aaa,&M FCONE FCONE); /* Aaa =  (I-A_aa)^{-1} dA (I-A_aa)^{-1} */
+     for (dp1=mu1[l],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* -d mu_a / d rho_l */
+     F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&zero,ba1p,&ione FCONE); /* ba1[l] = -(I-A_aa)^{-1}dmu_a/drho_l */ 
+     F77_CALL(dgemv)(&ntrans,&M,&M,&one,B,&M,bp,&ione,&one,ba1p,&ione FCONE); /* ba1p = db^a/drho_l */
+     /* store (I-A_aa)^{-1} dA (I-A_aa)^{-1} upper tri for future use */
+     /* repack into AI as A is packed, for use in derivative computation */
+     for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) {
+       *IAdAIAp = *Aaap; /* store - no need to clear only upper tri written actually accessed */
+     }
+     /* compute the NCV derivative w.r.t. rho_l... */
+     q = md[i]-jj+1; /* size of predict neighbourhood */
+     for (dum=j=0;j<q;j++) { /* loop over predict indices */
+       i1 = d[jj+j]; /* need to match predict index to a dropped index */
+       while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
+       NCV1[l] += 2*w[i1] * ba1p[dum] * bp[dum]; /* deriv of NCV wrt rho_l */
+     }
+     kk = mk[i]+1; /* start index of next neighbourhood in A */
+     ii = ma[i]+1; /* start index of next drop neighbourhood in a */
+     jj = md[i]+1; /* start index of next predict neighbourhood in d */
+     bp += M;
+     ba1p += M;
+    } /* neighbourhood i loop */
+    
+    /* The second derivative loop... */
+    for (r=0;r<=l;r++) {
+      /* get d2beta/drho_l drho_r */
+      xx = -sp[l];
+      F77_CALL(dgemv)(&ntrans,pg,&srl,&xx,P[l],pg,beta1[r]+soff[l],&ione,&zero,beta2,&ione FCONE);
+      xx = -sp[r];
+      q = sr[r]; if (q<0) q = -q;
+      F77_CALL(dgemv)(&ntrans,pg,&q,&xx,P[r],pg,beta1[l]+soff[r],&ione,&one,beta2,&ione FCONE);
+      if (l==r) for (bp=beta1[r],dp1=beta2,dp2=dp1 + *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
+      ncs=0;
+      Xbd(mu2,beta2,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* d2mu/drho_l drho_r note limited thread safety */
+
+      /* get second deriv of A w.r.t. rho_l and rho_r ... */
+      xx = -sp[l];
+      F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&srl,&xx,V[r]+soff[l] * *pg,pg,P[l],pg,&zero,V2,pg FCONE FCONE);
+      tad(V2,*pg); /* add to own transpose */
+      //xx = -sp[r];
+      //F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&q,&xx,V[l] + soff[r] * *pg,pg,P[r],pg,&one,V2,pg FCONE FCONE);
+      if (l==r) for (bp=V[r],dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
+      ncs=nrs=0;
+  
+      diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nk,nx,ts,dt,nt,v,qc,
+	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
+   
+      for (wp=wij,dp1=A2,dp2=dp1+nk;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
+       
+      /* Compute the second derivative of NCV w.r.t. rho_l and rho_r */
+      ba1p=ba1[l];ba2p=ba1[r];bp=ba;A2p=A2;Alp=A1[l];Arp=A1[r];IAp=IA;IAdAIAp = IAdAIA[l];IAdAIArp = IAdAIA[r];
+      for (jj=kk=ii=i=0;i<*nn;i++) { /* loop over neighbourhoods */
+	M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+	/*  need second derivative of b_a wrt rho_l and rho_r... */
+        for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current (I-A_aa)^{-1} to upper tri IAaa */
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j)  for (q=0;q<=j;q++,A2p++,Aaap++) *Aaap = *A2p; /* Aaa =  d2A_aa/drho_l drho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B =  d2 A_aa/drho_l drho_r  (I-A_aa)^{-1}  (y_a - mu_a) */
+	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,B,&ione,&zero,ba2,&ione FCONE);
+	for (dp1=mu2,j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -d2mu/d rho_l d rho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&one,ba2,&ione FCONE); /* ba2 has 2nd deriv based terms - now add first deriv based */
+
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Alp++,Aaap++) *Aaap =  *Alp; /* Aaa = dA_aa/drho_l */
+        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_l (I-A_aa)^{-1} (y_a - \mu_a) */
+
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIArp++,Aaap++) *Aaap =  *IAdAIArp; 
+        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
+	/* ...added (I-A_aa)^{-1}dA_aa/drho_r (I-A_aa)^{-1} dA_aa/drho_l (I-A_aa)^{-1} (y_a - \mu_a) */
+
+	for (dp1=mu1[l],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -dmu/d rho_l */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -(I-A_aa)^{-1}dA_aa/drho_r (I-A_aa)^{-1} d mu_a / drho_l */
+
+        /* now r <-> l for last two terms added to ba2 */
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Arp++,Aaap++) *Aaap =  *Arp; /* Aaa = dA_aa/drho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_r (I-A_aa)^{-1} (y_a - \mu_a) */
+
+	for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) *Aaap =  *IAdAIAp; 
+        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
+	/* ...added (I-A_aa)^{-1}dA_aa/drho_l (I-A_aa)^{-1} dA_aa/drho_r (I-A_aa)^{-1} (y_a - \mu_a) */
+
+	for (dp1=mu1[r],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -dmu/d rho_r */
+	F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -(I-A_aa)^{-1}dA_aa/drho_l (I-A_aa)^{-1} d mu_a / drho_r */
+
+	q = md[i]-jj+1; /* size of predict neighbourhood */
+        for (dum=j=0;j<q;j++) { /* loop over predict indices */
+          i1 = d[jj+j]; /* need to match predict index to a dropped index */
+          while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
+          NCV2[l+r*ns] += 2*w[i1] * ( ba1p[dum] * ba2p[dum] + bp[dum]*ba2[dum]); /* deriv of NCV wrt rho_l */
+        }
+	kk = mk[i]+1; /* start index of next neighbourhood in A */
+        ii = ma[i]+1; /* start index of next drop neighbourhood in a */
+        jj = md[i]+1; /* start index of next predict neighbourhood in d */
+	bp += M;ba2p += M;ba1p += M;
+      } /* neighbourhood i loop */
+      NCV2[r+l*ns] = NCV2[l+r*ns];
+    } /* r sp loop */   
+  } /* l sp loop */ 
+  for (l=0;l<ns;l++) {
+    FREE(P[l]);FREE(V[l]);FREE(A1[l]);FREE(ba1[l]);
+    FREE(mu1[l]);FREE(IAdAIA[l]);
+  }
+  FREE(P); FREE(beta1);FREE(V);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);
+  FREE(B);FREE(cs);FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
+  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);
+} /* ncvd0 */
+
+/* PENDING discrete NCV implementation notes:
+   - need to adjust nei for any dropped data in bam!! 
+*/   

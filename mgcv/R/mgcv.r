@@ -2046,16 +2046,20 @@ nanei <- function(nb,k) {
   nb 
 } ## nanei
 
-onei <- function(nb) {
+onei <- function(nb,cbase=FALSE) {
 ## orders the neighbourhood indices into ascending order within each neighbourhood.
 ## this makes some matching tasks easier especially for bam.
   if (is.null(nb$k)||is.null(nb$m)) return() ## LOOCV - nothing to do
   nn <- length(nb$m) ## number of neighbourhoods
-  b <- rep(1:nn,each=diff(c(0,nb$m))) ## neighbourhood indices/labels
+  b <- rep(1:nn,times=diff(c(0,nb$m))) ## neighbourhood indices/labels
   nb$k <- nb$k[order(b,nb$k)] ## order drop indices within neighbourhood.
   if (!is.null(nb$mi)) {
-    b <- rep(1:nn,each=diff(c(0,nb$mi))) ## neighbourhood indices/labels
+    b <- rep(1:nn,times=diff(c(0,nb$mi))) ## neighbourhood indices/labels
     nb$i <- nb$i[order(b,nb$i)] ## order predict indices within neighbourhood.
+  }
+  if (cbase) {
+    nb$k <- as.integer(nb$k) - 1L; nb$i <-  as.integer(nb$i) - 1L
+    nb$m <-  as.integer(nb$m) - 1L; nb$mi <-  as.integer(nb$mi) - 1L
   }
   nb
 } ## onei

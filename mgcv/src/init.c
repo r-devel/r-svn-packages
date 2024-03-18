@@ -33,6 +33,7 @@ R_CallMethodDef CallMethods[] = {
   {"sdiagXVXt",(DL_FUNC)&sdiagXVXt,4},
   {"CdiagXVXt",(DL_FUNC)&CdiagXVXt,14},
   {"CijXVXt",(DL_FUNC)&CijXVXt,15},
+  {"CNCV",(DL_FUNC)&CNCV,21},
   {"stmm",(DL_FUNC)&stmm,1},
   {"AddBVB",(DL_FUNC)&AddBVB,3},
   {"isa1p",(DL_FUNC)&isa1p,3},

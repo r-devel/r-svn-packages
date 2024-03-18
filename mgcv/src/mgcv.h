@@ -158,6 +158,9 @@ SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP
 	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS);
 SEXP CijXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K,SEXP K1, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
 	     SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS);
+SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEXP beta1r, SEXP wr,SEXP spr,
+	  SEXP Xr,SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	  SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP nei, SEXP Sr);
 
 /* various service routines */
 void davies(double *lb,double *nc,int *n,int *r,double *sigma,double *c,int *lim,
@@ -231,16 +234,17 @@ SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag);
 SEXP mrow_sum(SEXP x,SEXP M, SEXP K);
 SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI,SEXP M,
 	 SEXP K, SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DLET,SEXP DERIV);
-SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA, SEXP SP, SEXP ETA,
-	  SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS,SEXP NT);
+SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND, SEXP MI, SEXP M, SEXP K,
+	  SEXP BETA, SEXP SP, SEXP ETA,SEXP DETA,SEXP DLET,SEXP DERIV,SEXP EPS,SEXP NT);
 SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
 	   SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV);
 SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
 	    SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV,SEXP EPS,SEXP NT);
 SEXP nei_cov(SEXP v,SEXP d, SEXP M, SEXP K);
-void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *G,double *rsd, double *w,int *pg,int *nn,int *a,int *ma,
-	  int *d,int *md,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,int *soff,double *sp,
-	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads);
+void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd, double *w,int *pg,
+	  int *nn,int *a,int *ma,int *d,int *md,double *X,int *k,int *ck, int *ks,int *m,int *p, ptrdiff_t *n,
+	  double **S,
+	  int ns,int *sr,int *soff,double *sp,int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads);
 void chol_up(double *R,double *u, int *n,int *up,double *eps);
 void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work);
 
