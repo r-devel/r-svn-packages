@@ -2133,7 +2133,7 @@ int upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
 } /* upair */  
 
 
-void ncvd1(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
 	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
 	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
 	  int *soff,double *sp,
@@ -2166,9 +2166,9 @@ void ncvd1(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   *NCV=0.0;
   /* create indices for extracting A_aa blocks of influence matrix */
   mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of k1,k2 blocks defining each A_aa */
-  for (kk = -1,ii=i=0;i<*nn;i++) { /* create mk */
+  for (ii=kk = -1,i=0;i<*nn;i++) { /* create mk */
     q = ma[i]-kk; kk = ma[i];
-    ii = mk[i] = ii + q*(q+1)/2;
+    ii = mk[i] = ii + q*(q+1)/2; /* mk[i] is end of block i */
   }
   nk = mk[*nn-1]+1; /* number of rows of k */
   /* obtain the unique i,j elements of A required to produce the A_aa submatrix for each
@@ -2450,7 +2450,7 @@ void ncvd1(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
 
 
 
-void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
+void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
 	  double *w,int *pg,int *nn,int *a,int *ma,int *d,int *md,
 	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
 	  int *soff,double *sp,
@@ -2486,9 +2486,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   *NCV=0.0;
   /* create indices for extracting A_aa blocks of influence matrix */
   mk = (int *)CALLOC(*nn,sizeof(int)); /* ends of k1,k2 blocks defining each A_aa */
-  for (kk = -1,ii=i=0;i<*nn;i++) { /* create mk */
+  for (ii=kk = -1,i=0;i<*nn;i++) { /* create mk */
     q = ma[i]-kk; kk = ma[i];
-    ii = mk[i] = ii + q*(q+1)/2; // BUG: mk[i] is start of next block in 0 based indexing
+    ii = mk[i] = ii + q*(q+1)/2; // mk[i] is now end of block i in 0 based indexing
   }
   nk = mk[*nn-1]+1; /* number of rows of k */
   k1 = (int *)CALLOC(nk*(ptrdiff_t) *ck,sizeof(int));
@@ -2506,7 +2506,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
         *k2p = *p2; /* k2[k2i,] = k[a[kk+q],] */
       }  
     }
-    kk = ma[i] + 1;  
+    kk = ma[i]+ 1;  
   } /* neighbourhood loop */
   /* extract the influence matrix blocks */
   A = (double *)CALLOC(nk,sizeof(double));A2 = (double *)CALLOC(nk,sizeof(double));
@@ -2519,7 +2519,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   /* Get NCV and (I-A_aa)^-1... */
  
   for (M=nb=j=kk=i=0;i<*nn;i++) {
-    dum = mk[i]-kk+1; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
+    dum = mk[i]-kk+1;
+    kk = mk[i]+1;
+    if (j<dum) j = dum; /* largest A_aa */
     dum = (int)(sqrt(8*dum+1)-1)/2;
     if (j<dum) j = dum; /* largest dimension of A_aa */
     nb += dum; /* total storage for adjusted residuals */

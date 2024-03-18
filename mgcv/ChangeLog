@@ -34,6 +34,10 @@ present, and reparameterization needs checking (also for bam).
   extra factor levels in prediction. Slightly differs from predict.gam, in 
   setting effect to zero, rather than NA.
 
+* fix to NCV hadling of dropped NA points - previously could end up with
+  different numbers of predict and drop neighbourhoods. Thanks to Nicole
+  Augustin.	
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 

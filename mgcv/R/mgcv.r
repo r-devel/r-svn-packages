@@ -2024,27 +2024,45 @@ nanei <- function(nb,k) {
 ## this function adjusts nb to remove the dropped points and adjust the
 ## indices accordingly, so that the structure works with a data frame
 ## from which rows in k have been dropped.
+## A problem is that if a whole prediction/omission fold is dropped then
+## the corresponding omission/prediction fold must be dropped too. 
   if (!length(k)) return()
   if (is.null(nb$k)||is.null(nb$m)||is.null(nb$mi)||is.null(nb$i)) stop("full nei list needed if data incomplete")
-  ## first work on dropped folds...
-  kk <- which(nb$k %in% k) ## position of dropped in nb$k
-  ## adjust m for the fact that points are to be dropped...
-  nb$m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
-  ii <- which(diff(c(0,nb$m))==0) ## identify zero length folds
-  if (length(ii)) nb$m <- nb$m[-ii] ## drop zero length folds
-  nb$k <- nb$k[-kk] ## drop the elements of k
-  nb$k <- nb$k - findInterval(nb$k,sort(k)) ## and shift indices to account for dropped
 
-  ## now the prediction folds...
-  kk <- which(nb$i %in% k) ## position of dropped in nb$i
-  ## adjust mi for the fact that points are to be dropped...
-  nb$mi <- nb$mi - cumsum(tabulate(findInterval(kk-1,nb$mi)+1,nbins=length(nb$m)))
-  ii <- which(diff(c(0,nb$mi))==0) ## identify zero length folds
-  if (length(ii)) nb$mi <- nb$mi[-ii] ## drop zero length folds
-  nb$i <- nb$i[-kk] ## drop the elements of k
-  nb$i <- nb$i - findInterval(nb$i,sort(k)) ## and shift indices to account for dropped
+  ## first work on drop-folds...
+  kk <- which(nb$k %in% k) ## position of omitted in nb$k
+  ## adjust m for the fact that points are to be omitted...
+  m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
+  mdi <- which(diff(c(0,m))==0) ## identify zero length folds to omit entirely
+
+  ## now get elements of nb$i to omit from pred-folds because some drop-folds omitted entirely from k...
+  mm <- nb$mi
+  i0 <- if (length(mdi)) unlist(apply(array(mdi),1,function(mdi) (c(0,mm)[mdi]+1):c(0,mm)[mdi+1] ,simplify=TRUE)) else rep(0,0)
+
+  ## now the pred-folds...
+  ii <- unique(c(i0,which(nb$i %in% k))) ## position of omitted in nb$i
+  ## adjust mi for the fact that points are to be omitted...
+  mi <- nb$mi - cumsum(tabulate(findInterval(ii-1,nb$mi)+1,nbins=length(nb$m)))
+  midi <- which(diff(c(0,mi))==0) ## identify zero length folds
+
+  ## Now once more through drop-folds folds to omit because pred-fold omitted
+  mm <- nb$m
+  k0 <- if (length(midi)) unlist(apply(array(midi),1,function(mdi) (c(0,mm)[mdi]+1):c(0,mm)[mdi+1] ,simplify=TRUE)) else rep(0,0)
+  kk <- unique(c(k0,kk)) ## all points to omit from drop-folds
+  m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
+  mdi <- which(diff(c(0,m))==0) ## identify zero length folds to omit entirely
+
+  
+  if (length(mdi)) nb$m <- m[-mdi] ## omit zero length folds
+  nb$k <- nb$k[-kk] ## omit the elements of k
+  nb$k <- nb$k - findInterval(nb$k,sort(k)) ## and shift indices to account for omitted
+
+  if (length(midi)) nb$mi <- mi[-midi] ## omit zero length folds
+  nb$i <- nb$i[-ii] ## omit the elements of i
+  nb$i <- nb$i - findInterval(nb$i,sort(k)) ## and shift indices to account for omitted
   nb 
 } ## nanei
+
 
 onei <- function(nb,cbase=FALSE) {
 ## orders the neighbourhood indices into ascending order within each neighbourhood.
