@@ -109,7 +109,6 @@ void cs_trans(int *Ap,int *Ai,double *Ax,int *Cp,int *Ci, double *Cx,int *w,int 
 } /* cs_trans */  
 
 
-
 void sprealloc(spMat *A, int nzmax) {
 /* Alter the storage in A to accomodate at most nzmax non-zero entries. 
    Note that if using openMP then allocation of storage needs to be locked.

@@ -1380,8 +1380,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   m <- as.integer(unlist(lapply(Xd,nrow)));p <- as.integer(unlist(lapply(Xd,ncol)))
   beta1 <- numeric(length(beta)*nsp)
 
-  .Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, beta, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
-        as.integer(ts-1L), as.integer(dt), as.double(unlist(v)), as.integer(qc), as.integer(nthreads), nei, Sl)
+  tt <- system.time(.Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, beta, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
+        as.integer(ts-1L), as.integer(dt), as.double(unlist(v)), as.integer(qc), as.integer(nthreads), nei, Sl))[1]
   NCV2 <- matrix(NCV2,nsp,nsp)
   beta1 <- matrix(beta1,length(beta),nsp)
   ## NOTE: should modify to pass back dbeta/drho from CNCV

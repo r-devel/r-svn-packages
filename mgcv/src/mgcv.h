@@ -58,9 +58,9 @@
 */
 
 /* For safe memory handling from R... */
-#define CALLOC R_chk_calloc
+/*#define CALLOC R_chk_calloc
 #define FREE R_chk_free
-#define REALLOC R_chk_realloc
+#define REALLOC R_chk_realloc*/
 
 /* BUT, this can mess up valgrinding for memory error checking - problems are 
    sometimes missed because standard allocation is being circumvented. Then errors can 
@@ -68,9 +68,9 @@
    messes up internally because of corruption, which then makes it look as if
    R is generating the problem. Hence better to reset for checking. Also sizing
    errors in .C often generate no obvious valgrind error.*/
-//#define CALLOC calloc
-//#define FREE free
-//#define REALLOC realloc
+#define CALLOC calloc
+#define FREE free
+#define REALLOC realloc
 
 void *R_chk_calloc1(size_t nmemb,size_t size);
 
@@ -242,7 +242,7 @@ SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SE
 	    SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV,SEXP EPS,SEXP NT);
 SEXP nei_cov(SEXP v,SEXP d, SEXP M, SEXP K);
 void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd, double *w,int *pg,
-	  int *nn,int *a,int *ma,int *d,int *md,double *X,int *k,int *ck, int *ks,int *m,int *p, ptrdiff_t *n,
+	  int *nn,int *a,ptrdiff_t *ma,int *d,ptrdiff_t *md,double *X,int *k,int *ck, int *ks,int *m,int *p, ptrdiff_t *n,
 	  double **S,
 	  int ns,int *sr,int *soff,double *sp,int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads);
 void chol_up(double *R,double *u, int *n,int *up,double *eps);
