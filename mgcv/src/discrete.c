@@ -2283,7 +2283,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   } /* j is number of chunks */
   nchunk = j;
   if (nchunk==1) max_chunk = mk[*nn-1]+1;
-  Rprintf("nchunk = %d  max_chunk= %d \n",nchunk,(int)max_chunk);
+  //Rprintf("nchunk = %d  max_chunk= %d \n",nchunk,(int)max_chunk);
   ichunk = (int *)CALLOC(nchunk,sizeof(int));
   max_nb=0;
   for (j=0,jj=ii=-1,i=0;i<*nn;i++) { /* determine elements of mk indexing chunk ends */

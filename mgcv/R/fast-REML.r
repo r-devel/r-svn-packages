@@ -1409,7 +1409,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
     NCV2 <- t(L) %*% NCV2 %*% L
   }
   uconv.ind <- (abs(NCV1) > tol)|(abs(diag(NCV2))>tol)
-
+  robj <- list(beta=beta,grad=NCV1,db=beta1,PP=G,R=R,piv=piv,rank=r,
+               hess=NCV2,NCV=NCV)
   if (length(NCV1)>0 && sum(uconv.ind)>0) {
     if (sum(uconv.ind)!=ncol(NCV2)) { 
       NCV1 <- NCV1[uconv.ind]
@@ -1427,10 +1428,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
     ms <- max(abs(step))
     if (ms>4) step <- 4*step/ms
   } else step <- 0
-  
-  list(beta=beta,grad=NCV1,step=step,db=beta1,PP=G,R=R,piv=piv,rank=r,
-       hess=NCV2,NCV=NCV)
- 
+  robj$step <- step
+  robj
 } ## Sl.ncv
 
 Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
