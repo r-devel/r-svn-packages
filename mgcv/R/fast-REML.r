@@ -1373,7 +1373,11 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
     P <- pbsi(R,nt=nt[2],copy=TRUE) ## invert R 
     G[piv,piv] <-  pRRt(P,nt[2]) ## PP'
   } else G[piv,piv] <- chol2inv(R)
-  G <- t(G/d)/d ## inverse of penalized (scaled) Hessian
+  G0 <- t(G/d)/d ## inverse of penalized (scaled) Hessian
+
+  ## BUG: to get correct diag(A), the following is needed. But that means that the supplied Sl is
+  ##      using the wrong parameterization (we are back in original). ARGHH!!!
+  G <- Sl.initial.repara(Sl,G0,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nthreads) ## TRIAL!!
 
   NCV <- 0; nsp <- length(rho)
   NCV1 <- numeric(nsp); NCV2 <- numeric(nsp*nsp)
@@ -1409,7 +1413,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
     NCV2 <- t(L) %*% NCV2 %*% L
   }
   uconv.ind <- (abs(NCV1) > tol)|(abs(diag(NCV2))>tol)
-  robj <- list(beta=beta,grad=NCV1,db=beta1,PP=G,R=R,piv=piv,rank=r,
+  robj <- list(beta=beta,grad=NCV1,db=beta1,PP=G0,R=R,piv=piv,rank=r,
                hess=NCV2,NCV=NCV)
   if (length(NCV1)>0 && sum(uconv.ind)>0) {
     if (sum(uconv.ind)!=ncol(NCV2)) { 
