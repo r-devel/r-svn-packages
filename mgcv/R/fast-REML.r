@@ -65,7 +65,7 @@ iniStrans <- function(S,rank = NULL,trans.ldet=FALSE) {
 } ## iniStrans
 
 
-Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
+Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) {
 ## Sets up a list representing a block diagonal penalty matrix.
 ## from the object produced by `gam.setup'.
 ## Uses only pivoted Cholesky if cholesky==TRUE.
@@ -97,7 +97,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 ## The penalties in Sl are in the same order as those in G
 ## Also returns attribute "E" a square root of the well scaled total
 ## penalty, suitable for rank deficiency testing, and attribute "lambda"
-## the corresponding smoothing parameters.  
+## the corresponding smoothing parameters.
+## keepS==TRUE causes original penalties to be stored in S0 (after any splitting
+## of multiple penalties into singletons, but before reparameterization).
   ##if (!is.null(G$H)) stop("paraPen min sp not supported")
   Sl <- list()
   b <- 1 ## block counter
@@ -242,6 +244,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
   ##       looks wasteful - remove this??
 
   for (b in 1:length(Sl)) { ## once more into the blocks, dear friends...
+    if (keepS) Sl[[b]]$S0 <- Sl[[b]]$S ## keep untransformed version
     if (!Sl[[b]]$linear) { ## nonlinear term
       ## never re-parameterized, but need contribution to penalty square root, E
       Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
@@ -260,7 +263,8 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
       if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
         ## Reparameterize so that S has 1's or zero's on diagonal
         ## In new parameterization smooth specific model matrix is X%*%diag(D)
-        ## ind indexes penalized parameters from this smooth's set. 
+        ## ind indexes penalized parameters from this smooth's set.
+
         D <- diag(Sl[[b]]$S[[1]])
         ind <- D > 0 ## index penalized elements
 	Sl[[b]]$rank <- sum(ind)
@@ -1366,7 +1370,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   }
   beta <- rep(0,p)
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
-  mu <- Xbd(Xd,beta,k,ks,ts,dt,v,qc,drop)
+  betar <- Sl.initial.repara(Sl,beta,inverse=TRUE,both.sides=FALSE,cov=FALSE)
+  mu <- Xbd(Xd,betar,k,ks,ts,dt,v,qc,drop)
   rsd <- y-mu
   G <- matrix(0,p,p)
   if (nt[2]>1) {
@@ -1378,18 +1383,20 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   ## BUG: to get correct diag(A), the following is needed. But that means that the supplied Sl is
   ##      using the wrong parameterization (we are back in original). ARGHH!!!
   G <- Sl.initial.repara(Sl,G0,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nthreads) ## TRIAL!!
+  
 
   NCV <- 0; nsp <- length(rho)
   NCV1 <- numeric(nsp); NCV2 <- numeric(nsp*nsp)
   m <- as.integer(unlist(lapply(Xd,nrow)));p <- as.integer(unlist(lapply(Xd,ncol)))
   beta1 <- numeric(length(beta)*nsp)
 
-  tt <- system.time(.Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, beta, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
+  tt <- system.time(.Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, betar, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
         as.integer(ts-1L), as.integer(dt), as.double(unlist(v)), as.integer(qc), as.integer(nthreads), nei, Sl))
   NCV2 <- matrix(NCV2,nsp,nsp)
   beta1 <- matrix(beta1,length(beta),nsp)
   ## NOTE: should modify to pass back dbeta/drho from CNCV
-
+  if (ncol(beta1)>0) for (i in 1:ncol(beta1)) beta1[,i] <- ## d beta / d rho matrix
+        Sl.initial.repara(Sl,as.numeric(beta1[,i]),inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=npt[1]) 
   ## DEBUG code to check NCV score + deriv correct in loocv case
   db <- FALSE
   if (db) {

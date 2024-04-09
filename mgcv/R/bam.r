@@ -524,8 +524,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   ## in particular to deal with binomial properly...
   G$y <- y
   G$w <- weights
-
-  Sl <- Sl.setup(G) ## setup block diagonal penalty object
+  ## need to keep untransformed S matrices with NCV...
+  Sl <- Sl.setup(G,keepS=(method=="NCV")) ## setup block diagonal penalty object
   rank <- 0
   if (length(Sl)>0) for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
   Mp <- ncol(G$X) - rank ## null space dimension
@@ -624,9 +624,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
       if (gc.level>1) gc()
      
       ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
+     
       qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt[1])
       qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt[1])  
-        
+       
       G$n <- nobs
     } else {  ## end of if (iter==1||!additive)
       dev <- qrx$y.norm2 - sum(coef*qrx$f) ## actually penalized deviance
@@ -822,7 +823,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object$prior.weights <- G$w
   rm(G);if (gc.level>0) gc()
   object
-} ## end bgam.fitd
+} ## end bgam.fitd 
 
 
 regular.Sb <- function(S,off,sp,beta) {

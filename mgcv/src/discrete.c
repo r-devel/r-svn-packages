@@ -2063,19 +2063,27 @@ SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEX
     Sl = VECTOR_ELT(Sr, i);
     soff[ns] = asInteger(getListEl(Sl,"start")) - 1;
     sr[ns] = asInteger(getListEl(Sl,"stop")) - soff[ns];
-    Si = getListEl(Sl,"S");
+    Si = getListEl(Sl,"S0");
     q = length(Si);
-    if (q>1) for (j=0;j<q;j++,ns++) {
-      K = VECTOR_ELT(Si, j);sr[ns] = ncols(K); /* uses fact that multi-S terms always have unpenalized last */
+    for (j=0;j<q;j++,ns++) {
+      K = VECTOR_ELT(Si, j);
       K = PROTECT(coerceVector(K,REALSXP));nprot++;
       S[ns] = REAL(K);
-      if (j>0) { soff[ns] = soff[ns-1]; /*sr[ns] = sr[ns-1];*/} 
-    } else {
-      sr[ns] = -sr[ns];
-      /* diagonal of Si - one or zero */
-      S[ns] = REAL(PROTECT(coerceVector(getListEl(Sl,"ind"),REALSXP)));nprot++;
-      ns++;
-    } /* signals identity penalty */ 
+      if (j>0) { soff[ns] = soff[ns-1]; sr[ns] = sr[ns-1];}
+    }
+    // Following was used when X and G were in incompatible parameterizations
+    // with S compatible with G but not X...
+    //    if (q>1) for (j=0;j<q;j++,ns++) {
+    //  K = VECTOR_ELT(Si, j);sr[ns] = ncols(K); /* uses fact that multi-S terms always have unpenalized last */
+    //  K = PROTECT(coerceVector(K,REALSXP));nprot++;
+    //  S[ns] = REAL(K);
+    //  if (j>0) { soff[ns] = soff[ns-1]; /*sr[ns] = sr[ns-1];*/} 
+    //} else {
+    //  sr[ns] = -sr[ns];
+    //  /* diagonal of Si - one or zero */
+    //  S[ns] = REAL(PROTECT(coerceVector(getListEl(Sl,"ind"),REALSXP)));nprot++;
+    //  ns++;
+    //} /* signals identity penalty */ 
   }
   // NOTE: should throw error if ns != nsp
   ncvd(NCV,NCV1,NCV2,beta,db,G,rsd,w,&pg,&nn,a,ma,d,md,X,k,&ck,ks,m,p,&n,
@@ -2398,7 +2406,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
         jj = md[i-1]+1; /* start index of predict neighbourhood in d */
 	IAp = IA + kk - kk0; 
       }	
-      M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+      M = (int) ma[i]-ii+1;//(int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
    
       /* Fill upper triangle of I-Aaa */
       for (p1 = ind+kk-kk0,Aaap = Aaa+maxM2*tid,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = -A[*p1]; /* fill upper triangle of current Aaa*/
@@ -2471,7 +2479,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	  IAdAIAp = IAdAIA[l] + kk - kk0;
         }	
 
-	M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+	M = (int) ma[i]-ii+1; //(int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
   
         for (p1 = ind+kk-kk0,Ap=A1[l],Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Ap[*p1]; /* current A1_aa to upper tri Aaa */
         fill_lt(Aaa+tid*maxM2,M); /* fill in lower triangle */
@@ -2549,7 +2557,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	    IAdAIArp = IAdAIA[r] + kk - kk0;
           }	
 
-	  M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+	  M = (int) ma[i]-ii+1;// (sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
 	  /*  need second derivative of b_a wrt rho_l and rho_r... */
           for (Aaap = IAaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current W_a(I-A_aa W_a)^{-1} to upper tri IAaa */
           for (p1 = ind+kk-kk0,Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = A2[*p1]; /* Aaa =  d2A_aa/drho_l drho_r */
