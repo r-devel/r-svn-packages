@@ -1988,6 +1988,55 @@ void mroot(double *A,int *rank,int *n)
 }
 
 
+void mtrf(double *A, double *B,int *n,int *rank,int *psd,double *tol,double *work,int *iwork) {
+/* A is n by n symmetric and posiive semi-definite unless psd is zero.
+   If rank<=0 the rank is determined numerically and returned in rank, 
+   otherwise rank on input is taken as the rank of A. 
+   If psd returns n by rank matrix L in A, such that LL' = A(input).
+   If !psd returns n by rank matrices A and B such that AB' = A(input)  
+
+   On input A must be n by n. work is 2*n and iwork n. 
+   tol is needed with !psd to estimate rank.
+   if !psd B is n by rank if rank is known and n by n otherwise. Not needed if psd.
+ 
+*/  
+  int info=1,i,j,*piv;
+  char uplo='L';
+  double *p,*p1,max,row_max,x;
+  
+  pivot=iwork;
+  if (*psd) { /* positive semidefinite - use Cholesky pivoted A = LL'*/
+    x = -1.0; /* auto-tolerance */
+    F77_CALL(dpstrf)(&uplo,n,A,n,piv,&j,&x,B,&info FCONE); /* LAPACK pivoted Cholesky*/
+    if (*rank<=0) *rank=j;
+  } else { /* indefinite - use LU*/
+    F77_CALL(dgetrf)(n,n,A,n,piv,&info); /* LAPACK pivoted LU */
+    if (*rank<=0) { /* estimate rank */ 
+      *rank = 0;
+      for (i=0;i<*n;i++) { /* work through rows of U factor */
+        row_max=0.0;
+	for (p=A+i* *n+i,j=i;j<*n;j++,p += *n) { /* get row max */
+          x = fabs(*p); if (x > row_max) row_max=x;
+	}
+	if (row_max>max) max = row_max;
+	if (row_max > max * *tol) *rank = i+1; /* is row non-zero? */
+      }	
+    } /* rank determination */
+    /* copy U' to B */
+    for (i=0;i<*rank;i++) {
+      for (j=0;j<i;j++,B++) *B = 0.0;
+      for (p1=p=A+i* *n + i, j=i;j<*n;j++,B++,p+= *n) *B = *p;
+      *p1 = 1.0; /* LD element of L added in explicitly */
+    }  
+  }
+  /* zero upper triangle and unpivot L factor */
+  for (j=0;j<*rank;j++) {
+    for (i=0;i<j;i++) work[i] = 0.0;
+    for (p=A+j * *n,i=j;j<*n;i++) work[i] = p[i];
+    for (i=0;i<*n;i++) p[piv[i]] = work[i];
+  } 
+} /* mtrf */  
+
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)
 /* call LA_PACK svd routine to form x=UDV'. U returned in x. V' returned in vt.
    assumed r >= c. U is r by c. D is length c. V is c by c.
