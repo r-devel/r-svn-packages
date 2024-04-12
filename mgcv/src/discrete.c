@@ -718,7 +718,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
       ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
       /* Note thread safety of XBd means this must be only memory allocator in this section*/
       Xbd(xv + j * *n,V + kk * *pv,X,k1,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* XV[:,kk] */
-      Xbd(xi + j * *n,ei + j * *pv,X,k2,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,rs,nrs); /* X[:,kk] inefficient, but deals with constraint*/
+      /* Get X[:,kk] - inefficient when k1==k2, but deals with constraint*/
+      Xbd(xi + j * *n,ei + j * *pv,X,k2,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,rs,nrs); 
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
       for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* element-wise product of XV[:,kk] X[:,kk] */
     } 

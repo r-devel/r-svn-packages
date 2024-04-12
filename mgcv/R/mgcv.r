@@ -4486,25 +4486,16 @@ logLik.gam <- function (object,...)
 mroot <- function(A,rank=NULL,method="chol")
 # finds the smallest square root of A, or the best approximate square root of 
 # given rank. B is returned where BB'=A. A assumed non-negative definite. 
-# Current methods "chol", "svd". "svd" is much slower, but much better at getting the 
+# Current methods "chol", "svd". "svd" is slower, but much better at getting the 
 # correct rank if it isn't known in advance. 
 { if (is.null(rank)) rank <- 0 
   if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
   if (method=="svd") { 
-    um <- La.svd(A)
-    if (sum(um$d!=sort(um$d,decreasing=TRUE))>0) 
-    stop("singular values not returned in order")
-    if (rank < 1) # have to work out rank
-    { rank <- dim(A)[1]
-      if (um$d[1]<=0) rank <- 1 else
-      while (rank>0&&(um$d[rank]/um$d[1]<.Machine$double.eps||
-                           all.equal(um$u[,rank],um$vt[rank,])!=TRUE)) rank<-rank-1 
-      if (rank==0) stop("Something wrong - matrix probably not +ve semi definite")    
-    }
-    d<-um$d[1:rank]^0.5
-    return(t(t(um$u[,1:rank])*as.vector(d))) # note recycling rule used for efficiency
-  } else
-  if (method=="chol") { 
+    um <- eigen(A,symmetric=TRUE) ## same as svd for +ve semi def, but faster
+    if (rank<1) rank <- sum(um$values > max(um$values)*.Machine$double.eps)
+    if (rank==0) stop("Something wrong - matrix probably not +ve semi definite")
+    return(t(t(um$vectors[,1:rank])*sqrt(um$values[1:rank])))
+  } else if (method=="chol") { 
     ## don't want to be warned it's not +ve def...
     L <- suppressWarnings(chol(A,pivot=TRUE,tol=0))
     piv <- order(attr(L,"pivot"))

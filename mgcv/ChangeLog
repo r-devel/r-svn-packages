@@ -30,6 +30,9 @@ better done with .Call
   Matrix::Cholesky, giving the same functionality as Matrix::chol prior 
   to the decision for this not to return the pivot sequence. 
 
+* 'mroot' modified so that svd option uses an efficient symmetric eigen routine 
+  to compute SVD (of a positive semi-definite matrix!)
+
 * fixed gam.vcomp to avoid failure with extended families and bam. Thanks to
   Nathan LaSpina for reporting.
 

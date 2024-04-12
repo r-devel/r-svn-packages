@@ -1389,7 +1389,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   NCV1 <- numeric(nsp); NCV2 <- numeric(nsp*nsp)
   m <- as.integer(unlist(lapply(Xd,nrow)));p <- as.integer(unlist(lapply(Xd,ncol)))
   beta1 <- numeric(length(beta)*nsp)
-
+  ## profiling indicates that by far the dominant cost here is the diagXVXt calls in the C code...
   tt <- system.time(.Call(C_CNCV, NCV, NCV1, NCV2, G, rsd, betar, beta1, w, sp, as.double(unlist(Xd)), k-1L, as.integer(ks-1L), m, p,
         as.integer(ts-1L), as.integer(dt), as.double(unlist(v)), as.integer(qc), as.integer(nthreads), nei, Sl))
   NCV2 <- matrix(NCV2,nsp,nsp)
@@ -1400,7 +1400,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   ## DEBUG code to check NCV score + deriv correct in loocv case
   db <- FALSE
   if (db) {
-    dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w
+    tt1 <- system.time(dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w)
     rcv <- rsd/(1-dA)
     NCV0 <- sum(rcv^2*w)
     mu1 <- Xbd(Xd,beta1,k,ks,ts,dt,v,qc)
