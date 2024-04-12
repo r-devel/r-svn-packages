@@ -1989,52 +1989,106 @@ void mroot(double *A,int *rank,int *n)
 
 
 void mtrf(double *A, double *B,int *n,int *rank,int *psd,double *tol,double *work,int *iwork) {
-/* A is n by n symmetric and posiive semi-definite unless psd is zero.
-   If rank<=0 the rank is determined numerically and returned in rank, 
-   otherwise rank on input is taken as the rank of A. 
-   If psd returns n by rank matrix L in A, such that LL' = A(input).
-   If !psd returns n by rank matrices A and B such that AB' = A(input)  
+/* Obtain minimum rank factors of possibly rank deficient matrix A. If psd then A = LL'
+   otherwise A=LU.
 
-   On input A must be n by n. work is 2*n and iwork n. 
-   tol is needed with !psd to estimate rank.
-   if !psd B is n by rank if rank is known and n by n otherwise. Not needed if psd.
+   A [in,out] is n by n matrix. It is symmetric and posiive semi-definite unless psd is zero. 
+     on exit it is the L factor of A.
+   B [out] unused if psd, otherwise n by rank or n by n. Contains U' on exit if !psd.
+   n [in] dimension of A.
+   rank [in,out] if psd and >0 it is the rank of A. Otherwise rank determined numerically and
+        returned in this.
+   psd [in] 0 for an indefinte matrix, non zero for positive semi definite.
+   tol [in] tolerance for rank determination if !psd.
+   double [in, out] 2*n workspace array.
+   iwork [in,out] n workspace array.   
+
+   In psd case uses pivoted Cholesky, removing the trailing zero block of L and then unpivoting.
+   Otherwise uses pivoted LU decomposition A = PLU where the leading diagonal elements of L are 1. 
+   Zero rows of U are dropped, with corresponding columns of L. Remaining columns of L are unpivoted. 
+
+   LAPACK routines dpstrf and dgetrf are used. Note that they return pivot sequence using different 
+   conventions. Dropped columns of A and B are not zeroed on return.
  
+   mtrf must be in init.c for this to work - note no 'C_'
+
+   library(mgcv)
+   set.seed(1)
+   p <- 4;r<- 3
+   X <- matrix(rnorm(p*r),p,r);D <- X%*%t(X)
+   rank <- 0
+   er<-.C("mtrf",A=as.double(D),B=as.double(D),n=as.integer(p),rank=as.integer(rank),psd=as.integer(1),
+          tol=as.double(.Machine$double.eps),work=as.double(numeric(2*p)),iwork=as.integer(integer(4)),PACKAGE="mgcv")
+   rank <- er$rank
+   L <- matrix(er$A[1:(rank*p)],p,rank)
+   D;L%*%t(L);rank;range(D-L%*%t(L))
+   er<-.C("mtrf",A=as.double(D),B=as.double(D),n=as.integer(p),rank=as.integer(0),psd=as.integer(0),
+          tol=as.double(.Machine$double.eps),work=as.double(numeric(2*p)),iwork=as.integer(integer(4)),PACKAGE="mgcv")
+   rank <- er$rank
+   L <- matrix(er$A[1:(rank*p)],p,rank)
+   U <- t(matrix(er$B[1:(rank*p)],p,rank))
+   L%*%U;D;rank;range(D-L%*%U)
+   p <- 7
+   X <- matrix(rnorm(p*p),p,p); D <- X+t(X)
+   D[,1] <- D[1,] <- D[,4] <- D[4,] <- D[,6] <- D[6,] <- 3
+   er<-.C("mtrf",A=as.double(D),B=as.double(D),n=as.integer(p),rank=as.integer(0),psd=as.integer(0),
+          tol=as.double(.Machine$double.eps),work=as.double(numeric(2*p)),iwork=as.integer(integer(p)),PACKAGE="mgcv")
+   rank <- er$rank
+   L <- matrix(er$A[1:(rank*p)],p,rank)
+   U <- t(matrix(er$B[1:(rank*p)],p,rank))
+   L%*%U;D;rank;range(D-L%*%U)
+ 
+   D <- matrix(runif(p*r),p,r) %*%  matrix(runif(p*r),r,p)
+   er<-.C("mtrf",A=as.double(D),B=as.double(D),n=as.integer(p),rank=as.integer(0),psd=as.integer(0),
+          tol=as.double(.Machine$double.eps),work=as.double(numeric(2*p)),iwork=as.integer(integer(p)),PACKAGE="mgcv")
+   rank <- er$rank
+   L <- matrix(er$A[1:(rank*p)],p,rank)
+   U <- t(matrix(er$B[1:(rank*p)],p,rank))
+   L%*%U;D;rank;range(D-L%*%U)
 */  
   int info=1,i,j,*piv;
   char uplo='L';
-  double *p,*p1,max,row_max,x;
+  double *p,*p1,max=0.0,row_max,x;
   
-  pivot=iwork;
+  piv=iwork;
   if (*psd) { /* positive semidefinite - use Cholesky pivoted A = LL'*/
     x = -1.0; /* auto-tolerance */
     F77_CALL(dpstrf)(&uplo,n,A,n,piv,&j,&x,B,&info FCONE); /* LAPACK pivoted Cholesky*/
     if (*rank<=0) *rank=j;
+    for (i=0;i<*n;i++,piv++) *piv += -1;piv=iwork;
+    /* zero upper triangle and unpivot L factor */
+    for (j=0;j<*rank;j++) {
+      for (i=0;i<j;i++) work[i] = 0.0;
+      for (p=A+j * *n,i=j;i<*n;i++) work[i] = p[i];
+      for (i=0;i<*n;i++) p[piv[i]] = work[i];
+    } 
   } else { /* indefinite - use LU*/
     F77_CALL(dgetrf)(n,n,A,n,piv,&info); /* LAPACK pivoted LU */
-    if (*rank<=0) { /* estimate rank */ 
-      *rank = 0;
-      for (i=0;i<*n;i++) { /* work through rows of U factor */
-        row_max=0.0;
-	for (p=A+i* *n+i,j=i;j<*n;j++,p += *n) { /* get row max */
-          x = fabs(*p); if (x > row_max) row_max=x;
-	}
-	if (row_max>max) max = row_max;
-	if (row_max > max * *tol) *rank = i+1; /* is row non-zero? */
-      }	
+    /* dgetrf returns the sequence of row interchanges - not the pivots themselves. piv[i] is 
+       the row that row i was swapped with. Have to apply this shuffling to 1:n to get pivots */
+    for (i=0;i<*n;i++) { work[i] = (double) piv[i];piv[i]=i;}
+    for (i=0;i<*n;i++) { j = (int) work[i]-1;info = piv[j];piv[j]=piv[i];piv[i]=info;}
+    
+    *rank = 0;
+    for (p=A,p1=A+ *n * *n;p<p1;p++) { x=fabs(*p); if (x > max) max=x;}
+    for (i=0;i<*n;i++) { /* work through rows of U factor */
+      row_max=0.0;
+      for (p=A+i* *n+i,j=i;j<*n;j++,p += *n) { /* get row max */
+        x = fabs(*p); if (x > row_max) row_max=x;
+      }
+      if (row_max > max * *tol) { /* is row non-zero? */
+	/* copy U' to B */
+	for (j=0;j<i;j++,B++) *B = 0.0;
+	for (p1=p=A+i* *n + i, j=i;j<*n;j++,B++,p+= *n) *B = *p;
+        *p1 = 1.0; /* LD element of L added in explicitly */
+	/*  zero upper triangle and unpivot L factor */
+	for (j=0;j<i;j++) work[j] = 0.0;
+        for (p=A+i * *n,j=i;j<*n;j++) work[j] = p[j];
+        for (p=A+ *rank * *n,j=0;j<*n;j++) p[piv[j]] = work[j];
+	(*rank)++;
+      } 	
     } /* rank determination */
-    /* copy U' to B */
-    for (i=0;i<*rank;i++) {
-      for (j=0;j<i;j++,B++) *B = 0.0;
-      for (p1=p=A+i* *n + i, j=i;j<*n;j++,B++,p+= *n) *B = *p;
-      *p1 = 1.0; /* LD element of L added in explicitly */
-    }  
   }
-  /* zero upper triangle and unpivot L factor */
-  for (j=0;j<*rank;j++) {
-    for (i=0;i<j;i++) work[i] = 0.0;
-    for (p=A+j * *n,i=j;j<*n;i++) work[i] = p[i];
-    for (i=0;i<*n;i++) p[piv[i]] = work[i];
-  } 
 } /* mtrf */  
 
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)

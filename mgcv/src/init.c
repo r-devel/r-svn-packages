@@ -108,6 +108,7 @@ R_CMethodDef CEntries[] = {
     {"gridder",(DL_FUNC)&gridder, 13},
     {"row_block_reorder",(DL_FUNC)&row_block_reorder,5},
     {"mgcv_pqr",(DL_FUNC)&mgcv_pqr,6},
+    {"mtrf",(DL_FUNC)&mtrf,8},
     {"getRpqr",(DL_FUNC)&getRpqr,6},
     {"mgcv_pqrqy",(DL_FUNC)&mgcv_pqrqy,8},
     {"minres",(DL_FUNC)&minres,7},
