@@ -31,7 +31,7 @@ better done with .Call
   to the decision for this not to return the pivot sequence. 
 
 * 'mroot' modified so that svd option uses an efficient symmetric eigen routine 
-  to compute SVD (of a positive semi-definite matrix!)
+  to compute SVD (argument is positive semi-definite after all).
 
 * fixed gam.vcomp to avoid failure with extended families and bam. Thanks to
   Nathan LaSpina for reporting.
