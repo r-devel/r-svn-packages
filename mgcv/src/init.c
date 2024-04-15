@@ -54,6 +54,8 @@ R_CMethodDef CEntries[] = {
     {"davies",(DL_FUNC) davies,10},
     {"tri_chol",(DL_FUNC) tri_chol,4},
     {"diagXVXt", (DL_FUNC) &diagXVXt,21},
+    {"idiagXLLtXt", (DL_FUNC) &idiagXLLtXt,20},
+    {"idiagXLUtXt", (DL_FUNC) &idiagXLUtXt,21},
     {"XWXd0", (DL_FUNC) &XWXd0,18},
     {"XWXd1", (DL_FUNC) &XWXd1,22},
     {"XWyd", (DL_FUNC) &XWyd,21},

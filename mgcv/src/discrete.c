@@ -620,7 +620,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
    of XVX'. e.g. k1[l] might be storage location of row/obs i and k2[l] the storage location 
    for row/obs j. Then lth element computed is XVX'[i,j].  
 
-   V is a pv by pv matrix, if all terms are selected, otherwise pv by cv; 
+   V is a pv by pv matrix, if all terms are selected, otherwise pv by cv and V has to have been 
+   manipulated to contain only elements relevant to retained terms. 
    
    Parallelization is by splitting the columns of V into nthreads subsets.
    Currently inefficient. Could be speeded up by a factor of 2, by supplying a
@@ -730,6 +731,301 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
   FREE(xv);FREE(dc);FREE(xi);FREE(ei);
 } /* diagXVXt */
 
+
+static int kucomp(const void *a, const void *b) {
+  /* comparison function for qsort as used in kunique. a and b are pointers to integer pointers. Each points in particular to an
+     integer pair to sort, on the basis of the first element (the second element is an index tracker).
+  */   
+  int k;
+  k = *(*(int **)a) - *(*(int **)b); /* difference between first elements pointed to */
+  return(k);
+} /* kucomp */  
+
+void kunique(int *k, int *ind,ptrdiff_t *n) {
+/* finds the unique integers in k returning the number of these in *n (which is array length on entry).
+   The unique entries are returned in the early elements of k and ind[i] gives the elements of these unique entries
+   giving the ith input entry. i.e. k[i] on input is located in k[ind[i]] on output.
+   - could be optimized once tested.
+*/
+  int **a,*ap,*a0,*ii,i,j;
+  a = (int **)CALLOC(*n,sizeof(int *));
+  a0 = ap = (int *)CALLOC(*n * 2,sizeof(int));
+  for (i=0;i<*n;i++,ap += 2) { /* a[i] points to an integer pair (k[i],i) */
+    a[i] = ap;ap[0] = k[i];
+    ap[1] = i;
+  }  
+  qsort(a,*n,sizeof(int *),kucomp); /* sort the pair pointers to order k */
+  /* read sorted back into k and ind */
+  for (i=0;i<*n;i++,ap += 3) {
+    ap = a[i];
+    k[i] = *ap;ind[i] = ap[1];
+  }
+  for (i=0;i<*n;i++) a0[i] = ind[i]; /* need a copy for re-arranging into ind */
+  /* now compress unique into k, while recording index into ind */
+  j = 0;
+  ind[*a0] = j;
+  for (i=1;i<*n;i++) {
+    if (k[i]!=k[i-1]) { /* k change from previous */
+      j++; k[j] = k[i];
+    }
+    ind[a0[i]] = j; /* record that original index maps to unique row j */
+  }
+  *n = j+1; /* unique element count */
+  FREE(a0);FREE(a);
+} /* kunique */  
+
+void idiagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, int *n, 
+		 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
+		 int *ri,int *ci,int *nrc,int *nthreads) {
+  ptrdiff_t ni; ni = (ptrdiff_t) *n;
+  diagXLLtXt(diag,L,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,nrc,nthreads);
+}
+  
+void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
+	      int *ri,int *ci,int *nrc,int *nthreads) {
+/* Extracts elements indexed by ri and ci of XLL'X'. So on exit diag[i] = (XLL'X')[ri[i],ci[i]];
+
+   L is a pl by cl matrix. ri and ci are nrc vectors. X is packed in standard disrete form, other arguments 
+   relating to this.
+   
+   Parallelization is by splitting the columns of L into nthreads subsets.
+
+   Basic algorithm is to compute XL and then the row sums of XL.XL. 
+ 
+   In practice this is done by computing one column of XL at a time, and only the required rows 
+   are computed.
+
+   To test from R it is easiest to create a calling wrapper to deal with the ptrdiff_t *n and defined 
+   in mgcv.h and init.c.
+
+   Called using diagXVXd in R
+   library(mgcv)
+   X <- list(matrix(runif(4*3),4,3),matrix(runif(8*4),8,4),matrix(runif(5*2),5,2))
+   k <- cbind(sample(1:4,100,replace=TRUE),sample(1:8,100,replace=TRUE),sample(1:5,100,replace=TRUE))
+   ks <- cbind(1:3,2:4); ts <- 1:3;dt <- rep(1,3)
+   attr(X,"lpip") <- list(1:3,4:7,8:9)
+   Xf <- cbind(X[[1]][k[,1],],X[[2]][k[,2],],X[[3]][k[,3],])
+   V <- tcrossprod(L <- matrix(runif(45)-.5,9,5))
+   diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3))
+   d1 <- rowSums((Xf%*%V)*Xf)
+
+   ## all diagonal elements...
+
+   oo <- .C("idiagXLLtXt",diag=numeric (100),as.double(L),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(0:99),as.integer(0:99),as.integer(100),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   range(d1-d2)
+ 
+   ## not all diagonal elements...
+
+   oo <- .C("idiagXLLtXt",diag=numeric (50),as.double(L),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(0:49),as.integer(0:49),as.integer(50),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   range(d1[1:50]-d2)
+
+   ## scattered elements...
+   i <- c(2,4,8,25); j <- c(1,7,4,56)
+   d1 <- mgcv:::ijXVXd(i,j,X,V,k,ks,ts,dt,v=NULL,qc=rep(0,3))
+   
+   oo <- .C("idiagXLLtXt",diag=numeric (4),as.double(L),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(i-1),as.integer(j-1),as.integer(4),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   d2;d1;range(d2-d1)
+
+ 
+*/
+  double *xl,*dc,*p0,*p1,*p2,*p3;
+  ptrdiff_t bsj,bs,bsf,i,j,kk,nu;
+  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii;
+  /* first find the unique rows that need to be extracted - need to find unique
+     entries iu in ri,ci and the index of ri and ci in iu...
+  */
+  iu = (int *)CALLOC((size_t) 2 * *nrc,sizeof(int));
+  for (ip=iu,i1p=ri,i2p = ri + *nrc ;i1p<i2p;i1p++,ip++) *ip = *i1p;
+  for (i1p=ci,i2p = ci + *nrc ;i1p<i2p;i1p++,ip++) *ip = *i1p;
+  iir = ii = (int *)CALLOC((size_t) 2 * *nrc,sizeof(int));
+  nu = *nrc * 2; kunique(iu, iir, &nu); iic = iir + *nrc;
+  /* there are nu unique values in iu, ri[i] = iu[iir[i]], ci[i] = iu[iic[i]] */
+  if (nu<*n) { /* not all rows of XL are required - reduce k accordingly */
+    ku = (int *)CALLOC((size_t) *nx * nu,sizeof(int));
+    for (i=0;i<nu;i++) {
+      i1p = ku+i;i2p = k + iu[i];
+      for (j=0;j<*nx;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
+    }  
+  } else { /* can use k, ri and ci directly */
+    iir = ri;iic = ci;
+    ku=k;
+  }  
+  #ifndef OPENMP_ON
+  *nthreads = 1;
+  #endif
+  if (*nthreads<1) *nthreads = 1;
+  if (*nthreads > *cl) *nthreads = *cl;
+  xl = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XL */
+  dc = (double *) CALLOC((size_t) *nthreads * *nrc,sizeof(double)); /* storage for components of required elements */
+  cs = (int *)CALLOC((size_t) *nt * *nthreads,sizeof(int));
+  if (*nthreads>1) {
+    bs = *cl / *nthreads;
+    while (bs * *nthreads < *cl) bs++;
+    while (bs * *nthreads - bs >= *cl) (*nthreads)--;
+    bsf = *cl - (bs * *nthreads - bs); 
+  } else {
+    bsf = bs = *cl;
+  }
+  #ifdef OPENMP_ON
+#pragma omp parallel for private(j,bsj,i,kk,i1p,i2p,p1,p2,p3) num_threads(*nthreads)
+  #endif  
+  for (j=0;j < *nthreads;j++) {
+    if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
+    for (i=0;i<bsj;i++) { /* work through this block's columns */
+      kk = j * bs + i; /* column being worked on */   
+      /* Note thread safety of XBd means this must be only memory allocator in this section*/
+      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XL[:,kk] */
+      /* Now form dc[i] += XL[k1i[i],kk]*XL[k2i[i],kk] */
+      p1=xl + j * nu;p2 = dc + j * *nrc; p3 = p2 + *nrc;
+      for (i1p=iir,i2p=iic;p2<p3;p2++,i1p++,i2p++) *p2 += p1[*i1p] * p1[*i2p];
+    } 
+  } /* parallel loop end */
+  /* sum the contributions from the different threads into diag... */
+  for (p0=diag,p1=p0+ *nrc,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
+  for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *nrc;p0<p1;p0++,p2++) *p0 += *p2;
+  FREE(xl);FREE(dc);FREE(cs);FREE(iu);FREE(ii);if (nu<*n) FREE(ku);
+} /* diagXLLtXt */
+
+void idiagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, int *n, 
+		 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
+		 int *ri,int *ci,int *nrc,int *nthreads) {
+  ptrdiff_t ni; ni = (ptrdiff_t) *n;
+  diagXLUtXt(diag,L,U,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,nrc,nthreads);
+}
+  
+void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
+	      int *ri,int *ci,int *nrc,int *nthreads) {
+/* Extracts elements indexed by ri and ci of XLU'X'. So on exit diag[i] = (XLU'X')[ri[i],ci[i]];
+
+   L and U are pl by cl matrices. ri and ci are nrc vectors. X is packed in standard disrete form, other arguments 
+   relating to this.
+   
+   Parallelization is by splitting the columns of L into nthreads subsets.
+
+   Basic algorithm is to compute XL and XU then the row sums of XL.XU. 
+ 
+   In practice this is done by computing one column of XLand XU  at a time, and only the required rows 
+   are computed.
+
+   To test from R it is easiest to create a calling wrapper to deal with the ptrdiff_t *n and defined 
+   in mgcv.h and init.c.
+
+   Called using diagXVXd in R
+   library(mgcv)
+   X <- list(matrix(runif(4*3),4,3),matrix(runif(8*4),8,4),matrix(runif(5*2),5,2))
+   k <- cbind(sample(1:4,100,replace=TRUE),sample(1:8,100,replace=TRUE),sample(1:5,100,replace=TRUE))
+   ks <- cbind(1:3,2:4); ts <- 1:3;dt <- rep(1,3)
+   attr(X,"lpip") <- list(1:3,4:7,8:9)
+   Xf <- cbind(X[[1]][k[,1],],X[[2]][k[,2],],X[[3]][k[,3],])
+   L <- matrix(runif(45)-.5,9,5); U <- matrix(runif(45)-.5,9,5)
+   V <- L %*% t(U)
+   d0 <-diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3))
+   d1 <- rowSums((Xf%*%V)*Xf)
+
+   ## all diagonal elements...
+
+   oo <- .C("idiagXLUtXt",diag=numeric (100),as.double(L),as.double(U),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(0:99),as.integer(0:99),as.integer(100),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   range(d1-d2)
+ 
+   ## not all diagonal elements...
+
+   oo <- .C("idiagXLUtXt",diag=numeric (50),as.double(L),as.double(U),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(0:49),as.integer(0:49),as.integer(50),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   range(d1[1:50]-d2)
+
+   ## scattered elements...
+   i <- c(2,4,8,25); j <- c(1,7,4,56)
+   d1 <- mgcv:::ijXVXd(i,j,X,V,k,ks,ts,dt,v=NULL,qc=rep(0,3))
+   
+   oo <- .C("idiagXLUtXt",diag=numeric (4),as.double(L),as.double(U),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
+      m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
+      as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
+      pl=as.integer(9),cl=as.integer(5),as.integer(i-1),as.integer(j-1),as.integer(4),as.integer(1),PACKAGE="mgcv")
+   d2 <- oo$diag
+   d2;d1;range(d2-d1)
+
+ 
+*/
+  double *xl,*xu,*dc,*p0,*p1,*p2,*p3;
+  ptrdiff_t bsj,bs,bsf,i,j,kk,nu;
+  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii;
+  /* first find the unique rows that need to be extracted - need to find unique
+     entries iu in ri,ci and the index of ri and ci in iu...
+  */
+  iu = (int *)CALLOC((size_t) 2 * *nrc,sizeof(int));
+  for (ip=iu,i1p=ri,i2p = ri + *nrc ;i1p<i2p;i1p++,ip++) *ip = *i1p;
+  for (i1p=ci,i2p = ci + *nrc ;i1p<i2p;i1p++,ip++) *ip = *i1p;
+  iir = ii = (int *)CALLOC((size_t) 2 * *nrc,sizeof(int));
+  nu = *nrc * 2; kunique(iu, iir, &nu); iic = iir + *nrc;
+  /* there are nu unique values in iu, ri[i] = iu[iir[i]], ci[i] = iu[iic[i]] */
+  if (nu<*n) { /* not all rows of XL are required - reduce k accordingly */
+    ku = (int *)CALLOC((size_t) *nx * nu,sizeof(int));
+    for (i=0;i<nu;i++) {
+      i1p = ku+i;i2p = k + iu[i];
+      for (j=0;j<*nx;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
+    }  
+  } else { /* can use k, ri and ci directly */
+    iir = ri;iic = ci;
+    ku=k;
+  }  
+  #ifndef OPENMP_ON
+  *nthreads = 1;
+  #endif
+  if (*nthreads<1) *nthreads = 1;
+  if (*nthreads > *cl) *nthreads = *cl;
+  xl = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XL */
+  xu = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XU */
+  dc = (double *) CALLOC((size_t) *nthreads * *nrc,sizeof(double)); /* storage for components of required elements */
+  cs = (int *)CALLOC((size_t) *nt * *nthreads,sizeof(int));
+  if (*nthreads>1) {
+    bs = *cl / *nthreads;
+    while (bs * *nthreads < *cl) bs++;
+    while (bs * *nthreads - bs >= *cl) (*nthreads)--;
+    bsf = *cl - (bs * *nthreads - bs); 
+  } else {
+    bsf = bs = *cl;
+  }
+  #ifdef OPENMP_ON
+#pragma omp parallel for private(j,bsj,i,kk,i1p,i2p,p0,p1,p2,p3) num_threads(*nthreads)
+  #endif  
+  for (j=0;j < *nthreads;j++) {
+    if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
+    for (i=0;i<bsj;i++) { /* work through this block's columns */
+      kk = j * bs + i; /* column being worked on */   
+      /* Note thread safety of XBd means this must be only memory allocator in this section*/
+      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XL[:,kk] */
+      Xbd(xu + j * nu,U + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XU[:,kk] */
+      /* Now form dc[i] += XL[k1i[i],kk]*XL[k2i[i],kk] */
+      p0 = xu + j * nu;p1=xl + j * nu;p2 = dc + j * *nrc; p3 = p2 + *nrc;
+      for (i1p=iir,i2p=iic;p2<p3;p2++,i1p++,i2p++) *p2 += p1[*i1p] * p0[*i2p];
+    } 
+  } /* parallel loop end */
+  /* sum the contributions from the different threads into diag... */
+  for (p0=diag,p1=p0+ *nrc,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
+  for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *nrc;p0<p1;p0++,p2++) *p0 += *p2;
+  FREE(xu);FREE(xl);FREE(dc);FREE(cs);FREE(iu);FREE(ii);if (nu<*n) FREE(ku);
+} /* diagXLUtXt */
 
 
 SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP cyr, SEXP tsr, SEXP dtr,
@@ -2114,7 +2410,7 @@ static int ucomp(const void *a, const void *b) {
   return(k);
 } /* ucomp */  
 
-int upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
+void upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
 /* finds the unique integer pairs in k1, k2, returning the number of these in *n (which is array length on entry).
    The pairs are returned in the early elements of k1 and k2 and ind[i] gives the elements of these unique pair arrays
    giving the ith input pair. i.e. k1[i], k2[i] on input is located in k1[ind[i]],k2[ind[i]] on output.
@@ -2627,25 +2923,12 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd,
 	  double *w,int *pg,int *nn,int *a,ptrdiff_t *ma,int *d,ptrdiff_t *md,
 	  double *X,int *k, int *ck, int *ks,int *m,int *p, ptrdiff_t *n,double **S,int ns,int *sr,
 	  int *soff,double *sp,
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads) {
-/* tested version pre-omp.
+/* Working version prior to diagXVXt computation speed up
 
    computes the NCV criterion and its first two derivatives for the working linear regression of 
    a discretized smooth regression model. On entry G = (X'WX + S_t)^{-1} and rsd are the current 
@@ -2664,19 +2947,31 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
    influence matrix blocks. mk gives the block-ends.
 
    
-   NOTE: needs a pass through checking for potential integer overflow. Basically never more than
-   maxint data, but various arrays can be larger (e.g. a and d).
+   NOTE: never more than maxint data, but various arrays can be larger (e.g. a and d), hence need for
+         various ptrdiff_t indexing arrays and indices.
+
+   Set up for OMP but so far tests suggest no benefit at all. schedule(dynamic) tried too, as was
+   a thread per neighbourhood. Appears that it's not worth the setup overhead, basically.
+
+   nthreads passed to diagXVXt can make a big difference, but too
+   many threads harms performance.
 */
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
-    **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,***beta2,*mu2,//*AIr,
-    *V2,*ba2,
-    *ba2p,*Arp,*Alp,*IAdAIArp;
-  int ncs=0,nrs=0,dum,dum1,i1,i,j,M,q,r,info=1,*k1,*k2,k1i,k2i,*k1p,*k2p,*a1p,*a2p,
-    *p1,*p2,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv;
+    **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,***beta2,*mu2,
+    *V2,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp;
+  int ncs=0,nrs=0,dum,dum1,i1,i,j,M,q,r,info=1,*k1,*k2,k1i,k2i,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,
+    *p1,*p2,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim;
   ptrdiff_t nb,nk,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb;
   char uplo='U',ntrans='N',trans='T',side='L';
   cs =  (int *)CALLOC(*nt,sizeof(int));
-
+  thlim = (int *)CALLOC(ncvth+1,sizeof(int)); /* i range limits for threads */
+  if (ncvth>1) {
+    NCVth = (double *)CALLOC(ncvth,sizeof(double));
+    NCV1th = (double *)CALLOC(ncvth*ns,sizeof(double));
+    NCV2th = (double *)CALLOC(ncvth*ns*ns,sizeof(double));
+  } else {
+    NCVth = NCV;NCV1th = NCV1; NCV2th = NCV2;
+  }  
   /* first create P[l], V[l], and derivatives of beta w.r.t. log smoothing parameters */ 
   P = (double **)CALLOC(ns,sizeof(double *)); V = (double **)CALLOC(ns,sizeof(double *));
   beta1 = (double **)CALLOC(ns,sizeof(double *)); beta2 = (double ***)CALLOC(ns,sizeof(double **));
@@ -2734,12 +3029,14 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
     if (j<dum) j = dum; /* largest dimension of A_aa */
     nb += dum; /* total storage for adjusted residuals - but must be ma[*nn]+1 */
   }
-  Aaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
-  IAaa = (double *)CALLOC(j*(j+1)/2,sizeof(double));
-  B = (double *)CALLOC(j*(j+1)/2,sizeof(double));
-  rp = (double *)CALLOC(j,sizeof(double)); /* storage for residuals left out */
-  wij = (double *)CALLOC(j,sizeof(double)); /* storage for corresponding weights */
-  piv = (int *)CALLOC(j,sizeof(int)); /* pivot sequence for LU */
+  Aaa = (double *)CALLOC(ncvth*j*j,sizeof(double));
+  IAaa = (double *)CALLOC(ncvth*j*j,sizeof(double));
+  B = (double *)CALLOC(ncvth*j*j,sizeof(double));
+  rp = (double *)CALLOC(j*ncvth,sizeof(double)); /* storage for residuals left out */
+  wij = (double *)CALLOC(j*ncvth,sizeof(double)); /* storage for corresponding weights */
+  piv = (int *)CALLOC(j*ncvth,sizeof(int)); /* pivot sequence for LU */
+  ba2 = (double *)CALLOC(j*ncvth,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+  maxM=j;maxM2=j*j;
   /* Note that CV residuals are stored for whole drop-fold, rather than just the predict
      fold in order to avoid repeated recomputation */
 
@@ -2753,13 +3050,15 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
       if (mk[i-1]!=ii&&i>0) { /* aim for under target */
 	if (mk[i-1]-ii>max_chunk) max_chunk = mk[i-1]-ii; /* record maximum chunk size */
 	ii = mk[i-1]; j++;
-      } else { /* chunk so large we have to be over target */
+      } else { /* neighbourhood so large we have to be over target */
 	if (mk[i]-ii>max_chunk) max_chunk = mk[i]-ii; /* record maximum chunk size */
 	ii=mk[i]; if (i < *nn-1) j++; /* only a new chunk if not at end */
       }	
     }  
   } /* j is number of chunks */
   nchunk = j;
+  if (nchunk==1) max_chunk = mk[*nn-1]+1;
+  //Rprintf("nchunk = %d  max_chunk= %d \n",nchunk,(int)max_chunk);
   ichunk = (int *)CALLOC(nchunk,sizeof(int));
   max_nb=0;
   for (j=0,jj=ii=-1,i=0;i<*nn;i++) { /* determine elements of mk indexing chunk ends */
@@ -2777,6 +3076,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
     }  
   }
   ichunk[j] = *nn-1;
+  if (nchunk==1) max_nb = ma[*nn-1]+1;
   /* now mk[ichunk[j]] is end of jth chunk and max_nb is largest storage needed for
      CV residuals by a chunk. max_chunk is the largest vector needed to index
      the required elements A_ij for a chunk. ichunk[j] indexes the last neighbourhood in
@@ -2785,7 +3085,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   
   /* allocate required memory not dependent on knowing nu */
   ba = (double *)CALLOC(max_nb,sizeof(double)); /* storage adjusted residuals for each neighbourhood */
-  ba2 = (double *)CALLOC(max_nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
+  
   for (l=0;l<ns;l++) {
     ba1[l] = (double *)CALLOC(max_nb,sizeof(double)); /* storage for derivs of ba wrt rho_l */
   } /* l loop - allocation */
@@ -2798,8 +3098,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   for (l=0;l<ns;l++) IAdAIA[l]  = (double *)CALLOC(max_chunk,sizeof(double)); /* storage for (I-A_aa)^{-1} dA_aa/rho_l (I-A_aa)^&{-1} */
   a1 = (int *)CALLOC(max_chunk,sizeof(int));a2 = (int *)CALLOC(max_chunk,sizeof(int));
   ind = (int *)CALLOC(max_chunk,sizeof(int));
-  ind[0] = max_chunk;ind[1]=max_nb; // debug only (otherwise optimised out!)
-  
+
   for (ch=0;ch<nchunk;ch++) { /* loop over chunks */
     if (ch==0) {
       ch_start = kk = 0;
@@ -2809,7 +3108,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
       kk = ma[ch_start-1]+1; /* start index of first drop set */
       nu = mk[ichunk[ch]] - mk[ichunk[ch-1]] ; /* number of A_ij elements needed */
     }
-    //Rprintf("max_chunk=%d nu=%d ",(int)max_chunk,(int)nu);
+   
     for (k1p=a1,k2p=a2,i=ch_start;i<=ichunk[ch];i++) { /* loop over neighbourhoods */
       M = ma[i]-kk+1; /* size of neighbourhood i */
       a1p = a + kk; 
@@ -2819,7 +3118,6 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
       }
       kk = ma[i] + 1; 
     }
-    //nu = nk;
     
     upair(a1,a2,ind,&nu);
     /* now first nu elements of a1 and a2 are unique pairs, while a1[ind[i]], a2[ind[i]] is
@@ -2832,21 +3130,18 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
       nu_size = nu;
       k1 = (int *)REALLOC(k1,nu* *ck * sizeof(int));
       k2 = (int *)REALLOC(k2,nu* *ck * sizeof(int));
-      //wij = (double *)REALLOC(wij,nu*sizeof(double)); /* weight multiplier for Aij elements */
       for (l=0;l<ns;l++) A1[l] = (double *)REALLOC(A1[l],nu*sizeof(double)); /* storage for dA_aa/d rho_l packed as A */ 
       A = (double *)REALLOC(A,nu*sizeof(double));A2 = (double *)REALLOC(A2,nu*sizeof(double));
     } else { /* set up initial storage */
       nu_size = nu;
       k1 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
       k2 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
-      //wij = (double *)CALLOC(nu,sizeof(double)); /* weight multiplier for Aij elements */
       for (l=0;l<ns;l++) A1[l] = (double *)CALLOC(nu,sizeof(double)); /* storage for dA_aa/d rho_l packed as A */ 
       A = (double *)CALLOC(nu,sizeof(double));A2 = (double *)CALLOC(nu,sizeof(double));
     }
-    // wp=wij;
+    
     for (i=0;i<nu;i++,wp++) { /* create k1, k2 index matrices to extract the unique i,j pairs from A using diagXVXt */ 
       p1 = k + a1[i]; p2 = k + a2[i];
-      //*wp = w[a2[i]];
       for (k1p=k1+i,k2p=k2+i,j=0;j<*ck;j++,k1p+=nu,k2p+=nu,p1+= *n,p2 += *n) {
         *k1p = *p1;
         *k2p = *p2;
@@ -2856,12 +3151,15 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
     /* extract the unique elements making up the required influence matrix blocks */
     diagXVXt(A,G,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-    //for (wp=wij,dp1=A,dp2=A+nu;dp1<dp2;dp1++,wp++) *dp1 *= *wp;
- 
+    
     /* Get NCV and (I-A_aa)^-1... */
     if (ch==0) kk0=0; else kk0 = mk[ichunk[ch-1]]+1;
-  
-    for (i=ch_start;i<=ichunk[ch];i++) { /* loop over neighbourhoods */
+    thread_lim(ch_start,ichunk[ch],thlim,ncvth);
+#ifdef OPENMP_ON
+#pragma omp parallel for private(i,j,q,tid,ii,jj,kk,bp,IAp,Aaap,i1,dum,wp,dp1,dp2,xx,p1,info,M) num_threads(ncvth) 
+#endif
+    for (tid=0;tid<ncvth;tid++)
+    for (i=thlim[tid];i<thlim[tid+1];i++) { /* loop over neighbourhoods */
       // dpotri, DPOTRF and DPSTRF (piv)
       if (i==0) bp=ba; else {
         if (ch_start==0) bp = ba + ma[i-1]+1; else bp = ba + ma[i-1]- ma[ch_start-1];
@@ -2875,27 +3173,28 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
         jj = md[i-1]+1; /* start index of predict neighbourhood in d */
 	IAp = IA + kk - kk0; 
       }	
-      M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+      M = (int) ma[i]-ii+1;//(int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+   
       /* Fill upper triangle of I-Aaa */
-      for (p1 = ind+kk-kk0,Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = -A[*p1]; /* fill upper triangle of current Aaa*/
-      fill_lt(Aaa,M); /* fill in lower triangle */
-      for (wp=wij,j=0;j<M;j++) wp[j] = w[a[ii+j]]; /* w_aa */
-      for (Aaap=Aaa,wp=wij,dp1=wij+M;wp<dp1;wp++) for (dp2=Aaap+M;Aaap<dp2;Aaap++) *Aaap *= *wp; /*A_aa W_a */
-      for (Aaap=Aaa,j=0;j<M;j++,Aaap += M+1) *Aaap += 1; /* Aaa = I-A_aa W_a */
+      for (p1 = ind+kk-kk0,Aaap = Aaa+maxM2*tid,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = -A[*p1]; /* fill upper triangle of current Aaa*/
+      fill_lt(Aaa+maxM2*tid,M); /* fill in lower triangle */
+      for (wp=wij+maxM*tid,j=0;j<M;j++) wp[j] = w[a[ii+j]]; /* w_aa */
+      for (Aaap=Aaa+maxM2*tid,wp=wij+maxM*tid,dp1=wp+M;wp<dp1;wp++) for (dp2=Aaap+M;Aaap<dp2;Aaap++) *Aaap *= *wp; /*A_aa W_a */
+      for (Aaap=Aaa+maxM2*tid,j=0;j<M;j++,Aaap += M+1) *Aaap += 1; /* Aaa = I-A_aa W_a */
       if (M==1) { /* unit neighbourhood - trivial computation */
-        *IAp = *wij / *Aaa;  /*W_a/(1-A_aa)*/
+        *IAp = *(wij+maxM*tid) / *(Aaa+maxM2*tid);  /*W_a/(1-A_aa)*/
         *bp = *IAp * rsd[a[ii]]; /* weighted adjusted residual */
         IAp++;
       } else { /* bigger neighbourhood - need matrix inversion */
-        /* now invert I-Aaa */ // BUG: I-Aaa is not symmetric!!!!!!! use dgetri and dgetrf
-        F77_CALL(dgetrf)(&M,&M,Aaa,&M,piv,&info); /* LAPACK LU*/
-        F77_CALL(dgetri)(&M,Aaa,&M,piv,rp,&M,&info); /* LAPACK LU to inv */
-	for (Aaap=Aaa,j=0;j<M;j++) for (wp=wij,dp1=wij+M;wp<dp1;Aaap++,wp++) *Aaap *= *wp; /*W_a A_aa */
+        /* now invert I-Aaa */
+        F77_CALL(dgetrf)(&M,&M,Aaa+maxM2*tid,&M,piv+tid*maxM,&info); /* LAPACK LU*/
+        F77_CALL(dgetri)(&M,Aaa+maxM2*tid,&M,piv+tid*maxM,rp+tid*maxM,&M,&info); /* LAPACK LU to inv */
+	for (Aaap=Aaa+maxM2*tid,j=0;j<M;j++) for (wp=wij+tid*maxM,dp1=wp+M;wp<dp1;Aaap++,wp++) *Aaap *= *wp; /*W_a A_aa */
         /* compute adjusted residuals ba = (I-Aaa)^-1 rsd_aa */
-        for (j=0;j<M;j++) rp[j] = rsd[a[ii+j]]; /* rsd_aa */
-        F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&zero,bp,&ione FCONE); /* weighted adjusted residuals */
+        for (dp1=rp+tid*maxM,j=0;j<M;j++,dp1++) *dp1 = rsd[a[ii+j]]; /* rsd_aa */
+        F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,rp+tid*maxM,&ione,&zero,bp,&ione FCONE); /* weighted adjusted residuals */
         /* repack W_a A_aa into IA as A is packed, for use in derivative computation */
-        for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *IAp = *Aaap; 
+        for (Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *IAp = *Aaap; 
        
       }
       /* Now compute NCV itself  */
@@ -2904,11 +3203,11 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
         i1 = d[jj+j]; /* need to match predict index to a dropped index */
         while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
 	xx = bp[dum];
-        if (xx!=0.0) *NCV += xx*xx/w[i1];
+        if (xx!=0.0) NCVth[tid] += xx*xx/w[i1];
       }
    
     } /* neighbourhood, i loop */
-
+  
     /* Compute the derivatives... */
 
     for (l=0;l<ns;l++) { /* loop over smoothing parameters */
@@ -2917,12 +3216,15 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
       nrs=ncs=0;
       diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-      //for (wp=wij,dp1=A1[l],dp2=dp1+nu;dp1<dp2;dp1++,wp++) *dp1 *= *wp; /* post multiply by W */
-   
-      if (ch==0) kk0=0; else kk0= mk[ichunk[ch-1]]+1; 
-  
-      for (i=ch_start;i<=ichunk[ch];i++) { /* loop over neighbourhoods */
-        if (i==0) {
+    
+      if (ch==0) kk0=0; else kk0= mk[ichunk[ch-1]]+1;
+      
+#ifdef OPENMP_ON
+#pragma omp parallel for private(i,j,q,tid,ii,jj,kk,bp,ba1p,IAp,Ap,Aaap,IAdAIAp,i1,dum,dp1,dp2,xx,p1,M,side) num_threads(ncvth)
+#endif
+       for (tid=0;tid<ncvth;tid++)
+       for (i=thlim[tid];i<thlim[tid+1];i++) { /* loop over neighbourhoods */
+	if (i==0) {
 	  bp=ba;ba1p=ba1[l];
 	} else {
           if (ch_start==0) {
@@ -2944,24 +3246,22 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
 	  IAdAIAp = IAdAIA[l] + kk - kk0;
         }	
 
-	M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+	M = (int) ma[i]-ii+1; //(int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
   
-        for (p1 = ind+kk-kk0,Ap=A1[l],Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Ap[*p1]; /* current A1_aa to upper tri Aaa */
-        fill_lt(Aaa,M); /* fill in lower triangle */
-        //for (wp=wij,j=0;j<M;j++) wp[j] = w[a[ii+j]]; /* w_aa */
-        //for (Aaap=Aaa,wp=wij,dp1=wij+M;wp<dp1;wp++) for (dp2=Aaap+M;Aaap<dp2;Aaap++) *Aaap *= *wp; /*A1_aa W_a */
-
-	for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = *IAp; /* current W_a(I-A_aa W_a)^{-1} to upper tri IAaa */
+        for (p1 = ind+kk-kk0,Ap=A1[l],Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Ap[*p1]; /* current A1_aa to upper tri Aaa */
+        fill_lt(Aaa+tid*maxM2,M); /* fill in lower triangle */
+       
+	for (Aaap = IAaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap = *IAp; /* current W_a(I-A_aa W_a)^{-1} to upper tri IAaa */
         side = 'L';
-        F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,Aaa,&M,&zero,B,&M FCONE FCONE); /* B = W_a(I-A_aa W_a)^{-1} dA */
+        F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa+tid*maxM2,&M,Aaa+tid*maxM2,&M,&zero,B+tid*maxM2,&M FCONE FCONE); /* B = W_a(I-A_aa W_a)^{-1} dA */
         side = 'R';
-        F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa,&M,B,&M,&zero,Aaa,&M FCONE FCONE); /* Aaa =  W_a(I-A_aa W_a)^{-1} dA W_a(I-A_aa W_a)^{-1} */
-        for (dp1=mu1[l],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* -d mu_a / d rho_l */
-        F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&zero,ba1p,&ione FCONE); /* ba1[l] = -W_a(I-A_aa W_a)^{-1}dmu_a/drho_l */ 
-        F77_CALL(dgemv)(&ntrans,&M,&M,&one,B,&M,bp,&ione,&one,ba1p,&ione FCONE); /* ba1p = db^a/drho_l */
+        F77_CALL(dsymm)(&side,&uplo,&M,&M,&one,IAaa+tid*maxM2,&M,B+tid*maxM2,&M,&zero,Aaa+tid*maxM2,&M FCONE FCONE); /* Aaa =  W_a(I-A_aa W_a)^{-1} dA W_a(I-A_aa W_a)^{-1} */
+        for (dp2=rp+tid*maxM,dp1=mu1[l],j=0;j<M;j++,dp2++) *dp2 = -dp1[a[ii+j]]; /* -d mu_a / d rho_l */
+        F77_CALL(dsymv)(&uplo,&M,&one,IAaa+tid*maxM2,&M,rp+tid*maxM,&ione,&zero,ba1p,&ione FCONE); /* ba1[l] = -W_a(I-A_aa W_a)^{-1}dmu_a/drho_l */ 
+        F77_CALL(dgemv)(&ntrans,&M,&M,&one,B+tid*maxM2,&M,bp,&ione,&one,ba1p,&ione FCONE); /* ba1p = db^a/drho_l */
         /* store W_a (I-A_aa W_a)^{-1} dA W_a (I-A_aa W_a)^{-1} upper tri for future use */
         /* repack into AI as A is packed, for use in derivative computation */
-        for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) {
+        for (Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) {
           *IAdAIAp = *Aaap; /* store - no need to clear only upper tri written actually accessed */
         }
         /* compute the NCV derivative w.r.t. rho_l... */
@@ -2970,7 +3270,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
           i1 = d[jj+j]; /* need to match predict index to a dropped index */
           while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
 	  xx = ba1p[dum] * bp[dum];
-          if (xx!=0.0) NCV1[l] += 2*xx/w[i1]; /* deriv of NCV wrt rho_l */
+          if (xx!=0.0) NCV1th[tid*ns+l] += 2*xx/w[i1]; /* deriv of NCV wrt rho_l */
         }
        
       } /* neighbourhood i loop */
@@ -2990,12 +3290,15 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   
         diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
 	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-        
+     
         /* Compute the second derivative of NCV w.r.t. rho_l and rho_r */
        
         if (ch==0) kk0=0; else kk0= mk[ichunk[ch-1]]+1; 
- 
-	for (i=ch_start;i<=ichunk[ch];i++) { /* loop over neighbourhoods */
+#ifdef OPENMP_ON
+#pragma omp parallel for private(i,j,q,tid,ii,jj,kk,bp,ba1p,ba2p,IAp,Alp,Arp,Aaap,IAdAIAp,IAdAIArp,i1,dum,dp1,dp2,xx,p1,M) num_threads(ncvth) 
+#endif
+	for (tid=0;tid<ncvth;tid++)
+        for (i=thlim[tid];i<thlim[tid+1];i++) { /* loop over neighbourhoods */
 	  if (i==0) {
 	    bp=ba;ba1p=ba1[l];ba2p=ba1[r];
 	  } else {
@@ -3021,50 +3324,57 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
 	    IAdAIArp = IAdAIA[r] + kk - kk0;
           }	
 
-	  M = (int)(sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
+	  M = (int) ma[i]-ii+1;// (sqrt(8*(mk[i]-kk+1)+1)-1)/2; /* current Aaa is M by M */
 	  /*  need second derivative of b_a wrt rho_l and rho_r... */
-          for (Aaap = IAaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current W_a(I-A_aa W_a)^{-1} to upper tri IAaa */
-          for (p1 = ind+kk-kk0,Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = A2[*p1]; /* Aaa =  d2A_aa/drho_l drho_r */
+          for (Aaap = IAaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAp++,Aaap++) *Aaap =  *IAp; /* current W_a(I-A_aa W_a)^{-1} to upper tri IAaa */
+          for (p1 = ind+kk-kk0,Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = A2[*p1]; /* Aaa =  d2A_aa/drho_l drho_r */
 
-	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B =  d2 A_aa/drho_l drho_r b^a */
-	  F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,B,&ione,&zero,ba2,&ione FCONE); /*  W_a(I-A_aa W_a)^{-1} d2 A_aa/drho_l drho_r b^a */
-	  for (dp1=mu2,j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -d2mu/d rho_l d rho_r */
-	  F77_CALL(dsymv)(&uplo,&M,&one,IAaa,&M,rp,&ione,&one,ba2,&ione FCONE); /* ba2 has 2nd deriv based terms - now add first deriv based */
+	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,bp,&ione,&zero,B+tid*maxM2,&ione FCONE); /* B =  d2 A_aa/drho_l drho_r b^a */
+	  F77_CALL(dsymv)(&uplo,&M,&one,IAaa+tid*maxM2,&M,B+tid*maxM2,&ione,&zero,ba2+tid*maxM,&ione FCONE); /*  W_a(I-A_aa W_a)^{-1} d2 A_aa/drho_l drho_r b^a */
+	  for (dp2=rp+tid*maxM,dp1=mu2,j=0;j<M;j++,dp2++) *dp2 = -dp1[a[ii+j]]; /* rp = -d2mu/d rho_l d rho_r */
+	  F77_CALL(dsymv)(&uplo,&M,&one,IAaa+tid*maxM2,&M,rp+tid*maxM,&ione,&one,ba2+tid*maxM,&ione FCONE); /* ba2 has 2nd deriv based terms - now add first deriv based */
 
-	  for (p1 = ind+kk-kk0,Alp=A1[l],Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Alp[*p1]; /* Aaa = dA_aa/drho_l */
-          F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_l b^a */
+	  for (p1 = ind+kk-kk0,Alp=A1[l],Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Alp[*p1]; /* Aaa = dA_aa/drho_l */
+          F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,bp,&ione,&zero,B+tid*maxM2,&ione FCONE); /* B = dA_aa/drho_l b^a */
 
-	  for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIArp++,Aaap++) *Aaap =  *IAdAIArp; 
-          F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
+	  for (Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIArp++,Aaap++) *Aaap =  *IAdAIArp; 
+          F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,B+tid*maxM2,&ione,&one,ba2+tid*maxM,&ione FCONE);
 	  /* ...added W_a(I-A_aa W_a)^{-1}dA_aa/drho_r W_a(I-A_aa W_a)^{-1} dA_aa/drho_l b^a */
 
-	  for (dp1=mu1[l],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -dmu/d rho_l */
-	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -W_a(I-A_aa W_a)^{-1}dA_aa/drho_r W_a(I-A_aa W_a)^{-1} d mu_a / drho_l */
+	  for (dp2=rp+tid*maxM,dp1=mu1[l],j=0;j<M;j++,dp2++) *dp2 = -dp1[a[ii+j]]; /* rp = -dmu/d rho_l */
+	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,rp+tid*maxM,&ione,&one,ba2+tid*maxM,&ione FCONE);  /* -W_a(I-A_aa W_a)^{-1}dA_aa/drho_r W_a(I-A_aa W_a)^{-1} d mu_a / drho_l */
 
           /* now r <-> l for last two terms added to ba2 */
-	  for (p1 = ind+kk-kk0,Arp=A1[r],Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Arp[*p1]; /* Aaa = dA_aa/drho_r */
-	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,bp,&ione,&zero,B,&ione FCONE); /* B = dA_aa/drho_r b^a */
+	  for (p1 = ind+kk-kk0,Arp=A1[r],Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,Aaap++,p1++) *Aaap = Arp[*p1]; /* Aaa = dA_aa/drho_r */
+	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,bp,&ione,&zero,B+tid*maxM2,&ione FCONE); /* B = dA_aa/drho_r b^a */
 
-	  for (Aaap = Aaa,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) *Aaap =  *IAdAIAp; 
-          F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,B,&ione,&one,ba2,&ione FCONE);
+	  for (Aaap = Aaa+tid*maxM2,j=0;j<M;j++,Aaap += M-j) for (q=0;q<=j;q++,IAdAIAp++,Aaap++) *Aaap =  *IAdAIAp; 
+          F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,B+tid*maxM2,&ione,&one,ba2+tid*maxM,&ione FCONE);
 	  /* ...added W_a(I-A_aa W_a)^{-1}dA_aa/drho_l W_a(I-A_aa W_a)^{-1} dA_aa/drho_r b^a */
 
-	  for (dp1=mu1[r],j=0;j<M;j++) rp[j] = -dp1[a[ii+j]]; /* rp = -dmu/d rho_r */
-	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa,&M,rp,&ione,&one,ba2,&ione FCONE);  /* -W_a(I-A_aa W_a)^{-1}dA_aa/drho_l W_a(I-A_aa W_a)^{-1} d mu_a / drho_r */
+	  for (dp2=rp+tid*maxM,dp1=mu1[r],j=0;j<M;j++,dp2++) *dp2 = -dp1[a[ii+j]]; /* rp = -dmu/d rho_r */
+	  F77_CALL(dsymv)(&uplo,&M,&one,Aaa+tid*maxM2,&M,rp+tid*maxM,&ione,&one,ba2+tid*maxM,&ione FCONE);  /* -W_a(I-A_aa W_a)^{-1}dA_aa/drho_l W_a(I-A_aa W_a)^{-1} d mu_a / drho_r */
 
 	  q = md[i]-jj+1; /* size of predict neighbourhood */
           for (dum=j=0;j<q;j++) { /* loop over predict indices */
             i1 = d[jj+j]; /* need to match predict index to a dropped index */
             while (i1 > a[ii+dum]&&dum<M) dum++; // NOTE: need to throw an error if dum==M
-	    xx = ba1p[dum] * ba2p[dum] + bp[dum]*ba2[dum];
-            if (xx!=0.0) NCV2[l+r*ns] += 2 * xx/w[i1]; /* deriv of NCV wrt rho_l */
+	    xx = ba1p[dum] * ba2p[dum] + bp[dum]*ba2[dum+tid*maxM];
+            if (xx!=0.0) NCV2th[tid*ns*ns+l+r*ns] += 2 * xx/w[i1]; /* deriv of NCV wrt rho_l */
           }
 	
         } /* neighbourhood i loop */
-        NCV2[r+l*ns] = NCV2[l+r*ns];
       } /* r sp loop */   
     } /* l sp loop */
   } /* chunk loop */
+  if (ncvth>1) {
+    for (i=0;i<ncvth;i++) {
+      *NCV += NCVth[i];
+      for (j=0;j<ns;j++) NCV1[j] += NCV1th[i*ns+j];
+      for (j=0;j<ns;j++) for (q=0;q<=j;q++) NCV2[j+q*ns] += NCV2th[i*ns*ns+j+q*ns];
+    }  
+  }
+  for (j=0;j<ns;j++) for (q=0;q<=j;q++) NCV2[q+j*ns]=NCV2[j+q*ns];
   /* free memory */
   for (l=0;l<ns;l++) {
     for (r=0;r<=l;r++) FREE(beta2[l][r]);
@@ -3074,8 +3384,29 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   }
   FREE(P); FREE(beta1);FREE(V);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);FREE(piv);
   FREE(B);FREE(cs);FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
-  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);FREE(ichunk);
+  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);FREE(thlim);
+  if (ncvth>1) {
+    FREE(NCV1th);FREE(NCV2th);
+    FREE(NCVth);
+  }  
 } /* ncvd0 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* PENDING discrete NCV implementation notes:
    - need to adjust nei for any dropped data in bam!! 
