@@ -1,4 +1,8 @@
-2023-09-069 Brian Ripley
+2024-04-17 Brian Ripley
+
+	* src/dbfopen.c: remove long-obsolete version test
+
+2023-09-09 Brian Ripley
 
 	* DESCRIPTION: Version is 0.8-85
 	* src/dbfopen.c: avoid (correct) compiler warning.
