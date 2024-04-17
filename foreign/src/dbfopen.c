@@ -195,12 +195,16 @@
 #include <ctype.h>
 #include <string.h>
 
+// Nowadays require R (>= 4.0.0)
+# include <R_ext/Utils.h>
+/*
 #include <Rversion.h>
 #if R_VERSION >= R_Version(2,7,0)
 # include <R_ext/Utils.h>
 #else
 # define R_atof atof
 #endif
+*/
 
 #ifndef FALSE
 #  define FALSE		0
