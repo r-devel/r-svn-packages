@@ -1,6 +1,6 @@
 ###            Fit a general linear mixed effects model
 ###
-### Copyright 2005-2022  The R Core team
+### Copyright 2005-2024  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -1836,8 +1836,7 @@ predict.lme <-
   }
   maxQ <- max(level)			# maximum level for predictions
   nlev <- length(level)
-  mCall <- object$call
-  fixed <- eval(eval(mCall$fixed)[-2])  # RHS
+  fixed <- formula(object)[-2L]  # RHS
   Terms <- object$terms
   newdata <- as.data.frame(newdata)
   if (maxQ > 0) {			# predictions with random effects

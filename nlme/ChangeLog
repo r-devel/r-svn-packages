@@ -1,3 +1,8 @@
+2024-04-17  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/lme.R (predict.lme): use formula() instead of
+	re-evaluating the call (with the wrong scope), similar to PR#15892.
+
 2023-12-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/augPred_lab.R: manually do Hmisc  label(.) <- ..
