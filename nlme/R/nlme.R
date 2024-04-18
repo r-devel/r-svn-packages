@@ -1,6 +1,6 @@
 ###            Fit a general nonlinear mixed effects model
 ###
-### Copyright 2006-2023  The R Core team
+### Copyright 2006-2024  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -216,7 +216,8 @@ nlme.formula <-
   ##
   ## checking if self-starting formula is given
   ##
-  if (missing(start) && !is.null(attr(eval(model[[3]][[1]]), "initial"))) {
+  if (missing(start) && is.call(model[[3]]) &&
+      !is.null(attr(eval(model[[3]][[1]]), "initial"))) {
     nlmeCall <- Call
     nlsLCall <- nlmeCall[c("","model","data")]
     nlsLCall[[1]] <- quote(nlme::nlsList)
