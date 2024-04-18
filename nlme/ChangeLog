@@ -3,6 +3,11 @@
 	* R/lme.R (predict.lme): use formula() instead of
 	re-evaluating the call (with the wrong scope), similar to PR#15892.
 
+	* R/nlme.R (nlme.formula): nlme() finally works with fixed
+	variance weights (PR#17712), thanks to the pointers by Bill
+	Denney, Benjamin Tyner, and Ben Bolker.
+	* tests/varFixed.R: added, based on BD's example.
+
 2023-12-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/augPred_lab.R: manually do Hmisc  label(.) <- ..
