@@ -8,6 +8,8 @@
 	Denney, Benjamin Tyner, and Ben Bolker.
 	* tests/varFixed.R: added, based on BD's example.
 
+	* R/varFunc.R (varIdent): warn about misguided varIdent(~1|g)
+
 2023-12-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/augPred_lab.R: manually do Hmisc  label(.) <- ..

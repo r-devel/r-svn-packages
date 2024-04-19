@@ -1,6 +1,6 @@
 ###              Classes of variance functions
 ###
-### Copyright 2007-2021  The R Core team
+### Copyright 2007-2024  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -263,6 +263,8 @@ varIdent <-
   function(value = numeric(0), form = ~ 1, fixed = NULL)
 {
   if (is.null(getGroupsFormula(form))) { # constant value
+    if (length(value)) # possibly called as varIdent(~1|g)
+      warning("ignoring initial values (no grouping factor)")
     value <- numeric(0)
     attr(value, "fixed") <- NULL	# nothing to estimate
   } else {
@@ -447,7 +449,7 @@ recalc.varIdent <-
 
 summary.varIdent <-
   function(object,
-	   structName = if (is.null(formula(object))) "Constant variance"
+	   structName = if (is.null(getGroupsFormula(object))) "Constant variance"
 	                else "Different standard deviations per stratum",
            ...)
 {
