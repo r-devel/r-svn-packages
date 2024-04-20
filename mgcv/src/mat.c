@@ -2053,9 +2053,12 @@ void mtrf(double *A, double *B,int *n,int *rank,int *psd,double *tol,double *wor
   piv=iwork;
   if (*psd) { /* positive semidefinite - use Cholesky pivoted A = LL'*/
     x = -1.0; /* auto-tolerance */
-    F77_CALL(dpstrf)(&uplo,n,A,n,piv,&j,&x,B,&info FCONE); /* LAPACK pivoted Cholesky*/
+    F77_CALL(dpstrf)(&uplo,n,A,n,piv,&j,&x,work,&info FCONE); /* LAPACK pivoted Cholesky*/
     if (*rank<=0) *rank=j;
-    for (i=0;i<*n;i++,piv++) *piv += -1;piv=iwork;
+    for (i=0;i<*n;i++,piv++) *piv += -1;
+    piv=iwork;
+    /* zero columns between rank detected by Cholesky and supplied rank, if needed... */
+    if (j < *rank) for (p = A + j* *n,p1 = A + *rank * *n;p<p1;p++) *p = 0.0;
     /* zero upper triangle and unpivot L factor */
     for (j=0;j<*rank;j++) {
       for (i=0;i<j;i++) work[i] = 0.0;

@@ -1407,8 +1407,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
     b1 <-  matrix(0,length(y),length(sp))
     NCV10 <- rep(0,length(sp))
     for (i in 1:length(sp)) {
-      ii <- (Sl[[i]]$start:Sl[[i]]$stop)[Sl[[i]]$ind]
-      A1 <- diagXVXd(Xd,-sp[i]*G[,ii]%*%G[ii,],k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w
+      ii <- (Sl[[i]]$start:Sl[[i]]$stop)#[Sl[[i]]$ind]
+      A1 <- diagXVXd(Xd,-sp[i]*G[,ii]%*%Sl[[i]]$S0[[1]]%*%G[ii,],k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w
       b1[,i] <- A1/(1-dA)^2*rsd-mu1[,i]/(1-dA) ## C code for first term suspicious
       NCV10[i] <- 2*sum(w*b1[,i]*rcv)
     }

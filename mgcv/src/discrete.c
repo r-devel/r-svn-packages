@@ -484,6 +484,8 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff
    LIMITED thread safety. Allocates/frees memory using R_chk_calloc/R_chk_free (usually),
    protected within critical sections. Not safe to use with other routines allocating memory using these routines
    within a parallel section. Safe to use as the only allocator of memory within a parallel section. 
+
+   Note that if ncs <=0 then ncs and cs are reset to nt and 0:(nt-1). Requires care in parallel!
 */
   ptrdiff_t *off,*voff;
   int i,j,q,*pt,*tps,dC=0,c1,first,kk;
@@ -691,7 +693,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
 */
   double *xv,*dc,*p0,*p1,*p2,*p3,*ei,*xi;
   ptrdiff_t bsj,bs,bsf,i,j,kk;
-  int one=1;
+  int one=1,ii;
   #ifndef OPENMP_ON
   *nthreads = 1;
   #endif
@@ -709,6 +711,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,in
   } else {
     bsf = bs = *cv;
   }
+  if (*ncs <=0 ) { *ncs = *nt; for (ii=0;ii<*nt;ii++) cs[ii] = ii;} /* set here to avoid reset in parallel sections by Xbd */
+  if (*nrs <=0 ) { *nrs = *nt; for (ii=0;ii<*nt;ii++) rs[ii] = ii;}
   #ifdef OPENMP_ON
   #pragma omp parallel for private(j,bsj,i,kk,p0,p1,p2,p3) num_threads(*nthreads)
   #endif  
@@ -747,7 +751,7 @@ void kunique(int *k, int *ind,ptrdiff_t *n) {
    giving the ith input entry. i.e. k[i] on input is located in k[ind[i]] on output.
    - could be optimized once tested.
 */
-  int **a,*ap,*a0,*ii,i,j;
+  int **a,*ap,*a0,i,j;
   a = (int **)CALLOC(*n,sizeof(int *));
   a0 = ap = (int *)CALLOC(*n * 2,sizeof(int));
   for (i=0;i<*n;i++,ap += 2) { /* a[i] points to an integer pair (k[i],i) */
@@ -777,13 +781,13 @@ void kunique(int *k, int *ind,ptrdiff_t *n) {
 void idiagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, int *n, 
 		 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
 		 int *ri,int *ci,int *nrc,int *nthreads) {
-  ptrdiff_t ni; ni = (ptrdiff_t) *n;
-  diagXLLtXt(diag,L,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,nrc,nthreads);
+  ptrdiff_t ni,nrci; ni = (ptrdiff_t) *n;nrci = (ptrdiff_t) *nrc;
+  diagXLLtXt(diag,L,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,&nrci,nthreads);
 }
   
 void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
-	      int *ri,int *ci,int *nrc,int *nthreads) {
+	      int *ri,int *ci,ptrdiff_t *nrc,int *nthreads) {
 /* Extracts elements indexed by ri and ci of XLL'X'. So on exit diag[i] = (XLL'X')[ri[i],ci[i]];
 
    L is a pl by cl matrix. ri and ci are nrc vectors. X is packed in standard disrete form, other arguments 
@@ -815,7 +819,7 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
    oo <- .C("idiagXLLtXt",diag=numeric (100),as.double(L),as.double(unlist(X)),as.integer(k-1L),as.integer(ks-1L),
       m=as.integer(unlist(lapply(X,nrow))),p=as.integer(unlist(lapply(X,ncol))),n=as.integer(100),nx=as.integer(length(X)),
       as.integer(ts-1),as.integer(dt),as.integer(length(dt)),v=as.double(0),qc=as.integer(rep(-1,3)),
-      pl=as.integer(9),cl=as.integer(5),as.integer(0:99),as.integer(0:99),as.integer(100),as.integer(1),PACKAGE="mgcv")
+      pl=as.integer(9),cl=as.integer(5),as.integer(0:99),as.integer(0:99),as.integer(100),as.integer(2),PACKAGE="mgcv")
    d2 <- oo$diag
    range(d1-d2)
  
@@ -843,7 +847,7 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
 */
   double *xl,*dc,*p0,*p1,*p2,*p3;
   ptrdiff_t bsj,bs,bsf,i,j,kk,nu;
-  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii;
+  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii,ck=0;
   /* first find the unique rows that need to be extracted - need to find unique
      entries iu in ri,ci and the index of ri and ci in iu...
   */
@@ -854,10 +858,11 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
   nu = *nrc * 2; kunique(iu, iir, &nu); iic = iir + *nrc;
   /* there are nu unique values in iu, ri[i] = iu[iir[i]], ci[i] = iu[iic[i]] */
   if (nu<*n) { /* not all rows of XL are required - reduce k accordingly */
-    ku = (int *)CALLOC((size_t) *nx * nu,sizeof(int));
+    for (i1p=ks,i2p=ks+2 * *nx;i1p<i2p;i1p++) if (ck < *i1p) ck = *i1p; /* find number cols of k */
+    ku = (int *)CALLOC((size_t) ck   * nu,sizeof(int));
     for (i=0;i<nu;i++) {
       i1p = ku+i;i2p = k + iu[i];
-      for (j=0;j<*nx;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
+      for (j=0;j<ck;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
     }  
   } else { /* can use k, ri and ci directly */
     iir = ri;iic = ci;
@@ -870,7 +875,8 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
   if (*nthreads > *cl) *nthreads = *cl;
   xl = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XL */
   dc = (double *) CALLOC((size_t) *nthreads * *nrc,sizeof(double)); /* storage for components of required elements */
-  cs = (int *)CALLOC((size_t) *nt * *nthreads,sizeof(int));
+  cs = (int *)CALLOC((size_t) *nt,sizeof(int));
+  ncs = *nt; for (i=0;i<ncs;i++) cs[i] = i; /* set explicitly to avoid setting in Xbd in parallel section */
   if (*nthreads>1) {
     bs = *cl / *nthreads;
     while (bs * *nthreads < *cl) bs++;
@@ -887,7 +893,7 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i; /* column being worked on */   
       /* Note thread safety of XBd means this must be only memory allocator in this section*/
-      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XL[:,kk] */
+      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs); /* XL[:,kk] */
       /* Now form dc[i] += XL[k1i[i],kk]*XL[k2i[i],kk] */
       p1=xl + j * nu;p2 = dc + j * *nrc; p3 = p2 + *nrc;
       for (i1p=iir,i2p=iic;p2<p3;p2++,i1p++,i2p++) *p2 += p1[*i1p] * p1[*i2p];
@@ -895,20 +901,20 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
   } /* parallel loop end */
   /* sum the contributions from the different threads into diag... */
   for (p0=diag,p1=p0+ *nrc,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
-  for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *nrc;p0<p1;p0++,p2++) *p0 += *p2;
+  for (i=1;i< *nthreads;i++) for (p0=diag;p0<p1;p0++,p2++) *p0 += *p2;
   FREE(xl);FREE(dc);FREE(cs);FREE(iu);FREE(ii);if (nu<*n) FREE(ku);
 } /* diagXLLtXt */
 
 void idiagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, int *n, 
 		 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
 		 int *ri,int *ci,int *nrc,int *nthreads) {
-  ptrdiff_t ni; ni = (ptrdiff_t) *n;
-  diagXLUtXt(diag,L,U,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,nrc,nthreads);
+  ptrdiff_t ni,nrci; ni = (ptrdiff_t) *n;nrci = (ptrdiff_t) *nrc;
+  diagXLUtXt(diag,L,U,X,k,ks,m,p,&ni,nx,ts,dt,nt,v,qc,pl,cl,ri,ci,&nrci,nthreads);
 }
   
 void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
-	      int *ri,int *ci,int *nrc,int *nthreads) {
+	      int *ri,int *ci,ptrdiff_t *nrc,int *nthreads) {
 /* Extracts elements indexed by ri and ci of XLU'X'. So on exit diag[i] = (XLU'X')[ri[i],ci[i]];
 
    L and U are pl by cl matrices. ri and ci are nrc vectors. X is packed in standard disrete form, other arguments 
@@ -969,7 +975,7 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
 */
   double *xl,*xu,*dc,*p0,*p1,*p2,*p3;
   ptrdiff_t bsj,bs,bsf,i,j,kk,nu;
-  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii;
+  int one=1,*ku,*i1p,*i2p,*cs,ncs=-1,*iu,*ip,*iir,*iic,*ii,ck=0;
   /* first find the unique rows that need to be extracted - need to find unique
      entries iu in ri,ci and the index of ri and ci in iu...
   */
@@ -980,10 +986,11 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
   nu = *nrc * 2; kunique(iu, iir, &nu); iic = iir + *nrc;
   /* there are nu unique values in iu, ri[i] = iu[iir[i]], ci[i] = iu[iic[i]] */
   if (nu<*n) { /* not all rows of XL are required - reduce k accordingly */
-    ku = (int *)CALLOC((size_t) *nx * nu,sizeof(int));
+    for (i1p=ks,i2p=ks+2 * *nx;i1p<i2p;i1p++) if (ck < *i1p) ck = *i1p; /* find number cols of k */
+    ku = (int *)CALLOC((size_t) ck * nu,sizeof(int));
     for (i=0;i<nu;i++) {
       i1p = ku+i;i2p = k + iu[i];
-      for (j=0;j<*nx;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
+      for (j=0;j<ck;j++,i1p+=nu,i2p+= *n) *i1p = *i2p; 
     }  
   } else { /* can use k, ri and ci directly */
     iir = ri;iic = ci;
@@ -997,7 +1004,8 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
   xl = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XL */
   xu = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XU */
   dc = (double *) CALLOC((size_t) *nthreads * *nrc,sizeof(double)); /* storage for components of required elements */
-  cs = (int *)CALLOC((size_t) *nt * *nthreads,sizeof(int));
+  cs = (int *)CALLOC((size_t) *nt,sizeof(int));
+  ncs = *nt; for (i=0;i<ncs;i++) cs[i] = i; /* avoid resetting in Xbd in parallel section */
   if (*nthreads>1) {
     bs = *cl / *nthreads;
     while (bs * *nthreads < *cl) bs++;
@@ -1014,8 +1022,8 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i; /* column being worked on */   
       /* Note thread safety of XBd means this must be only memory allocator in this section*/
-      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XL[:,kk] */
-      Xbd(xu + j * nu,U + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs+ j * *nt,&ncs); /* XU[:,kk] */
+      Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs); /* XL[:,kk] */
+      Xbd(xu + j * nu,U + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs); /* XU[:,kk] */
       /* Now form dc[i] += XL[k1i[i],kk]*XL[k2i[i],kk] */
       p0 = xu + j * nu;p1=xl + j * nu;p2 = dc + j * *nrc; p3 = p2 + *nrc;
       for (i1p=iir,i2p=iic;p2<p3;p2++,i1p++,i2p++) *p2 += p1[*i1p] * p0[*i2p];
@@ -1039,7 +1047,7 @@ SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEX
   ncs and nrs are length of cs/rs.
 */
   double *XWy,*X,*v,*w,*ar_weights,*y;
-  int *k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,*cs,*rs,nx,nt,ncs,nrs,*ar_stop,*ar_row,*cy;
+  int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*cy;
   ptrdiff_t n;
   n = (ptrdiff_t) nrows(kr); XWy = REAL(XWyr);
   X = REAL(Xr);w = REAL(wr);y = REAL(yr);
@@ -2416,7 +2424,7 @@ void upair(int *k1,int *k2, int *ind,ptrdiff_t *n) {
    giving the ith input pair. i.e. k1[i], k2[i] on input is located in k1[ind[i]],k2[ind[i]] on output.
    - could be optimized once tested.
 */
-  int **a,*ap,*a0,*ii,i,j;
+  int **a,*ap,*a0,i,j;
   a = (int **)CALLOC(*n,sizeof(int *));
   a0 = ap = (int *)CALLOC(*n * 3,sizeof(int));
   for (i=0;i<*n;i++,ap += 3) { /* a[i] points to an integer triplet (k1[i],k2[i],i) */
@@ -2486,12 +2494,12 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
    nthreads passed to diagXVXt can make a big difference, but too
    many threads harms performance.
 */
-  double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
-    **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,***beta2,*mu2,
-    *V2,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp;
-  int ncs=0,nrs=0,dum,dum1,i1,i,j,M,q,r,info=1,*k1,*k2,k1i,k2i,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,
-    *p1,*p2,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim;
-  ptrdiff_t nb,nk,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb;
+  double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp0,*dp1,*dp2,
+    *dp3,*dp4,xx,*L,**beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**L1,*IAdAIAp,***beta2,*mu2,
+    *V2,*U,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp,*work,***L2,***U2,*Vl;
+  int ncs=0,dum,i1,i,j,M,q,r,info=1,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,
+    *p1,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim,*l1c,**l2c,*iwork;
+  ptrdiff_t nb,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb;
   char uplo='U',ntrans='N',trans='T',side='L';
   cs =  (int *)CALLOC(*nt,sizeof(int));
   thlim = (int *)CALLOC(ncvth+1,sizeof(int)); /* i range limits for threads */
@@ -2503,19 +2511,33 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     NCVth = NCV;NCV1th = NCV1; NCV2th = NCV2;
   }  
   /* first create P[l], V[l], and derivatives of beta w.r.t. log smoothing parameters */ 
-  P = (double **)CALLOC(ns,sizeof(double *)); V = (double **)CALLOC(ns,sizeof(double *));
+  P = (double **)CALLOC(ns,sizeof(double *));
+  L1 = (double **)CALLOC(ns,sizeof(double *)); //!!
   beta1 = (double **)CALLOC(ns,sizeof(double *)); beta2 = (double ***)CALLOC(ns,sizeof(double **));
+  L2 = (double ***)CALLOC(ns,sizeof(double **));U2 = (double ***)CALLOC(ns,sizeof(double **)); // !!
+  l1c = (int *)CALLOC(ns,sizeof(int *)); /* cols in V[l] square roots */ //!!
+  l2c = (int **)CALLOC(ns,sizeof(int **)); // !!
   A1 = (double **)CALLOC(ns,sizeof(double *));
   mu1 = (double **)CALLOC(ns,sizeof(double *));
   IAdAIA = (double **)CALLOC(ns,sizeof(double *));ba1 = (double **)CALLOC(ns,sizeof(double *));
-  V2 = (double *)CALLOC(*pg * *pg,sizeof(double));
+  L = (double *)CALLOC((size_t) *pg * *pg,sizeof(double)); // !!
+  Vl = (double *)CALLOC((size_t) *pg * *pg,sizeof(double)); // !!
+  V2 = (double *)CALLOC((size_t) *pg * *pg,sizeof(double));
+  U = (double *)CALLOC((size_t) *pg * *pg,sizeof(double)); // !!
   mu2 = (double *)CALLOC(*n,sizeof(double));
+  for (dp1=L,dp2=L+ *pg * *pg,dp3=G;dp1<dp2;dp1++,dp3++) *dp1 = *dp3; /* copy G to L */
+  work = (double *)CALLOC((size_t) *pg * 2,sizeof(double)); iwork = (int *)CALLOC((size_t) *pg ,sizeof(int)); // !!
+
+  mtrf(L,L,pg,pg,&ione,&zero,work,iwork); /* LL' = G */
   
   for (l=0;l<ns;l++) { /* loop over smoothing parameters computing P[l], V[l], beta1[l], beta2[l][r] and mu1[l] */
     srl = sr[l]; if (srl<0) srl = -srl; 
     P[l] = (double *)CALLOC(srl * *pg,sizeof(double));
-    V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
+    //V[l] = (double *)CALLOC(*pg * *pg,sizeof(double));
     beta2[l] = (double **)CALLOC(ns,sizeof(double *));
+    L2[l] = (double **)CALLOC(ns,sizeof(double *));
+    U2[l] = (double **)CALLOC(ns,sizeof(double *)); 
+    l2c[l] = (int *)CALLOC(ns,sizeof(int *)); 
     mu1[l] = (double *)CALLOC(*n,sizeof(double));
     if (sr[l]>0) {
       F77_CALL(dgemm)(&ntrans,&ntrans,pg,sr+l,sr+l,&one,G+soff[l] * *pg,pg,S[l],sr+l,&zero,P[l],pg FCONE FCONE); /* P[l] = [G]^l S_l */
@@ -2528,10 +2550,24 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     beta1[l] = db + l * *pg;
     xx = -sp[l];
     F77_CALL(dgemv)(&ntrans,pg,&srl,&xx,P[l],pg,beta+soff[l],&ione,&zero,beta1[l],&ione FCONE); /* beta1[l] = dbeta/d rho_l */
-    ncs=0;
+    ncs=0;xx = sp[l];
     Xbd(mu1[l],beta1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* dmu/d rho_l note limited thread safety */
-    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,&srl,&xx,P[l],pg,G+soff[l],pg,&zero,V[l],pg FCONE FCONE); /* - sp[l] P[l] [G]_l  */
+    F77_CALL(dgemm)(&ntrans,&ntrans,pg,pg,&srl,&xx,P[l],pg,G+soff[l],pg,&zero,Vl,pg FCONE FCONE); /* Vl = + sp[l] P[l] [G]_l */
+  
     for (r=0;r<=l;r++) {
+    
+      xx = sp[r];j=sr[r];if (j<0) j = -j;
+      F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&j,&xx,Vl+soff[r] * *pg,pg,P[r],pg,&zero,V2,pg FCONE FCONE);
+      tad(V2,*pg); /* add to own transpose */
+      if (l==r) for (bp=Vl,dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += - *bp;
+      xx = 1e-14; // tol
+      j = -1; mtrf(V2,U,pg,&j,&izero,&xx,work,iwork); /* on exit V2 = LU' = V2 */
+      L2[l][r] = L2[r][l] = (double *)CALLOC(*pg * j,sizeof(double)); // !!
+      U2[l][r] = U2[r][l] = (double *)CALLOC(*pg * j,sizeof(double)); // !!
+      dp0=L2[l][r];dp1=dp0+j * *pg;dp2=U2[l][r];dp3=V2;dp4=U;
+      for (;dp0<dp1;dp0++,dp2++,dp3++,dp4++) {*dp0 = *dp3; *dp2 = *dp4;}
+      l2c[r][l]=l2c[l][r] = j;
+      
       beta2[r][l] = beta2[l][r] =  (double *)CALLOC(*pg,sizeof(double));
       /* get d2beta/drho_l drho_r */
       xx = -sp[l];
@@ -2541,16 +2577,21 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
       F77_CALL(dgemv)(&ntrans,pg,&q,&xx,P[r],pg,beta1[l]+soff[r],&ione,&one,beta2[l][r],&ione FCONE);
       if (l==r) for (bp=beta1[r],dp1=beta2[l][r],dp2=dp1 + *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
     }
+
+    j = -1; mtrf(Vl,Vl,pg,&j,&ione,&zero,work,iwork); l1c[l] = j;
+    L1[l] = (double *)CALLOC(*pg * j,sizeof(double)); /* L1[l]L1[l]' = Vl */
+    for (dp1=L1[l],dp2=dp1+ *pg * j,dp3=Vl;dp1<dp2;dp1++,dp3++) *dp1 = *dp3;
+   
   } /* end of P[l], V[l] etc. loop */
  
   *NCV=0.0;
   /* create indices for extracting A_aa blocks of influence matrix */
-  mk = (ptrdiff_t *)CALLOC(*nn,sizeof(ptrdiff_t)); /* ends of k1,k2 blocks defining each A_aa */
+  mk = (ptrdiff_t *)CALLOC(*nn,sizeof(ptrdiff_t)); /* ends of a1,a2 blocks defining each A_aa */
   for (ii=kk = -1,i=0;i<*nn;i++) { /* create mk */
     q = ma[i]-kk; kk = ma[i];
     ii = mk[i] = ii + q*(q+1)/2; /* mk[i] is end of block i */
   }
-  nk = mk[*nn-1]+1; /* number of rows of k1/2 if extracting all in one go */
+  //nk = mk[*nn-1]+1; /* number of rows of a1/a2 if extracting all in one go */
 
   /* get total storage requirements for all CV residuals + largest A_aa */
   for (M=nb=j=kk=i=0;i<*nn;i++) {
@@ -2658,30 +2699,23 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
    
     if (ch&&nu>nu_size) { /* need to extend storage */
       nu_size = nu;
-      k1 = (int *)REALLOC(k1,nu* *ck * sizeof(int));
-      k2 = (int *)REALLOC(k2,nu* *ck * sizeof(int));
+      //  k1 = (int *)REALLOC(k1,nu* *ck * sizeof(int));
+      //k2 = (int *)REALLOC(k2,nu* *ck * sizeof(int));
       for (l=0;l<ns;l++) A1[l] = (double *)REALLOC(A1[l],nu*sizeof(double)); /* storage for dA_aa/d rho_l packed as A */ 
       A = (double *)REALLOC(A,nu*sizeof(double));A2 = (double *)REALLOC(A2,nu*sizeof(double));
     } else { /* set up initial storage */
       nu_size = nu;
-      k1 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
-      k2 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
+      //k1 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
+      //k2 = (int *)CALLOC(nu*(ptrdiff_t) *ck,sizeof(int));
       for (l=0;l<ns;l++) A1[l] = (double *)CALLOC(nu,sizeof(double)); /* storage for dA_aa/d rho_l packed as A */ 
       A = (double *)CALLOC(nu,sizeof(double));A2 = (double *)CALLOC(nu,sizeof(double));
     }
-    
-    for (i=0;i<nu;i++,wp++) { /* create k1, k2 index matrices to extract the unique i,j pairs from A using diagXVXt */ 
-      p1 = k + a1[i]; p2 = k + a2[i];
-      for (k1p=k1+i,k2p=k2+i,j=0;j<*ck;j++,k1p+=nu,k2p+=nu,p1+= *n,p2 += *n) {
-        *k1p = *p1;
-        *k2p = *p2;
-      }  
-    }  
 
     /* extract the unique elements making up the required influence matrix blocks */
-    diagXVXt(A,G,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-    
+    //diagXVXt(A,G,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,pg,pg,nthreads,cs,&ncs,cs,&nrs);
+    j=1;
+    diagXLLtXt(A,L,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,pg,pg,
+	       a1,a2,&nu,nthreads);
     /* Get NCV and (I-A_aa)^-1... */
     if (ch==0) kk0=0; else kk0 = mk[ichunk[ch-1]]+1;
     thread_lim(ch_start,ichunk[ch],thlim,ncvth);
@@ -2743,10 +2777,11 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     for (l=0;l<ns;l++) { /* loop over smoothing parameters */
       srl = sr[l]; if (srl<0) srl = -srl; 
   
-      nrs=ncs=0;
-      diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-    
+      //nrs=ncs=0;
+      //diagXVXt(A1[l],V[l],X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,pg,pg,nthreads,cs,&ncs,cs,&nrs);
+      j=1;diagXLLtXt(A1[l],L1[l],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,pg,l1c+l,
+		     a1,a2,&nu,nthreads);
+      for (dp1=A1[l],dp2=dp1+nu;dp1<dp2;dp1++) *dp1 = - *dp1;
       if (ch==0) kk0=0; else kk0= mk[ichunk[ch-1]]+1;
       
 #ifdef OPENMP_ON
@@ -2810,17 +2845,10 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
         ncs=0;
         Xbd(mu2,beta2[l][r],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs); /* d2mu/drho_l drho_r note limited thread safety */
 
-        /* get second deriv of A w.r.t. rho_l and rho_r ... */
-        xx = -sp[l];
-        F77_CALL(dgemm)(&ntrans,&trans,pg,pg,&srl,&xx,V[r]+soff[l] * *pg,pg,P[l],pg,&zero,V2,pg FCONE FCONE);
-        tad(V2,*pg); /* add to own transpose */
-   
-        if (l==r) for (bp=V[r],dp1=V2,dp2=dp1 + *pg * *pg;dp1<dp2;bp++,dp1++) *dp1 += *bp;
-        ncs=nrs=0;
-  
-        diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,
-	   pg,pg,nthreads,cs,&ncs,cs,&nrs);
-     
+        //diagXVXt(A2,V2,X,k1,k2,ks,m,p,&nu,nx,ts,dt,nt,v,qc,pg,pg,nthreads,cs,&ncs,cs,&nrs);
+	
+        j=1;diagXLUtXt(A2,L2[l][r],U2[l][r],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,pg,l2c[l]+r,
+		       a1,a2,&nu,nthreads);
         /* Compute the second derivative of NCV w.r.t. rho_l and rho_r */
        
         if (ch==0) kk0=0; else kk0= mk[ichunk[ch-1]]+1; 
@@ -2907,14 +2935,18 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   for (j=0;j<ns;j++) for (q=0;q<=j;q++) NCV2[q+j*ns]=NCV2[j+q*ns];
   /* free memory */
   for (l=0;l<ns;l++) {
-    for (r=0;r<=l;r++) FREE(beta2[l][r]);
-    FREE(beta2[l]);
-    FREE(P[l]);FREE(V[l]);FREE(A1[l]);FREE(ba1[l]);
+    for (r=0;r<=l;r++) {
+      FREE(beta2[l][r]);FREE(L2[l][r]);FREE(U2[l][r]);
+    }  
+    FREE(beta2[l]);FREE(L2[l]);FREE(U2[l]);
+    FREE(P[l]);FREE(L1[l]);FREE(A1[l]);FREE(ba1[l]);
     FREE(mu1[l]);FREE(IAdAIA[l]);
+    FREE(l2c[l]);
   }
-  FREE(P); FREE(beta1);FREE(V);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);FREE(piv);
-  FREE(B);FREE(cs);FREE(mk);FREE(k1);FREE(k2);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
-  FREE(beta2);FREE(mu2);FREE(V2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);FREE(thlim);
+  FREE(l1c);FREE(l2c);FREE(L);FREE(V2);FREE(U);FREE(Vl);
+  FREE(P);FREE(beta1);FREE(L1);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);FREE(piv);FREE(work);FREE(iwork);
+  FREE(B);FREE(cs);FREE(mk);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
+  FREE(beta2);FREE(L2);FREE(U2);FREE(mu2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);FREE(thlim);
   if (ncvth>1) {
     FREE(NCV1th);FREE(NCV2th);
     FREE(NCVth);
@@ -2959,9 +2991,9 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp1,*dp2,*dp3,xx,
     **beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**V,*IAdAIAp,***beta2,*mu2,
     *V2,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp;
-  int ncs=0,nrs=0,dum,dum1,i1,i,j,M,q,r,info=1,*k1,*k2,k1i,k2i,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,
-    *p1,*p2,ione=1,izero=0,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim;
-  ptrdiff_t nb,nk,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb;
+  int ncs=0,nrs=0,dum,i1,i,j,M,q,r,info=1,*k1,*k2,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,
+    *p1,*p2,ione=1,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim;
+  ptrdiff_t nb,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb;
   char uplo='U',ntrans='N',trans='T',side='L';
   cs =  (int *)CALLOC(*nt,sizeof(int));
   thlim = (int *)CALLOC(ncvth+1,sizeof(int)); /* i range limits for threads */
@@ -3020,7 +3052,7 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
     q = ma[i]-kk; kk = ma[i];
     ii = mk[i] = ii + q*(q+1)/2; /* mk[i] is end of block i */
   }
-  nk = mk[*nn-1]+1; /* number of rows of k1/2 if extracting all in one go */
+  //  nk = mk[*nn-1]+1; /* number of rows of k1/2 if extracting all in one go */
 
   /* get total storage requirements for all CV residuals + largest A_aa */
   for (M=nb=j=kk=i=0;i<*nn;i++) {
@@ -3390,21 +3422,6 @@ void ncvd0(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double
     FREE(NCVth);
   }  
 } /* ncvd0 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

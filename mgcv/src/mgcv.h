@@ -159,13 +159,13 @@ void idiagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, 
 		 int *ri,int *ci,int *nrc,int *nthreads);
 void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
 	        int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
-		int *ri,int *ci,int *nrc,int *nthreads);
+		int *ri,int *ci,ptrdiff_t *nrc,int *nthreads);
 void idiagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, int *n, 
 		 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
 		 int *ri,int *ci,int *nrc,int *nthreads);
 void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m,int *p, ptrdiff_t *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pl,int *cl,
-		int *ri,int *ci,int *nrc,int *nthreads);
+		int *ri,int *ci,ptrdiff_t *nrc,int *nthreads);
 SEXP CdiagXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,
 	       SEXP vp,SEXP QC, SEXP NTHREADS, SEXP CS, SEXP RS);
 SEXP CijXVXt(SEXP DIAG, SEXP Vp, SEXP x, SEXP K,SEXP K1, SEXP KS, SEXP M, SEXP P, SEXP TS, SEXP DT,

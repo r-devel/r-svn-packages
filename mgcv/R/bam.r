@@ -2112,9 +2112,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
   control <- do.call("gam.control",control)
+ 
   if (control$trace) t3 <- t2 <- t1 <- t0 <- proc.time()
   if (length(nthreads)==1) nthreads <- rep(nthreads,2)
   if (is.null(G)) { ## need to set up model!
+    weights.name <- substitute(weights) ## needed in case of update
+    AR.sname <- substitute(AR.start) ## needed in case of update
     if (is.character(family))
             family <- eval(parse(text = family))
     if (is.function(family))
@@ -2532,6 +2535,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (G$m) for (i in 1:G$m) G$min.edf<-G$min.edf+G$smooth[[i]]$null.space.dim
     G$discretize <- discretize
     G$formula<-formula
+    G$weights.name <- weights.name; G$AR.sname <- AR.sname
     ## environment(G$formula)<-environment(formula)
     environment(G$pterms) <- environment(G$terms) <- environment(G$pred.formula) <- 
     environment(G$formula) <- .BaseNamespaceEnv
@@ -2623,7 +2627,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$boundary <- FALSE  # always FALSE for this case
   object$call<-G$cl # needed for update() to work 
   object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
- 
+  object$weights.name <- G$weights.name
+  object$AR.sname <- G$AR.sname
+
   object$contrasts <- G$contrasts
   object$control <- control
   object$converged <- TRUE ## no iteration
@@ -2725,21 +2731,19 @@ bam.update <- function(b,data,chunk.size=10000) {
   ## rownames(X) <- NULL
   cnames <- names(b$coefficients)
 
-  AR.start <- NULL ## keep R checks happy
+  AR.start <- NULL ## keep R checks happy 
 
   ## now get the new data in model frame form...
   getw <- "(weights)"%in%names(b$model)
   getARs <- "(AR.start)"%in%names(b$model)
-  if (getw&&getARs) {
-    mf <- model.frame(gp$fake.formula,data,weights=weights,AR.start=AR.start,
-                      xlev=b$xlev,na.action=b$NA.action)
-    w <- mf[["(weights)"]]
-  } else if (getw) { 
-    mf <- model.frame(gp$fake.formula,data,weights=weights,xlev=b$xlev,na.action=b$NA.action)
-    w <- mf[["(weights)"]]
-  } else if (getARs) {
-    mf <- model.frame(gp$fake.formula,data,AR.start=AR.start,xlev=b$xlev,na.action=b$NA.action)
-    w <- rep(1,nrow(mf))
+ 
+  if (getw||getARs) {
+    mfstr <- "mf <- model.frame(gp$fake.formula,data,"
+    if (getw) mfstr <- paste(mfstr,"weights=",b$weights.name,",",sep="")
+    if (getARs) mfstr <- paste(mfstr,"AR.start=",b$AR.sname,",",sep="")
+    mfstr <- paste(mfstr,"xlev=b$xlev,na.action=b$NA.action)",sep="")
+    eval(parse(text=mfstr))
+    w <- if (getw) mf[["(weights)"]] else  rep(1,nrow(mf))
   } else {
     mf <- model.frame(gp$fake.formula,data,xlev=b$xlev,na.action=b$NA.action)
     w <- rep(1,nrow(mf))
