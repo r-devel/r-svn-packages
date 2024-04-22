@@ -1,6 +1,6 @@
 
-R Under development (unstable) (2023-12-07 r85661) -- "Unsuffered Consequences"
-Copyright (C) 2023 The R Foundation for Statistical Computing
+R Under development (unstable) (2024-04-16 r86430) -- "Unsuffered Consequences"
+Copyright (C) 2024 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -6814,12 +6814,14 @@ Achieved convergence tolerance: 4.39e-06
 +    initial = logistInit, parameters = c("Asym", "xmid", "scal"))
 
 > getInitial(circumference ~ logist(age, Asym, xmid, scal), Orange)
-Warning: selfStart initializing functions should have a final '...' argument since R 4.1.0
+Warning in getInitial.selfStart(func, data, mCall = as.list(match.call(func,  :
+  selfStart initializing functions should have a final '...' argument since R 4.1.0
 Asym xmid scal 
  176  637  347 
 
 > nls(circumference ~ logist(age, Asym, xmid, scal), Orange)
-Warning: selfStart initializing functions should have a final '...' argument since R 4.1.0
+Warning in getInitial.selfStart(func, data, mCall = as.list(match.call(func,  :
+  selfStart initializing functions should have a final '...' argument since R 4.1.0
 Nonlinear regression model
   model: circumference ~ logist(age, Asym, xmid, scal)
    data: Orange
