@@ -471,6 +471,28 @@ SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
   return(R_NilValue);
 } /*  CXbd */
 
+void Xbdspace(ptrdiff_t *space,int *m,int *p, ptrdiff_t *n, int *nx, int *dt, int *nt) {
+  /* computes space needed by Xbd returning in 3 vector space [int,ptrdiff_t,double] */
+  int i,q,j,c1,dC,maxrow=0,maxp=0,pti;
+  ptrdiff_t ii;
+  for (q=i=0;i< *nt; i++) { /* work through the terms */
+    for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
+      if (maxrow<m[q]) maxrow=m[q];
+      if (j>0 && j==dt[i]-1) {
+        c1 = pti * (ptrdiff_t) m[q]; 
+        if (c1>dC) dC = c1; /* dimension of working matrix C */
+      }
+      if (j==0) pti = p[q]; else pti *= p[q]; /* term dimension */
+    } 
+    if (maxp < pti) maxp = pti;
+  }
+  space[0] = *nt *2 + 1; /* int */
+  space[1] = *nx + *nt + 2; /* ptrdiff_t */
+  ii = *n; if (ii<3*maxp) ii= (ptrdiff_t) 3*maxp; if (ii<maxrow) ii=(ptrdiff_t)maxrow;
+  if (!dC) dC=1; /* avoid pointing to unallocated */
+  space[2] = ii + *n + dC; /* double */
+} /* Xbdspace */
+
 
 void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, 
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs) {
@@ -487,24 +509,31 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff
 
    Note that if ncs <=0 then ncs and cs are reset to nt and 0:(nt-1). Requires care in parallel!
 */
-  ptrdiff_t *off,*voff;
-  int i,j,q,*pt,*tps,dC=0,c1,first,kk;
+  ptrdiff_t *off,*voff,space[3],ii;
+  int i,j,q,*pt,*tps,first,kk;//,dC=0,c1;
   double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0,maxrow=0;
+  Xbdspace(space,m,p,n, nx,dt,nt);
   /* obtain various indices */
 #pragma omp critical (xbdcalloc)
-  { pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
-    off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
-    voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */
-    tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  { pt = (int *) CALLOC((size_t) space[0],sizeof(int)); /* the term dimensions */
+    off = (ptrdiff_t *) CALLOC((size_t)space[1],sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
+    pf=f0 = (double *)CALLOC((size_t)space[2],sizeof(double));
   }
+  tps = pt + *nt; /* the term starts in param vector or XWy */
+  voff = off + *nx + 1;/* offsets for v subvector starts */
+  //{ pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+  //  off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
+  //  voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */
+  //  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  //}
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q] * (ptrdiff_t) m[q]; /* submatrix start offsets */
       if (maxrow<m[q]) maxrow=m[q];
-      if (j>0 && j==dt[i]-1) {
-        c1 = pt[i] * (ptrdiff_t) m[q]; 
-        if (c1>dC) dC = c1; /* dimension of working matrix C */
-      }
+      //     if (j>0 && j==dt[i]-1) {
+      //  c1 = pt[i] * (ptrdiff_t) m[q]; 
+      //  if (c1>dC) dC = c1; /* dimension of working matrix C */
+      //}
       if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
     } 
     if (qc[i]==0) voff[i+1] = voff[i]; else if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else {  /* start of ith v matrix */
@@ -528,12 +557,13 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff
   }
   tps[*nt] = kk;
   /* now form the product term by term... */ 
-  i = *n; if (i<3*maxp) i=3*maxp; if (i<maxrow) i=maxrow;
-#pragma omp critical (xbdcalloc)
-  { pf=f0 = (double *)CALLOC((size_t)*n,sizeof(double));
-    work = (double *)CALLOC((size_t)i,sizeof(double));
-    if (dC) C = (double *)CALLOC((size_t)dC,sizeof(double));
-  }
+  ii = *n; if (ii<3*maxp) ii=(ptrdiff_t)3*maxp; if (ii<maxrow) ii=(ptrdiff_t)maxrow;
+  //#pragma omp critical (xbdcalloc)
+  //{ pf=f0 = (double *)CALLOC((size_t)*n,sizeof(double));
+  //  work = (double *)CALLOC((size_t)i,sizeof(double));
+  //  if (dC) C = (double *)CALLOC((size_t)dC,sizeof(double));
+  //}
+  work = pf + *n;C = work + ii;
   for (j=0;j < *bc;j++) { /* loop over columns of beta */
     first = 1;
     for (kk=0;kk<*ncs;kk++) {
@@ -553,10 +583,12 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff
     f += *n;beta += tps[*nt]; /* move on to next column */
   } /* col beta loop */
 #pragma omp critical (xbdcalloc)
-  { if (dC) FREE(C);
-    FREE(work);FREE(pf);
-    FREE(pt);FREE(off);FREE(voff);FREE(tps);
-  }
+  { FREE(pf);FREE(off);FREE(pt);
+  }  
+  //  { if (dC) FREE(C);
+  //  FREE(work);FREE(pf);
+  //  FREE(pt);FREE(off);FREE(voff);FREE(tps);
+  //}
 } /* Xb */
 
 
