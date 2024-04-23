@@ -1,6 +1,6 @@
 ## Contributed by Mary Lindstrom <lindstro@biostat.wisc.edu>
 
-# Copyright 2007-2020 The R Core team
+# Copyright 2007-2024 The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -39,10 +39,15 @@ getVarCov.lme <-
         result <- list()
         groups  <-  obj$groups[[1]]
         ugroups  <-  unique(groups)
-        if (missing(individuals)) individuals  <-  as.matrix(ugroups)[1,]
-        if (is.numeric(individuals))
+        ## CAVE: both default and numeric 'individuals' are undocumented,
+        ##       but unlike getVarCov.gls and perhaps unintentionally, these
+        ##       index the groups as they occur in the data, not the levels!
+        if (missing(individuals)) {
+            individuals  <-  ugroups[1]
+        } else if (is.numeric(individuals)) {
             individuals  <-  ugroups[individuals]
-        for (individ in individuals)
+        }
+        for (individ in as.character(individuals))
         {
             ind <- groups == individ
             ni <- sum(ind, na.rm = TRUE)
@@ -64,12 +69,12 @@ getVarCov.lme <-
             cond.var <- t(V * sds) * sds
             dimnames(cond.var)  <-  list(1:nrow(cond.var),1:ncol(cond.var))
             if (type=="conditional")
-                result[[as.character(individ)]] <- cond.var
+                result[[individ]] <- cond.var
             else
             {
                 Z <- model.matrix(obj$modelStruct$reStruct,
                                   getData(obj))[ind, , drop = FALSE]
-                result[[as.character(individ)]] <-
+                result[[individ]] <-
                     cond.var + Z %*% D %*% t(Z)
             }
         }
