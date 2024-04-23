@@ -2617,7 +2617,7 @@ Variogram.lme <-
   wchRows <- NULL
   if (missing(distance)) {
     if (missing(form) && inherits(csT, "corSpatial")) {
-      distance <- getCovariate(csT)
+      distance <- getCovariate(csT)  # this excludes 1-obs groups
     } else {
       metric <- match.arg(metric)
       if (missing(data)) {

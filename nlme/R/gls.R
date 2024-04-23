@@ -1141,7 +1141,7 @@ Variogram.gls <-
     wchRows <- NULL
     if (missing(distance)) {
         if (missing(form) && inherits(csT, "corSpatial")) {
-            distance <- getCovariate(csT)
+            distance <- getCovariate(csT)  # this excludes 1-obs groups
             grps <- getGroups(object)
         } else {
             metric <- match.arg(metric)

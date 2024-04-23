@@ -1750,6 +1750,7 @@ corFactor.corSpatial <- function(object, ...)
 corMatrix.corSpatial <-
   function(object, covariate = getCovariate(object), corr = TRUE, ...)
 {
+  ## the default 'covariate' excludes 1-obs groups (empty distance)
   nRt <- function(vec) round((1 + sqrt(1 + 8 * length(vec))) / 2)
   corD <- Dim(object,
 	      if(is.list(covariate)) {
