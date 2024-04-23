@@ -92,15 +92,19 @@ getVarCov.gls <-
         stop("not implemented for uncorrelated errors")
     if (is.null(grp <- getGroups(csT)))
         stop("not implemented for correlation structures without a grouping factor")
-    S <- corMatrix(csT)[[individual]]
+    ind <- if (is.numeric(individual)) {
+               as.integer(grp) == individual
+           } else         grp  == individual
+    ni <- sum(ind, na.rm = TRUE)
+    if (ni == 0)
+        stop(gettextf("individual %s was not used in the fit",
+                      sQuote(individual)), domain = NA)
+    S <- if (ni > 1) corMatrix(csT)[[individual]] else diag(1) # PR#16806
     if (!is.null( obj$modelStruct$varStruct))
     {
-        ind <- if (is.numeric(individual)) {
-                   as.integer(grp) == individual
-               } else         grp  == individual
         vw  <-  1/varWeights(obj$modelStruct$varStruct)[ind]
     }
-    else vw  <-  rep(1,nrow(S))
+    else vw  <-  rep(1, ni)
     vars  <-  (obj$sigma * vw)^2
     result  <-  t(S * sqrt(vars))*sqrt(vars)
     class(result)  <-  c("marginal","VarCov")
