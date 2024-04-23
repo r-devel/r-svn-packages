@@ -54,10 +54,11 @@ getVarCov.lme <-
             if (ni == 0)
                 stop(gettextf("individual %s was not used in the fit",
                               sQuote(individ)), domain = NA)
-            if(!is.null(csT <- obj$modelStruct$corStruct)) {
+            if(!is.null(csT <- obj$modelStruct$corStruct)
+               && ni > 1) { # corMatrix.corSpatial() excludes 1-obs groups (PR#16806)
                 V <- corMatrix(csT)[[individ]]
-            }
-            else V <- diag(ni)
+            } else
+                V <- diag(ni)
             if(!is.null(obj$modelStruct$varStruct)) {
                 ## CAVE: stored weights are based on internally reordered data,
                 ##       so cannot be indexed via obj$groups
