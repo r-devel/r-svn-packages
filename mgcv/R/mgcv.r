@@ -1476,26 +1476,6 @@ corBC <- function(lambda,y,mu) {
   -cor(qn,sort(BC(y,lambda)-BC(mu,lambda)))
 }
 
-neico4 <- function(nei,dd,dd1) {
-## nei is neighbourhood structure. dd are leave one out perturbations.
-## dd1 the same for a different residual
-## This routine computes the most basic covariance
-## matrix estimate, based on observed correlation within neighbourhoods
-## and assumption of zero correlation without. Somehow it is a testement
-## to my extreme slowness that it took me 6 months to come up with this
-## skull-thumpingly obvious solution having tried every other hare brained
-## scheme first.
-  n <- length(nei$i)
-  i1 <- 0
-  W <- dd*0 ## dbeta/dy (y-mu)
-  for (i in 1:n) {
-    i0 <- i1+1
-    i1 <- nei$m[i]
-    ii <- nei$k[i0:i1] ## neighbours of i
-    W[nei$i[i],] <-  W[nei$i[i],] + colSums(dd[ii,,drop=FALSE]) 
-  }
-  V <- t(dd1)%*%W
-} ## neico4
 
 pdef <- function(V,eps = .Machine$double.eps^.9) {
 ## find nearest pdf matrix to symmetric matrix V

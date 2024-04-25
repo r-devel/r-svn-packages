@@ -2250,6 +2250,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (gc.level>0) gc()  
     if (rho!=0&&!is.null(mf$"(AR.start)")) if (!is.logical(mf$"(AR.start)")) stop("AR.start must be logical")
 
+    if (!is.null(nei)) { ## check if data dropped
+      k <- attr(mf,"na.action")
+      if (!is.null(k)) { ## need to adjust nei for dropped data
+        nei <- nanei(nei,as.numeric(k))
+      }
+    }
+
     if (method=="NCV") { ## pre-process the neighbourhood structure 'nei'
       n <- nrow(mf)
       if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) {
