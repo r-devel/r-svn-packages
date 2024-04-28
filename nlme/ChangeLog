@@ -1,3 +1,9 @@
+2024-04-28  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/corStruct.R (corARMA): corARMA() no longer returns the
+	dysfunctional/undocumented corIdent() structure, with a clear
+	error message when neither 'p' nor 'q' are set > 0 (PR#17988).
+
 2024-04-23  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/VarCov.R (getVarCov.lme, getVarCov.gls): support

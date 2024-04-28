@@ -24,8 +24,8 @@ corARMA(value, form, p, q, fixed)
    \code{~ 1}, which corresponds to using the order of the observations
    in the data as a covariate, and no groups.}  
  \item{p, q}{non-negative integers specifying respectively the
-   autoregressive order and the moving average order of the \code{ARMA}
-   structure. Both default to 0.}
+   autoregressive order and the moving average order of the \acronym{ARMA}
+   structure. Both default to 0, but at least one should be > 0.}
  \item{fixed}{an optional logical value indicating whether the
    coefficients should be allowed to vary in the optimization, or kept
    fixed at their initial value. Defaults to \code{FALSE}, in which case

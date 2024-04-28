@@ -1,6 +1,6 @@
 ###              Classes of correlation structures
 ###
-### Copyright 2005-2020  The R Core team
+### Copyright 2005-2024  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 
@@ -1154,7 +1154,7 @@ corARMA <-
     stop("moving average order must be a non-negative integer")
   }
   if (0 == (p + q)) {
-    return(corIdent())
+    stop("at least one of 'p' and 'q' should be > 0")
   }
   if (length(value) != p + q) {
     stop("initial value for parameter of wrong length")
