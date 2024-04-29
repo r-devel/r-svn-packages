@@ -263,7 +263,7 @@ fixef.lmList <- function(object, ...)
 }
 
 formula.lmList <-
-  function(x, ...) eval(attr(x, "call")[["object"]])
+  function(x, ...) eval(attr(x, "call")[["object"]]) # flaky if object is a name
 
 getData.lmList <-
   function(object)

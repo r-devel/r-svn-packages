@@ -58,3 +58,9 @@ stopifnot(exprs = {
     identical(getResponseFormula(fmGnl), ~height)
 })
 
+## similarly for self-starting models:
+formula <- height ~ SSasymp(age, Asym, R0, lrc)
+fm2 <- nlme(formula, data = Loblolly, fixed = Asym + R0 + lrc ~ 1, random = Asym ~ 1)
+## nlme <= 3.1-164 failed with Error in x$formula :
+##   object of type 'symbol' is not subsettable
+stopifnot(identical(formula(fm2), formula))

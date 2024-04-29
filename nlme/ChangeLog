@@ -1,3 +1,8 @@
+2024-04-29  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/nlme.R (nlme.nlsList): fix scoping issue for nlsList() and
+	self-starting nlme() calls with a preconstructed formula.
+
 2024-04-28  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/corStruct.R (corARMA): corARMA() no longer returns the

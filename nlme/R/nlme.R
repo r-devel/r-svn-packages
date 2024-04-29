@@ -69,10 +69,9 @@ nlme.nlsList <-
   last.call$control <- NULL
   last.call$pool <- NULL
   thisCall[names(last.call)] <- last.call
-  thisModel <- last.call[["model"]]
-  thisCall[["model"]] <-
-    eval(parse(text=paste( deparse (getResponseFormula (thisModel)[[2]]),
-                          c_deparse(getCovariateFormula(thisModel)[[2]]),sep="~")))
+  thisModel <- eval.parent(last.call[["model"]]) # formula.nlsList() still evals
+  thisCall[["model"]] <- eval.parent(call("~", getResponseFormula (thisModel)[[2]],
+                                          getCovariateFormula(thisModel)[[2]]))
   ## create "fixed" and "start"
   cf <- na.omit(coef(model))
   start <- list(fixed = unlist(lapply(cf, median, na.rm = TRUE)))
