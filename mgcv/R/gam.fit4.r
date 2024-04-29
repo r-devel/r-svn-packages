@@ -1097,6 +1097,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ## with ll1 < ll0 in place of ll1 <= ll0 in next line than we can repeatedly accept
     ## miniscule steps that do not actually improve anything.
     llold <- ll ## avoid losing lbb slot on stp failure
+    no.change <- 0
     while ((!is.finite(ll1)||ll1 <= ll0) && khalf < 25) { ## step halve until it succeeds...
       step <- step/fac;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
@@ -1104,8 +1105,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       if (is.finite(ll1)&&ll1>=ll0) { ## improvement, or at least no worse.
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       }
-      ## abort if step has made no difference...
-      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps) khalf <- 100
+      if (ll1 == ll0) no.change <- no.change + 1 
+      ## abort if step has made no difference (e.g. 2 iteractions of exactly no improvement)...
+      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps||no.change>1) khalf <- 100
       khalf <- khalf + 1
       if (khalf>5) fac <- 5
     } ## end step halve
@@ -1124,6 +1126,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       khalf <- 0
     }
 
+    no.change <- 0
     while ((!is.finite(ll1)||(ll1 <= ll0 && !iconv)) && khalf < 25) { ## step cut until it succeeds...
       step <- step/10;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
@@ -1131,12 +1134,13 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       if (is.finite(ll1)&&ll1>=ll0) { ## improvement, or no worse
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       }
+      if (ll1 == ll0) no.change <- no.change + 1
       ## abort if step has made no difference...
-      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps) khalf <- 100 ## step gone nowhere
+      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps||no.change>1) khalf <- 100 ## step gone nowhere
       khalf <- khalf + 1
     }
 
-    if ((is.finite(ll1)&&ll1 >= ll0&&khalf<25)||iter==control$maxit) { ## step ok. Accept and test
+    if ((is.finite(ll1)&&ll1 >= ll0&&(khalf<25||indefinite))||iter==control$maxit) { ## step ok. Accept and test
       coef <- coef + step
       grad <- ll$lb - St%*%coef
       Hp <- -ll$lbb+St
@@ -1151,6 +1155,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
                     (rep_len(c(0,1),length(coef)) - 0.5 ) * mean(abs(coef))*1e-5*perturbed 
             ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
             ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
+	    grad <- ll$lb - St%*%coef
+            Hp <- -ll$lbb+St
           } else {        
             rank.checked <- TRUE
             if (penalized) {
@@ -1748,6 +1754,7 @@ deriv.check5 <- function(x, y, sp,
    M <- length(sp) ## number of smoothing parameters
    fd.br <- matrix(0,p,M)
    REML1 <- rep(0,M)
+   REML2 <- b$REML2
    fd.dH <- list()
    if (!is.null(b$b2)) fd.br2 <- b$b2*0
    k <- 0
@@ -1765,6 +1772,7 @@ deriv.check5 <- function(x, y, sp,
        }	
      }  
      REML1[i] <- (b1$REML-b0$REML)/spe
+     REML2[,i] <- (b1$REML1-b0$REML1)/spe
      fd.dH[[i]] <- (b1$lbb - b0$lbb)/spe
    }
    ## plot db.drho against fd versions...

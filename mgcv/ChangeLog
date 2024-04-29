@@ -26,8 +26,8 @@ better done with .Call
 
 1.9-2
 
-* Fixed bam/bam.update to pick up weights correctly, rather than failing. Thnaks to Max 
-  Moldovan.
+* Fixed bam/bam.update to pick up weights correctly, rather than failing. 
+  Thanks to Max Moldovan.
 
 * Added sparse matrix Cholesky routine, mchol, a wrapper for 
   Matrix::Cholesky, giving the same functionality as Matrix::chol prior 

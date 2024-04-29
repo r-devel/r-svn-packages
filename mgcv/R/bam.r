@@ -696,7 +696,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         if (scale<=0) log.phi <- lsp[n.sp+1]
         prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(crit)*.Machine$double.eps^.5,gamma=gamma)
-        deriv.check <- TRUE
+        deriv.check <- FALSE
         if (deriv.check) { ## for debug derivative testing
           Hd <- prop$hess; eps <- 1e-7
           bfd <- prop$db
