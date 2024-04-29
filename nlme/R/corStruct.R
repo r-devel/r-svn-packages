@@ -1154,7 +1154,7 @@ corARMA <-
     stop("moving average order must be a non-negative integer")
   }
   if (0 == (p + q)) {
-    stop("at least one of 'p' and 'q' should be > 0")
+    stop("at least one of 'p' and 'q' must be > 0")
   }
   if (length(value) != p + q) {
     stop("initial value for parameter of wrong length")
