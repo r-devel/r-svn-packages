@@ -917,7 +917,6 @@ void diagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, p
     if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i; /* column being worked on */   
-      /* Note thread safety of XBd means this must be only memory allocator in this section*/
       Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs,
 	  iwork+j*space[0],pwork+j*space[1],dwork+j*space[2]); /* XL[:,kk] */
       /* Now form dc[i] += XL[k1i[i],kk]*XL[k2i[i],kk] */
@@ -1053,7 +1052,6 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
     if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i; /* column being worked on */   
-      /* Note thread safety of XBd means this must be only memory allocator in this section*/
       Xbd(xl + j * nu,L + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs,
 	  iwork+j*space[0],pwork+j*space[1],dwork+j*space[2]); /* XL[:,kk] */
       Xbd(xu + j * nu,U + kk * *pl,X,ku,ks,m,p,&nu,nx,ts,dt,nt,v,qc,&one,cs,&ncs,
