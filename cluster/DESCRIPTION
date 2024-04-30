@@ -1,6 +1,6 @@
 Package: cluster
-Version: 2.1.6
-Date: 2023-11-30
+Version: 2.1.7
+Date: 2024-04-30
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from

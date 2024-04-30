@@ -6,6 +6,19 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
+\section{Changes in version 2.1.7 (2024-..-.., svn r83..)}{
+  \subsection{Bug Fixes}{
+    \itemize{
+      \item . % do not release before we have bug fix or new feature.
+    }
+  }
+  \subsection{Misc}{
+    \itemize{
+      \item \file{man/pam.Rd} set.seed() for \emph{data}, hence reproducible example.
+    }
+  }
+}
+
 \section{Changes in version 2.1.6 (2023-11-30, svn r8311)}{
   \subsection{Bug Fixes}{
     \itemize{
