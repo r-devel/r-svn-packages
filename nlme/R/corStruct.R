@@ -779,7 +779,12 @@ corIdent <-
   ## Constructor for the corIdent class
   function(form = NULL)
 {
-  .Deprecated("corAR1(0, *)", "nlme")
+  .Deprecated(
+    msg = paste0(
+      "The \"corIdent\" class is deprecated.\n",
+      "Use argument 'correlation = NULL' for uncorrelated errors in model functions."
+    ),
+    package = "nlme")
   value <- numeric(0)
   attr(value, "formula") <- form
   attr(value, "fixed") <- TRUE
