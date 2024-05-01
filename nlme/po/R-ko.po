@@ -11,7 +11,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-105\n"
-"POT-Creation-Date: 2023-11-28 20:13\n"
+"POT-Creation-Date: 2024-05-01 22:23\n"
 "PO-Revision-Date: 2013-08-16 18:52-0600\n"
 "Last-Translator: Chel Hee Lee <gnustats@gmail.com>\n"
 "Language-Team: R Development Translation Teams (Korean) <gnustats@korea.gnu."
@@ -133,6 +133,9 @@ msgid "autoregressive order must be a non-negative integer"
 msgstr ""
 
 msgid "moving average order must be a non-negative integer"
+msgstr ""
+
+msgid "at least one of 'p' and 'q' must be > 0"
 msgstr ""
 
 msgid "initial value for parameter of wrong length"
@@ -934,6 +937,9 @@ msgid "ignoring 'group' in \"varFixed\" formula"
 msgstr ""
 
 msgid "all variables used in 'formula' must be in 'data'"
+msgstr ""
+
+msgid "ignoring initial values (no grouping factor)"
 msgstr ""
 
 msgid "initial values must have group names in 'varIdent'"

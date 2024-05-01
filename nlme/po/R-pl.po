@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-115\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2023-11-28 20:13\n"
+"POT-Creation-Date: 2024-05-01 22:23\n"
 "PO-Revision-Date: 2014-03-25 17:00+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -180,6 +180,12 @@ msgstr "rząd autoregresji musi być nieujemną liczbą całkowitą"
 # stop("moving average order must be a non-negative integer")
 msgid "moving average order must be a non-negative integer"
 msgstr "rząd średniej ruchomej musi być nieujemną liczbą całkowitą"
+
+# nlme/R/varFunc.R: 270
+# stop("initial values for 'varIdent' must be > 0")
+#, fuzzy
+msgid "at least one of 'p' and 'q' must be > 0"
+msgstr "początkowe wartości dla 'varIdent' muszą być > 0"
 
 # nlme/R/corStruct.R: 1186
 # stop("initial value for parameter of wrong length")
@@ -1639,6 +1645,12 @@ msgstr "Ignorowanie 'group' w formule klasy \"varFixed\""
 # stop("all variables used in 'formula' must be in 'data'")
 msgid "all variables used in 'formula' must be in 'data'"
 msgstr "wszystkie zmienne użyte w 'formula' muszą być w 'data'"
+
+# nlme/R/groupedData.R: 219
+# warning("'subset' ignored with single grouping factor")
+#, fuzzy
+msgid "ignoring initial values (no grouping factor)"
+msgstr "argument 'subset' został zignorowany z jednym czynnikem grupującym"
 
 # nlme/R/varFunc.R: 266
 # stop("initial values must have group names in 'varIdent'")
