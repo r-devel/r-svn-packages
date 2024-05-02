@@ -74,7 +74,7 @@ void indReduce(int *ka,int *kb,double *w,int tri,int *n,
    In comparison direct accumulation costs would be O(n*cc). 
 
    If buffer!=0 then the routine will access worki (dimension 6 * n) and will modify w. It does 
-   this becuase it massively improves data locality and cache performance to read the sparse matrix 
+   this because it massively improves data locality and cache performance to read the sparse matrix 
    out of the hash table structure into 3 arrays, before using it for multiplication.
 */
   SM **sm1, **sm2,*smk;
@@ -1466,8 +1466,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 
    * W = diag(w) if tri!=0 and is tridiagonal otherwise, with super in ws and sub in ws + n-1;     
    * off[i] is offset to start of ith matrix (out of nx)  
-   If Xk is a tensor product term, let dXk denote row tensor product of all but it's final 
-   marginal. 
+   If Xk is a tensor product term, let dXk denote row tensor product of all but its final marginal. 
    
    Workspace: Let mi and mj index the final marginal of term i and j, then the dim of work needed is
               2*n + 3*m[mi] + I(n>m[mi]*m[mj])*m[mi]*m[mj] + max(m[mi]*p[mj],m[mj]*p[mi]) 
@@ -1533,7 +1532,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     wb = work; work += mim;// wbs = work; work += m[i]; wbl = work; work += m[i];
     
     if (dt[i]>1) { /* tensor */
-      ddt = dt[i]-1; /* number of marginals, exluding final */
+      ddt = dt[i]-1; /* number of marginals, excluding final */
       koff = 0; /* only one index vector per marginal, so no offset */
     }  
    
@@ -1875,6 +1874,9 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
      X^full_j = sum_q prod_i X_{ts[j]+i}[k[,ks[i]+q],]  
 
      - q runs from 0 to ks[i,2] - ks[i,1] - 1; i runs from 0 to dt[j] - 1.
+ 
+     * ar_weights[0,2,4,6,...,2*n-2] is the ld of the square root of the tri-diagonal AR weight matrix
+       ar_weights[1,3,5,...,2*n-1] is the sub-diagonal.
          
    Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
    (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
