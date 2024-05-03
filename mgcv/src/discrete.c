@@ -1490,7 +1490,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
   mim = (ptrdiff_t) m[im];
   /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
   dXi = work;work += n;pdXj = dXj = work;work += n;
-  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense  */
+  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense - i.e. what is stored has n rows  */
     jm = ts[j];
     mjm = (ptrdiff_t) m[jm];
     pim = p[im];pjm = p[jm];
