@@ -1428,7 +1428,8 @@ ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int
   return(nwork);
 } /* XWXijspace */  
 
-ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, int *m, int *p,int *pt,int *pd,int nx,ptrdiff_t n,int *ts, int *dt,int nt, int tri) {
+ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, int *m, int *p,int *pt,int *pd,int nx,ptrdiff_t n,
+		   int *ts, int *dt,int nt, int tri) {
 /* Tedious routine to evaluate workspace requirment of XWXijs. Basically does a dummy run through the 
    blocks computing the memory requirement for each and recording the maximum used.
    Avoids over allocating. 
@@ -1453,6 +1454,237 @@ ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, in
   }
   return(nmax);
 } /*XWXspace*/
+
+void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int *m, int *p,int nx,ptrdiff_t n,int *ts, int *dt,
+	    int nt, double *e,int *a,ptrdiff_t *ma,ptrdiff_t *off,double *work,int *worki,int nxwx) {
+/* Forms product X_i'VX_j or the r,cth sub-block of this where X_i and X_j are stored in compact form. 
+   V is the matrix of elements V[i,j] = e[i]*e[j] if j in nei(i) and 0 otherwise.
+   IN PROGRESS
+
+   Specifically, X'WX can be partitioned into blocks related to model terms. row block i column block j
+   relates to term i and term j. However, if i and or j are tensor product terms, then they can be
+   partitioned into sub-blocks. A tensor term has (total number of cols)/(number of cols of final marginal) 
+   sub blocks associated with it, so a singleton has one sub-block. This routine computes sub-block r,c of 
+   term block i,j (sub-block indexing is within its term block). The reason for working at this finer grain is that
+   it makes load balancing easier when parallelizing.
+
+   * W = diag(w) if tri!=0 and is tridiagonal otherwise, with super in ws and sub in ws + n-1;     
+   * off[i] is offset to start of ith matrix (out of nx)  
+   If Xk is a tensor product term, let dXk denote row tensor product of all but its final marginal. 
+   
+   Workspace: Let mi and mj index the final marginal of term i and j, then the dim of work needed is
+              2*n + 3*m[mi] + I(n>m[mi]*m[mj])*m[mi]*m[mj] + max(m[mi]*p[mj],m[mj]*p[mi]) 
+              + 3n 
+             SMstack should be an n-vectors if tri==0 and a 3n-vector otherwise. sm is an n vector.
+
+   This version uses sparse accumulation if \bar W too large, based on calling indReduce.
+   ht is a 256 vector initialized by SMinihash. sm is length n. SMstack is length n if tri==0, 3n otherwise.
+
+*/
+  int si,sj,//ri,rj,
+    jm,im,kk,ddtj,*Ki,*Kj,pim,pjm,
+    ii,jj,akk,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,q;
+  ptrdiff_t mim,mjm,*map,kp; /* avoid integer overflow in large pointer calculations */ 
+  double x,*dXi,*dXj,*Xi,*Xj,done=1.0,dzero=0.0,*Cq,*Dq,*ep,*ep1,
+    *C=NULL,*D=NULL,*W=NULL,*p2,*p3;
+  char trans = 'T',ntrans = 'N';
+  si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
+  im = ts[i]+dt[i]-1; /* the index of the final marginal for term i */
+  mim = (ptrdiff_t) m[im];
+  /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
+  dXi = work;work += n;/*pdXj = */dXj = work;work += n;
+  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense - i.e. what is stored has n rows  */
+    jm = ts[j];
+    mjm = (ptrdiff_t) m[jm];
+    pim = p[im];pjm = p[jm];
+    sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
+    for (ii=0;ii<pim;ii++) for (jj=0;jj<pjm;jj++)  XWX[ii + (ptrdiff_t)nxwx * jj] = 0.0;   
+    for (s=0;s<si;s++) for (t=0;t<sj;t++) {
+      Ki = k +  (ptrdiff_t)(ks[im]+s) * n; /* index for i */
+      Kj = k +  (ptrdiff_t)(ks[jm]+t) * n; /* index for j */
+      for (ii=0;ii<pim;ii++) { /* row of XWX */
+        Xi = X + off[im] + mim * ii;
+        if (i==j) jj=ii; else jj=0;
+	for (jj=ii;jj<pjm;jj++) { /* cols of XWX symmetric case */
+  	  Xj = X + off[jm] + mjm * jj;  
+	  //for (x=0.0,Kik=Ki,Kjk=Kj,pw=w,p0=w +n;pw<p0;Kik++,Kjk++,pw++) x += *pw * Xi[*Kik] * Xj[*Kjk];
+	  x=0.0;Kik=Ki;
+	  for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	      akk = a[kp];  
+	      x += *ep * e[akk] *  Xi[*Kik] * Xj[Kj[akk]];
+	  }    
+	  XWX[ii + (ptrdiff_t) nxwx * jj] += x;
+	  if (i==j) XWX[jj + (ptrdiff_t) nxwx * ii] += x;
+        }  
+      }
+    }  
+  } else { /* general case */
+    sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
+    jm = ts[j]+dt[j]-1; /* the index of the final marginal for term j */
+    ddti = dt[i]-1;ddtj = dt[j]-1; /* number of marginals excluding final */
+    if (ddti) tensi = 1; else tensi = 0; /* is term i a tensor? */
+    if (ddtj) tensj = 1; else tensj = 0;
+    mjm = (ptrdiff_t) m[jm];
+   
+    if (n>mjm*mim) acc_w = 1; else acc_w = 0; /* accumulate \bar W or \bar W X_j / \bar W'X_i)? */ 
+    if (acc_w) {
+      if (p[im]*mim*mjm + p[im]*p[jm]*mjm > mim*mjm*p[jm] + p[im]*p[jm]*mim) rfac=0; else rfac=1; /* which order for final product */
+      /* Allocate storage for W (mim*mjm) */
+      W = work; work += mim*mjm;
+    } else {
+      /* now establish whether to form left product, D, or right product C */
+      if (tensi) ii = 2; else ii = 1;if (tensj) ii++;
+      kk = ma[n-1]/n; /* average nei size */ 
+      alpha = ii + kk; /* ~ ops per iteration of accumulation loop */ 
+      if (alpha*si*sj*n*p[im]+mjm*p[im]*p[jm]<alpha*si*sj*n*p[jm]+mim*p[im]*p[jm]) rfac = 0; else rfac=1; //rfac = 1; 
+      if (mim == n) rfac = 0; else if (mjm == n) rfac = 1; /* make absolutely sure we do not form n by p*m product */
+     
+    } /* end of accumulation storage allocation */
+    
+    if (rfac) {
+      /* Allocate storage for C mim by p[jm] */
+      C = work; work += mim * p[jm];
+    } else {
+      /* Allocate storage for D mjm by p[im] */
+      D = work; work += mjm * p[im]; 
+    }	
+   
+    if (acc_w) for (kk=0;kk<mim*mjm;kk++) W[kk] = 0.0; /* clear W */
+    else if (rfac) for (kk=0;kk<mim*p[jm];kk++) C[kk] = 0.0; /* clear C */
+    else for (kk=0;kk<mjm*p[im];kk++) D[kk] = 0.0; /* clear D */
+
+    for (s=0;s<si;s++) for (t=0;t<sj;t++) { /* summation convention loop */
+      if (tensi) { /* extract col r of dXi according to sth set of index vectors */
+	for (kk=0;kk<n;kk++) dXi[kk] = 1.0;
+	tensorXj(dXi, X + off[ts[i]], m + ts[i], p + ts[i],&ddti, 
+		 k, &n, &r, ks + ts[i],&s);
+      }
+      if (tensj) { /* extract col c of dXj according to tth set of index vectors */
+	for (kk=0;kk<n;kk++) dXj[kk] = 1.0;
+        tensorXj(dXj, X + off[ts[j]], m + ts[j], p + ts[j],&ddtj, 
+		 k, &n, &c, ks + ts[j],&t);
+      }
+      Ki = k +  (ptrdiff_t)(ks[im]+s) * n; /* index for final margin of i */
+      Kj = k +  (ptrdiff_t)(ks[jm]+t) * n; /* index for final margin of j */
+      if (acc_w) { /* weight accumulation */    
+        if (tensi&&tensj) { /* i and j are tensors */
+	   //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,p2++,p3++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0 * *p2 * *p3;
+	   Kik=Ki;p2=dXi;p3=dXj;
+	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
+	       akk = a[kp];
+	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * *p2 * p3[akk];
+	   }    
+	 } else if (tensi) { /* only i is tensor */
+	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,p2++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0 * *p2;
+	   Kik=Ki;p2=dXi;
+	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
+	       akk = a[kp];
+	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * *p2;
+	   }   
+	 } else if (tensj) { /* only j is tensor */
+	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,p3++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0  * *p3;
+	   Kik=Ki;p3=dXj;
+	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	       akk = a[kp];
+	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * p3[akk];
+	   }
+	 } else { /* i and j are singletons */  
+	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0;
+	   Kik=Ki;
+	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map; kp++) {
+	       akk = a[kp];
+	       W[*Kik + mim * Kj[akk]] += *ep * e[akk];
+	   } 
+	}	    
+      } else if (rfac) { /* use direct accumulation */
+          for (q=0;q<p[jm];q++) { 
+	    Cq = C + q * mim;Xj = X + off[jm] + q * mjm; /* qth cols of C and X */ 
+	    if (tensi&&tensj) { /* X_i and X_j are tensors */
+	      //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Cq[*Kik] += *p0 * *p2 * *p3 * Xj[*Kjk];
+	       Kik=Ki;p2=dXi;p3=dXj;
+	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
+	         akk = a[kp];
+	         Cq[*Kik] += *ep * e[akk] * *p2 * p3[akk] * Xj[Kj[akk]];
+	       }
+	    } else if (tensi) { /* only X_i is tensor */
+	      //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Cq[*Kik] += *p0 * *p2  * Xj[*Kjk];
+	       Kik=Ki;p2=dXi;
+	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map; kp++) {
+	         akk = a[kp];
+	         Cq[*Kik] += *ep * e[akk] * *p2 * Xj[Kj[akk]];
+	       }
+	    } else if (tensj) { /* only X_j is tensor */
+	      // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Cq[*Kik] += *p0 * *p3 * Xj[*Kjk];
+	       Kik=Ki;p3=dXj;
+	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	         akk = a[kp];
+	         Cq[*Kik] += *ep * e[akk]  * p3[akk] * Xj[Kj[akk]];
+	       }
+	    } else { /* both singletons */
+	      // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Cq[*Kik] += *p0 * Xj[*Kjk];
+	       Kik=Ki;
+	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	         akk = a[kp];
+	         Cq[*Kik] += *ep * e[akk] * Xj[Kj[akk]];
+	       }
+	    }
+	  } /* q loop */
+      } else { /* direct accumulation of left factor D (mjm by p[im]) = \bar W' X_i */
+          for (q=0;q<p[im];q++) {
+	      Dq = D + q * mjm;Xi = X + off[im] + q * mim; /* qth cols of C and Xi */ 
+	      if (tensi&&tensj) { /* X_i and X_j are tensors */
+		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Dq[*Kjk] += *p0 * *p2 * *p3 * Xi[*Kik];
+		Kik=Ki;p2=dXi;p3=dXj;
+	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
+	          akk = a[kp];
+	          Dq[Kj[akk]] += *ep * e[akk] * *p2 * p3[akk] * Xi[*Kik];
+	        }
+	      } else if (tensi) { /* only X_i is tensor */
+	        // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Dq[*Kjk] += *p0 * *p2  * Xi[*Kik];
+		Kik=Ki;p2=dXi;
+	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
+	          akk = a[kp];
+	          Dq[Kj[akk]] += *ep * e[akk] * *p2 * Xi[*Kik];
+	        }
+	      } else if (tensj) { /* only X_j is tensor */
+		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Dq[*Kjk] += *p0 * *p3 * Xi[*Kik];
+		Kik=Ki;p3=dXj;
+	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	          akk = a[kp];
+	          Dq[Kj[akk]] += *ep * e[akk] * p3[akk] * Xi[*Kik];
+	        }
+	      } else { /* both singletons */
+		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Dq[*Kjk] += *p0 * Xi[*Kik];
+		Kik=Ki;
+	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
+	          akk = a[kp];
+	          Dq[Kj[akk]] += *ep * e[akk] * Xi[*Kik];
+	        }
+	      }
+	  } /* q loop */
+      } /* direct  accumulation of D */
+      
+  } /* end of summation convention loop */
+	if (acc_w) { /* form X_im' \bar W X_j from \bar W */
+	  if (rfac) { /* form C = \bar W X_j first */
+	  /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+                   int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+             transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+             where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+             in calling routine (to allow use of sub-matrices) */   
+            F77_CALL(dgemm)(&ntrans,&ntrans,m+im,p+jm,m+jm,&done,W,m+im,X+off[jm],m+jm,&dzero,C,m+im FCONE FCONE); 
+	  } else { /* form D = \bar W' X_i first */
+            F77_CALL(dgemm)(&trans,&ntrans,m+jm,p+im,m+im,&done,W,m+im,X+off[im],m+im,&dzero,D,m+jm FCONE FCONE);
+	  }  
+	} /* if acc_w */
+	if (rfac) { /* Xi'C direct to the r,c p[im] by p[jm] block of XWX */
+          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+im,&done,X+off[im],m+im,C,m+im,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx FCONE FCONE);
+	} else { /* D'Xj (same block of XWX) */
+          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+jm,&done,D,m+jm,X+off[jm],m+jm,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx FCONE FCONE);
+	}  
+
+  } /* general case */
+} /* XVXijs */  
 
 void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int *m, int *p,int nx,ptrdiff_t n,int *ts, int *dt,
 	    int nt, double *w,double *ws, int tri,ptrdiff_t *off,double *work,int *worki,int nxwx,unsigned long long *ht,SM **sm,SM * SMstack) {
@@ -2057,6 +2289,199 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
   FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);FREE(worki);
 } /* XWXd0 */ 
 
+void XVXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff_t  *n, int *nx, int *ts, 
+	   int *dt, int *nt,double *v,int *qc,int *nthreads,double *e,int *a,ptrdiff_t *ma) {
+/* Version of XWXd0 in which (diagonal or tri-diagonal) W is replaced by V such that 
+   V[i,j] = e[i]*e[j] if j in nei(i) and 0 othrewise. 
+
+
+   Forms Xt'VXt when Xt is divided into blocks of columns, each stored in compact form
+   using arguments X and k.  
+   * 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix containing the unique rows of 
+     the ith marginal model matrix. 
+   * There are 'nt' model terms. Each term is made up of one or more maginal model matrices.
+   * The jth term starts at block ts[j] of X, and has dt[j] marginal matrices. The terms model
+     matrix is the row tensor product of its full (n row) marginals.
+   * The index vectors converting the unique row matrices to full marginal matrices are in 
+     'k', an n-row matrix of integers. Conceptually if Xj and kj represent the jth unique 
+      row matrix and index vector then the ith row of the corresponding full marginal matrix 
+      is Xj[kj[i],], but things are more complicated when each full term matrix is actually 
+      the sum of several matrices (summation convention).
+   * To handle the summation convention, each marginal matrix can have several index vectors. 
+     'ks' is an nx by 2 matrix giving the columns of k corresponding to the ith marginal 
+     model matrix. Specifically columns ks[i,1]:(ks[i,2]-1) of k are the index vectors for the ith 
+     marginal. All marginals corresponding to one term must have the same number of index columns.
+     The full model matrix for the jth term is constucted by summing over q the full 
+     model matrices corresponding to the qth index vectors for each of its marginals.    
+   * For example the exression for the full model matrix of the jth term is...
+  
+     X^full_j = sum_q prod_i X_{ts[j]+i}[k[,ks[i]+q],]  
+
+     - q runs from 0 to ks[i,2] - ks[i,1] - 1; i runs from 0 to dt[j] - 1.
+ 
+   * a[ma[i-1]+1:ma[i]] are the neighbours of point i (ma[-1]+1 = 0 by convention).
+         
+   Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
+   (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
+   dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
+
+*/   
+  int *pt, *pd,si,maxp=0,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,
+    kk,kb,tid=0,nxwx=0,*worki,one=1;
+  ptrdiff_t *off,*voff,mmp,q,qi=0,i,j;
+  double *work,*Cost,*cost,*x0,*x1,*p1,x;
+  //unsigned long long ht[256];
+  #ifndef OPENMP_ON
+  *nthreads = 1;
+  #endif
+  if (*nthreads<1) *nthreads = 1;
+  //SMinihash(ht);
+  pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+  pd = (int *) CALLOC((size_t)*nt,sizeof(int)); /* storage for last marginal size */
+  off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
+  voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvectors starts */
+  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts */
+  tpsu = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the unconstrained term starts */
+  for (q=i=0;i< *nt; i++) { /* work through the terms */
+    for (j=0;j<dt[i];j++,q++) {
+      if (j==dt[i]-1) pd[i] = p[q]; /* the relevant dimension for deciding product ordering */
+      off[q+1] = off[q] + p[q] * (ptrdiff_t) m[q]; /* submatrix start offsets */
+      if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
+    }
+    if (qc[i]==0) voff[i+1] = voff[i]; else if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else {
+      si = (int) round(v[voff[i]]); /* number of contrasts in this KP contrast */
+      voff[i+1] = voff[i] + si + 2; 
+    } /* start of ith v vector */
+    if (maxp<pt[i]) maxp=pt[i];
+    if (qc[i]==0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
+    else if (qc[i]>0) tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
+    else { /* Kronecker product of sum to zero contrasts */ 
+      si = (int) round(v[voff[i]]); /* number of contrasts */
+      tps[i+1] = tps[i] + pt[i] - (int) round(v[voff[i]+si+1]); /* subtracting number of constraints */
+    }  
+    tpsu[i+1] = tpsu[i] + pt[i]; /* where ith term starts in unconstrained param vector */ 
+  }
+  qi =  6 * *n; /* integer work space */
+
+  worki = (int *)CALLOC((size_t)qi * *nthreads,sizeof(int));
+  mmp = maxp;mmp = mmp*mmp;
+  ptot = tps[*nt]; /* total number of parameters */
+  nxwx = tpsu[*nt];
+
+  //sm = (SM **)CALLOC((size_t) *n * *nthreads,sizeof(SM *));
+  //SMstack = (SM *)CALLOC((size_t) 3 * *n * *nthreads,sizeof(SM));
+  N = ((*nt + 1) * *nt)/2;
+  C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
+  sb = (int *) CALLOC((size_t)N+1,sizeof(int)); /* at which sub-block does block start */
+  Cost = (double *)CALLOC((size_t) N,sizeof(double));
+  sb[0] = 0; /* start of first sub-block of block 0 */
+  for (kk=r=0;r < *nt;r++) for (c=r;c< *nt;c++,kk++) { /* loop over main blocks */
+    
+    R[kk]=r;C[kk]=c;
+    si = ks[ts[r] + *nx] - ks[ts[r]]; /* number of terms in summation convention for i */
+
+    i = (pt[r]/pd[r])*(pt[c]/pd[c]);
+   
+    sb[kk+1] = sb[kk] + i; /* next block starts at this sub-block */
+    /* compute rough cost per sub block figures */
+    if (m[r]*m[c] < *n) { /* weight accumulation */
+       Cost[kk] = m[r]*m[c]*(double) pd[c];
+       x = m[r]*m[c]*(double) pd[r]; if (x<Cost[kk]) Cost[kk] = x;
+    } else { /* direct accumulation */
+      Cost[kk] = *n * pd[c];;
+      x = *n * pd[r]; if (x < Cost[kk]) Cost[kk] = x;
+    }
+  }
+  b = (int *) CALLOC((size_t)sb[N],sizeof(int));
+  B = (int *) CALLOC((size_t)sb[N],sizeof(int));
+  cost = (double *)CALLOC((size_t)sb[N],sizeof(double));
+  for (kb=0,i=0;i<sb[N];i++) {
+    b[i]=i;while (i>=sb[kb+1]) kb++; /* kb is main block */
+    rb = R[kb];cb=C[kb];
+    cost[i] = Cost[kb];
+    B[i] = kb; 
+  }  
+  revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
+  i=0;
+  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,i); /* compute the maximum workspace required per thread */
+  work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double)); /* allocate it */
+  /* In what follows rb and cb are the whole term row column indices. r and c are the sub blocks within 
+     the cross-product between two terms. The sub blocks arise when we have tensor product terms. The cleaner 
+     design in which the sub-blocks are dealt with in XWXij does not load balance so well, hence this design.*/ 
+  kb=0;
+  #ifdef OPENMP_ON
+  #pragma omp parallel for private(j,kb,kk,r,c,rb,cb,rt,ct,tid,i) num_threads(*nthreads) schedule(dynamic)
+  #endif
+  for (j=0;j<sb[N];j++) { /* the block loop */
+    kk = b[j];kb=B[kk];
+    rb = R[kb];cb=C[kb]; /* set up allows blocks to be computed in any order by re-arranging B */
+    i = kk - sb[kb]; /* sub-block index */
+    rt = pt[rb]/pd[rb]; ct = pt[cb]/pd[cb]; /* total rows and cols of sub-blocks */
+    /* compute sub-row and column */
+    if (sb[kb+1]-sb[kb]<rt*ct) { /* symmetric upper half only needed */ 
+      r=0; while (i >= rt - r) { i -= rt - r;r++;}
+      c = i + r;
+    } else {
+      r = i / ct;
+      c = i % ct;
+    }
+   
+    #ifdef OPENMP_ON
+    tid = omp_get_thread_num(); /* needed for providing thread specific work space to XWXij */
+    #endif
+    XVXijs(XWX+tpsu[rb] +  (ptrdiff_t) nxwx * tpsu[cb],rb,cb,r,c,X,k,ks,m,p,*nx,*n,ts, dt,*nt,e,a,ma,
+	   off,work + tid * q,worki + tid * (ptrdiff_t) qi,nxwx); /* compute r,c block */
+    /* NOTE: above will write directly to oversized XWX, then have constraints applied post-hoc. */ 
+  } /* block loop */
+
+  FREE(work);
+  work = (double *)CALLOC((size_t) 2*nxwx,sizeof(double)); /* working for Ztb */
+  
+  /* now XWX contains the unconstrained X'WX, but the constraints have to be applied to blocks involving tensor products */
+  for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) {
+    /* if Xr is tensor, may need to apply constraint */
+    if (dt[r]>1&&qc[r]!=0) { /* first term is a tensor with a constraint */
+      /* col by col form (I-vv')xwx, dropping first row... */
+      /* col by col form Z' xwx where Z is constraint matrix */
+      for (j=0;j<pt[c];j++) { /* loop over columns */
+        x0 = XWX + tpsu[r] + (tpsu[c]+j) * (ptrdiff_t) nxwx; /* jth col of raw block */
+	x1 = XWX + tps[r] + (tpsu[c]+j) * (ptrdiff_t) nxwx;   /* jth col of constrained block */
+	Ztb(x1,x0,v+voff[r],qc+r,&one,pt+r,work);
+      }
+      pa = pt[r]-1;
+    } else {
+      pa = pt[r];
+      if (tpsu[r]!=tps[r]) { /* still need to shift rows upwards */
+        for (j=0;j<pt[c];j++) { /* loop over columns */
+	  x0 = XWX + tpsu[r] + (tpsu[c]+j) * (ptrdiff_t) nxwx; /* jth col of raw block */
+	  x1 = XWX + tps[r] + (tpsu[c]+j) * (ptrdiff_t) nxwx;   /* jth col of shifted block */
+	  for (p1 = x0 + pt[r];x0<p1;x0++,x1++) *x1 = *x0;
+	}  
+      }	
+    }  
+    if (dt[c]>1&&qc[c]!=0) { /* Xc term is a tensor with a constraint */
+      /* row by row form xwx(I-vv') dropping first col... */
+      /* row by row form xwx Z, where Z is constraint matrix */
+      for (j=0;j<pa;j++) { /* work down rows */
+        x0 = XWX + tps[r] + j + tpsu[c] * (ptrdiff_t) nxwx; /* jth col of raw block */
+	x1 = XWX + tps[r] + j + tps[c] * (ptrdiff_t) nxwx;   /* jth col of constrained block */
+	Ztb(x1,x0,v+voff[c],qc+c,&nxwx,pt+c,work);
+      }
+    } else if (tpsu[c]!=tps[c]) { /* still need to shift cols leftwards */
+      for (j=0;j<pa;j++) { /* work down rows */
+	x0 = XWX + tps[r] + j + tpsu[c] * (ptrdiff_t) nxwx; /* jth col of raw block */
+	x1 = XWX + tps[r] + j + tps[c] * (ptrdiff_t) nxwx;   /* jth col of shifted block */
+	for (p1 = x0 + nxwx * pt[c];x0<p1;x0 += nxwx,x1 += nxwx) *x1 = *x0;
+      }
+    }  
+  }
+
+  if (ptot<nxwx) row_squash(XWX,ptot,nxwx,ptot); /* drop the now redundant trailing rows */
+  up2lo(XWX,ptot); /* copy upper triangle to lower */
+  
+  FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(tpsu);FREE(work);
+  FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(worki);
+} /* XVXd0 */ 
 
 SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr,
