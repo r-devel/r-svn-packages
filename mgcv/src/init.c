@@ -25,6 +25,7 @@ R_CallMethodDef CallMethods[] = {
   {"Rkradius",(DL_FUNC)&Rkradius,5},
   {"sXWXd",(DL_FUNC)&sXWXd,5},
   {"CXWXd0",(DL_FUNC)&CXWXd0,14},
+  {"CXVXd0",(DL_FUNC)&CXVXd0,15},
   {"CXWXd1",(DL_FUNC)&CXWXd1,16},
   {"sXbd",(DL_FUNC)&sXbd,3},
   {"CXbd",(DL_FUNC)&CXbd,13},

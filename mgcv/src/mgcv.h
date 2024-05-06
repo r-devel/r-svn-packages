@@ -137,6 +137,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
           int *ar_stop,double *ar_weights);
 SEXP CXWXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr);
+SEXP CXVXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP er,SEXP ar, SEXP mar);
 void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *nx, int *ts, 
 	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,double *ar_weights,
 	   int *rs, int *cs, int *nrs, int *ncs);
