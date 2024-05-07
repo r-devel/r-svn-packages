@@ -2291,8 +2291,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 
 
 
-void XVXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff_t  *n, int *nx, int *ts, 
-	   int *dt, int *nt,double *v,int *qc,int *nthreads,double *e,int *a,ptrdiff_t *ma) {
+void XVXd0(double *XWX,double *X,double *e,int *k,int *ks, int *m,int *p, ptrdiff_t  *n, int *nx, int *ts, 
+	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *a,ptrdiff_t *ma) {
 /* Version of XWXd0 in which (diagonal or tri-diagonal) W is replaced by V such that 
    V[i,j] = e[i]*e[j] if j in nei(i) and 0 othrewise. 
 
@@ -2485,19 +2485,19 @@ void XVXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
   FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(worki);
 } /* XVXd0 */ 
 
-SEXP CXVXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
-	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP er,SEXP ar, SEXP mar) {
+SEXP CXVXd0(SEXP XWXr, SEXP Xr, SEXP er, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
+	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar, SEXP mar) {
 /* .Call wrapper for XVXd0 allowing R long vector storage for k and a. Note that 
   this does not allow more than maxint data - that would require re-writting R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
 
   n is number of rows of k, nx is length of m or p, nt is the length of ts or dt.
 */
-  double *XWX,*X,*v,*w,*mad=NULL,*e;
+  double *XWX,*X,*v,*mad=NULL,*e;
   int *k,*ks,*m,*p,*ts,*dt,*qc,*nthreads,nx,nt,*a,*mai=NULL,nma,i;
   ptrdiff_t n,*ma;
   n = (ptrdiff_t) nrows(kr); XWX = REAL(XWXr);
-  X = REAL(Xr);w = REAL(wr);
+  X = REAL(Xr);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
   p = INTEGER(pr); e = REAL(er);
@@ -2514,7 +2514,7 @@ SEXP CXVXd0(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
   v = REAL(vr);qc = INTEGER(qcr);
   nthreads = INTEGER(nthreadsr);
-  XVXd0(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,e,a,ma);
+  XVXd0(XWX,X,e,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,a,ma);
   FREE(ma);
   return(R_NilValue);
 } /*  CXVXd0 */

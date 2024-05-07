@@ -285,6 +285,28 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   XWX
 } ## XWXd
 
+
+XVXd <- function(X,e,k,ks,ts,dt,v,qc,nthreads=1,a,ma) {
+## e is a residual vector. a[ma[i-1]+1:ma[i]] contains the indices of the neighbours of point i
+## (ma[-1]=-1, by convention - C indexing assumed).
+## This routine computes X'VX where V[i,j] = e[i]*e[j] if i is a neighbour of j and 0 otherwise.
+  m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
+  nx <- length(X);nt <- length(ts)
+  n <- length(e);ptfull <- pt <- 0;
+  for (i in 1:nt) {
+    fullsize <- prod(p[ts[i]:(ts[i]+dt[i]-1)])
+    ptfull <- ptfull + fullsize
+    pt <- pt + fullsize - if (qc[i]>0) 1 else if (qc[i]<0) v[[i]][v[[i]][1]+2] else 0
+  }
+  XVX <- numeric(ptfull^2)
+  .Call(C_CXVXd0,XVX,as.double(unlist(X)),e,k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
+          as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(nthreads),
+	  as.integer(a),ma)
+  XVX <- matrix(XVX[1:pt^2],pt,pt)
+  XVX
+} ## XVXd
+
+
 XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL) {
 ## X'Wy...
 ## if lt if not NULL then it lists the discrete terms to include (from X)

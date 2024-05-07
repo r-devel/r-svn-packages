@@ -778,9 +778,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     }
     if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(G$y,weighted.mean(G$y,G$w),G$w,theta))   
   }
-
+ 
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt[1])
   F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt[1])  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
+ 
   object$edf <- diag(F)
   object$edf1 <- 2*object$edf - rowSums(t(F)*F)
   lsp <- if (n.sp>0) lsp[1:n.sp] else rep(0,0)
@@ -793,6 +794,18 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object$sig2 <- object$scale <- scale
   object$Vp <- PP * scale
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt[1]) ## F%*%object$Vp
+
+  if (method=="NCV"&& max(diff(nei$m))>1 && max(diff(nei$mi))==1) { ## replace Vp with NCV estimate 
+    e <- (z-eta)*w ## weighted residuals
+    XVX <- XVXd(G$Xd,e,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nthreads=1,a=nei$k,ma=nei$m)
+    inflate <- max(1,(prop$NCV/sum(e[nei$i]^2/w[nei$i])-1)/2+1)
+    V1 <- PP %*% XVX %*% PP *inflate
+    object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
+    ## NOTE: generally we will not have cross validated residuals for all data points.
+    ##       This is because we usually base NCV on a sample for large data. But average
+    ##       CV inflation factor is computable.
+  }
+  
   ## sp uncertainty correction... 
   if (!is.null(G$L)) prop$db <- prop$db%*%G$L
   M <- ncol(prop$db) 
