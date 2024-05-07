@@ -26,6 +26,10 @@ better done with .Call
 
 1.9-2
 
+* fix bam to always return a square QR R factor of the model matrix 
+  (previously it was possible for it not to be square for a rank deficient 
+  model matrix, which could cause a failure in summary). Thanks to Amy Hughes
+
 * Fixed bam/bam.update to pick up weights correctly, rather than failing. 
   Thanks to Max Moldovan.
 

@@ -2681,9 +2681,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   class(object) <- c("bam","gam","glm","lm")
   if (!G$discretize) { object$linear.predictors <- 
           as.numeric(predict.bam(object,newdata=object$model,block.size=chunk.size,cluster=cluster))
+    dr <- dim(object$R) ## R can have fewer rows than columns if model rank def without penalization 
+    if (dr[1]<dr[2]) object$R <- rbind(object$R,matrix(0,dr[2]-dr[1],dr[2]))
   } else { ## store discretization specific information to help with discrete prediction
-    #object$dinfo <- list(gp=gp, v = G$v, ts = G$ts, dt = G$dt, qc = G$qc, drop = G$drop, pmf.names=pmf.names,lpip=lpip)
-    #if (paratens) object$dinfo$para.discrete <- TRUE 
     object$dinfo <- G$dinfo
   } 
   rm(G);if (gc.level>0) gc()
