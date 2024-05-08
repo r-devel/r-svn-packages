@@ -445,10 +445,22 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   nobs <- nrow(mf)
   offset <- G$offset 
 
-  if (method=="NCV"&&rho!=0) {
-    warning("rho ignored with NCV"); rho <- 0
+  if (method=="NCV") {
+    if (rho!=0) {
+      warning("rho ignored with NCV"); rho <- 0
+    }
+    nei$a <- nei$k; nei$ma <- nei$m ## for use in cov matrix computation
+    if (!is.null(nei$sample)) { ## only a sub-sample of points used in optimization NCV
+      if (length(nei$sample)==1) nei$sample <- sample(nei$m,nei$sample)
+      m1 <- nei$m[nei$sample]; m0 <- c(0,nei$m)[nei$sample]
+      nei$k <- nei$k[sequence(m1-m0,m0+1L,1L)]
+      nei$m <- cumsum(m1-m0)-1L
+      m1 <- nei$mi[nei$sample]; m0 <- c(0,nei$mi)[nei$sample]
+      nei$i <- nei$i[sequence(m1-m0,m0+1L,1L)]
+      nei$mi <- cumsum(m1-m0)-1L
+    }
   }
-
+  
   if (inherits(G$family,"extended.family")) { ## preinitialize extended family
     efam <- TRUE
     if (!is.null(G$family$preinitialize) && !is.null(attr(G$family$preinitialize,"needG"))) attr(G$family,"G") <- G
