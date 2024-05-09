@@ -253,7 +253,7 @@ f <- function(x) 0.2 * x^11 * (10 * (1 - x))^6 + 10 *
             (10 * x)^3 * (1 - x)^10
 set.seed(6);n <- 100;x <- sort(runif(n))
 Ey <- exp(f(x)/4);scale <- .5
-y <- rgamma(n,shape=1/scale,scale=Ey*scale) ## sim gamma data
+y <- rgamma(n,shape=1/scale,scale=Ey*scale) ## sim gamma dataexit
 b <- gam(y~s(x,k=20),family=Gamma(link=log),method="REML")
 Xp <- predict(b,type="lpmatrix")
 br <- rmvn(10000,coef(b),vcov(b)) ## 1000 replicate param. vectors
