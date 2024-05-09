@@ -1607,7 +1607,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     if (criterion!="NCV") nei$jackknife <- FALSE ## no cov matrix stuff.
     if (nei$jackknife) {
       n <- length(nei$d)
-      nei1 <- if (loocv) nei else list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV or requested straight jackknife
+      nei1 <- if (loocv) nei else list(d=1:n,md=1:n,ma=1:n,a=1:n) ## set up for LOO CV or requested straight jackknife
       nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
     } else nei1 <- nei ## called with another criteria
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
@@ -1704,7 +1704,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (method %in% c("QNCV","NCV")||!is.null(nei)) {
     optimizer <- c("outer","bfgs")
     if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
-    if (is.null(nei)) nei <- list(i=1:G$n,mi=1:G$n,m=1:G$n,k=1:G$n) ## LOOCV
+    if (is.null(nei)) nei <- list(d=1:G$n,md=1:G$n,ma=1:G$n,a=1:G$n) ## LOOCV
     if (is.null(nei$a)||is.null(nei$ma)) nei$a <- nei$ma <- nei$md <- nei$d <- 1:G$n 
     if (is.null(nei$d)) if (length(nei$ma)==G$n) nei$md <- nei$d <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
     if (length(nei$md)!=length(nei$ma)) stop("for NCV number of dropped and predicted neighbourhoods must match")
@@ -2007,39 +2007,39 @@ nanei <- function(nb,k) {
 ## A problem is that if a whole prediction/omission fold is dropped then
 ## the corresponding omission/prediction fold must be dropped too. 
   if (!length(k)) return()
-  if (is.null(nb$k)||is.null(nb$m)||is.null(nb$mi)||is.null(nb$i)) stop("full nei list needed if data incomplete")
+  if (is.null(nb$a)||is.null(nb$ma)||is.null(nb$md)||is.null(nb$d)) stop("full nei list needed if data incomplete")
 
   ## first work on drop-folds...
-  kk <- which(nb$k %in% k) ## position of omitted in nb$k
-  ## adjust m for the fact that points are to be omitted...
-  m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
+  kk <- which(nb$a %in% k) ## position of omitted in nb$a
+  ## adjust ma for the fact that points are to be omitted...
+  m <- nb$ma - cumsum(tabulate(findInterval(kk-1,nb$ma)+1,nbins=length(nb$ma)))
   mdi <- which(diff(c(0,m))==0) ## identify zero length folds to omit entirely
 
-  ## now get elements of nb$i to omit from pred-folds because some drop-folds omitted entirely from k...
-  mm <- nb$mi
+  ## now get elements of nb$d to omit from pred-folds because some drop-folds omitted entirely from k...
+  mm <- nb$md
   i0 <- if (length(mdi)) unlist(apply(array(mdi),1,function(mdi) (c(0,mm)[mdi]+1):c(0,mm)[mdi+1] ,simplify=TRUE)) else rep(0,0)
 
   ## now the pred-folds...
-  ii <- unique(c(i0,which(nb$i %in% k))) ## position of omitted in nb$i
+  ii <- unique(c(i0,which(nb$d %in% k))) ## position of omitted in nb$i
   ## adjust mi for the fact that points are to be omitted...
-  mi <- nb$mi - cumsum(tabulate(findInterval(ii-1,nb$mi)+1,nbins=length(nb$m)))
+  mi <- nb$md - cumsum(tabulate(findInterval(ii-1,nb$md)+1,nbins=length(nb$ma)))
   midi <- which(diff(c(0,mi))==0) ## identify zero length folds
 
   ## Now once more through drop-folds folds to omit because pred-fold omitted
-  mm <- nb$m
+  mm <- nb$ma
   k0 <- if (length(midi)) unlist(apply(array(midi),1,function(mdi) (c(0,mm)[mdi]+1):c(0,mm)[mdi+1] ,simplify=TRUE)) else rep(0,0)
   kk <- unique(c(k0,kk)) ## all points to omit from drop-folds
-  m <- nb$m - cumsum(tabulate(findInterval(kk-1,nb$m)+1,nbins=length(nb$m)))
+  m <- nb$ma - cumsum(tabulate(findInterval(kk-1,nb$ma)+1,nbins=length(nb$ma)))
   mdi <- which(diff(c(0,m))==0) ## identify zero length folds to omit entirely
 
   
-  if (length(mdi)) nb$m <- m[-mdi] ## omit zero length folds
-  nb$k <- nb$k[-kk] ## omit the elements of k
-  nb$k <- nb$k - findInterval(nb$k,sort(k)) ## and shift indices to account for omitted
+  if (length(mdi)) nb$ma <- m[-mdi] ## omit zero length folds
+  nb$a <- nb$a[-kk] ## omit the elements of k
+  nb$a <- nb$a - findInterval(nb$a,sort(k)) ## and shift indices to account for omitted
 
-  if (length(midi)) nb$mi <- mi[-midi] ## omit zero length folds
-  nb$i <- nb$i[-ii] ## omit the elements of i
-  nb$i <- nb$i - findInterval(nb$i,sort(k)) ## and shift indices to account for omitted
+  if (length(midi)) nb$md <- mi[-midi] ## omit zero length folds
+  nb$d <- nb$d[-ii] ## omit the elements of i
+  nb$d <- nb$d - findInterval(nb$d,sort(k)) ## and shift indices to account for omitted
   nb 
 } ## nanei
 
@@ -2047,17 +2047,17 @@ nanei <- function(nb,k) {
 onei <- function(nb,cbase=FALSE) {
 ## orders the neighbourhood indices into ascending order within each neighbourhood.
 ## this makes some matching tasks easier especially for bam.
-  if (is.null(nb$k)||is.null(nb$m)) return() ## LOOCV - nothing to do
-  nn <- length(nb$m) ## number of neighbourhoods
-  b <- rep(1:nn,times=diff(c(0,nb$m))) ## neighbourhood indices/labels
-  nb$k <- nb$k[order(b,nb$k)] ## order drop indices within neighbourhood.
-  if (!is.null(nb$mi)) {
-    b <- rep(1:nn,times=diff(c(0,nb$mi))) ## neighbourhood indices/labels
-    nb$i <- nb$i[order(b,nb$i)] ## order predict indices within neighbourhood.
+  if (is.null(nb$a)||is.null(nb$ma)) return() ## LOOCV - nothing to do
+  nn <- length(nb$ma) ## number of neighbourhoods
+  b <- rep(1:nn,times=diff(c(0,nb$ma))) ## neighbourhood indices/labels
+  nb$a <- nb$a[order(b,nb$a)] ## order drop indices within neighbourhood.
+  if (!is.null(nb$md)) {
+    b <- rep(1:nn,times=diff(c(0,nb$md))) ## neighbourhood indices/labels
+    nb$d <- nb$d[order(b,nb$d)] ## order predict indices within neighbourhood.
   }
   if (cbase) {
-    nb$k <- as.integer(nb$k) - 1L; nb$i <-  as.integer(nb$i) - 1L
-    nb$m <-  as.integer(nb$m) - 1L; nb$mi <-  as.integer(nb$mi) - 1L
+    nb$a <- as.integer(nb$a) - 1L; nb$d <-  as.integer(nb$d) - 1L
+    nb$ma <-  as.integer(nb$ma) - 1L; nb$md <-  as.integer(nb$md) - 1L
   }
   nb
 } ## onei

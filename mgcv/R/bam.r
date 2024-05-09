@@ -2285,7 +2285,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (method=="NCV") { ## pre-process the neighbourhood structure 'nei'
       n <- nrow(mf)
       if (is.null(nei)||is.null(nei$a)||is.null(nei$ma)) {
-        nei <- list(k=1:n,m=1:n,i=1:n,mi=1:n) ## LOOCV  
+        nei <- list(a=1:n,ma=1:n,d=1:n,md=1:n) ## LOOCV  
       } else if (is.null(nei$d)||is.null(nei$md)) {
         if (length(nei$ma)!=n) stop("nei$d and nei$md must be supplied if number of neighbourhoods is not number of data")
 	nei$d <- 1:n; nei$md <- 1:n
