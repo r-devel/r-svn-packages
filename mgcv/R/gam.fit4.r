@@ -642,21 +642,21 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    Vg <- NCV <- NCV1 <- REML <- REML1 <- REML2 <- NULL
    if (scoreType=="NCV") {
-     eta.cv <- rep(0.0,length(nei$i))
-     deta.cv <- if (deriv) matrix(0.0,length(nei$i),ntot) else matrix(0.0,1,ntot)
+     eta.cv <- rep(0.0,length(nei$d))
+     deta.cv <- if (deriv) matrix(0.0,length(nei$d),ntot) else matrix(0.0,1,ntot)
      w1 <- -dd$Deta/2; w2 <- dd$Deta2/2; dth <- dd$Detath/2 ## !?
      R <- try(chol(crossprod(x,w*x)+St),silent=TRUE)
      if (nei$jackknife > 2) { ## return NCV coef changes for each fold 
        if (deriv>0) stop("jackknife and derivatives requested together")
-       dth <- matrix(0,ncol(x),length(nei$m))
+       dth <- matrix(0,ncol(x),length(nei$ma))
        deriv1 <- -1 ## signal to return coef changes
      } else deriv1 <- deriv
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
-        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv1);
+        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv1);
 	warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
      } else { ## use Cholesky update approach
-	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$mi,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv,
+	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$k-1,oo$beta,exp(sp),eta.cv,
 	                    deta.cv, dth, deriv1,.Machine$double.eps,control$ncv.threads);
 	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
      }   
@@ -665,20 +665,20 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      ## if some elements of theta are fixed, figure out which derivatives will be needed...
      if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):(ncol(db.drho)+!scale.known) else 1:(ncol(db.drho)+!scale.known)
    
-     dev0 <- dev.resids(y[nei$i], mu[nei$i], weights[nei$i],theta)
-     ls0 <- family$ls(y[nei$i],weights[nei$i],theta,scale)
+     dev0 <- dev.resids(y[nei$d], mu[nei$d], weights[nei$d],theta)
+     ls0 <- family$ls(y[nei$d],weights[nei$d],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV
-       qdev <- dev0 + gamma*dd$Deta[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2[nei$i]*(eta.cv-eta[nei$i])^2
+       qdev <- dev0 + gamma*dd$Deta[nei$d]*(eta.cv-eta[nei$d]) + 0.5*gamma*dd$Deta2[nei$d]*(eta.cv-eta[nei$d])^2
        NCV <- sum(qdev)/(2*scale) - ls0$ls
        if (deriv) {
          deta <- x %*% db.drho
-	 ncv1 <- (dd$Deta[nei$i]*((1-gamma)*deta[nei$i,,drop=FALSE]+gamma*deta.cv) +
-	          gamma*dd$Deta2[nei$i]*deta.cv*(eta.cv-eta[nei$i]) +
-	          0.5*gamma*as.numeric(dd$Deta3[nei$i])*deta[nei$i,,drop=FALSE]*(eta.cv-eta[nei$i])^2)/(2*scale)
+	 ncv1 <- (dd$Deta[nei$d]*((1-gamma)*deta[nei$d,,drop=FALSE]+gamma*deta.cv) +
+	          gamma*dd$Deta2[nei$d]*deta.cv*(eta.cv-eta[nei$d]) +
+	          0.5*gamma*as.numeric(dd$Deta3[nei$d])*deta[nei$d,,drop=FALSE]*(eta.cv-eta[nei$d])^2)/(2*scale)
 	 if (nt>0) { ## deal with direct dependence on the theta parameters
            ncv1[,1:nt] <- ncv1[,1:nt]- ls0$LSTH1[,1:nt] +
-	      if (nt==1) (dd$Dth[nei$i] + gamma*dd$Detath[nei$i]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i]*(eta.cv-eta[nei$i])^2)/(2*scale)
-	      else (dd$Dth[nei$i,] + gamma*dd$Detath[nei$i,]*(eta.cv-eta[nei$i]) + 0.5*gamma*dd$Deta2th[nei$i,]*(eta.cv-eta[nei$i])^2)/(2*scale)
+	      if (nt==1) (dd$Dth[nei$d] + gamma*dd$Detath[nei$d]*(eta.cv-eta[nei$d]) + 0.5*gamma*dd$Deta2th[nei$d]*(eta.cv-eta[nei$d])^2)/(2*scale)
+	      else (dd$Dth[nei$d,] + gamma*dd$Detath[nei$d,]*(eta.cv-eta[nei$d]) + 0.5*gamma*dd$Deta2th[nei$d,]*(eta.cv-eta[nei$d])^2)/(2*scale)
          }
 	 if (!scale.known) {
 	   ncv1 <- cbind(ncv1,-qdev/(2*scale) - ls0$LSTH1[,1+nt])
@@ -690,12 +690,12 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        DEV <- sum(dev0)/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
        if (deriv) {
-         dd.cv <- dDeta(y[nei$i],mu.cv,weights[nei$i],theta,family,1) 
+         dd.cv <- dDeta(y[nei$d],mu.cv,weights[nei$d],theta,family,1) 
 	 ncv1 <- dd.cv$Deta*deta.cv/(2*scale)
-	 if (gamma!=1) dev1 <- (dd$Deta*(x%*%db.drho))[nei$i,,drop=FALSE]/(2*scale)
+	 if (gamma!=1) dev1 <- (dd$Deta*(x%*%db.drho))[nei$d,,drop=FALSE]/(2*scale)
          if (nt>0) {
        	   ncv1[,1:nt] <- ncv1[,1:nt] + as.matrix(dd.cv$Dth/(2*scale)) - ls0$LSTH1[,1:nt]
-	   if (gamma!=1) dev1[,1:nt] <- dev1[,1:nt] + as.matrix(dd$Dth/(2*scale))[nei$i,,drop=FALSE] - ls0$LSTH1[,1:nt]
+	   if (gamma!=1) dev1[,1:nt] <- dev1[,1:nt] + as.matrix(dd$Dth/(2*scale))[nei$d,,drop=FALSE] - ls0$LSTH1[,1:nt]
          }
          if (!scale.known) { ## deal with log scale parameter derivative
 	   ncv1 <- cbind(ncv1,-dev.cv/(2*scale) - ls0$LSTH1[,1+nt])
@@ -706,7 +706,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      } ## exact NCV
      
      if (nei$jackknife>2) { 
-       nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
+       nk <- c(nei$ma[1],diff(nei$ma)) ## dropped fold sizes
        jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
        dth <-jkw*t(dth)%*%t(T)
        #Vj <- crossprod(dd) ## jackknife cov matrix for coefs (beta)
@@ -1303,9 +1303,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ncv <- family$ncv ## helps debugging!
     deriv1 <-  if (nei$jackknife>2) -1 else if (deriv==0) 0 else  1
     ## create nei if null - now in estimate.gam
-    #if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
-    #if (is.null(nei$i)) if (length(nei$m)==nobs) nei$mi <- nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
-    #if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    #if (is.null(nei)||is.null(nei$k)||is.null(nei$ma)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+    #if (is.null(nei$d)) if (length(nei$ma)==nobs) nei$md <- nei$d <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+    #if (length(nei$md)!=length(nei$ma)) stop("for NCV number of dropped and predicted neighbourhoods must match")
     ## complete dH
     if (deriv>0) {
       for (i in 1:length(ll$d1H)) ll$d1H[[i]] <- ll$d1H[[i]] - Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop] 
@@ -1330,7 +1330,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     NCV1 <- ret$NCV1
     Vg <- ret$Vg
     if (deriv1<0) { ## Jackknife cov matrix...
-      nk <- c(nei$m[1],diff(nei$m)) ## dropped fold sizes
+      nk <- c(nei$ma[1],diff(nei$ma)) ## dropped fold sizes
       jkw <- sqrt((nobs-nk)/(nobs*nk)) ## jackknife weights
       dd <- attr(ret$NCV,"deta.cv")
       #dd <-jkw*t(dd)%*%t(T)

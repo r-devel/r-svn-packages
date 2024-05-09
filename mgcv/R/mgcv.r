@@ -1589,8 +1589,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   object[names(mv)] <- mv
   if (!is.null(nei)) {
-    if (isTRUE(all.equal(sort(nei$i),1:nrow(G$X))) && length(nei$mi)==nrow(G$X) && criterion=="NCV") { ## each point predicted on its own
-      loocv <- length(nei$k)==length(nei$i) && isTRUE(all.equal(nei$i,nei$k)) && length(nei$m) == length(nei$k) ## leave one out CV,
+    if (isTRUE(all.equal(sort(nei$d),1:nrow(G$X))) && length(nei$md)==nrow(G$X) && criterion=="NCV") { ## each point predicted on its own
+      loocv <- length(nei$a)==length(nei$d) && isTRUE(all.equal(nei$d,nei$a)) && length(nei$ma) == length(nei$a) ## leave one out CV,
       if (is.logical(nei$jackknife)&&nei$jackknife) loocv <- TRUE ## straight jackknife requested
       if (nei$jackknife < 0) nei$jackknife <- TRUE ## signal cov matrix calc
     } else {
@@ -1606,7 +1606,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     if (is.null(nei$gamma)) nei$gamma <- 1 ## a major application of this NCV is to select gamma - so it must not itself change with gamma!
     if (criterion!="NCV") nei$jackknife <- FALSE ## no cov matrix stuff.
     if (nei$jackknife) {
-      n <- length(nei$i)
+      n <- length(nei$d)
       nei1 <- if (loocv) nei else list(i=1:n,mi=1:n,m=1:n,k=1:n) ## set up for LOO CV or requested straight jackknife
       nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
     } else nei1 <- nei ## called with another criteria
@@ -1705,13 +1705,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     optimizer <- c("outer","bfgs")
     if (method=="QNCV") { method <- "NCV";G$family$qapprox <- TRUE } else G$family$qapprox <- FALSE
     if (is.null(nei)) nei <- list(i=1:G$n,mi=1:G$n,m=1:G$n,k=1:G$n) ## LOOCV
-    if (is.null(nei$k)||is.null(nei$m)) nei$k <- nei$m <- nei$mi <- nei$i <- 1:G$n 
-    if (is.null(nei$i)) if (length(nei$m)==G$n) nei$mi <- nei$i <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
-    if (length(nei$mi)!=length(nei$m)) stop("for NCV number of dropped and predicted neighbourhoods must match")
-    nei$m <- round(nei$m); nei$mi <- round(nei$mi); nei$k <- round(nei$k); nei$i <- round(nei$i); 
-    if (min(nei$i)<1||max(nei$i>G$n)||min(nei$k)<1||max(nei$k>G$n)) stop("nei indexes non-existent points")
-    if (nei$m[1]<1||max(nei$m)>length(nei$k)||length(nei$m)<2||any(diff(nei$m)<1)) stop('nei$m faulty')
-    if (nei$mi[1]<1||max(nei$mi)>length(nei$i)||length(nei$mi)<2||any(diff(nei$mi)<1)) stop('nei$mi faulty')
+    if (is.null(nei$a)||is.null(nei$ma)) nei$a <- nei$ma <- nei$md <- nei$d <- 1:G$n 
+    if (is.null(nei$d)) if (length(nei$ma)==G$n) nei$md <- nei$d <- 1:G$n else stop("unclear which points NCV neighbourhoods belong to")
+    if (length(nei$md)!=length(nei$ma)) stop("for NCV number of dropped and predicted neighbourhoods must match")
+    nei$ma <- round(nei$ma); nei$md <- round(nei$md); nei$a <- round(nei$a); nei$d <- round(nei$d); 
+    if (min(nei$d)<1||max(nei$d>G$n)||min(nei$a)<1||max(nei$a>G$n)) stop("nei indexes non-existent points")
+    if (nei$ma[1]<1||max(nei$ma)>length(nei$a)||length(nei$ma)<2||any(diff(nei$ma)<1)) stop('nei$ma faulty')
+    if (nei$md[1]<1||max(nei$md)>length(nei$d)||length(nei$md)<2||any(diff(nei$md)<1)) stop('nei$md faulty')
     if (is.null(nei$jackknife)) nei$jackknife <- -1
   }  
 

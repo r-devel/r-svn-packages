@@ -26,6 +26,12 @@ better done with .Call
 
 1.9-2
 
+** 'NCV' added as a method option for bam(...,discrete=TRUE). More efficient 
+  than gam(...,method='NCV'), but much less efficient than default REML.
+
+* names in NCV 'nei' structure modified to better match paper and documentation 
+  notation.
+
 * fix bam to always return a square QR R factor of the model matrix 
   (previously it was possible for it not to be square for a rank deficient 
   model matrix, which could cause a failure in summary). Thanks to Amy Hughes
@@ -47,7 +53,7 @@ better done with .Call
   extra factor levels in prediction. Slightly differs from predict.gam, in 
   setting effect to zero, rather than NA.
 
-* fix to NCV hadling of dropped NA points - previously could end up with
+* fix to NCV handling of dropped NA points - previously could end up with
   different numbers of predict and drop neighbourhoods. Thanks to Nicole
   Augustin.	
 

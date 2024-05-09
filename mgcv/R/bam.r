@@ -449,15 +449,15 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     if (rho!=0) {
       warning("rho ignored with NCV"); rho <- 0
     }
-    nei$a <- nei$k; nei$ma <- nei$m ## for use in cov matrix computation
+    nei$af <- nei$a; nei$maf <- nei$ma ## for use in cov matrix computation
     if (!is.null(nei$sample)) { ## only a sub-sample of points used in optimization NCV
-      if (length(nei$sample)==1) nei$sample <- sample(nei$m,nei$sample)
-      m1 <- nei$m[nei$sample]; m0 <- c(0,nei$m)[nei$sample]
-      nei$k <- nei$k[sequence(m1-m0,m0+1L,1L)]
-      nei$m <- cumsum(m1-m0)-1L
-      m1 <- nei$mi[nei$sample]; m0 <- c(0,nei$mi)[nei$sample]
-      nei$i <- nei$i[sequence(m1-m0,m0+1L,1L)]
-      nei$mi <- cumsum(m1-m0)-1L
+      if (length(nei$sample)==1) nei$sample <- sample(nei$ma,nei$sample)
+      m1 <- nei$ma[nei$sample]; m0 <- c(0,nei$ma)[nei$sample]
+      nei$a <- nei$a[sequence(m1-m0,m0+1L,1L)]
+      nei$ma <- cumsum(m1-m0)-1L
+      m1 <- nei$md[nei$sample]; m0 <- c(0,nei$md)[nei$sample]
+      nei$d <- nei$d[sequence(m1-m0,m0+1L,1L)]
+      nei$md <- cumsum(m1-m0)-1L
     }
   }
   
@@ -807,10 +807,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object$Vp <- PP * scale
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt[1]) ## F%*%object$Vp
 
-  if (method=="NCV"&& max(diff(nei$m))>1 && max(diff(nei$mi))==1) { ## replace Vp with NCV estimate 
+  if (method=="NCV"&& max(diff(nei$ma))>1 && max(diff(nei$md))==1) { ## replace Vp with NCV estimate 
     e <- (z-eta)*w ## weighted residuals
-    XVX <- XVXd(G$Xd,e,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nthreads=1,a=nei$k,ma=nei$m)
-    inflate <- max(1,(prop$NCV/sum(e[nei$i]^2/w[nei$i])-1)/2+1)
+    XVX <- XVXd(G$Xd,e,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nthreads=1,a=nei$af,ma=nei$maf)
+    inflate <- max(1,(prop$NCV/sum(e[nei$d]^2/w[nei$d])-1)/2+1)
     V1 <- PP %*% XVX %*% PP *inflate
     object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
     ## NOTE: generally we will not have cross validated residuals for all data points.
@@ -2284,15 +2284,15 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (method=="NCV") { ## pre-process the neighbourhood structure 'nei'
       n <- nrow(mf)
-      if (is.null(nei)||is.null(nei$k)||is.null(nei$m)) {
+      if (is.null(nei)||is.null(nei$a)||is.null(nei$ma)) {
         nei <- list(k=1:n,m=1:n,i=1:n,mi=1:n) ## LOOCV  
-      } else if (is.null(nei$i)||is.null(nei$mi)) {
-        if (length(nei$m)!=n) stop("nei$i and nei$mi must be supplied if number of neighbourhoods is not number of data")
-	nei$i <- 1:n; nei$mi <- 1:n
+      } else if (is.null(nei$d)||is.null(nei$md)) {
+        if (length(nei$ma)!=n) stop("nei$d and nei$md must be supplied if number of neighbourhoods is not number of data")
+	nei$d <- 1:n; nei$md <- 1:n
       }
-      if (max(nei$m)>length(nei$k)||min(nei$m)<1) stop("nei$m does not match nei$k")
-      if (max(nei$mi)>length(nei$i)||min(nei$mi)<1) stop("nei$mi does not match nei$i")
-      if (max(nei$i)>n||min(nei$i)<1||max(nei$k)>n||min(nei$k)<1) stop("supplied nei index out of range")
+      if (max(nei$ma)>length(nei$a)||min(nei$ma)<1) stop("nei$ma does not match nei$a")
+      if (max(nei$md)>length(nei$d)||min(nei$md)<1) stop("nei$md does not match nei$d")
+      if (max(nei$d)>n||min(nei$d)<1||max(nei$a)>n||min(nei$a)<1) stop("supplied nei index out of range")
       nei <- onei(nei,TRUE) ## order indices within neighbourhoods and chnage to C indexing - needed for discrete NCV C code
     } ## nei pre-processing
     
