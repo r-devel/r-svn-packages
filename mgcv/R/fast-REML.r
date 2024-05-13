@@ -1380,9 +1380,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   } else G[piv,piv] <- chol2inv(R)
   G0 <- t(G/d)/d ## inverse of penalized (scaled) Hessian
 
-  ## BUG: to get correct diag(A), the following is needed. But that means that the supplied Sl is
-  ##      using the wrong parameterization (we are back in original). ARGHH!!!
-  G <- Sl.initial.repara(Sl,G0,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nthreads) ## TRIAL!!
+  
+  G <- Sl.initial.repara(Sl,G0,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nthreads) 
   
 
   NCV <- 0; nsp <- length(rho)
@@ -1396,8 +1395,8 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   beta1 <- matrix(beta1,length(beta),nsp)
   ## NOTE: should modify to pass back dbeta/drho from CNCV
   if (ncol(beta1)>0) for (i in 1:ncol(beta1)) beta1[,i] <- ## d beta / d rho matrix
-        Sl.initial.repara(Sl,as.numeric(beta1[,i]),inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=npt[1]) 
-  ## DEBUG code to check NCV score + deriv correct in loocv case
+        Sl.initial.repara(Sl,as.numeric(beta1[,i]),inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=nthreads) 
+ 
   db <- FALSE
   if (db) {
     tt1 <- system.time(dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w)

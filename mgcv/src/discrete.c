@@ -1459,26 +1459,22 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 	    int nt, double *e,int *a,ptrdiff_t *ma,ptrdiff_t *off,double *work,int *worki,int nxwx) {
 /* Forms product X_i'VX_j or the r,cth sub-block of this where X_i and X_j are stored in compact form. 
    V is the matrix of elements V[i,j] = e[i]*e[j] if j in nei(i) and 0 otherwise.
-   IN PROGRESS
 
-   Specifically, X'WX can be partitioned into blocks related to model terms. row block i column block j
+   Neighbourhood structures are stored in a and ma. Specifically a[ma[i-1]+1:ma[i]] are the neighbours of 
+   i where ma[i-1] = -1 by convention. 
+  
+   As with X'WX, X'VX can be partitioned into blocks related to model terms. row block i column block j
    relates to term i and term j. However, if i and or j are tensor product terms, then they can be
    partitioned into sub-blocks. A tensor term has (total number of cols)/(number of cols of final marginal) 
    sub blocks associated with it, so a singleton has one sub-block. This routine computes sub-block r,c of 
    term block i,j (sub-block indexing is within its term block). The reason for working at this finer grain is that
    it makes load balancing easier when parallelizing.
 
-   * W = diag(w) if tri!=0 and is tridiagonal otherwise, with super in ws and sub in ws + n-1;     
    * off[i] is offset to start of ith matrix (out of nx)  
    If Xk is a tensor product term, let dXk denote row tensor product of all but its final marginal. 
    
-   Workspace: Let mi and mj index the final marginal of term i and j, then the dim of work needed is
-              2*n + 3*m[mi] + I(n>m[mi]*m[mj])*m[mi]*m[mj] + max(m[mi]*p[mj],m[mj]*p[mi]) 
-              + 3n 
-             SMstack should be an n-vectors if tri==0 and a 3n-vector otherwise. sm is an n vector.
-
-   This version uses sparse accumulation if \bar W too large, based on calling indReduce.
-   ht is a 256 vector initialized by SMinihash. sm is length n. SMstack is length n if tri==0, 3n otherwise.
+  Basically as XWXijs, but with the algorithms for scattered V[i,j] substituted in polace of those for (tri-)
+  diagonal W, and no sparse methods used.
 
 */
   int si,sj,//ri,rj,
@@ -1507,7 +1503,6 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
         if (i==j) jj=ii; else jj=0;
 	for (jj=ii;jj<pjm;jj++) { /* cols of XWX symmetric case */
   	  Xj = X + off[jm] + mjm * jj;  
-	  //for (x=0.0,Kik=Ki,Kjk=Kj,pw=w,p0=w +n;pw<p0;Kik++,Kjk++,pw++) x += *pw * Xi[*Kik] * Xj[*Kjk];
 	  x=0.0;Kik=Ki;
 	  for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	      akk = a[kp];  
@@ -1568,28 +1563,24 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
       Kj = k +  (ptrdiff_t)(ks[jm]+t) * n; /* index for final margin of j */
       if (acc_w) { /* weight accumulation */    
         if (tensi&&tensj) { /* i and j are tensors */
-	   //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,p2++,p3++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0 * *p2 * *p3;
 	   Kik=Ki;p2=dXi;p3=dXj;
 	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
 	       akk = a[kp];
 	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * *p2 * p3[akk];
 	   }    
 	 } else if (tensi) { /* only i is tensor */
-	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,p2++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0 * *p2;
 	   Kik=Ki;p2=dXi;
 	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
 	       akk = a[kp];
 	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * *p2;
 	   }   
 	 } else if (tensj) { /* only j is tensor */
-	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,p3++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0  * *p3;
 	   Kik=Ki;p3=dXj;
 	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	       akk = a[kp];
 	       W[*Kik + mim * Kj[akk]] += *ep * e[akk] * p3[akk];
 	   }
 	 } else { /* i and j are singletons */  
-	  //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0;
 	   Kik=Ki;
 	   for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map; kp++) {
 	       akk = a[kp];
@@ -1600,28 +1591,24 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
           for (q=0;q<p[jm];q++) { 
 	    Cq = C + q * mim;Xj = X + off[jm] + q * mjm; /* qth cols of C and X */ 
 	    if (tensi&&tensj) { /* X_i and X_j are tensors */
-	      //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Cq[*Kik] += *p0 * *p2 * *p3 * Xj[*Kjk];
 	       Kik=Ki;p2=dXi;p3=dXj;
 	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
 	         akk = a[kp];
 	         Cq[*Kik] += *ep * e[akk] * *p2 * p3[akk] * Xj[Kj[akk]];
 	       }
 	    } else if (tensi) { /* only X_i is tensor */
-	      //for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Cq[*Kik] += *p0 * *p2  * Xj[*Kjk];
 	       Kik=Ki;p2=dXi;
 	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map; kp++) {
 	         akk = a[kp];
 	         Cq[*Kik] += *ep * e[akk] * *p2 * Xj[Kj[akk]];
 	       }
 	    } else if (tensj) { /* only X_j is tensor */
-	      // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Cq[*Kik] += *p0 * *p3 * Xj[*Kjk];
 	       Kik=Ki;p3=dXj;
 	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	         akk = a[kp];
 	         Cq[*Kik] += *ep * e[akk]  * p3[akk] * Xj[Kj[akk]];
 	       }
 	    } else { /* both singletons */
-	      // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Cq[*Kik] += *p0 * Xj[*Kjk];
 	       Kik=Ki;
 	       for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	         akk = a[kp];
@@ -1633,28 +1620,24 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
           for (q=0;q<p[im];q++) {
 	      Dq = D + q * mjm;Xi = X + off[im] + q * mim; /* qth cols of C and Xi */ 
 	      if (tensi&&tensj) { /* X_i and X_j are tensors */
-		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Dq[*Kjk] += *p0 * *p2 * *p3 * Xi[*Kik];
 		Kik=Ki;p2=dXi;p3=dXj;
 	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
 	          akk = a[kp];
 	          Dq[Kj[akk]] += *ep * e[akk] * *p2 * p3[akk] * Xi[*Kik];
 	        }
 	      } else if (tensi) { /* only X_i is tensor */
-	        // for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Dq[*Kjk] += *p0 * *p2  * Xi[*Kik];
 		Kik=Ki;p2=dXi;
 	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++,p2++) for (;kp <= *map;kp++) {
 	          akk = a[kp];
 	          Dq[Kj[akk]] += *ep * e[akk] * *p2 * Xi[*Kik];
 	        }
 	      } else if (tensj) { /* only X_j is tensor */
-		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Dq[*Kjk] += *p0 * *p3 * Xi[*Kik];
 		Kik=Ki;p3=dXj;
 	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	          akk = a[kp];
 	          Dq[Kj[akk]] += *ep * e[akk] * p3[akk] * Xi[*Kik];
 	        }
 	      } else { /* both singletons */
-		// for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Dq[*Kjk] += *p0 * Xi[*Kik];
 		Kik=Ki;
 	        for (kp=0,ep=e,ep1=e+n,map=ma;ep<ep1;ep++,map++,Kik++) for (;kp <= *map;kp++) {
 	          akk = a[kp];
@@ -2370,8 +2353,6 @@ void XVXd0(double *XWX,double *X,double *e,int *k,int *ks, int *m,int *p, ptrdif
   ptot = tps[*nt]; /* total number of parameters */
   nxwx = tpsu[*nt];
 
-  //sm = (SM **)CALLOC((size_t) *n * *nthreads,sizeof(SM *));
-  //SMstack = (SM *)CALLOC((size_t) 3 * *n * *nthreads,sizeof(SM));
   N = ((*nt + 1) * *nt)/2;
   C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
   sb = (int *) CALLOC((size_t)N+1,sizeof(int)); /* at which sub-block does block start */

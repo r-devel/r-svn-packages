@@ -885,8 +885,8 @@ neicov <- function(Dd,nei) {
 ## coef vectors. nei is neighbourhood structure. 
   p <- ncol(Dd)
   V <- matrix(0,p,p)
-  k <- nei$k-1
-  .Call(C_nei_cov,V,Dd,nei$m,k)
+  a <- nei$a-1
+  .Call(C_nei_cov,V,Dd,nei$ma,a)
   (V+t(V))/2
 } ## neicov
 

@@ -653,10 +653,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      } else deriv1 <- deriv
      if (inherits(R,"try-error")) { ## use CG approach...
 	Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
-        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv1);
+        cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$a-1,oo$beta,exp(sp),eta.cv, deta.cv, dth, deriv1);
 	warn[[length(warn)+1]] <- "NCV positive definite update check not possible"
      } else { ## use Cholesky update approach
-	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$k-1,oo$beta,exp(sp),eta.cv,
+	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$a-1,oo$beta,exp(sp),eta.cv,
 	                    deta.cv, dth, deriv1,.Machine$double.eps,control$ncv.threads);
 	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
      }   
@@ -1303,7 +1303,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     ncv <- family$ncv ## helps debugging!
     deriv1 <-  if (nei$jackknife>2) -1 else if (deriv==0) 0 else  1
     ## create nei if null - now in estimate.gam
-    #if (is.null(nei)||is.null(nei$k)||is.null(nei$ma)) nei <- list(i=1:nobs,mi=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+    #if (is.null(nei)||is.null(nei$a)||is.null(nei$ma)) nei <- list(d=1:nobs,md=1:nobs,ma=1:nobs,a=1:nobs) ## LOOCV
     #if (is.null(nei$d)) if (length(nei$ma)==nobs) nei$md <- nei$d <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
     #if (length(nei$md)!=length(nei$ma)) stop("for NCV number of dropped and predicted neighbourhoods must match")
     ## complete dH
