@@ -40,7 +40,7 @@ c Obtain kernel weights
 
 c Combine kernel weights and grid counts
 
-      do 40 k = 1,M
+      do k = 1,M
          if (xcnts(k).ne.0) then
             do i = 1,iQ
                do j = max(1,k-Lvec(i)),min(M,k+Lvec(i))
@@ -56,7 +56,7 @@ c Combine kernel weights and grid counts
                end do
             end do
          endif
-40    continue
+      end do
 
       do k = 1,M
          do i = 1,ipp

@@ -1,3 +1,5 @@
+c     A LINPACK routine updated for Fortran 90.
+
       subroutine dgesl(a,lda,n,ipvt,b,job)
       integer lda,n,ipvt(*),job
       double precision a(lda,*),b(*)
@@ -45,9 +47,9 @@ c     to compute  inverse(a) * c  where  c  is a matrix
 c     with  p  columns
 c           call dgeco(a,lda,n,ipvt,rcond,z)
 c           if (rcond is too small) go to ...
-c           do 10 j = 1, p
+c           j = 1, p
 c              call dgesl(a,lda,n,ipvt,c(1,j),0)
-c        10 continue
+c           end do
 c
 c     linpack. this version dated 08/14/78 .
 c     cleve moler, university of new mexico, argonne national lab.
@@ -62,22 +64,22 @@ c
       integer k,kb,l,nm1
 c
       nm1 = n - 1
-      if (job .ne. 0) go to 50
+      if (job .ne. 0) then
 c
 c        job = 0 , solve  a * x = b
 c        first solve  l*y = b
 c
-         if (nm1 .lt. 1) go to 30
+         if (nm1 .ge. 1) then
          do k = 1, nm1
             l = ipvt(k)
             t = b(l)
-            if (l .eq. k) go to 10
+            if (l .ne. k) then
                b(l) = b(k)
                b(k) = t
-   10       continue
+            end if
             call daxpy(n-k,t,a(k+1,k),1,b(k+1),1)
          end do
-   30    continue
+      end if
 c
 c        now solve  u*x = y
 c
@@ -87,8 +89,8 @@ c
             t = -b(k)
             call daxpy(k-1,t,a(1,k),1,b(1),1)
          end do
-      go to 100
-   50 continue
+         return
+      end if
 c
 c        job = nonzero, solve  trans(a) * x = b
 c        first solve  trans(u)*y = b
@@ -100,18 +102,16 @@ c
 c
 c        now solve trans(l)*x = y
 c
-         if (nm1 .lt. 1) go to 90
+         if (nm1 .lt. 1) return
          do kb = 1, nm1
             k = n - kb
             b(k) = b(k) + ddot(n-k,a(k+1,k),1,b(k+1),1)
             l = ipvt(k)
-            if (l .eq. k) go to 70
+            if (l .ne. k) then
                t = b(l)
                b(l) = b(k)
                b(k) = t
-   70       continue
+            end if
          end do
-   90    continue
-  100 continue
       return
       end

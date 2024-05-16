@@ -1,3 +1,8 @@
+c     A LINPACK routine updated for Fortran 90.
+c     A version on Netlib has
+c     linpack. this version dated 08/14/78 .
+c     cleve moler, university of new mexico, argonne national lab.
+
       subroutine dgedi(a,lda,n,ipvt,det,work,job)
       integer lda,n,ipvt(*),job
       double precision a(lda,*),det(2),work(*)
@@ -89,7 +94,7 @@ c        ...exit
 c
 c     compute inverse(u)
 c
-      if (mod(job,10) .eq. 0) go to 150
+      if (mod(job,10) .eq. 0) return
          do k = 1, n
             a(k,k) = 1.0d0/a(k,k)
             t = -a(k,k)
@@ -123,6 +128,5 @@ c
             if (l .ne. k) call dswap(n,a(1,k),1,a(1,l),1)
          end do
   140    continue
-  150 continue
       return
       end
