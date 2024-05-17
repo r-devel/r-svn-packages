@@ -264,6 +264,8 @@ src/Makevars does not need FLIBS as there is Fortran code in the package.
 Version 2.23-23
 ===============
 
+(Not released to CRAN)
+
 Declare a variable in cp.f to pacify Intel ifx.
 
 Version 2.23-24
