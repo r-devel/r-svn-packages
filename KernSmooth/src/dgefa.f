@@ -97,7 +97,7 @@ c
    40    continue
             info = k
    50    continue
-   60 end do
+      end do
    70 continue
       ipvt(n) = n
       if (a(n,n) .eq. 0.0d0) info = n
