@@ -557,7 +557,7 @@
 2017-11-28  Brian Ripley
 
 	* DESCRIPTION (Version): 3.1-133 (released for R-devel but withdrawn)
-	* tests/coef.Rout.save: update for R-pre-3.5.0 chanages to str()
+	* tests/coef.Rout.save: update for R-pre-3.5.0 changes to str()
 
 2017-09-18  Martin Maechler
 
@@ -755,7 +755,7 @@
 
 	* DESCRIPTION: version is 3.1-116
 
-	* R/{lme,newMethods,nlsList}.R: modify messsages.
+	* R/{lme,newMethods,nlsList}.R: modify messages.
 	* po/{R-pl,pl}.po: update.
 
 2014-03-19  Brian Ripley
@@ -1413,7 +1413,7 @@
 	* inst/scripts/ch01.R: Clean up and check these scripts
 
 	* src/nlmefit.c (gls_loglik): re-write contributed by ?? (I
-	accidently deleted the email message).
+	accidentally deleted the email message).
 
 	* R/lme.R (lme.formula): Use nlminb if available.
 
