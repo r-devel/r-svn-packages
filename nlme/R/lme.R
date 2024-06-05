@@ -806,10 +806,7 @@ MEdims <- function(groups, ncols)
        Q = Q,                   # no. of levels of random effects
        StrRows = strRows,       # no. of rows required for storage
        qvec = ncols * c(rep(1, Q), 0, 0), # lengths of random effects
-                                        # no. of groups at each level
-### This looks wrong: ")" at wrong place: unlist(*, N, N) !!
-       ngrps = c(unlist(lapply(lastRow, length), N, N)),
-###?ok ngrps = c(lengths(lastRow), N, N),# no. of groups at each level
+       ngrps = lengths(lastRow),# no. of groups at each level and 1s for X, y
        DmOff = c(0, cumsum(ncols^2))[1:(Q+2)],# offsets into DmHalf array by level
        ncol = ncols,            # no. of columns decomposed per level
        nrot = rev(c(0, cumsum(rev(ncols))))[-1L],# no. of columns rotated per level
