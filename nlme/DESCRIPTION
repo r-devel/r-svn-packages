@@ -1,6 +1,6 @@
 Package: nlme
 Version: 3.1-165
-Date: 2023-12-08
+Date: 2024-06-05
 Priority: recommended
 Title: Linear and Nonlinear Mixed Effects Models
 Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
@@ -15,7 +15,7 @@ Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
                     role = c("aut", "cre")))
 Contact: see 'MailingList'
 Description: Fit and compare Gaussian linear and nonlinear mixed-effects models.
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.6.0)
 Imports: graphics, stats, utils, lattice
 Suggests: MASS, SASmixed
 LazyData: yes
