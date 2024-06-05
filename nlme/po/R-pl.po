@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-115\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2024-05-01 22:23\n"
+"POT-Creation-Date: 2024-06-05 14:17\n"
 "PO-Revision-Date: 2014-03-25 17:00+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -333,8 +333,8 @@ msgstr "maksymalna liczba iteracji została osiągnięta bez uzyskania zbieżno�
 msgid "computed \"gls\" fit is singular, rank %s"
 msgstr "obliczone dopasowanie \"gls\" jest osobliwe, ranga %s"
 
-msgid "object must inherit from class \"gls\""
-msgstr "argument 'object' nie jest obiektem klasy \"gls\""
+msgid "object must inherit from class %s"
+msgstr "argument 'object' nie jest obiektem klasy %s"
 
 msgid "'Terms' must be between 1 and %d"
 msgstr "argument 'Terms' musi być pomiędzy 1 a %d"
@@ -433,6 +433,9 @@ msgstr "argument 'params' musi być formułą lub listą formuł"
 
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr "formuły w argumencie 'param' muszą mieć formę \"parametr ~ wyrażenie\""
+
+msgid "step halving factor reduced below minimum in NLS step"
+msgstr "czynnik skracający krok został zredukowany poniżej minimum w kroku NLS"
 
 # nlme/R/gnls.R: 654
 # stop("cannot calculate REML log-likelihood for \"gnls\" objects")
@@ -718,9 +721,6 @@ msgstr ""
 "maksymalna liczba iteracji ('lmeControl(maxIter)') została osiągnięta bez "
 "uzyskania zbieżności"
 
-msgid "object must inherit from class \"lme\""
-msgstr "argument 'object' nie jest obiektem klasy \"lme\""
-
 # nlme/R/lme.R: 907
 # stop("terms must all have the same denominator DF")
 msgid "terms must all have the same denominator DF"
@@ -757,11 +757,10 @@ msgstr "wszystkie dopasowane obiekty muszą mieć tę samą metodę oszacowania"
 
 # nlme/R/lme.R: 1019
 # warning("fitted objects with different fixed effects. REML comparisons are not meaningful.")
-#, fuzzy
 msgid ""
 "fitted objects with different fixed effects. REML comparisons are not "
 "meaningful."
-msgstr "dopasowane obiekty z różnymi stałymi efektami."
+msgstr "dopasowane obiekty z różnymi stałymi efektami. Porównania REML nie mają sensu."
 
 # nlme/R/lme.R: 1026
 # stop("objects must have a \"call\" component or attribute")
@@ -854,9 +853,6 @@ msgstr "brak dopasowanego obiektu \"lme\""
 msgid "objects must have coefficients with same row names"
 msgstr "obiekty muszą mieć współczynniki z tymi samymi nazwami wierszy"
 
-msgid "object must inherit from \"data.frame\""
-msgstr "obiekt musi dziedziczyć z klasy \"data.frame\""
-
 msgid "only one level allowed in 'gapply'"
 msgstr "tylko jeden poziom jest dozwolony w funkcji 'gapply()'"
 
@@ -884,9 +880,6 @@ msgstr "argument 'FUN' może być jedynie funkcją lub listą funkcji"
 # stop("cannot omit grouping factor without 'form'")
 msgid "cannot omit grouping factor without 'form'"
 msgstr "nie można pominąć czynnika grupującego bez 'form'"
-
-msgid "object must inherit from class \"lmList\""
-msgstr "argument nie jest obiektem klasy \"lmList\""
 
 # nlme/R/newFunc.R: 313
 # stop("no degrees of freedom for estimating standard deviation")
@@ -1011,8 +1004,8 @@ msgstr "niespójne formuły dla grup w \"random\" oraz \"correlation\""
 # nlme/R/nlme.R: 332
 # warning("cannot use smaller level of grouping for \"correlation\" than for \"random\". Replacing the former with the latter.")
 msgid ""
-"cannot use smaller level of grouping for \"correlation\" than for \"random"
-"\". Replacing the former with the latter."
+"cannot use smaller level of grouping for \"correlation\" than for "
+"\"random\". Replacing the former with the latter."
 msgstr ""
 "nie można użyć mniejszego poziomu grupowania dla \"correlation\" niż dla "
 "\"random\". Zastępowanie pierwszego drugim."
@@ -1101,12 +1094,15 @@ msgstr ""
 msgid "Iteration %d, LME step: nlm() did not converge (code = %d)."
 msgstr ""
 
+msgid "step halving factor reduced below minimum in PNLS step"
+msgstr ""
+"czynnik skracający krok został zredukowany poniżej minimum w kroku PNLS"
+
 # nlme/R/lme.R: 368
 # gettext("maximum number of iterations (lmeControl(maxIter)) reached without convergence")
-#, fuzzy
 msgid "maximum number of iterations (maxIter = %d) reached without convergence"
 msgstr ""
-"maksymalna liczba iteracji ('lmeControl(maxIter)') została osiągnięta bez "
+"maksymalna liczba iteracji (maxIter = %d) została osiągnięta bez "
 "uzyskania zbieżności"
 
 # nlme/R/nlsList.R: 31
@@ -1332,8 +1328,8 @@ msgstr "nie można wyodrębnić macierzy z niezainicjalizowanego obiektu"
 # stop("cannot extract the matrix from an uninitialized \"pdIdent\" object")
 msgid "cannot extract the matrix from an uninitialized \"pdIdent\" object"
 msgstr ""
-"nie można wyodrębnić macierzy z niezainicjalizowanego obiektu klasy \"pdIdent"
-"\""
+"nie można wyodrębnić macierzy z niezainicjalizowanego obiektu klasy "
+"\"pdIdent\""
 
 # nlme/R/pdMat.R: 1406
 # stop("cannot extract the matrix with uninitialized dimensions")
@@ -1968,39 +1964,6 @@ msgstr[2] ""
 "nazwy grup nie zgadzają się z początkowymi wartościami dla efektów losowych: "
 "%s"
 
-# nlme/R/gnls.R: 273
-# stop ("starting values for parameters are not of the correct length")
-#~ msgid "starting values for parameters are not of the correct length"
-#~ msgstr "wartości początkowe parametrów nie mają poprawnej długości"
-
-#~ msgid "level %s not allowed for %s"
-#~ msgid_plural "levels %s not allowed for %s"
-#~ msgstr[0] "poziom %s nie jest dozwolony dla %s"
-#~ msgstr[1] "poziomy %s nie są dozwolone dla %s"
-#~ msgstr[2] "poziomy %s nie są dozwolone dla %s"
-
-# nlme/R/gnls.R: 419
-# warning("step halving factor reduced below minimum in NLS step")
-# nlme/R/gnls.R: 421
-# stop("step halving factor reduced below minimum in NLS step")
-#~ msgid "step halving factor reduced below minimum in NLS step"
-#~ msgstr ""
-#~ "czynnik skracający krok został zredukowany poniżej minimum w kroku NLS"
-
-# nlme/R/lmList.R: 87
-# warning("An lm fit failed, probably because a factor only had one level")
-#~ msgid "An lm fit failed, probably because a factor only had one level"
-#~ msgstr ""
-#~ "Dopasowanie 'lm()' nie powiodło się prawdopodobnie dlatego, że czynnik "
-#~ "miał tylko jeden poziom"
-
-#~ msgid ""
-#~ "objects must inherit from classes \"gls\", \"gnls\",\"lm\",\"lmList\", "
-#~ "\"lme\",\"nlme\",\"nlsList\", or \"nls\""
-#~ msgstr ""
-#~ "obiekty muszą dziedziczyć z co najmniej jednej z następujących klas: \"lm"
-#~ "\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", \"nls\""
-
 # nlme/R/gnls.R: 483
 # stop("approximate covariance matrix for parameter estimates not of full rank")
 #~ msgid ""
@@ -2008,20 +1971,6 @@ msgstr[2] ""
 #~ msgstr ""
 #~ "przybliżona macierz kowariancji dla szacunkowych parametrów nie jest "
 #~ "pełnej rangi"
-
-# nlme/R/nlme.R: 878
-# warning("step halving factor reduced below minimum in PNLS step")
-# nlme/R/nlme.R: 880
-# stop("step halving factor reduced below minimum in PNLS step")
-#~ msgid "step halving factor reduced below minimum in PNLS step"
-#~ msgstr ""
-#~ "czynnik skracający krok został zredukowany poniżej minimum w kroku PNLS"
-
-#~ msgid "negative control$nlmStepMax - using default value"
-#~ msgstr "ujemna wartość 'control$nlmStepMax' - używanie wartości domyślnej"
-
-#~ msgid "REML comparisons are not meaningful."
-#~ msgstr "Porównania REML nie mają sensu."
 
 # nlme/R/VarCov.R: 26
 # stop("'getVarCov.lme()' is not implemented for objects of class \"nlme\"")

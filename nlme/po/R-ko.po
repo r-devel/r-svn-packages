@@ -11,7 +11,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-105\n"
-"POT-Creation-Date: 2024-05-01 22:23\n"
+"POT-Creation-Date: 2024-06-05 14:17\n"
 "PO-Revision-Date: 2013-08-16 18:52-0600\n"
 "Last-Translator: Chel Hee Lee <gnustats@gmail.com>\n"
 "Language-Team: R Development Translation Teams (Korean) <gnustats@korea.gnu."
@@ -212,8 +212,9 @@ msgstr "수렴하지 않고 지정된 최대 반복수에 도달하였습니다"
 msgid "computed \"gls\" fit is singular, rank %s"
 msgstr ""
 
-msgid "object must inherit from class \"gls\""
-msgstr ""
+#, fuzzy
+msgid "object must inherit from class %s"
+msgstr "'object'는 반드시 formula이어야 합니다"
 
 msgid "'Terms' must be between 1 and %d"
 msgstr "'Terms'는 반드시 1과 %d 사이에 있어야 합니다"
@@ -268,6 +269,9 @@ msgid "'params' must be a formula or list of formulae"
 msgstr ""
 
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
+msgstr ""
+
+msgid "step halving factor reduced below minimum in NLS step"
 msgstr ""
 
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
@@ -420,9 +424,6 @@ msgid ""
 "convergence"
 msgstr "수렴하지 않고 지정된 최대 반복수에 도달하였습니다"
 
-msgid "object must inherit from class \"lme\""
-msgstr ""
-
 msgid "terms must all have the same denominator DF"
 msgstr ""
 
@@ -500,9 +501,6 @@ msgstr "적합된 \"lme\" 객체가 없습니다"
 msgid "objects must have coefficients with same row names"
 msgstr ""
 
-msgid "object must inherit from \"data.frame\""
-msgstr ""
-
 msgid "only one level allowed in 'gapply'"
 msgstr ""
 
@@ -525,9 +523,6 @@ msgid "'FUN' can only be a function or a list of functions"
 msgstr ""
 
 msgid "cannot omit grouping factor without 'form'"
-msgstr ""
-
-msgid "object must inherit from class \"lmList\""
 msgstr ""
 
 msgid "no degrees of freedom for estimating std. dev."
@@ -598,8 +593,8 @@ msgid "incompatible formulas for groups in \"random\" and \"correlation\""
 msgstr ""
 
 msgid ""
-"cannot use smaller level of grouping for \"correlation\" than for \"random"
-"\". Replacing the former with the latter."
+"cannot use smaller level of grouping for \"correlation\" than for "
+"\"random\". Replacing the former with the latter."
 msgstr ""
 
 msgid "'start' must have a component called 'fixed'"
@@ -651,6 +646,9 @@ msgid "PORT message:"
 msgstr ""
 
 msgid "Iteration %d, LME step: nlm() did not converge (code = %d)."
+msgstr ""
+
+msgid "step halving factor reduced below minimum in PNLS step"
 msgstr ""
 
 #, fuzzy

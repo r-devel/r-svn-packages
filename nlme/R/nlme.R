@@ -870,7 +870,7 @@ nlme.formula <-
     if (verbose) cat(" completed fit_nlme() step.\n")
     if (work$settings[4] == 1) {
       ##      convResult <- 2
-      msg <- "step halving factor reduced below minimum in PNLS step"
+      msg <- gettext("step halving factor reduced below minimum in PNLS step")
       if (controlvals$returnObject)
         warning(msg)
       else

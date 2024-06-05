@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-165\n"
-"POT-Creation-Date: 2024-05-01 22:23\n"
+"POT-Creation-Date: 2024-06-05 14:17\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -185,7 +185,7 @@ msgstr ""
 msgid "computed \"gls\" fit is singular, rank %s"
 msgstr ""
 
-msgid "object must inherit from class \"gls\""
+msgid "object must inherit from class %s"
 msgstr ""
 
 msgid "'Terms' must be between 1 and %d"
@@ -240,6 +240,9 @@ msgid "'params' must be a formula or list of formulae"
 msgstr ""
 
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
+msgstr ""
+
+msgid "step halving factor reduced below minimum in NLS step"
 msgstr ""
 
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
@@ -383,9 +386,6 @@ msgstr ""
 msgid "maximum number of iterations (lmeControl(maxIter)) reached without convergence"
 msgstr ""
 
-msgid "object must inherit from class \"lme\""
-msgstr ""
-
 msgid "terms must all have the same denominator DF"
 msgstr ""
 
@@ -458,9 +458,6 @@ msgstr ""
 msgid "objects must have coefficients with same row names"
 msgstr ""
 
-msgid "object must inherit from \"data.frame\""
-msgstr ""
-
 msgid "only one level allowed in 'gapply'"
 msgstr ""
 
@@ -483,9 +480,6 @@ msgid "'FUN' can only be a function or a list of functions"
 msgstr ""
 
 msgid "cannot omit grouping factor without 'form'"
-msgstr ""
-
-msgid "object must inherit from class \"lmList\""
 msgstr ""
 
 msgid "no degrees of freedom for estimating std. dev."
@@ -597,6 +591,9 @@ msgid "PORT message:"
 msgstr ""
 
 msgid "Iteration %d, LME step: nlm() did not converge (code = %d)."
+msgstr ""
+
+msgid "step halving factor reduced below minimum in PNLS step"
 msgstr ""
 
 msgid "maximum number of iterations (maxIter = %d) reached without convergence"

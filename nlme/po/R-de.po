@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 4.0.0 / nlme-3.1-145\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2024-05-01 22:23\n"
+"POT-Creation-Date: 2024-06-05 14:17\n"
 "PO-Revision-Date: 2020-04-01 15:18+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -151,8 +151,8 @@ msgstr ""
 # http://www.sozpsy.uni-hannover.de/marienthal/glossar/html/k37.htm
 msgid "covariate must have unique values within groups for \"corCAR1\" objects"
 msgstr ""
-"Kovariate muss eindeutige Werte innerhalb der Gruppen für \"corCAR1-Objekte"
-"\" haben."
+"Kovariate muss eindeutige Werte innerhalb der Gruppen für \"corCAR1-"
+"Objekte\" haben."
 
 msgid "autoregressive order must be a non-negative integer"
 msgstr "Autoregressive Ordnung muss eine nicht-negative Ganzzahl sein."
@@ -161,9 +161,8 @@ msgid "moving average order must be a non-negative integer"
 msgstr ""
 "Ordnung des gleitenden Durchschnitts muss eine nicht-negative Ganzzahl sein."
 
-#, fuzzy
 msgid "at least one of 'p' and 'q' must be > 0"
-msgstr "Startwerte für 'varIdent' müssen > 0 sein."
+msgstr "'p' oder 'q' muss > 0 sein"
 
 msgid "initial value for parameter of wrong length"
 msgstr "Anfangswerte für Parameter hat falsche Länge"
@@ -182,8 +181,8 @@ msgstr ""
 # http://www.sozpsy.uni-hannover.de/marienthal/glossar/html/k37.htm
 msgid "covariate must have unique values within groups for \"corARMA\" objects"
 msgstr ""
-"Kovariate muss eindeutige Werte innerhalb der Gruppen für \"corARMA-Objekte"
-"\" haben."
+"Kovariate muss eindeutige Werte innerhalb der Gruppen für \"corARMA-"
+"Objekte\" haben."
 
 msgid "parameter in \"corCompSymm\" structure must be < 1 in absolute value"
 msgstr "Parameter in \"corCompSymm\"-Struktur muss vom Betrag < 1 sein."
@@ -249,8 +248,8 @@ msgstr "maximale Anzahl der Iterationen ohne Konvergenz erreicht"
 msgid "computed \"gls\" fit is singular, rank %s"
 msgstr "errechneter \"gls\"-Fit ist singulär, Rang %s"
 
-msgid "object must inherit from class \"gls\""
-msgstr "Objekt muss von der Klasse \"gls\" abgeleitet sein."
+msgid "object must inherit from class %s"
+msgstr "Objekt muss von der Klasse %s erben"
 
 msgid "'Terms' must be between 1 and %d"
 msgstr "'Terms' müssen zwischen 1 und %d liegen."
@@ -311,6 +310,9 @@ msgstr "'params' müssen eine Formel oder eine Liste von Formeln sein."
 
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr "Formeln in 'params' müssen die Form \"parameter ~ expr\" haben."
+
+msgid "step halving factor reduced below minimum in NLS step"
+msgstr "Schrittlängen-Halbierungsfaktor reduziert unter Minimum im NLS-Schritt"
 
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
 msgstr "REML Log-likelihood für \"gnls\"-Objekte kann nicht berechnet werden"
@@ -473,9 +475,6 @@ msgstr ""
 "maximale Anzahl der Iterationen (lmeControl(maxIter)) ohne Konvergenz "
 "erreicht"
 
-msgid "object must inherit from class \"lme\""
-msgstr "Objekt muss von der Klasse \"lme\" erben"
-
 msgid "terms must all have the same denominator DF"
 msgstr "Terme müssen alle den gleichen Freiheitsgrad im Nenner haben"
 
@@ -564,9 +563,6 @@ msgstr "kein angepasstes \"lme\"-Objekt"
 msgid "objects must have coefficients with same row names"
 msgstr "Objekte müssen Koeffizienten mit gleichen Zeilennamen haben."
 
-msgid "object must inherit from \"data.frame\""
-msgstr "Objekt muss von \"data.frame\" erben."
-
 msgid "only one level allowed in 'gapply'"
 msgstr "nur eine Stufe in 'gapply' erlaubt"
 
@@ -590,9 +586,6 @@ msgstr "'FUN' kann nur eine Funktion oder eine Liste von Funktionen sein."
 
 msgid "cannot omit grouping factor without 'form'"
 msgstr "Gruppierungsfaktor ohne 'form' kann nicht weggelassen werden."
-
-msgid "object must inherit from class \"lmList\""
-msgstr "Objekt muss von der Klasse \"lmList\" erben."
 
 msgid "no degrees of freedom for estimating std. dev."
 msgstr "keine Freiheitsgrade für Schätzung von Standardabweichung"
@@ -666,11 +659,11 @@ msgid "incompatible formulas for groups in \"random\" and \"correlation\""
 msgstr "inkompatible Formeln für Gruppen in \"random\" und \"correlation\""
 
 msgid ""
-"cannot use smaller level of grouping for \"correlation\" than for \"random"
-"\". Replacing the former with the latter."
+"cannot use smaller level of grouping for \"correlation\" than for "
+"\"random\". Replacing the former with the latter."
 msgstr ""
-"Zur Gruppierung in \"correlation\" kann keine kleinere Stufe als für \"random"
-"\" benutzt werden. Ersteres wird durch letzteres ersetzt."
+"Zur Gruppierung in \"correlation\" kann keine kleinere Stufe als für "
+"\"random\" benutzt werden. Ersteres wird durch letzteres ersetzt."
 
 msgid "'start' must have a component called 'fixed'"
 msgstr "'start' muss eine Komponente mit Namen 'fixed' haben."
@@ -733,6 +726,10 @@ msgstr "PORT Nachricht:"
 
 msgid "Iteration %d, LME step: nlm() did not converge (code = %d)."
 msgstr "Iteration %d, LME Schritt: nlm() hat nicht konvergiert (Kode = %d)."
+
+msgid "step halving factor reduced below minimum in PNLS step"
+msgstr ""
+"Schrittlängenhalbierungsfaktor unter das Minimum in PNLS-Schritt vermindert"
 
 msgid "maximum number of iterations (maxIter = %d) reached without convergence"
 msgstr ""
@@ -1087,9 +1084,8 @@ msgstr "'group' in \"varFixed\"-Formel wird ignoriert."
 msgid "all variables used in 'formula' must be in 'data'"
 msgstr "Alle in 'formula' benutzten Variablen müssen in 'data' enthalten sein."
 
-#, fuzzy
 msgid "ignoring initial values (no grouping factor)"
-msgstr "'subset' mit einzelnem Gruppierungsfaktor ignoriert"
+msgstr "Startwerte werden ignoriert (kein Gruppierungsfaktor)"
 
 msgid "initial values must have group names in 'varIdent'"
 msgstr "Startwerte müssen Gruppennamen in 'varIdent' haben."
@@ -1276,76 +1272,8 @@ msgid_plural ""
 msgstr[0] "Gruppenname nicht zu Startwerten für Zufallseffekte passend: %s"
 msgstr[1] "Gruppennamen nicht zu Startwerten für Zufallseffekte passend: %s"
 
-#~ msgid "starting values for parameters are not of the correct length"
-#~ msgstr "Startwerte für Parameter haben nicht die richtige Länge."
-
-#~ msgid ""
-#~ "%d errors caught in %s.  The error messages and their frequencies are"
-#~ msgstr ""
-#~ "%d Fehler abgefangen in %s. Die Fehlermeldungen und ihre Häufigkeiten sind"
-
-#~ msgid "Package"
-#~ msgstr "Paket"
-
-#~ msgid "installed with old R version"
-#~ msgstr "installiert mit alter R Version"
-
-#~ msgid "should not be used with R version"
-#~ msgstr "sollte nicht benutzt werden mit R Version"
-
-#~ msgid "Rather re-install it with this version of R."
-#~ msgstr "Besser mit dieser R Version erneut installieren."
-
-#~ msgid "level %s not allowed for %s"
-#~ msgid_plural "levels %s not allowed for %s"
-#~ msgstr[0] "Stufe %s nicht für %s erlaubt"
-#~ msgstr[1] "Stufen %s nicht für %s erlaubt"
-
-#~ msgid "%d error caught in %s: %s"
-#~ msgid_plural "%d times caught the same error in %s: %s"
-#~ msgstr[0] "%d Fehler abgefangen in %s: %s"
-#~ msgstr[1] "%d Mal denselben Fehler abgefangen in %s: %s"
-
-#~ msgid "step halving factor reduced below minimum in NLS step"
-#~ msgstr ""
-#~ "Schrittlängen-Halbierungsfaktor reduziert unter Minimum im NLS-Schritt"
-
-#~ msgid ""
-#~ "for 'sigma' fixed, 'apVar' is set FALSE, as the cov approxmation is not "
-#~ "yet available."
-#~ msgstr ""
-#~ "für festes 'sigma' wird 'apVar' auf FALSE gesetzt, da die cov "
-#~ "Approximation noch nicht verfügbar ist."
-
-#~ msgid "An lm fit failed, probably because a factor only had one level"
-#~ msgstr ""
-#~ "Eine lm Anpassung ist fehlgeschlage, vermtlich, weil ein Faktor nur\n"
-#~ "eine Stufe hatte"
-
-#~ msgid ""
-#~ "objects must inherit from classes \"gls\", \"gnls\",\"lm\",\"lmList\", "
-#~ "\"lme\",\"nlme\",\"nlsList\", or \"nls\""
-#~ msgstr ""
-#~ "Objekte müssen von den Klassen \"gls\", \"gnls\", \"lm\", \"lmList\", "
-#~ "\"lme\", \"nlme\", \"nlsList\" oder \"nls\" erben"
-
 #~ msgid ""
 #~ "approximate covariance matrix for parameter estimates not of full rank"
 #~ msgstr ""
 #~ "Approximiert Kovarianzmatrix für Parameterschätzungen haben keinen "
 #~ "vollständigen Rang."
-
-#~ msgid "step halving factor reduced below minimum in PNLS step"
-#~ msgstr ""
-#~ "Schrittlängenhalbierungsfaktor unter das Minimum in PNLS-Schritt "
-#~ "vermindert"
-
-#~ msgid "REML comparisons are not meaningful."
-#~ msgstr "REML-Vergleiche sind nicht sinnvoll."
-
-#~ msgid "negative control$nlmStepMax - using default value"
-#~ msgstr "Negativer control$nlmStepMax – Standardwert wird benutzt."
-
-# FIXME 'Terms;
-#~ msgid "'Terms; must be between 1 and %d"
-#~ msgstr "'Terms' müssen zwischen 1 und %d liegen"

@@ -871,7 +871,7 @@ anova.lme <-
   Lmiss <- missing(L)
   if ((rt <- ...length() + 1L) == 1L) {    ## just one object
     if (!inherits(object,"lme")) {
-      stop("object must inherit from class \"lme\" ")
+      stop(gettextf("object must inherit from class %s", '"lme"'), domain = NA)
     }
     vFix <- attr(object$fixDF, "varFixFact")
     if (adjustSigma && object$method == "ML")

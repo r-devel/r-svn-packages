@@ -427,7 +427,7 @@ anova.gls <-
     ## returns the likelihood ratio statistics, the AIC, and the BIC
     if ((rt <- ...length() + 1L) == 1L) {    ## just one object
         if (!inherits(object,"gls"))
-            stop("object must inherit from class \"gls\"")
+            stop(gettextf("object must inherit from class %s", '"gls"'), domain = NA)
 	if(is.na(adjustSigma))
 	    ## REML correction already applied to gnls objects
 	    adjustSigma <- inherits(object, "gnls")
