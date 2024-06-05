@@ -869,8 +869,7 @@ anova.lme <-
   fixSig <- !is.null(fixSig) && fixSig
   ## returns the likelihood ratio statistics, the AIC, and the BIC
   Lmiss <- missing(L)
-  dots <- list(...)
-  if ((rt <- length(dots) + 1L) == 1L) {    ## just one object
+  if ((rt <- ...length() + 1L) == 1L) {    ## just one object
     if (!inherits(object,"lme")) {
       stop("object must inherit from class \"lme\" ")
     }

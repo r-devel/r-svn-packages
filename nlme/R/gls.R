@@ -425,8 +425,7 @@ anova.gls <-
     fixSig <- !is.null(fixSig) && fixSig
     Lmiss <- missing(L)
     ## returns the likelihood ratio statistics, the AIC, and the BIC
-    dots <- list(...)
-    if ((rt <- length(dots) + 1L) == 1L) {    ## just one object
+    if ((rt <- ...length() + 1L) == 1L) {    ## just one object
         if (!inherits(object,"gls"))
             stop("object must inherit from class \"gls\"")
 	if(is.na(adjustSigma))
