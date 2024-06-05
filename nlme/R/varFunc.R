@@ -228,7 +228,7 @@ Initialize.varFixed <-
   function(object, data, ...)
 {
   form <- formula(object)
-  if (any(is.na(match(all.vars(form), names(data))))) {
+  if (anyNA(match(all.vars(form), names(data)))) {
     ## cannot evaluate covariate on data
     stop("all variables used in 'formula' must be in 'data'")
   }
@@ -367,7 +367,7 @@ Initialize.varIdent <-
     }
     if (!is.null(fix <- attr(object, "fixed"))) {
       fixNames <- names(fix)
-      if (any(is.na(match(fixNames, uStrat)))) {
+      if (anyNA(match(fixNames, uStrat))) {
 	stop("fixed parameter names in 'varIdent' must be a subset of group names")
       }
       uStratVar <- uStrat[is.na(match(uStrat, fixNames))] # varying strata
@@ -563,7 +563,7 @@ Initialize.varPower <-
 	if (is.null(fixNames)) {
 	  stop("fixed parameters must have group names")
 	}
-	if (any(is.na(match(fixNames, uStrat)))) {
+	if (anyNA(match(fixNames, uStrat))) {
 	  stop("mismatch between group names and fixed values names")
 	}
       } else {
@@ -774,7 +774,7 @@ Initialize.varExp <-
 	if (is.null(fixNames)) {
 	  stop("fixed parameters must have group names")
 	}
-	if (any(is.na(match(fixNames, uStrat)))) {
+	if (anyNA(match(fixNames, uStrat))) {
 	  stop("mismatch between group names and fixed values names")
 	}
       } else {
@@ -903,7 +903,7 @@ varConstPower <-
     if (is.null(nv <- names(val))) {
       names(val) <- c("const", "power")[1:lv]
     } else {
-      if (any(is.na(match(nv, c("const", "power"))))) {
+      if (anyNA(match(nv, c("const", "power")))) {
         stop(gettextf("%s can only have names \"const\" and \"power\"", nam),
              domain = NA)
       }
@@ -1044,7 +1044,7 @@ Initialize.varConstPower <-
 	  if (is.null(fixNames)) {
 	    stop("fixed parameters must have group names")
 	  }
-	  if (any(is.na(match(fixNames, uStrat)))) {
+	  if (anyNA(match(fixNames, uStrat))) {
 	    stop("mismatch between group names and fixed values names")
 	  }
 	} else {
@@ -1169,7 +1169,7 @@ varConstProp <-
     if (is.null(nv <- names(val))) {
       names(val) <- c("const", "prop")[1:lv]
     } else {
-      if (any(is.na(match(nv, c("const", "prop"))))) {
+      if (anyNA(match(nv, c("const", "prop")))) {
         stop(gettextf("%s can only have names \"const\" and \"prop\"", nam),
              domain = NA)
       }
@@ -1310,7 +1310,7 @@ Initialize.varConstProp <-
 	  if (is.null(fixNames)) {
 	    stop("fixed parameters must have group names")
 	  }
-	  if (any(is.na(match(fixNames, uStrat)))) {
+	  if (anyNA(match(fixNames, uStrat))) {
 	    stop("mismatch between group names and fixed values names")
 	  }
 	} else {

@@ -201,7 +201,7 @@ getCovariate.corStruct <-
       if (is.null(grps)) {
         covar <- 1:nrow(data)
       } else {
-	covar <- lapply(split(grps, grps), function(x) seq_along(x))
+	covar <- lapply(split(grps, grps), seq_along)
       }
     }
     if (!is.null(grps)) {

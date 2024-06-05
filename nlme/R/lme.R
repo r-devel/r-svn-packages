@@ -1843,7 +1843,7 @@ predict.lme <-
     reSt <- object$modelStruct$reStruct[whichQ]
     lmeSt <- lmeStruct(reStruct = reSt)
     groups <- getGroupsFormula(reSt)
-    if (any(is.na(match(all.vars(groups), names(newdata))))) {
+    if (anyNA(match(all.vars(groups), names(newdata)))) {
       ## groups cannot be evaluated in newdata
       stop("cannot evaluate groups for desired levels on 'newdata'")
     }

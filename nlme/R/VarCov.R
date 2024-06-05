@@ -24,7 +24,7 @@ getVarCov.lme <-
              type= c("random.effects","conditional","marginal"), ...)
 {
     type  <-  match.arg(type)
-    if(any("nlme" == class(obj)))
+    if(inherits(obj, "nlme"))
         stop("not implemented for \"nlme\" objects")
     if(length(obj$groups) > 1)
         stop("not implemented for multiple levels of nesting")

@@ -164,7 +164,7 @@ gapply <-
              }
            },
            numeric = {
-             if (any(is.na(match(which, 1:ncol(object))))) {
+             if (anyNA(match(which, 1:ncol(object)))) {
                  stop(gettextf("'which' must be between 1 and %d",
                                ncol(object)), domain = NA)
              }
