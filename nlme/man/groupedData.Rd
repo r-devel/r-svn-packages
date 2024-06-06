@@ -105,13 +105,14 @@ groupedData(formula, data, order.groups, FUN, outer, inner,
 }
 \references{
   Bates, D.M. and Pinheiro, J.C. (1997), "Software Design for Longitudinal
-  Data", in "Modelling Longitudinal and Spatially Correlated Data:
+  Data Analysis", in "Modelling Longitudinal and Spatially Correlated Data:
   Methods, Applications and Future Directions", T.G. Gregoire (ed.),
   Springer-Verlag, New York.
+  \doi{10.1007/978-1-4612-0699-6_4}
 
-  Pinheiro, J.C. and Bates, D.M. (1997) "Future Directions in
-  Mixed-Effects Software: Design of NLME 3.0" available at
-  http://nlme.stat.wisc.edu/ %% << no longer existing FIXME
+  %% Pinheiro, J.C. and Bates, D.M. (1997) "Future Directions in
+  %% Mixed-Effects Software: Design of NLME 3.0" (talk)
+  %% originally available at http://nlme.stat.wisc.edu/
 
   Pinheiro, J.C., and Bates, D.M. (2000) "Mixed-Effects Models
   in S and S-PLUS", Springer.  
