@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-165\n"
-"POT-Creation-Date: 2024-06-05 14:17\n"
+"POT-Creation-Date: 2024-06-06 11:06\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -789,9 +789,6 @@ msgid "\"pdMat\" elements must have a formula"
 msgstr ""
 
 msgid "elements in 'object' must be formulas or \"pdMat\" objects"
-msgstr ""
-
-msgid "cannot change the parameter when ength of parameters is undefined"
 msgstr ""
 
 msgid "cannot change parameter length of initialized objects"

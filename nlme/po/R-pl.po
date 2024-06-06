@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-115\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2024-06-05 14:17\n"
+"POT-Creation-Date: 2024-06-06 11:06\n"
 "PO-Revision-Date: 2014-03-25 17:00+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -760,7 +760,9 @@ msgstr "wszystkie dopasowane obiekty muszą mieć tę samą metodę oszacowania"
 msgid ""
 "fitted objects with different fixed effects. REML comparisons are not "
 "meaningful."
-msgstr "dopasowane obiekty z różnymi stałymi efektami. Porównania REML nie mają sensu."
+msgstr ""
+"dopasowane obiekty z różnymi stałymi efektami. Porównania REML nie mają "
+"sensu."
 
 # nlme/R/lme.R: 1026
 # stop("objects must have a \"call\" component or attribute")
@@ -1102,8 +1104,8 @@ msgstr ""
 # gettext("maximum number of iterations (lmeControl(maxIter)) reached without convergence")
 msgid "maximum number of iterations (maxIter = %d) reached without convergence"
 msgstr ""
-"maksymalna liczba iteracji (maxIter = %d) została osiągnięta bez "
-"uzyskania zbieżności"
+"maksymalna liczba iteracji (maxIter = %d) została osiągnięta bez uzyskania "
+"zbieżności"
 
 # nlme/R/nlsList.R: 31
 # stop("second argument must be a groupedData object")
@@ -1514,9 +1516,6 @@ msgid "elements in 'object' must be formulas or \"pdMat\" objects"
 msgstr ""
 "elementy w argumencie 'object' muszą być formułami lub obiektami klasy "
 "\"pdMat\""
-
-msgid "cannot change the parameter when ength of parameters is undefined"
-msgstr "nie można zmienić parametru gdy długość parametru jest nieokreślona"
 
 msgid "cannot change parameter length of initialized objects"
 msgstr "nie można zmienić długości parametru zainicjowanych obiektów"

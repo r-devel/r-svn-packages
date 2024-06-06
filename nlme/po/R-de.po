@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 4.0.0 / nlme-3.1-145\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2024-06-05 14:17\n"
+"POT-Creation-Date: 2024-06-06 11:06\n"
 "PO-Revision-Date: 2020-04-01 15:18+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -1000,12 +1000,6 @@ msgstr "\"pdMat\"-Elemente müssen eine Formel haben"
 
 msgid "elements in 'object' must be formulas or \"pdMat\" objects"
 msgstr "Elemente in 'object' müssen Formeln oder \"pdMat\"-Objekte sein."
-
-# FIXME s/ength/length/
-msgid "cannot change the parameter when ength of parameters is undefined"
-msgstr ""
-"Der Parameter kann nicht geändert werden, wenn die Länge der Parameters "
-"nicht definiert ist."
 
 msgid "cannot change parameter length of initialized objects"
 msgstr ""
