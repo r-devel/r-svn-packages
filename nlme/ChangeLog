@@ -2,6 +2,10 @@
 
 	* DESCRIPTION (Depends): update to real minimum R version (R >= 3.6.0).
 
+	* po, inst/po: update (installed) translations
+
+	* man/simulate.lme.Rd, man/summary.lme.Rd: drop unneeded \donttest.
+
 2024-04-29  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/nlme.R (nlme.nlsList): fix scoping issue for nlsList() and
