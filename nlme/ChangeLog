@@ -1,3 +1,17 @@
+2024-06-16  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
+
+	* man/pairs.compareFits.Rd:
+	* man/pairs.lmList.Rd:
+	* man/pairs.lme.Rd:
+	* man/plot.ACF.Rd:
+	* man/plot.Variogram.Rd:
+	* man/plot.augPred.Rd:
+	* man/plot.gls.Rd:
+	* man/plot.lmList.Rd:
+	* man/plot.lme.Rd:
+	* man/plot.nfnGroupedData.Rd:
+	Add package anchors for links to targets from package 'lattice'.
+
 2024-06-05  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* DESCRIPTION (Depends): update to real minimum R version (R >= 3.6.0).
