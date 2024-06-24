@@ -1259,7 +1259,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
 
     ## Now call the family again to get first derivative of Hessian w.r.t
     ## smoothing parameters, in list d1H. Alternatively, if deriv==1 and !ncv
-    ## then tr(Hi d1H) returne as a vector in 'd1H'.
+    ## then tr(Hi d1H) return as a vector in 'd1H'.
 
     ll <- if (ncv) llf(y,x,coef,weights,family,offset=offset,deriv=3,d1b=d1b,ncv=TRUE) else
                    llf(y,x,coef,weights,family,offset=offset,deriv=2+(deriv>1),d1b=d1b,fh=D*t(D*chol2inv(L)[ipiv,ipiv]))
