@@ -880,13 +880,15 @@ minres <- function(R,u,b) {
   oo$x
 }
 
-neicov <- function(Dd,nei) {
+neicov <- function(Dd,D1=NULL,nei) {
 ## wrapper for nei_cov. Dd is n by p matrix of leave one out perturbations to
-## coef vectors. nei is neighbourhood structure. 
+## coef vectors. nei is neighbourhood structure. If D1 is not NULL then it is
+## perturbation matrix to be used on RHS of computation - used for correction
+## terms.
   p <- ncol(Dd)
   V <- matrix(0,p,p)
   a <- nei$a-1
-  .Call(C_nei_cov,V,Dd,nei$ma,a)
+  if (is.null(D1)) .Call(C_nei_cov,V,Dd,Dd,nei$ma,a) else .Call(C_nei_cov,V,Dd,D1,nei$ma,a)
   (V+t(V))/2
 } ## neicov
 

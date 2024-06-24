@@ -257,7 +257,7 @@ SEXP ncvls(SEXP x,SEXP JJ,SEXP h,SEXP hi,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP I
 	   SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV);
 SEXP Rncvls(SEXP x,SEXP JJ,SEXP R1,SEXP dH,SEXP L1, SEXP L2,SEXP L3,SEXP IND, SEXP MI, SEXP M, SEXP K,SEXP BETA,
 	    SEXP ETACV,SEXP DETACV,SEXP DETA,SEXP DB,SEXP DERIV,SEXP EPS,SEXP NT);
-SEXP nei_cov(SEXP v,SEXP d, SEXP M, SEXP K);
+SEXP nei_cov(SEXP v,SEXP d, SEXP d1, SEXP M, SEXP K);
 void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double *G,double *rsd, double *w,int *pg,
 	  int *nn,int *a,ptrdiff_t *ma,int *d,ptrdiff_t *md,double *X,int *k,int *ck, int *ks,int *m,int *p, ptrdiff_t *n,
 	  double **S,

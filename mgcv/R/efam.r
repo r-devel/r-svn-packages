@@ -91,7 +91,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
     if (sum(abs(g) > tol*abs(nll$nll))==0) break 
   } ## main Newton loop
   if (step.failed) warning("step failure in theta estimation")
-  if (attachH) attr(theta,"H") <- H#nll$H
+  if (attachH) attr(theta,"H") <- H #nll$H
   theta
 } ## estimate.theta
 

@@ -147,7 +147,8 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       Sl[[b]] <- list()
       Sl[[b]]$nl.reg <- if (is.null(G$smooth[[i]]$nl.reg)||G$smooth[[i]]$nl.reg<=0) NULL else G$smooth[[i]]$nl.reg ## any fixed regularizer for non-linear coefs
       Sl[[b]]$start <- G$smooth[[i]]$first.para
-      Sl[[b]]$stop <- G$smooth[[i]]$last.para    
+      Sl[[b]]$stop <- G$smooth[[i]]$last.para
+      Sl[[b]]$srank <- G$smooth[[b]]$rank ## original rank of penalty matrix
       ## if the smooth has a g.index field it indicates non-linear params,
       ## in which case re-parameterization will usually break the model.
       ## Or global supression of reparameterization may be requested...
@@ -840,7 +841,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
         grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=deriv) else 
              ldetSblock(Sl[[b]]$rS,rho[ind],deriv=deriv,root=root,nt=nt)
 	grp$det0 <- 0     
-      }	     
+      }
       Sl[[b]]$lambda <- exp(rho[ind])
       ## If stabilizing repara not applied to coefs, then need to correct log det
       ## for transform, as it won't cancel, hence grp$det0...
@@ -1222,7 +1223,9 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
 
 d.detXXS <- function(Sl,PP,nt=1,deriv=2) {
 ## function to obtain derivatives of log |X'X+S| given unpivoted PP' where 
-## P is inverse of R from the QR of the augmented model matrix. 
+## P is inverse of R from the QR of the augmented model matrix.
+## Note that d1[k] is also the EDF suppressed by the kth smoothing penalty,
+## for linear smoothing parameters. 
   SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP'
   nd <- length(SPP)
   d1 <- rep(0,nd);d2 <- matrix(0,nd,nd) 

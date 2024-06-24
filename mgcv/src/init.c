@@ -43,7 +43,7 @@ R_CallMethodDef CallMethods[] = {
   {"Rncv",(DL_FUNC)&Rncv,19},
   {"ncvls",(DL_FUNC)&ncvls,18},
   {"Rncvls",(DL_FUNC)&Rncvls,19},
-  {"nei_cov",(DL_FUNC)&nei_cov,4},
+  {"nei_cov",(DL_FUNC)&nei_cov,5},
   {"dpdev",(DL_FUNC)&dpdev,1},
   {"spdev",(DL_FUNC)&spdev,1},
   {"mvnll",(DL_FUNC)&mvnll,13},
