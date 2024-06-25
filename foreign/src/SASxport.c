@@ -506,7 +506,7 @@ xport_info(SEXP xportFile)
     PROTECT(char_numeric   = mkChar("numeric"));
     PROTECT(char_character = mkChar("character"));
 
-    if(!isValidString(xportFile))
+    if(!validString(xportFile))
 	error(_("first argument must be a file name"));
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(xportFile, 0))), "rb");
     if (!fp)
@@ -603,7 +603,7 @@ xport_read(SEXP xportFile, SEXP xportInfo)
     names = getAttrib(xportInfo, R_NamesSymbol);
     setAttrib(ans, R_NamesSymbol, names);
 
-    if(!isValidString(xportFile))
+    if(!validString(xportFile))
 	error(_("first argument must be a file name"));
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(xportFile, 0))), "rb");
     if (!fp)

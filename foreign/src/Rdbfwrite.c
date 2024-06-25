@@ -28,8 +28,14 @@
 #include "shapefil.h"
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/Visibility.h>
 #include "foreign.h"
 
+Rboolean attribute_hidden validString(SEXP x)
+{
+    return TYPEOF(x) == STRSXP && LENGTH(x) > 0
+           && TYPEOF(STRING_ELT(x, 0)) != NILSXP;
+}
 
 static DBFHandle Rdbfwrite(DBFHandle, SEXP, SEXP, SEXP, SEXP);
 
@@ -46,7 +52,7 @@ SEXP DoWritedbf(SEXP file, SEXP df, SEXP pr, SEXP sc, SEXP DataTypes)
 {
     DBFHandle hDBF;
 
-    if (!isValidString(file))
+    if (!validString(file))
 	error (_("first argument must be a file name"));
 
     hDBF = DBFCreate(R_ExpandFileName(CHAR(STRING_ELT(file, 0))));

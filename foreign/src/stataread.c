@@ -584,7 +584,7 @@ SEXP do_readStata(SEXP call)
       error(_("can not yet read Stata .dta on this platform"));
 
 
-    if (!isValidString(fname = CADR(call)))
+    if (!validString(fname = CADR(call)))
 	error(_("first argument must be a file name\n"));
 
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(fname,0))), "rb");
@@ -1040,7 +1040,7 @@ SEXP do_writeStata(SEXP call)
       error(_("cannot yet read write .dta on this platform"));
 
 
-    if (!isValidString(fname = CADR(call)))
+    if (!validString(fname = CADR(call)))
 	error(_("first argument must be a file name\n"));
 
     df = CADDR(call);
