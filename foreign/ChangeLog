@@ -1,3 +1,12 @@
+2024-06-25 Tomas Kalibera
+
+	* DESCRIPTION: Version is 0.8-87
+	* src/foreign.h
+	* src/Rdbfwrite.c
+	* src/SASxport.c
+	* src/stataread.c
+        avoid using isValidString
+
 2024-04-17 Brian Ripley
 
 	* src/dbfopen.c: remove long-obsolete version test
