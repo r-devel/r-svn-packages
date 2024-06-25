@@ -1,11 +1,16 @@
 2024-06-25 Tomas Kalibera
 
 	* DESCRIPTION: Version is 0.8-87
-	* src/foreign.h
-	* src/Rdbfwrite.c
-	* src/SASxport.c
-	* src/stataread.c
+	* src/foreign.h:
+	* src/Rdbfwrite.c:
+	* src/SASxport.c:
+	* src/stataread.c:
         avoid using isValidString
+
+	* src/pfm-read.c:
+	* src/sfm-read.c:
+	fix mismatches between expected and provided argument types
+	in formatted output
 
 2024-04-17 Brian Ripley
 
