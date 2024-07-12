@@ -1634,27 +1634,34 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         }
         rsd1 <- residuals.gam(object) ## CV residuals
 	ii <- !is.finite(rsd1);if (any(ii)) rsd1[ii] <- rsd0[ii]
-#	mu.err <- fitted0 - object$fitted.values ## estimated error in mu
-#	dr <- (rsd0-rsd1)/mu.err ## approx. drsd/dmu
-#        mu.err <- mu.err*dr
-        object$fitted.values <- (fitted0 + object$fitted.values)/2
-        rsd <- residuals.gam(object) ## best estimate true residuals
-	ii <- !is.finite(rsd);if (any(ii)) rsd[ii] <- rsd0[ii]
-	mu.err <- rsd0-rsd ## using mid point of mu and mu.cv as best estimate
+
+        ## adaptive weighting to avoid underestimating mu error, while accounting for higher variance in
+	## cv mu relative to mu...
+        alpha <- 0.4 ## half way between full shrinkage compensation (.3) and none (.5)  
+      
+	mu.err <- (1-alpha)*(rsd0-rsd1)
+	#rsd <- alpha*rsd0 + (1-alpha)*rsd1
         object$fitted.values <- fitted0
 
-#        V0 <- neicov(dd,nei=nei)  #*n/(n-sum(object$edf))   ## direct V (too small)
+        V0 <- neicov(dd,nei=nei)    ## direct V (too small)
 	dd0 <- dd*mu.err/rsd0
-#        dd1 <- dd*rsd/rsd0 ## correct to avoid underestimation (over-estimation if CV residuals used alone)	
-#       V0 <- V0 - neicov(dd0,dd1,nei)-neicov(dd1,dd0,nei)-neicov(dd0,dd0,nei)
-#	ev <- eigen(V0,symmetric = TRUE);ev$values[ev$values<0] <- 0
-#	V0 <- sqrt(ev$values)*t(ev$vectors);Vj <- crossprod(V0) 
+	
+        V0 <- V0 - neicov(dd,dd0,nei)-neicov(dd0,dd,nei)
+        #dd0 <- dd*(rsd0-rsd)/rsd0
+        V0 <- V0+neicov(dd0,dd0,nei)
+        Vj <- V0
+
+        ## get nearest +ve def matrix
+        ev <- eigen(Vj)
+        mev <- mean(ev$values)
+        ev$values[ev$values<0] <- 0
+	if (mev>0) ev$values <- ev$values*mev/mean(ev$values)
+	V0 <- sqrt(ev$values)*t(ev$vectors);
+	Vj <- crossprod(V0) *n/(n-sum(object$edf))
+	
         dd1 <- dd*rsd1/rsd0
-        Vcv <- pdef(neicov(dd1,nei=nei))
-	V0 <- Vcv-neicov(dd0,dd0,nei)  #*n/(n-sum(object$edf)) ## cross validated V (too large)
-	ev <- eigen(V0,symmetric = TRUE);ev$values[ev$values<0] <- 0
-	V0 <- sqrt(ev$values)*t(ev$vectors);Vj <- crossprod(V0)	#V0 <- pdef(V0)  #*n/(n-sum(object$edf))   ## direct V (too small)
-        # Vj <-  (Vcv+V0)/2       ## combination less bad
+        Vcv <- neicov(dd1,nei=nei) ## cross validated V (too large)
+
 	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate - does lower limit make sense? 
 	alpha1 <- max(sum(Vj*object$Ve)/sum(object$Ve^2),1)
 	Vcv <- Vcv + (object$Vp-object$Ve)*alpha1 ## bias correct conservative (too large)
