@@ -772,9 +772,13 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
       nldS <- Sl[[b]]$ldS(Sl[[b]],deriv) ## get the log determinant and any derivatives
       ldS <- ldS + nldS$ldS
       nldS$ldS1 <- nldS$ldS1[!fixed[ind]] ## discard fixed param derivatives
+      
       nderiv <- length(nldS$ldS1)
       if (nderiv) d1.ldS[k.deriv+1:nderiv-1] <- nldS$ldS1
-      if (deriv>1) stop("second derivs not available for non-linear penalties")
+      if (deriv>1) {
+        nldS$ldS2 <- nldS$ldS2[!fixed[ind],!fixed[ind]]
+	d2.ldS[k.deriv+1:nderiv-1,k.deriv+1:nderiv-1] <- nldS$ldS2
+      }
       k.deriv <- k.deriv + nderiv
       k.sp <- k.sp + Sl[[b]]$n.sp
       Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
@@ -1140,9 +1144,12 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
   SA <- list()
   k <- 0 ## component counter
   nb <- length(Sl) ## number of blocks
+  nli <- list()
   if (nb>0) for (b in 1:nb) { ## block loop
       if (!Sl[[b]]$linear) { ## non-linear term
         ind <- Sl[[b]]$start:Sl[[b]]$stop
+	kk <- length(nli)+1
+	nli[[kk]] <- c(k+1,b) ## record where nl term starts in SA 
         for (i in 1:Sl[[b]]$n.sp) { ## loop over its paramaters
 	  k <- k + 1  
           if (full) {
@@ -1156,6 +1163,7 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
             attr(SA[[k]],"ind") <- ind
 	  }
         }
+
       } else if (length(Sl[[b]]$S)==1) { ## singleton
       k <- k + 1
       ind <- Sl[[b]]$start:Sl[[b]]$stop
@@ -1218,29 +1226,44 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
       } ## end of S loop for block b
     }
   } ## end block loop
+  nl <- matrix(0,2,length(SA)) ## 0 indicates linear term
+  if (length(nli)) { ## record which element of Sl each non-linear SA element relates to 
+    for (i in 1:length(nli)) nl[,nli[[i]][1]+1:Sl[[nli[[i]][2]]]$n.sp-1] <- nli[[i]] 
+  }
+  attr(SA,"nli") <- nl ## record starts of non-linear terms in SA
   SA
 } ## end Sl.termMult
 
-d.detXXS <- function(Sl,PP,nt=1,deriv=2) {
+d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
 ## function to obtain derivatives of log |X'X+S| given unpivoted PP' where 
 ## P is inverse of R from the QR of the augmented model matrix.
 ## Note that d1[k] is also the EDF suppressed by the kth smoothing penalty,
-## for linear smoothing parameters. 
-  SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP'
+## for linear smoothing parameters.
+  spp <- SPP
+  SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP' where S_k is derivative in nl case
   nd <- length(SPP)
-  d1 <- rep(0,nd);d2 <- matrix(0,nd,nd) 
+  d1 <- rep(0,nd);d2 <- matrix(0,nd,nd)
+  if (deriv==2) nli <- attr(SPP,"nli")
   if (nd>0) for (i in 1:nd) { 
     indi <- attr(SPP[[i]],"ind")
     d1[i] <- sum(diag(SPP[[i]][,indi,drop=FALSE]))
     if (deriv==2) {
+      b <- nli[2,i] ## non-linear Sl[[b]] b==0 => linear
       for (j in i:nd) {
         indj <- attr(SPP[[j]],"ind")
-        d2[i,j] <- d2[j,i] <- -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])
+        xx <- -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])  
+        if (b && b == nli[2,j]) { ## non-linear second derivative needed
+	  k0 <- nli[1,i] - 1 ## where sps start in overall sp vector - 1
+	  ind <- Sl[[b]]$start:Sl[[b]]$stop
+	  xx <- xx + sum(diag(Sl[[b]]$AdS(t(PP[ind,,drop=FALSE]),Sl[[b]],j-k0,i-k0)[ind,]))
+	}
+	d2[i,j] <- d2[j,i] <- xx 
       }
-      d2[i,i] <- d2[i,i] + d1[i]
+      if (nli[2,i]==0) d2[i,i] <- d2[i,i] + d1[i] 
     }  
   }
-  list(d1=d1,d2=d2)
+  if (!spp) SPP <- NULL
+  list(d1=d1,d2=d2,SPP=SPP)
 } ## end d.detXXS
 
 Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
@@ -1284,8 +1307,9 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 ## and to use these directly to evaluate derivs of b'Sb and the RSS.
 ## piv contains the pivots from the chol that produced R.
 ## rssj and bSbj only contain the terms that will not cancel in rssj + bSbj
+## Col j of S1b is dS/drho_j beta
   Sb <- Sl.mult(Sl,beta,k = 0)          ## unpivoted
-  Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted
+  Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted dS/drho beta
   nd <- length(Skb) ## number of derivatives
   cd <- FALSE
   if (cd) { ## check derivatives
@@ -1326,7 +1350,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 
   ## alternative all in one code - matches loop results, but
   ## timing close to identical - modified for parallel exec
-  D <- matrix(unlist(Skb),length(beta),nd)
+  D <- matrix(unlist(Skb),length(beta),nd) ## cols of this are dS/drho_j beta
   bSb1 <- colSums(beta*D)
   if (inherits(R,c("dgCMatrix","dtCMatrix"))) { ## sparse R
     Dd <- Diagonal(length(d),1/d)
@@ -1336,19 +1360,31 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
     D1 <- .Call(C_mgcv_Rpforwardsolve,R,D[piv,]/d[piv],nt) ## note R transposed internally unlike forwardsolve
     db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D1,nt)/d[piv]
   }
+  S.db <- Sl.mult(Sl,db,k=0)
+  nli <- attr(Skb,"nli") ## index of non-linear terms npi[1,] is first sp of term, npi[2,] is block index 0s for linear 
+  bSb2 <- diag(x=colSums(beta*D)*(nli[1,]==0),nrow=nd)  ## linear only - only applies if npi[1,]==0
+  bSb2 <- bSb2 + 2 * (.Call(C_mgcv_pmmult2,db,D+S.db,1,0,nt) + .Call(C_mgcv_pmmult2,D,db,1,0,nt))
+  if (any(nli[1,]!=0)) { ## non-linear 2nd deriv part needed
+    kk <- which(nli[2,]!=0)
+    for (i in kk) {
+      b <- nli[2,i];k0 <- nli[1,i]-1
+      ind <- Sl[[b]]$start:Sl[[b]]$stop
+      for (j in kk) if (nli[2,j]==b && i<=j) {
+        x <- bSb2[i,j] + sum(Sl[[b]]$AdS(beta[ind],Sl[[b]],i-k0,j-k0)*beta[ind])
+	bSb2[i,j] <- bSb2[j,i] <- x
+      }
+    }  
+  }
   
-  if (is.null(XX)) return(list(bSb1=bSb1,db=db)) ## return early
+  if (is.null(XX)) return(list(bSb2=bSb2,bSb1=bSb1,db=db,S1b=D)) ## return early
   
   ## XX.db <- XX%*%db
   XX.db <- .Call(C_mgcv_pmmult2,XX,db,0,0,nt)
- 
-  S.db <- Sl.mult(Sl,db,k=0)
 
   rss2 <- 2 * .Call(C_mgcv_pmmult2,db,XX.db,1,0,nt)
-  bSb2 <- diag(x=colSums(beta*D),nrow=nd)
-  bSb2 <- bSb2 + 2 * (.Call(C_mgcv_pmmult2,db,D+S.db,1,0,nt) + .Call(C_mgcv_pmmult2,D,db,1,0,nt))
+ 
   list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,
-       d1b=db ,rss1=rss1,rss2=rss2)
+       d1b=db ,rss1=rss1,rss2=rss2,S1b=D)
 } ## end Sl.iftChol
 
 Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=0,drop=NULL,tol=0,nthreads=1) {
