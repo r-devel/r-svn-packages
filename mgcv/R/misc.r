@@ -232,7 +232,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
       XWX <- Dl[-ldrop,] %*% XWX %*% t(Dl[-rdrop,])
     }
     return(XWX) ## note that this is sparse
-  }
+  } ## sparse case 
   ## block oriented code...
   if (is.null(lt)&&is.null(lt)) {
     # old .C code - can't handle long vector k
@@ -252,9 +252,9 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
     lpip <- attr(X,"lpip") ## list of coefs for each term
     rpi <- unlist(lpip[rt])
     lpi <- unlist(lpip[lt])
-    if (is.null(lt)) {
+    if (is.null(lt)) { ## note nrs and ncs not used in current code 
       lpi <- rpi
-      nrs <- lt <- 0
+      nrs <- lt <- 0 ## currently lt == 0 signals nrs = 0 !
       ncs <- length(rt)
     } else {
       nrs <- length(lt)

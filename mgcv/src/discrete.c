@@ -2504,7 +2504,7 @@ SEXP CXVXd0(SEXP XWXr, SEXP Xr, SEXP er, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
 
 SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr,
-	    SEXP csr, SEXP rsr) {
+	    SEXP rsr,SEXP csr) {
 /* .Call wrapper for XWXd1 allowing R long vector storage for k. Note that 
   this does not allow more than maxint data - that would require re-writting R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
@@ -2527,6 +2527,8 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
   nthreads = INTEGER(nthreadsr);
   cs = INTEGER(csr); rs = INTEGER(rsr);
   nrs = length(rsr); ncs = length(csr);
+  if (*cs<0) ncs = 0;
+  if (*rs<0) nrs = 0;
   XWXd1(XWX,X,w,k,ks,m,p,&n,&nx,ts,dt,&nt,v,qc,nthreads,ar_stop,ar_weights,
 	rs,cs,&nrs,&ncs);
   return(R_NilValue);

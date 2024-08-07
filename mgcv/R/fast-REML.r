@@ -1241,6 +1241,12 @@ d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
 ## for linear smoothing parameters.
   spp <- SPP
   SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP' where S_k is derivative in nl case
+  ## if PP is sparse over block covered by penalty, implying that it is from the ISA and not a
+  ## full inverse, then second order terms like tr(PPdS_jPPdS_k) will not be correct - hence will
+  ## be omitted...
+  if (inherits(PP,"Matrix")) { 
+    sparse <- sapply(SPP,function(x,PP) {ii <- attr(x,"ind");length(ii)^2!=length(PP[ii,ii]@x)},PP=PP)
+  } else sparse <- rep(FALSE,length(SPP))
   nd <- length(SPP)
   d1 <- rep(0,nd);d2 <- matrix(0,nd,nd)
   if (deriv==2) nli <- attr(SPP,"nli")
@@ -1251,7 +1257,9 @@ d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
       b <- nli[2,i] ## non-linear Sl[[b]] b==0 => linear
       for (j in i:nd) {
         indj <- attr(SPP[[j]],"ind")
-        xx <- -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])  
+	## following is correct if only one term is sparse (involves incomplete portion of inverse Hessian PP),
+	## but not both. Use as approximation if i and j are for same block, but zero otherwise
+        xx <- if (sparse[i]&&sparse[j]&&!all.equal(indj,indi)) 0 else -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])  
         if (b && b == nli[2,j]) { ## non-linear second derivative needed
 	  k0 <- nli[1,i] - 1 ## where sps start in overall sp vector - 1
 	  ind <- Sl[[b]]$start:Sl[[b]]$stop
@@ -1262,7 +1270,7 @@ d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
       if (nli[2,i]==0) d2[i,i] <- d2[i,i] + d1[i] 
     }  
   }
-  if (!spp) SPP <- NULL
+  if (!spp) SPP <- NULL else attr(SPP,"sparse") <- sparse
   list(d1=d1,d2=d2,SPP=SPP)
 } ## end d.detXXS
 

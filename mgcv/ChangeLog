@@ -57,6 +57,9 @@ better done with .Call
   different numbers of predict and drop neighbourhoods. Thanks to Nicole
   Augustin.	
 
+* XWXd fix for row col interchange bug introduced with long vector support in 
+  1.9-1.
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 
