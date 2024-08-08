@@ -1000,7 +1000,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
   }
   
-  initialize <- expression({
+  initialize <- expression({ ## init gaulss
   ## idea is to regress g(y) on model matrix for mean, and then 
   ## to regress the corresponding log absolute residuals on 
   ## the model matrix for log(sigma) - may be called in both
@@ -1019,7 +1019,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank") 
@@ -1034,7 +1034,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
 	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(eta1)))
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
 	  piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank")
@@ -1338,7 +1338,7 @@ multinom <- function(K=1) {
     apply(cp,1,function(x) min(which(x>runif(1))))-1    
   } ## rd
 
-  initialize <- expression({
+  initialize <- expression({ ## for multinom
   ## Binarize each category and lm on 6*y-3 by category.
  
       n <- rep(1, nobs)
@@ -1350,9 +1350,8 @@ multinom <- function(K=1) {
           start <- rep(0,max(unlist(jj)))
           for (k in 1:length(jj)) { ## loop over the linear predictors
             yt1 <- 6*as.numeric(y==k)-3
-	    R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
-	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[k]])+crossprod(E[,jj[[k]]]),
-		 pivot=TRUE))
+	    R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[k]])+crossprod(E[,jj[[k]]])))
 	    Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[k]])
 	    piv <- attr(R,"pivot")
 	    rrank <- attr(R,"rank")
@@ -2306,8 +2305,8 @@ gevlss <- function(link=list("identity","identity","logit")) {
           start <- rep(0,max(unlist(jj)))
           yt1 <- if (family$link[[1]]=="identity") y else 
                  family$linfo[[1]]$linkfun(abs(y)+max(y)*1e-7)
-          R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
-	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE))
+          R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot");rrank <- attr(R,"rank");startji <- rep(0,ncol(R))
           if (rrank<ncol(R)) {
@@ -2320,8 +2319,8 @@ gevlss <- function(link=list("identity","identity","logit")) {
           ## LP 2...
 	  lres1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
           lres1 <- log(abs(y-family$linfo[[1]]$linkinv(lres1)))
-          R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
-	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE))
+          R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
           piv <- attr(R,"pivot");rrank <- attr(R,"rank");startji <- rep(0,ncol(R))
           if (rrank<ncol(R)) {
@@ -2333,8 +2332,8 @@ gevlss <- function(link=list("identity","identity","logit")) {
 	  start[jj[[2]]] <- startji
 	  ## LP 3...
 	  yt1 <- rep(family$linfo[[3]]$linkfun(1e-3),length(yt1))
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
-	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[3]])+crossprod(E[,jj[[3]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[3]])+crossprod(E[,jj[[3]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[3]])
           piv <- attr(R,"pivot");rrank <- attr(R,"rank");startji <- rep(0,ncol(R))
           if (rrank<ncol(R)) {
@@ -2840,8 +2839,8 @@ gammals <- function(link=list("identity","log"),b=-7) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
-	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
+	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank")
@@ -2854,10 +2853,10 @@ gammals <- function(link=list("identity","log"),b=-7) {
 	  startji[!is.finite(startji)] <- 0
 	  start[jj[[1]]] <- startji
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
-	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(eta1)))
+	  lres1 <- family$linfo[[2]]$linkfun(log(abs(y-family$linfo[[1]]$linkinv(eta1))))
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
-	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
+	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
 	  piv <- attr(R,"pivot");startji <- rep(0,ncol(R));rrank <- attr(R,"rank")
 	  if (rrank<ncol(R)) {
@@ -3175,8 +3174,8 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
-	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
+	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank")
@@ -3192,8 +3191,8 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 	  lres1 <- log((y-family$linfo[[1]]$linkinv(eta1))^2)/2 - .25
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
 	  lres1 <- family$linfo[[2]]$linkfun(lres1)
-	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
-	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
+	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
 	  piv <- attr(R,"pivot");startji <- rep(0,ncol(R));rrank <- attr(R,"rank")
 	  if (rrank<ncol(R)) {
