@@ -1,3 +1,9 @@
+2024-08-12  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/corStruct.R (Initialize.corARMA): catch unsupported values of
+	'p' and 'q' (PR#18777, thanks to Liming Li).
+	* tests/corStruct.R: added, with regression test.
+
 2024-06-18  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* tests/deviance.R, tests/nlme.R, tests/updateLme.R:
