@@ -446,7 +446,7 @@ Initialize.corSymm <- function(object, data, ...)
 
   covar <- attr(object, "covariate")
   if(!is.list(covar)) covar <- list(covar)
-  if (any(unlist(lapply(covar, duplicated)))) {
+  if (any(lapply(covar, anyDuplicated) > 0)) {
     stop("covariate must have unique values within groups for \"corSymm\" objects")
   }
   covar <- unlist(covar) - 1
@@ -669,7 +669,7 @@ Initialize.corNatural <- function(object, data, ...)
 
   covar <- attr(object, "covariate")
   if(!is.list(covar)) covar <- list(covar)
-  if (any(unlist(lapply(covar, duplicated)))) {
+  if (any(lapply(covar, anyDuplicated) > 0)) {
     stop("covariate must have unique values within groups for \"corNatural\" objects")
   }
   covar <- unlist(covar) - 1
@@ -951,7 +951,7 @@ Initialize.corAR1 <-
   object <- NextMethod()
   covar <- attr(object, "covariate")
   if(!is.list(covar)) covar <- list(covar)
-  if (any(unlist(lapply(covar, duplicated)))) {
+  if (any(lapply(covar, anyDuplicated) > 0)) {
     stop("covariate must have unique values within groups for \"corAR1\" objects")
   }
   if (any(unlist(lapply(covar, diff)) != 1)) {
@@ -1114,7 +1114,7 @@ Initialize.corCAR1 <-
   covar <- attr(object, "covariate")
   if(!is.list(covar)) covar <- list(covar)
 
-  if (any(unlist(lapply(covar, duplicated)))) {
+  if (any(lapply(covar, anyDuplicated) > 0)) {
     stop("covariate must have unique values within groups for \"corCAR1\" objects")
   }
   attr(object, "factor") <- corFactor(object)
@@ -1314,7 +1314,7 @@ Initialize.corARMA <-
   object <- NextMethod()
   covar <- attr(object, "covariate")
   if(!is.list(covar)) covar <- list(covar)
-  if (any(unlist(lapply(covar, duplicated)))) {
+  if (any(lapply(covar, anyDuplicated) > 0)) {
     stop("covariate must have unique values within groups for \"corARMA\" objects")
   }
   if ((attr(object, "p") == 1) && (attr(object, "q") == 0) &&
