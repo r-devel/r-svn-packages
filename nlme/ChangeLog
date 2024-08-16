@@ -1,3 +1,8 @@
+2024-08-16  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* tests/corFactor.R, tests/corMatrix.R:	rename and add test of
+	spatial correlation with groups.
+
 2024-08-13  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
 
 	* DESCRIPTION (Version): 3.1-166.
