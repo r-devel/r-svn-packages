@@ -3,6 +3,12 @@
 	* tests/corFactor.R, tests/corMatrix.R:	rename and add test of
 	spatial correlation with groups.
 
+	* src/corStruct.c (corStruct_recalc): fix iterating over 'Xy' to
+	be compatible with spatial correlation structures, avoiding memory
+	errors from nlme() (PR#18192).
+	[and probably also gnls() (PR#17227), to be confirmed]
+	* tests/nlme.R: add corresponding regression test.
+
 2024-08-13  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
 
 	* DESCRIPTION (Version): 3.1-166.
