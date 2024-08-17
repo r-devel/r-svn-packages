@@ -739,6 +739,8 @@ compSymm_recalc(double *Xy, int *pdims, int *ZXcol, double *par,
     }
 }
 
+
+#if 0 // corHF() is not implemented
 /* Huyn-Feldt class */
 
 static void
@@ -822,6 +824,9 @@ HF_recalc(double *Xy, int *pdims, int *ZXcol, double *par,
 	R_Free(Factor);
     }
 }
+
+#endif // corHF()
+
 
 /* Spatial correlation structures */
 
