@@ -5,8 +5,9 @@
 
 	* src/corStruct.c (corStruct_recalc): fix iterating over 'Xy' to
 	be compatible with spatial correlation structures, avoiding memory
-	errors from nlme() (PR#18192).
-	[and probably also gnls() (PR#17227), to be confirmed]
+	errors from nlme() (PR#18192) and gnls() (PR#17227).
+	Thanks to Laurens Bogaardt for the useful reproducible example and to
+	Mikko Korpela, Benjamin Tyner, and Ivan Krylov for initial debugging.
 	* tests/nlme.R: add corresponding regression test.
 
 2024-08-13  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
