@@ -3188,40 +3188,55 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 	  startji[!is.finite(startji)] <- 0
 	  start[jj[[1]]] <- startji
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
-	  lres1 <- log((y-family$linfo[[1]]$linkinv(eta1))^2)/2 - .25
+	  lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(eta1))^2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
 	  lres1 <- family$linfo[[2]]$linkfun(lres1)
-	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
+	  R1 <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
 	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
-	  piv <- attr(R,"pivot");startji <- rep(0,ncol(R));rrank <- attr(R,"rank")
-	  if (rrank<ncol(R)) {
-            R <- R[1:rrank,1:rrank]
-	    piv <- piv[1:rrank]
+	  piv1 <- attr(R1,"pivot");startji <- rep(0,ncol(R1));rrank <- attr(R1,"rank")
+	  if (rrank<ncol(R1)) {
+            R1 <- R1[1:rrank,1:rrank]
+	    piv1 <- piv1[1:rrank]
           }
-	  startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+	  startji[piv1] <- backsolve(R1,forwardsolve(t(R1),Xty[piv1]))
           start[jj[[2]]] <- startji
+	  ## pass 2 at mean param...
+	  eta2 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[2]]) +
+	          if (is.null(offset[[2]])) 0 else offset[[2]] 
+	  yt1 <- yt1 - .57721*exp(family$linfo[[2]]$linkinv(eta2))
+	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
+	  startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+	  startji[!is.finite(startji)] <- 0
+	  start[jj[[1]]] <- startji
         } else { ## regular case
 	  start <- rep(0,ncol(x))
 	  x1 <- x[,jj[[1]],drop=FALSE]
           e1 <- E[,jj[[1]],drop=FALSE] ## square root of total penalty
           if (use.unscaled) {
             qrx <- qr(rbind(x1,e1))
-            x1 <- rbind(x1,e1)
-            startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
+            startji <- qr.coef(qrx,c(yt1,rep(0,nrow(E))))
             startji[!is.finite(startji)] <- 0       
           } else startji <- pen.reg(x1,e1,yt1)
           start[jj[[1]]] <- startji
           lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]]))^2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
 	  lres1 <- family$linfo[[2]]$linkfun(lres1)
-          x1 <-  x[,jj[[2]],drop=FALSE];e1 <- E[,jj[[2]],drop=FALSE]
+          x2 <-  x[,jj[[2]],drop=FALSE];e2 <- E[,jj[[2]],drop=FALSE]
           if (use.unscaled) {
-            x1 <- rbind(x1,e1)
-            startji <- qr.coef(qr(x1),c(lres1,rep(0,nrow(E))))   
+            x2 <- rbind(x2,e2)
+            startji <- qr.coef(qr(x2),c(lres1,rep(0,nrow(E))))   
             startji[!is.finite(startji)] <- 0
-          } else startji <- pen.reg(x1,e1,lres1)
+          } else startji <- pen.reg(x2,e2,lres1)
           start[jj[[2]]] <- startji
+	  ## pass 2 at mean parameter...
+	  eta2 <- x[,jj[[2]],drop=FALSE]%*%start[jj[[2]]] + if (is.null(offset[[2]])) 0 else offset[[2]] 
+	  yt1 <- yt1 - .57721*exp(family$linfo[[2]]$linkinv(eta2))
+	  if (use.unscaled) {
+            startji <- qr.coef(qrx,c(yt1,rep(0,nrow(E))))
+            startji[!is.finite(startji)] <- 0       
+          } else startji <- pen.reg(x1,e1,yt1)
+	  start[jj[[1]]] <- startji
 	}  
       }
   }) ## initialize gumbls

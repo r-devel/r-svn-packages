@@ -1752,8 +1752,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       lsp <- ilsp + step * trial$alpha
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
-           control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=lo$start,
-           mustart=lo$mustart,scoreType=scoreType,null.coef=null.coef,
+           control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+	   ## repeatedly changing the start values can occasionally cause step failure close to optimum...
+	   start=initial$start,mustart=initial$mustart, #lo$start,mustart=lo$mustart,
+	   scoreType=scoreType,null.coef=null.coef,
            pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
       trial$mustart <- fitted(b)
@@ -1769,7 +1771,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
            control=control,gamma=gamma,scale=scale,printWarn=FALSE,
-           start=trial$start,mustart=trial$mustart,
+           start=initial$start,mustart=initial$mustart, #start=trial$start,mustart=trial$mustart,
            scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
            dev.extra=dev.extra,n.true=n.true,Sl=Sl,nei=nei,...)
 
