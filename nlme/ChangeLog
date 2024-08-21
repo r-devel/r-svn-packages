@@ -1,3 +1,10 @@
+2024-08-21  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* src/nlmefit.c (mixed_fcn): guard against non-finite results
+	of 'internal_loglik', potentially causing infinite looping in
+	'optif9'; reported for simulate.lme() in PR#17955 and PR#18433.
+	* tests/predict.lme.R: add corresponding regression test.
+
 2024-08-16  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* tests/corFactor.R, tests/corMatrix.R:	rename and add test of
