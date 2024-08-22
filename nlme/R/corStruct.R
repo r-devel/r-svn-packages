@@ -734,10 +734,10 @@ print.summary.corNatural <-
 {
   if (length(as.vector(x)) > 0 &&
       !is.null(mC <- attr(x, "maxCov"))) {
-    cat("Correlation Structure: General\n")
+    cat("Correlation Structure: General, with natural parametrization\n")
     cat(paste(" Formula:", deparse(formula(x)),"\n"))
     cat(" Parameter estimate(s):\n")
-    aux <- coef(x, FALSE)
+    aux <- coef.corNatural(x, FALSE)
     val <- diag(mC)
     dimnames(val) <- list(1:mC, 1:mC)
     val[lower.tri(val)] <- aux

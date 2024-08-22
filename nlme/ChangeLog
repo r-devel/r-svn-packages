@@ -1,3 +1,8 @@
+2024-08-22  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/corStruct.R (print.summary.corNatural):
+	failed from wrong coef() method.
+
 2024-08-21  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* src/nlmefit.c (mixed_fcn): guard against non-finite results
@@ -19,7 +24,7 @@
 
 2024-08-13  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
 
-	* DESCRIPTION (Version): 3.1-166.
+	* DESCRIPTION (Version): 3.1-166 (released)
 
 2024-08-12  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
