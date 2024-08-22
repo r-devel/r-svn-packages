@@ -132,6 +132,7 @@ coef.corStruct <-
   }
 }
 
+## not used in nlme but for custom classes (some are in ape, covBM)
 `coef<-.corStruct` <- function(object, ..., value)
 {
   ## Assignment of the unconstrained parameter of corStruct objects
@@ -238,6 +239,7 @@ Initialize.corStruct <-
   ## Initializes some attributes of corStruct objects
   function(object, data, ...)
 {
+  ## might already be initialized, e.g., from ARMA(1,0) <-> AR1 methods
   form <- formula(object)
   ## obtaining the groups information, if any
   groups <- if (!is.null(getGroupsFormula(form))) {
@@ -298,6 +300,7 @@ print.summary.corStruct <- function(x, ...)
 }
 
 
+## not used in nlme but for custom classes (some are in ape, covBM)
 recalc.corStruct <-
   function(object, conLin, ...)
 {
