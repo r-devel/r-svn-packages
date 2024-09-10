@@ -29,6 +29,8 @@ better done with .Call
 ** 'NCV' added as a method option for bam(...,discrete=TRUE). More efficient 
   than gam(...,method='NCV'), but much less efficient than default REML.
 
+* 'clog' censored logistic family added for AFT models. Written by Chris Shen.
+
 * names in NCV 'nei' structure modified to better match paper and documentation 
   notation.
 

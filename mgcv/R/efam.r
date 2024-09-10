@@ -627,6 +627,423 @@ cnorm <- function (theta = NULL, link = "identity") {
 
 
 #################################################
+## censored logistic family (Chris Shen)
+#################################################
+
+clog <- function(theta=NULL, link="identity") {
+  # links
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+      stats <- link
+      if (!is.null(stats$name)) linktemp <- stats$name
+    }
+    else stop(linktemp, "link not available for clog family; available links are \"identity\", \"log\" and \"sqrt\"")
+  } ## maths by c.s
+  
+  # theta
+  n.theta <- 1
+  if (!is.null(theta) && theta!=0) {
+    # positive theta; implies fixed value
+    if (theta>0) {
+      iniTheta <- log(theta)
+      n.theta <- 0
+    }
+    # negative theta; theta is now estimated
+    else iniTheta <- log(-theta)
+  } else iniTheta <- 0 # initial theta value for estimation
+
+  env <- new.env(parent=.GlobalEnv)
+  assign(".Theta", iniTheta, envir=env)
+  getTheta <- function(trans=FALSE) if (trans) exp(get(".Theta")) else get(".Theta")
+  putTheta <- function(theta) assign(".Theta", theta, envir=environment(sys.function()))
+
+  validmu <- if (link=="identity") function(mu) all(is.finite(mu)) else function(mu) all(mu>0)
+
+  # deviance residuals squared
+  # basically the deviance
+  dev.resids <- function(y, mu, wt, theta=NULL) {
+    log1pexp <- function(x) { ## compute log(1+e^x) safely
+      result <- x
+      i1 <- which(x<=37); result[i1] <- exp(x[i1])
+      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
+      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      return(result)
+    } # log1pexp
+
+    log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
+      result <- numeric(length(a))
+      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
+      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      return(result)
+    } # log1mexp
+
+    if (is.null(theta)) theta <- get(".Theta")
+    yat <- attr(y,"censor")
+    if (is.null(yat)) yat <- y
+    d <- rep(0,length(y))
+
+    # get indices
+    iu <- which(yat==y) # uncensored
+    ii <- which(is.finite(yat*y) & yat!=y) # interval censored
+    il <- which(yat==-Inf) # left censored
+    ir <- which(yat==Inf) # right censored
+
+    # uncensored
+    if (length(iu)) {
+      si <- exp(theta)/sqrt(wt[iu])
+      mui <- mu[iu]
+      yi <- y[iu]
+      d[iu] <- 2*(-2*log(2)+((yi-mui)/si)+2*log1pexp(-(yi-mui)/si)) # prevents overflow
+    }
+
+    # interval censored
+    if (length(ii)) {
+      si <- exp(theta)/sqrt(wt[ii])
+      mui <- mu[ii]
+      yl <- pmin(y[ii], yat[ii])
+      yr <- pmax(y[ii], yat[ii])
+
+      lm <- ((yr-yl)/(2*si))+log1mexp((yr-yl)/(2*si))-log1pexp((yr-yl)/(2*si))
+      l <- log1mexp((yr-yl)/si)-log1pexp((yl-mui)/si)-log1pexp(-(yr-mui)/si) # prevents overflow
+      d[ii] <- 2*(lm-l)
+    }
+
+    # left censored
+    if (length(il)) {
+      si <- exp(theta)/sqrt(wt[il])
+      mui <- mu[il]
+      yr <- y[il]
+
+      lm <- 0
+      l <- -log1pexp(-(yr-mui)/si)
+      d[il] <- 2*(lm-l)
+    }
+
+    # right censored
+    if (length(ir)) {
+      si <- exp(theta)/sqrt(wt[ir])
+      mui <- mu[ir]
+      yl <- y[ir]
+      
+      lm <- 0
+      l <- (-(yl-mui)/si)-log1pexp(-(yl-mui)/si)
+      d[ir] <- 2*(lm-l)
+    }
+    return(d)
+  } ## dev.resids clogistic
+
+  # deviance derivatives
+  Dd <- function(y, mu, theta, wt, level=0) {
+
+    yat <- attr(y, "censor")
+    if (is.null(yat)) yat <- y
+
+    # get indices
+    iu <- which(yat==y) # uncensored
+    ii <- which(is.finite(yat*y) & yat!=y) # interval censored
+    il <- which(yat==-Inf) # left censored
+    ir <- which(yat==Inf) # right censored
+
+    # initialise variables
+    n <- length(mu)
+    Dmu <- Dmu2 <- rep(0,n)
+    if (level>0) Dth <- Dmuth <- Dmu3 <- Dmu2th <- Dmu
+    if (level>1) Dmu4 <- Dth2 <- Dmuth2 <- Dmu2th2 <- Dmu3th <- Dmu
+
+    # uncensored
+    if (length(iu)) {
+      si <- exp(theta)/sqrt(wt[iu])
+      yi <- y[iu]; mui <- mu[iu]
+      alphai <- 1/(2+expm1((yi-mui)/si)) # with precision
+
+      Dmu[iu] <- Dmui <- (2/si)*(2*alphai-1)
+      Dmu2[iu] <- Dmu2i <- (4/si^2)*alphai*(1-alphai)
+      if (level>0) {
+        Dmuth[iu] <- Dmuthi <- -Dmui+(yi-mui)*Dmu2i
+        Dth[iu] <- Dthi <- (yi-mui)*Dmui
+        Dmu3[iu] <- Dmu3i <- (-1/2)*Dmui*Dmu2i
+        Dmu2th[iu] <- Dmu2thi <- -2*Dmu2i+(1/2)*(mui-yi)*Dmui*Dmu2i
+      }
+      if (level>1) {
+        Dth2[iu] <- Dth2i <- (yi-mui)*Dmuthi
+        Dmuth2[iu] <- Dmuth2i <- -Dmuthi+(yi-mui)*Dmu2thi
+        Dmu4[iu] <- Dmu4i <- (-1/2)*(Dmu2i^2+Dmui*Dmu3i)
+        Dmu3th[iu] <- Dmu3thi <- (-1/2)*(Dmu2i*Dmuthi+Dmui*Dmu2thi)
+        Dmu2th2[iu] <- Dmu2th2i <- -2*Dmu2thi+(1/2)*(mui-yi)*(Dmui*Dmu2thi+Dmu2i*Dmuthi)
+      }
+    }
+
+    # interval censored
+    if (length(ii)) {
+      yl <- pmin(y[ii], yat[ii])
+      yr <- pmax(y[ii], yat[ii])
+      si <- exp(theta)/sqrt(wt[ii])
+      mui <- mu[ii]
+
+      alphai <- 1/(2+expm1(-(yr-mui)/si))
+      betai <- 1/(2+expm1(-(yl-mui)/si))
+
+      Dmu[ii] <- Dmui <- (2/si)*(1-alphai-betai)
+      Dmu2[ii] <- Dmu2i <- (2/si^2)*(alphai-alphai^2+betai-betai^2)
+      if (level>0) {
+        Dmuth[ii] <- Dmuthi <- -Dmui+(2/si^2)*((yr-mui)*(alphai-alphai^2)+(yl-mui)*(betai-betai^2))
+
+        lmth <- (yr-yl)*(1/si)*(1/(expm1(-(yr-yl)/(2*si))-expm1((yr-yl)/(2*si))))
+        lth <- (1/si)*(-(yr-yl)*(1/(expm1((yr-yl)/si)))+
+          (yl-mui)*(1/(expm1((mui-yl)/si)+2))-(yr-mui)*(1/(expm1((yr-mui)/si)+2)))
+        Dth[ii] <- Dthi <- 2*(lmth-lth)
+
+        Dmu3[ii] <- Dmu3i <- (4/si^2)*(alphai^2-alphai^3+betai^2-betai^3)-Dmu2i
+        Dmu2th[ii] <- Dmu2thi <- -2*Dmu2i+(-1/si)*(Dmuthi+Dmui)+
+          (4/si^3)*((yr-mui)*(alphai^2-alphai^3)+(yl-mui)*(betai^2-betai^3))
+      }
+      if (level>1) {
+        lmth2 <- -lmth-(1/2)*(yr-yl)^2*(1/si^2)*(1/(expm1(-(yr-yl)/(2*si))+
+          -expm1((yr-yl)/(2*si))))^2*(2+expm1(-(yr-yl)/(2*si))+expm1((yr-yl)/(2*si)))
+        lth2 <- -lth-(1/si^2)*((yr-yl)^2*(1/(expm1((yr-yl)/si)))*(1/(-expm1(-(yr-yl)/si)))+
+          (yl-mui)^2*(1/(expm1((mui-yl)/si)+2))*(1/(expm1((yl-mui)/si)+2))+
+          (yr-mui)^2*(1/(expm1((yr-mui)/si)+2))*(1/(expm1((mui-yr)/si)+2)))
+        Dth2[ii] <- Dth2i <- 2*(lmth2-lth2)
+
+        Dmuth2i <- -3*Dmuthi-2*Dmui+(-2/si^3)*((yr-mui)^2*(1-2*alphai)*(alphai-alphai^2)+
+          (yl-mui)^2*(1-2*betai)*(betai-betai^2))
+        Dmuth2[ii] <- Dmuth2i
+
+        Dmu4[ii] <- (-4/si^3)*((2*alphai-3*alphai^2)*(alphai-alphai^2)+
+          (2*betai-3*betai^2)*(betai-betai^2))-Dmu3i
+        Dmu3th[ii] <- -2*Dmu3i+2*(1/si^3)*((yr-mui)*(alphai-alphai^2)*(1-6*alphai+
+          6*alphai^2)+(yl-mui)*(betai-betai^2)*(1-6*betai+6*betai^2))
+        Dmu2th2[ii] <- -2*Dmu2thi+(1/si)*(Dmui-Dmuth2i)+(-12/si^3)*((yr-mui)*(alphai^2-alphai^3)+
+          (yl-mui)*(betai^2-betai^3))+(-4/si^4)*((yr-mui)^2*(2*alphai-3*alphai^2)*(alphai-alphai^2)+
+          (yl-mui)^2*(2*betai-3*betai^2)*(betai-betai^2))
+      }
+    }
+
+    # left censored
+    if (length(il)) {
+      si <- exp(theta)/sqrt(wt[il]) # array to number
+      yr <- y[il]
+      mui <- mu[il]
+      alphai <- 1/(2+expm1(-(yr-mui)/si))
+
+      Dmu[il] <- Dmui <- (2/si)*(1-alphai)
+      Dmu2[il] <- Dmu2i <- (2/si^2)*(alphai-alphai^2)
+      if (level>0) {
+        Dmuth[il] <- Dmuthi <- -Dmui+(yr-mui)*Dmu2i
+        Dth[il] <- Dthi <- (yr-mui)*Dmui
+        Dmu3[il] <- Dmu3i <- (1/si)*(2*alphai-1)*Dmu2i
+        Dmu2th[il] <- Dmu2thi <- -2*Dmu2i+(1/si)*(yr-mui)*(2*alphai-1)*Dmu2i
+      }
+      if (level>1) {
+        Dth2[il] <- Dth2i <- (yr-mui)*Dmuthi
+        Dmuth2[il] <- Dmuth2i <- -Dmuthi+(yr-mui)*Dmu2thi
+        Dmu4[il] <- Dmu4i <- -Dmu2i^2+(1/si)*(2*alphai-1)*Dmu3i
+        Dmu3th[il] <- Dmu3thi <- -(yr-mui)*Dmu2i^2+(1/si)*(2*alphai-1)*(Dmu2thi-Dmu2i)
+        Dmu2th2[il] <- -2*Dmu2thi-(yr-mui)^2*Dmu2i^2+
+          (1/si)*(yr-mui)*(2*alphai-1)*(Dmu2thi-Dmu2i)
+      }
+    }
+
+    # right censored
+    if (length(ir)) {
+      si <- exp(theta)/sqrt(wt[ir]) # array to number
+      yl <- y[ir]; mui <- mu[ir]
+      
+      betai <- 1/(2+expm1(-(yl-mui)/si))
+
+      Dmu[ir] <- Dmui <- (2/si)*betai
+      Dmu2[ir] <- Dmu2i <- (-2/si^2)*(betai-betai^2)
+      if (level>0) {
+        Dmuth[ir] <- Dmuthi <- (yl-mui)*Dmu2i
+        Dth[ir] <- Dthi <- (yl-mui)*Dmui
+        Dmu3[ir] <- Dmu3i <- (-1/si)*(1-2*betai)*Dmu2i
+        Dmu2th[ir] <- Dmu2thi <- -(2+(1/si)*(yl-mui)*(1-2*betai))*Dmu2i
+      }
+      if (level>1) {
+        Dth2[ir] <- Dth2i <- (yl-mui)*Dmuthi
+        Dmuth2[ir] <- Dmuth2i <- (yl-mui)*Dmu2thi
+        Dmu4[ir] <- Dmu4i <- Dmu2i^2+(-1/si)*(1-2*betai)*Dmu3i
+        Dmu3th[ir] <- Dmu3thi <- (1/si)*(1-2*betai)*(Dmu2i-Dmu2thi)+(yl-mui)*Dmu2i^2
+        #Dmu2th2[ir] <- -2*Dmu2thi-(mui-yl)*Dmu3thi ###
+        Dmu2th2[ir] <- (1/si)*(yl-mui)*(1-2*betai)*(Dmu2i-Dmu2thi)+
+          (yl-mui)^2*Dmu2i^2-2*Dmu2thi
+      }
+    }
+
+    r <- list(Dmu=Dmu, Dmu2=Dmu2, EDmu2=Dmu2)
+    if (level>0) {
+      r$Dth <- Dth; r$Dmuth <- Dmuth; r$Dmu3 <- Dmu3
+      r$EDmu2th <- r$Dmu2th <- Dmu2th
+    }
+    if (level>1) {
+      r$Dmu4 <- Dmu4; r$Dth2 <- Dth2;  r$Dmuth2 <- Dmuth2;
+	    r$Dmu2th2 <- Dmu2th2; r$Dmu3th <- Dmu3th
+    }
+    return(r)
+  } ## Dd clogistic
+
+  # akaike information criterion
+  aic <- function(y, mu, theta=NULL, wt, dev) {
+    log1pexp <- function(x) { ## compute log(1+e^x) safely
+      result <- x
+      i1 <- which(x<=37); result[i1] <- exp(x[i1])
+      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
+      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      return(result)
+    } # log1pexp
+
+    log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
+      result <- numeric(length(a))
+      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
+      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      return(result)
+    } # log1mexp
+    
+    if (is.null(theta)) theta <- get(".Theta")
+    th <- theta-0.5*log(wt)
+    yat <- attr(y,"censor")
+    if (is.null(yat)) yat <- rep(NA,length(y))
+    a <- rep(0,length(y))
+
+    # get indices
+    iu <- which(yat==y) # uncensored
+    ii <- which(is.finite(yat*y) & yat!=y) # interval censored
+    il <- which(yat==-Inf) # left censored
+    ir <- which(yat==Inf) # right censored
+
+    # uncensored
+    if (length(iu)) {
+      si <- exp(theta)/sqrt(wt[iu])
+      lm <- -log1p(si-1)-2*log(2)
+      a[iu] <- -2*lm+2*th[iu]
+    }
+
+    # interval censored
+    if (length(ii)) {
+      si <- exp(theta)/sqrt(wt[ii])
+      yl <- pmin(y[ii], yat[ii])
+      yr <- pmax(y[ii], yat[ii])
+      lm <- ((yr-yl)/(2*si))+log1mexp((yr-yl)/(2*si))-log1pexp((yr-yl)/(2*si))
+      a[ii] <- -2*lm+2*th[ii]
+    }
+
+    # left censored
+    if (length(il)) {
+      a[il] <- 2*th[il]
+    }
+
+    # right censored
+    if (length(ir)) {
+      a[ir] <- 2*th[ir]
+    }
+    return(sum(a))
+  } ## AIC clogistic
+
+  # saturated log likelihood
+  ls <- function(y, w, theta, scale) {
+    log1pexp <- function(x) { ## compute log(1+e^x) safely
+      result <- x
+      i1 <- which(x<=37); result[i1] <- exp(x[i1])
+      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
+      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      return(result)
+    } # log1pexp
+
+    log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
+      result <- numeric(length(a))
+      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
+      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      return(result)
+    } # log1mexp
+    
+    yat <- attr(y, "censor")
+    if (is.null(yat)) yat <- y
+
+    # get indices
+    iu <- which(yat==y) # uncensored
+    ii <- which(is.finite(yat*y) & yat!=y) # interval censored
+    l2 <- l1 <- l <- rep(0, length(y))
+
+    # uncensored
+    if (length(iu)) {
+      si <- exp(theta)/sqrt(w[iu])
+      l[iu] <- -log1p(si-1)-2*log(2)
+      l1[iu] <- -1
+    }
+
+    # interval censored
+    if (length(ii)) {
+      si <- exp(theta)/sqrt(w[ii])
+      yl <- pmin(y[ii], yat[ii])
+      yr <- pmax(y[ii], yat[ii])
+
+      l[ii] <- ((yr-yl)/(2*si))+log1mexp((yr-yl)/(2*si))-log1pexp((yr-yl)/(2*si))
+      lmth <- (yr-yl)*(1/si)*(1/(expm1(-(yr-yl)/(2*si))-expm1((yr-yl)/(2*si))))
+      l1[ii] <- lmth
+      lmth2 <- -lmth-(1/2)*(yr-yl)^2*(1/si^2)*(1/(expm1(-(yr-yl)/(2*si))+
+        -expm1((yr-yl)/(2*si))))^2*(2+expm1(-(yr-yl)/(2*si))+expm1((yr-yl)/(2*si)))
+      l2[ii] <- lmth2
+    }
+    # right and left censored are zero
+    result <- list(ls=sum(l), lsth1=sum(l1), LSTH1=matrix(l1,ncol=1),lsth2=sum(l2))
+    return(result)
+  } ## ls clogistic
+
+  initialize <- expression({
+    if (is.matrix(y)) {
+      .yat <- y[,2]
+      y <- y[,1]
+      attr(y, "censor") <- .yat
+    }
+    mustart <- if (family$link=="identity") y else pmax(y, min(y>0))
+  })
+
+  postproc <- function(family, y, prior.weights, fitted, linear.predictors, offset, intercept) {
+    posr <- list()
+    if (is.matrix(y)) {
+      .yat <- y[,2]
+      y <- y[,1]
+      attr(y, "censor") <- .yat
+    }
+    posr$null.deviance <- mgcv:::find.null.dev(family, y, eta=linear.predictors, offset, prior.weights)
+    posr$family <- paste("clogistic(",round(family$getTheta(TRUE),3),")",sep="")
+    posr
+  } ## postproc clogistic
+
+  rd <- function(mu, wt, scale) { # incomplete
+    Theta <- exp(get(".Theta"))
+  }
+
+  qf <- function(p ,mu, wt, scale) { # incomplete
+    Theta <- exp(get(".Theta"))
+  }
+
+  subsety <- function(y, ind) {
+    if (is.matrix(y)) return(y[ind,])
+    yat <- attr(y, "censor")
+    y <- y[ind]
+    if (!is.null(yat)) attr(y, "censor") <- yat[ind]
+    y
+  } ## subsety
+
+  environment(dev.resids) <- environment(aic) <- environment(getTheta) <-
+    environment(rd) <- environment(qf) <- environment(putTheta) <- env
+
+  structure(list(family="clogistic", link=linktemp, linkfun=stats$linkfun,
+    linkinv=stats$linkinv, dev.resids=dev.resids, Dd=Dd, subsety=subsety,
+    aic=aic, mu.eta=stats$mu.eta, initialize=initialize, postproc=postproc,
+    ls=ls, validmu=validmu, valideta=stats$valideta, n.theta=n.theta, 
+    ini.theta=iniTheta, putTheta=putTheta, getTheta=getTheta),
+    class = c("extended.family","family"))
+} ## clog
+
+#################################################
 ## extended family object for ordered categorical
 #################################################
 

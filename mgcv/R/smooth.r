@@ -3471,20 +3471,10 @@ smooth.construct.gp.smooth.spec <- function(object,data,knots)
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu > xtra$max.knots) { ## then there is really a problem 
         rngs <- temp.seed(xtra$seed)
-        #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-        #if (inherits(seed,"try-error")) {
-        #  runif(1)
-        #  seed <- get(".Random.seed",envir=.GlobalEnv)
-        #}
-        #kind <- RNGkind(NULL)
-        #RNGkind("default","default")
-        #set.seed(xtra$seed) ## ensure repeatability
         nk <- xtra$max.knots ## going to create nk knots
         ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
         knt <- as.numeric(xu[ind,])  ## ... like this
 	temp.seed(rngs)
-        #RNGkind(kind[1],kind[2])
-        #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { 
         knt <- xu; nk <- nu
       } ## end of large data set handling
