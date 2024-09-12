@@ -629,6 +629,21 @@ cnorm <- function (theta = NULL, link = "identity") {
 #################################################
 ## censored logistic family (Chris Shen)
 #################################################
+    log1pexp <- function(x) { ## compute log(1+e^x) safely
+      result <- x
+      ii <- which(x<=37); result[ii] <- exp(x[ii])
+      ii <- which(-37<x & x<=18); result[ii] <- log1p(exp(x[ii]))
+      ii <- which(18<x & x<=33.3); result[ii] <- x[ii]+exp(-x[ii])
+      return(result)
+    } # log1pexp
+
+    log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
+      result <- numeric(length(a))
+      ii <- which(0<a & a<=log(2)); result[ii] <- log(-expm1(-a[ii]))
+      ii <- which(a>log(2)); result[ii] <- log1p(-exp(-a[ii]))
+      return(result)
+    } # log1mexp
+
 
 clog <- function(theta=NULL, link="identity") {
   # links
@@ -643,8 +658,8 @@ clog <- function(theta=NULL, link="identity") {
       stats <- link
       if (!is.null(stats$name)) linktemp <- stats$name
     }
-    else stop(linktemp, "link not available for clog family; available links are \"identity\", \"log\" and \"sqrt\"")
-  } ## maths by c.s
+    else stop(linktemp, "link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+  }
   
   # theta
   n.theta <- 1
@@ -670,19 +685,19 @@ clog <- function(theta=NULL, link="identity") {
   dev.resids <- function(y, mu, wt, theta=NULL) {
     log1pexp <- function(x) { ## compute log(1+e^x) safely
       result <- x
-      i1 <- which(x<=37); result[i1] <- exp(x[i1])
-      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
-      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      ii <- which(x<=37); result[ii] <- exp(x[ii])
+      ii <- which(-37<x & x<=18); result[ii] <- log1p(exp(x[ii]))
+      ii <- which(18<x & x<=33.3); result[ii] <- x[ii]+exp(-x[ii])
       return(result)
     } # log1pexp
 
     log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
       result <- numeric(length(a))
-      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
-      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      ii <- which(0<a & a<=log(2)); result[ii] <- log(-expm1(-a[ii]))
+      ii <- which(a>log(2)); result[ii] <- log1p(-exp(-a[ii]))
       return(result)
     } # log1mexp
-
+    
     if (is.null(theta)) theta <- get(".Theta")
     yat <- attr(y,"censor")
     if (is.null(yat)) yat <- y
@@ -740,7 +755,6 @@ clog <- function(theta=NULL, link="identity") {
 
   # deviance derivatives
   Dd <- function(y, mu, theta, wt, level=0) {
-
     yat <- attr(y, "censor")
     if (is.null(yat)) yat <- y
 
@@ -857,26 +871,34 @@ clog <- function(theta=NULL, link="identity") {
       
       betai <- 1/(2+expm1(-(yl-mui)/si))
 
-      Dmu[ir] <- Dmui <- (2/si)*betai
-      Dmu2[ir] <- Dmu2i <- (-2/si^2)*(betai-betai^2)
+      #Dmu[ir] <- Dmui <- (2/si)*betai
+      Dmu[ir] <- Dmui <- -(2/si)*betai
+      #Dmu2[ir] <- Dmu2i <- (-2/si^2)*(betai-betai^2)
+      Dmu2[ir] <- Dmu2i <- (2/si^2)*(betai-betai^2)
       if (level>0) {
-        Dmuth[ir] <- Dmuthi <- (yl-mui)*Dmu2i
+        #Dmuth[ir] <- Dmuthi <- (yl-mui)*Dmu2i
+        Dmuth[ir] <- Dmuthi <- -Dmui+(yl-mui)*Dmu2i
         Dth[ir] <- Dthi <- (yl-mui)*Dmui
         Dmu3[ir] <- Dmu3i <- (-1/si)*(1-2*betai)*Dmu2i
         Dmu2th[ir] <- Dmu2thi <- -(2+(1/si)*(yl-mui)*(1-2*betai))*Dmu2i
       }
       if (level>1) {
         Dth2[ir] <- Dth2i <- (yl-mui)*Dmuthi
-        Dmuth2[ir] <- Dmuth2i <- (yl-mui)*Dmu2thi
-        Dmu4[ir] <- Dmu4i <- Dmu2i^2+(-1/si)*(1-2*betai)*Dmu3i
-        Dmu3th[ir] <- Dmu3thi <- (1/si)*(1-2*betai)*(Dmu2i-Dmu2thi)+(yl-mui)*Dmu2i^2
+        #Dmuth2[ir] <- Dmuth2i <- (yl-mui)*Dmu2thi
+        Dmuth2[ir] <- Dmuth2i <- -Dmuthi+(yl-mui)*Dmu2thi
+        #Dmu4[ir] <- Dmu4i <- Dmu2i^2+(-1/si)*(1-2*betai)*Dmu3i
+        Dmu4[ir] <- Dmu4i <- -Dmu2i^2+(-1/si)*(1-2*betai)*Dmu3i
+        #Dmu3th[ir] <- Dmu3thi <- (1/si)*(1-2*betai)*(Dmu2i-Dmu2thi)+(yl-mui)*Dmu2i^2
+        Dmu3th[ir] <- Dmu3thi <- (1/si)*(1-2*betai)*(Dmu2i-Dmu2thi)-(yl-mui)*Dmu2i^2
         #Dmu2th2[ir] <- -2*Dmu2thi-(mui-yl)*Dmu3thi ###
         Dmu2th2[ir] <- (1/si)*(yl-mui)*(1-2*betai)*(Dmu2i-Dmu2thi)+
-          (yl-mui)^2*Dmu2i^2-2*Dmu2thi
+          -(yl-mui)^2*Dmu2i^2-2*Dmu2thi
       }
     }
+    ip <- which(Dmu2<0); EDmu2t <- Dmu2
+    EDmu2t[ip] <- 0
 
-    r <- list(Dmu=Dmu, Dmu2=Dmu2, EDmu2=Dmu2)
+    r <- list(Dmu=Dmu, Dmu2=Dmu2, EDmu2=EDmu2t)
     if (level>0) {
       r$Dth <- Dth; r$Dmuth <- Dmuth; r$Dmu3 <- Dmu3
       r$EDmu2th <- r$Dmu2th <- Dmu2th
@@ -892,19 +914,18 @@ clog <- function(theta=NULL, link="identity") {
   aic <- function(y, mu, theta=NULL, wt, dev) {
     log1pexp <- function(x) { ## compute log(1+e^x) safely
       result <- x
-      i1 <- which(x<=37); result[i1] <- exp(x[i1])
-      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
-      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      ii <- which(x<=37); result[ii] <- exp(x[ii])
+      ii <- which(-37<x & x<=18); result[ii] <- log1p(exp(x[ii]))
+      ii <- which(18<x & x<=33.3); result[ii] <- x[ii]+exp(-x[ii])
       return(result)
     } # log1pexp
 
     log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
       result <- numeric(length(a))
-      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
-      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      ii <- which(0<a & a<=log(2)); result[ii] <- log(-expm1(-a[ii]))
+      ii <- which(a>log(2)); result[ii] <- log1p(-exp(-a[ii]))
       return(result)
     } # log1mexp
-    
     if (is.null(theta)) theta <- get(".Theta")
     th <- theta-0.5*log(wt)
     yat <- attr(y,"censor")
@@ -949,19 +970,18 @@ clog <- function(theta=NULL, link="identity") {
   ls <- function(y, w, theta, scale) {
     log1pexp <- function(x) { ## compute log(1+e^x) safely
       result <- x
-      i1 <- which(x<=37); result[i1] <- exp(x[i1])
-      i2 <- which(-37<x & x<=18); result[i2] <- log1p(exp(x[i2]))
-      i3 <- which(18<x & x<=33.3); result[i3] <- x[i3]+exp(-x[i3])
+      ii <- which(x<=37); result[ii] <- exp(x[ii])
+      ii <- which(-37<x & x<=18); result[ii] <- log1p(exp(x[ii]))
+      ii <- which(18<x & x<=33.3); result[ii] <- x[ii]+exp(-x[ii])
       return(result)
     } # log1pexp
 
     log1mexp <- function(a) { ## compute log(1-e^(-a)) safely
       result <- numeric(length(a))
-      i1 <- which(0<a & a<=log(2)); result[i1] <- log(-expm1(-a[i1]))
-      i2 <- which(a>log(2)); result[i2] <- log1p(-exp(-a[i2]))
+      ii <- which(0<a & a<=log(2)); result[ii] <- log(-expm1(-a[ii]))
+      ii <- which(a>log(2)); result[ii] <- log1p(-exp(-a[ii]))
       return(result)
     } # log1mexp
-    
     yat <- attr(y, "censor")
     if (is.null(yat)) yat <- y
 
@@ -1011,7 +1031,7 @@ clog <- function(theta=NULL, link="identity") {
       y <- y[,1]
       attr(y, "censor") <- .yat
     }
-    posr$null.deviance <- mgcv:::find.null.dev(family, y, eta=linear.predictors, offset, prior.weights)
+    posr$null.deviance <- find.null.dev(family, y, eta=linear.predictors, offset, prior.weights)
     posr$family <- paste("clogistic(",round(family$getTheta(TRUE),3),")",sep="")
     posr
   } ## postproc clogistic
