@@ -2340,10 +2340,27 @@ gevlss <- function(link=list("identity","identity","logit")) {
               R <- R[1:rrank,1:rrank]
 	      piv <- piv[1:rrank]
           }
-          startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
-	  startji[!is.finite(startji)] <- 0
-	  start[jj[[3]]] <- startji
-        } else {
+	  fob <- function(m=1) {
+            startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]*m))
+	    startji[!is.finite(startji)] <- 0
+	    start[jj[[3]]] <- startji
+	    list(l=family$ll(y,x,start,weights,family,offset)$l,start=start)
+	  } ## fob
+	  f0b <- fob(); dm <- .2; mm <- 1; up <- FALSE
+	  while (mm>-4.2 && mm <4.2) { ## crude search for improved initial xi
+            f1b <- fob(mm+dm)
+	    if (is.finite(f1b$l) && f1b$l>f0b$l) {
+              up <- TRUE;f0b <- f1b;mm <- mm + dm
+            } else if (up) { ## f0b best
+              break
+            } else if (dm>0) dm <- -dm else break
+          }
+	  if (!is.finite(f1b$l)) { ## move back a bit from non finite regime
+            f1b <- fob(mm-dm)
+	    if (is.finite(f1b$l)) f0b <- f1b
+          }
+	  start <- f0b$start
+        } else { ## not discrete case
 	  start <- rep(0,ncol(x))
           yt1 <- if (family$link[[1]]=="identity") y else 
                  family$linfo[[1]]$linkfun(abs(y)+max(y)*1e-7)
@@ -2367,9 +2384,27 @@ gevlss <- function(link=list("identity","identity","logit")) {
           } else startji <- pen.reg(x1,e1,lres1)
           start[jj[[2]]] <- startji
 	  x1 <-  x[,jj[[3]],drop=FALSE]
-	  startji <- qr.coef(qr(x1),c(rep(family$linfo[[3]]$linkfun(1e-3),nrow(x1))))   
-          startji[!is.finite(startji)] <- 0
-	  start[jj[[3]]] <- startji
+	  qrx1 <- qr(x1);yt1 <- rep(family$linfo[[3]]$linkfun(1e-3),nrow(x1))
+	  fob <- function(m=1) {
+	    startji <- qr.coef(qrx1,yt1*m)   
+            startji[!is.finite(startji)] <- 0
+	    start[jj[[3]]] <- startji
+	    list(l=family$ll(y,x,start,weights,family,offset)$l,start=start)
+	  } ## fob
+	  f0b <- fob(); dm <- .2; mm <- 1; up <- FALSE
+	  while (mm>-4.2 && mm <4.2) { ## crude search for improved initial xi
+            f1b <- fob(mm+dm)
+	    if (is.finite(f1b$l) && f1b$l>f0b$l) {
+              up <- TRUE;f0b <- f1b;mm <- mm + dm
+            } else if (up) { ## f0b best
+              break
+            } else if (dm>0) dm <- -dm else break
+          }
+	  if (!is.finite(f1b$l)) { ## move back a bit from non finite regime
+            f1b <- fob(mm-dm)
+	    if (is.finite(f1b$l)) f0b <- f1b
+          }
+	  start <- f0b$start  
         } ## non-discrete initiailization
       }	
   }) ## initialize gevlss

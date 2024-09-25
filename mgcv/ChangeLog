@@ -65,6 +65,8 @@ better done with .Call
 * zoom in bfgs modified so that start values always the same to avoid
   occasional step failures from repeatedly changing initial values.
 
+* gevlss improved xi initialization.
+
 1.9-1
 
 * Revised bam discrete code to allow indexing vectors to be long vectors, 
