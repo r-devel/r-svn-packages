@@ -963,13 +963,15 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
   nobs <- length(y)
   
   if (penalized) {
-    Eb <- attr(Sl,"E") ## balanced penalty sqrt
+    Sb <- attr(Sl,"S") ## balanced penalty sqrt
  
     ## the stability reparameterization + log|S|_+ and derivs... 
-    rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
+    rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE,Stot=TRUE) 
     x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-    Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty
-    St <- crossprod(rp$E) ## total penalty matrix
+    #Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty
+    Sb <- Sl.repa(rp$rp,Sb,l=-2,r=-1)
+    # St <- crossprod(rp$E) ## total penalty matrix
+    St <- rp$S ## total penalty matrix
     E <- rp$E ## root total penalty
     attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be further scaled   
     if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
@@ -1160,7 +1162,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
           } else {        
             rank.checked <- TRUE
             if (penalized) {
-              Sb <- crossprod(Eb) ## balanced penalty
+              #Sb <- crossprod(Eb) ## balanced penalty
               Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
             } else Hb <- -ll$lbb/norm(ll$lbb,"F")
             ## apply pre-conditioning, otherwise badly scaled problems can result in
@@ -1474,7 +1476,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     #  ret$ghost1 <- ll$ghost1; ret$ghost2 <- ret$ghost2
     #} 
     ret
-} ## end of gam.fit5
+} ## end of gam.fit5 crossprod
 
 efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
                      control=gam.control(),Mp=-1,start=NULL) {
@@ -1496,7 +1498,8 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
     ipiv <- piv <- attr(fit$L,"pivot")
     p <- length(piv)
     ipiv[piv] <- 1:p
-    Vb <- crossprod(forwardsolve(t(fit$L),diag(fit$D,nrow=p)[piv,,drop=FALSE])[ipiv,,drop=FALSE])
+    # Vb <- crossprod(forwardsolve(t(fit$L),diag(fit$D,nrow=p)[piv,,drop=FALSE])[ipiv,,drop=FALSE])
+    Vb <- crossprod(forwardsolve(fit$L,diag(fit$D,nrow=p)[piv,,drop=FALSE],upper.tri=TRUE,transpose=TRUE)[ipiv,,drop=FALSE])
     if (sum(fit$bdrop)) { ## some coefficients were dropped...
       q <- length(fit$bdrop)
       ibd <- !fit$bdrop

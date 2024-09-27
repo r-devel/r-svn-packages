@@ -543,6 +543,22 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   Mp <- ncol(G$X) - rank ## null space dimension
   Nstep <- 0
   if (efam) theta <- family$getTheta()
+
+  if(!is.null(coef)) { ## use supplied coef if supplied, including for step halving (Matteo Fasiolo)
+    # Define all quantities needed for step-halving
+    coef0 <- coef
+    b0 <- Sl.initial.repara(Sl, coef0, inverse = FALSE, both.sides = FALSE, cov = FALSE)
+    eta0 <- Xbd(G$Xd,coef0,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop) + offset
+    mu0 <- linkinv(eta0)
+    dev0 <- if (efam) sum(family$dev.resids(G$y,mu0,G$w,theta)) else sum(family$dev.resids(G$y,mu0,G$w))
+    dev <- dev0 * 2  # just to avoid converging at iter 1 (see above)
+    # Note: possibly over-writing arguments etastart and mustart, and corresponding dev, but we must be coherent with coef0
+    etastart <- eta <- eta0
+    mustart <- mu <- mu0
+    c.iter <- 1 # Used later on to indicate whether to perform step-halving after 1st or...
+  } else c.iter <- 2 # ... 2nd iteration 
+
+
   for (iter in 1L:control$maxit) { ## main fitting loop 
     devold <- dev
     dev <- 0
@@ -556,7 +572,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         lsp.full <- G$lsp0
 	if (n.sp>0) lsp.full <- lsp.full + if (is.null(G$L)) lsp[1:n.sp] else G$L %*% lsp[1:n.sp]
 	rSb <- Sl.rSb(Sl,lsp.full,prop$beta) ## store S beta to allow rapid step halving
-	if (iter>2) {
+	if (iter>c.iter) {
 	  rSb0 <- Sl.rSb(Sl,lsp.full,b0)
 	  bSb0 <- sum(rSb0^2) ## penalty at start of beta step
 	  ## get deviance at step start, with current theta if efam
@@ -570,7 +586,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         mu <- linkinv(eta)
 	dev <- if (efam) sum(family$dev.resids(G$y,mu,G$w,theta)) else
 	                 sum(family$dev.resids(G$y,mu,G$w))
-        if (iter>2) { ## coef step length control
+        if (iter>c.iter) { ## coef step length control
 	  bSb <- sum(rSb^2) ## penalty at end of beta step
 	  #stepr <- max(abs(coef-coef0))/(max(abs(coef0)))
 	  #if (stepr<2)

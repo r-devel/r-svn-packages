@@ -21,8 +21,8 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
-* efsud Vb every time? gam.fit5 crossprd E? log.detS setting matrix diagonals
-better done with .Call	
+* efsud Vb every time? log.detS setting matrix diagonals
+better done with .Call. Fix bam NCV variance comp, to be as gam.
 
 1.9-2
 
@@ -66,6 +66,12 @@ better done with .Call
   occasional step failures from repeatedly changing initial values.
 
 * gevlss improved xi initialization.
+
+* gam(...,discrete=TRUE) no longer ignores starting coefficient values (thanks
+  to Matteo Fasiolo).
+
+* Sl.setup and ldetS changes to return totla penalty matrices directly 
+  (avoiding a redundant crossproduct)
 
 1.9-1
 
@@ -126,6 +132,7 @@ better done with .Call
 * tests directory removed, as check time was tripping up every CRAN submission.
 
 * coxph memory error fix - could make bfgs fitting fail.
+
 
 1.8-42
 

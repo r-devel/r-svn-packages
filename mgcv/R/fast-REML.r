@@ -238,7 +238,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
   ## case E is a list of lists of rows (i), cols (j) and elements (x) defining each
   ## block. So E$i[[b]],E$j[[b]],E$x[[b]] defines block b...
   
-  E <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) ## well scaled square root penalty
+  S <- E <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) ## well scaled penalty & square root penalty
   lambda <- rep(0,0)
 
   ## NOTE: computing transforms for repara=FALSE blocks and then not using them
@@ -250,15 +250,19 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       ## never re-parameterized, but need contribution to penalty square root, E
       Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
       lambda <- c(lambda,Sl[[b]]$lambda)
+      tmp <- Sl[[b]]$St(Sl[[b]],1)
       if (sparse) {
         ## E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix") deprecated
-	E0 <- as(as(as(Sl[[b]]$St(Sl[[b]],1)$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	E0 <- as(as(as(tmp$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
 	E$i[[b]] <- E0@i + Sl[[b]]$start
-	E$j[[b]] <- E0@j + Sl[[b]]$start
-	E$x[[b]] <- E0@x
+	E$j[[b]] <- E0@j + Sl[[b]]$start;E$x[[b]] <- E0@x
+	E0 <- as(as(as(tmp$St, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	S$i[[b]] <- E0@i + Sl[[b]]$start
+	S$j[[b]] <- E0@j + Sl[[b]]$start;S$x[[b]] <- E0@x
       } else { ## dense
         ind <- Sl[[b]]$start:Sl[[b]]$stop
-        E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E ## add to the square root
+        E[ind,ind] <- tmp$E ## add to the square root
+	S[ind,ind] <- tmp$St(Sl[[b]],1)$St
       }	
     } else if (length(Sl[[b]]$S)==1) { ## then we have a singleton
       if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
@@ -309,14 +313,14 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
 	## penalty matrix
         Sl[[b]]$ind <- ind
       }
-      ## add penalty square root into E  
+      ## add penalty into S and square root into E  
       if (Sl[[b]]$repara) { ## then it is just the identity
         ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
 	if (sparse) {
-	  E$j[[b]] <- E$i[[b]] <- ind
-	  E$x[[b]] <- ind*0 + 1
+	  E$j[[b]] <- E$i[[b]] <- ind; E$x[[b]] <- ind*0 + 1
+	  S$j[[b]] <- S$i[[b]] <- ind; S$x[[b]] <- ind*0 + 1
 	} else { ## dense
-          diag(E)[ind] <- 1
+          diag(E)[ind] <- 1; diag(S)[ind] <- 1
 	}  
         lambda <- c(lambda,1) ## record corresponding lambda
       } else { ## need scaled root penalty in *original* parameterization
@@ -328,13 +332,25 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
 	  ## D <- as(D,"dgTMatrix") deprecated
 	  D <- as(as(as(D, "dMatrix"), "generalMatrix"), "TsparseMatrix")
 	  E$i[[b]] <- D@i + Sl[[b]]$start
-	  E$j[[b]] <- D@j + Sl[[b]]$start
-	  E$x[[b]] <- D@x
+	  E$j[[b]] <- D@j + Sl[[b]]$start; E$x[[b]] <- D@x
         } else {
 	  indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
-          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
-          E[indr,indc] <- D
-	}  
+          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1); E[indr,indc] <- D
+	}
+	## and then the total penalty matrix ...
+        D <- if (is.null(Sl[[b]]$nl.reg)) crossprod(Sl[[b]]$Di[1:Sl[[b]]$rank,]) else
+	        Sl[[b]]$U %*% ((Sl[[b]]$ev+Sl[[b]]$nl.reg)*t(Sl[[b]]$U))
+        D <- D/D.norm^2
+	if (sparse) {
+	  ## D <- as(D,"dgTMatrix") deprecated
+	  D <- as(as(as(D, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	  S$i[[b]] <- D@i + Sl[[b]]$start
+	  S$j[[b]] <- D@j + Sl[[b]]$start; S$x[[b]] <- D@x
+        } else {
+	  indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
+          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1); S[indr,indc] <- D
+	}
+
         lambda <- c(lambda,1/D.norm^2)
       }
     } else { ## multiple S block
@@ -355,9 +371,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       } else {
         Sl[[b]]$ldet = 0 ## this is pure orthogonal transform
         Sl[[b]]$rS <- list() ## needed for adaptive re-parameterization
-        S <- Sl[[b]]$S[[1]]
-        for (j in 2:length(Sl[[b]]$S)) S <- S + Sl[[b]]$S[[j]] ## scaled total penalty
-        es <- eigen(S,symmetric=TRUE);U <- es$vectors; D <- es$values
+        St <- Sl[[b]]$S[[1]]
+        for (j in 2:length(Sl[[b]]$S)) St <- St + Sl[[b]]$S[[j]] ## scaled total penalty
+        es <- eigen(St,symmetric=TRUE);U <- es$vectors; D <- es$values
         Sl[[b]]$D <- U
         if (is.null(Sl[[b]]$rank)) { ## need to estimate rank
             Sl[[b]]$rank <- sum(D>.Machine$double.eps^.8*max(D))
@@ -385,22 +401,28 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
         lambda <- c(lambda,1/S.norm)
       } 
       St <- (t(St) + St)/2  ## avoid over-zealous chol sym check
-      St <- t(mroot(St,Sl[[b]]$rank))
+      Sr <- t(mroot(St,Sl[[b]]$rank))
       if (sparse) {
         ## St <- as(St,"dgTMatrix") - deprecated
+	Sr <- as(as(as(Sr, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+        E$i[[b]] <- Sr@i + Sl[[b]]$start
+	E$j[[b]] <- Sr@j + Sl[[b]]$start; E$x[[b]] <- Sr@x
 	St <- as(as(as(St, "dMatrix"), "generalMatrix"), "TsparseMatrix")
-        E$i[[b]] <- St@i + Sl[[b]]$start
-	E$j[[b]] <- St@j + Sl[[b]]$start
-	E$x[[b]] <- St@x
+        S$i[[b]] <- St@i + Sl[[b]]$start
+	S$j[[b]] <- St@j + Sl[[b]]$start; S$x[[b]] <- St@x
       } else { ## dense
         indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(St)-1)
         indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(St)-1)
-        E[indr,indc] <- St
+        E[indr,indc] <- Sr; S[indr,indc] <- St
       }	
     }
   } ## re-para finished
-  if (sparse) E <- sparseMatrix(i=unlist(E$i),j=unlist(E$j),x=unlist(E$x),dims=c(np,np))
+  if (sparse) {
+    E <- sparseMatrix(i=unlist(E$i),j=unlist(E$j),x=unlist(E$x),dims=c(np,np))
+    S <- sparseMatrix(i=unlist(S$i),j=unlist(S$j),x=unlist(S$x),dims=c(np,np))
+  }
   attr(Sl,"E") <- E ## E'E = scaled total penalty
+  attr(Sl,"S") <- S ## scaled total penalty
   attr(Sl,"lambda") <- lambda ## smoothing parameters corresponding to E
   attr(Sl,"cholesky") <- cholesky ## store whether this is Cholesky based or not
   Sl ## the penalty list
@@ -739,7 +761,7 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
 } ## ldetSt
 
 
-ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FALSE) {
+ldetS <- function(Sl,rho,fixed,np,root=FALSE,Stot=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FALSE) {
 ## Get log generalized determinant of S stored blockwise in an Sl list.
 ## If repara=TRUE multi-term blocks will be re-parameterized using gam.reparam, and
 ## a re-parameterization object supplied in the returned object.
@@ -749,6 +771,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
 ## Returns: Sl, with modified rS terms, if needed and rho added to each block
 ##          rp, a re-parameterization list
 ##          E a total penalty square root such that E'E = S_tot (if root==TRUE)
+##          S the total penalty matrix if Stot==TRUE.
 ##          ldetS,ldetS1,ldetS2 the value, grad vec and Hessian
   n.deriv <- sum(!fixed)
   k.deriv <- k.sp <- k.rp <- 1
@@ -763,7 +786,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
   ## block. So E$i[[b]],E$j[[b]],E$x[[b]] defines block b...
 
   if (root) { E <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) } else E <- NULL
-  
+  if (Stot) { S <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) } else S <- NULL
+
   if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
     
     if (!Sl[[b]]$linear) { ## non-linear block
@@ -782,16 +806,28 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
       k.deriv <- k.deriv + nderiv
       k.sp <- k.sp + Sl[[b]]$n.sp
       Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
+      if (root||Stot) tmp <- Sl[[b]]$St(Sl[[b]],1)
       if (root) if (sparse) {
         ## E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix") - deprecated
-	E0 <- as(as(as(Sl[[b]]$St(Sl[[b]],1)$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	E0 <- as(as(as(tmp$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
 	E$i[[b]] <- E0@i + Sl[[b]]$start
 	E$j[[b]] <- E0@j + Sl[[b]]$start
 	E$x[[b]] <- E0@x
       } else {
         ind <- Sl[[b]]$start:Sl[[b]]$stop
-	E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E
+	E[ind,ind] <- tmp$E
       }
+      if (Stot) if (sparse) {
+        ## E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix") - deprecated
+	E0 <- as(as(as(tmp$S, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	S$i[[b]] <- E0@i + Sl[[b]]$start
+	S$j[[b]] <- E0@j + Sl[[b]]$start
+	S$x[[b]] <- E0@x
+      } else {
+        ind <- Sl[[b]]$start:Sl[[b]]$stop
+	S[ind,ind] <- tmp$S
+      }
+      
     } else if (length(Sl[[b]]$S)==1) { ## linear singleton
       ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
       ldS <- ldS + if (is.null(Sl[[b]]$nl.reg)) rho[k.sp] * Sl[[b]]$rank else
@@ -813,8 +849,6 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
         } else { ## root has to be in original parameterization...
           if (sparse) {
 	    ## dgTMatrix is triplet form, which makes combining easier...
-	    #D <- if (is.null(Sl[[b]]$nl.reg)) as(Sl[[b]]$Di[1:Sl[[b]]$rank,]* exp(rho[k.sp]*.5),"dgTMatrix") else
-	    #     as(sqrt(Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*t(Sl[[b]]$U),"dgTMatrix")
 	    D <- if (is.null(Sl[[b]]$nl.reg)) as(as(as(Sl[[b]]$Di[1:Sl[[b]]$rank,]* exp(rho[k.sp]*.5), "dMatrix"),
 	         "generalMatrix"), "TsparseMatrix") else as(as(as(sqrt(Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*
 		 t(Sl[[b]]$U) , "dMatrix"), "generalMatrix"), "TsparseMatrix")	 
@@ -827,6 +861,33 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
             indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
             indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
             E[indr,indc] <- D 
+	  }  
+        }
+      } ## if (root)
+      if (Stot) { 
+        ## insert diagonal from block start to end
+        if (Sl[[b]]$repara) {
+	  ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+	  if (sparse) {
+	    S$i[[b]] <- S$j[[b]] <- ind; S$x[[b]] <- ind*0 + exp(rho[k.sp])
+	  } else {
+            diag(S)[ind] <- exp(rho[k.sp]) ## smoothing param
+	  }  
+        } else { ## root has to be in original parameterization...
+          if (sparse) {
+	    ## dgTMatrix is triplet form, which makes combining easier...
+	    D <- if (is.null(Sl[[b]]$nl.reg)) as(as(as(crossprod(Sl[[b]]$Di[1:Sl[[b]]$rank,]) * exp(rho[k.sp]), "dMatrix"),
+	         "generalMatrix"), "TsparseMatrix") else as(as(as(Sl[[b]]$U%*%((Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*
+		 t(Sl[[b]]$U)), "dMatrix"), "generalMatrix"), "TsparseMatrix")	 
+	    S$i[[b]] <- D@i + Sl[[b]]$start
+	    S$j[[b]] <- D@j + Sl[[b]]$start
+	    S$x[[b]] <- D@x
+	  } else {
+            D <- if (is.null(Sl[[b]]$nl.reg)) crossprod(Sl[[b]]$Di[1:Sl[[b]]$rank,]) * exp(rho[k.sp]) else
+	         Sl[[b]]$U%*%((Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*t(Sl[[b]]$U))
+            indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
+            indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
+            S[indr,indc] <- D 
 	  }  
         }
       }
@@ -844,6 +905,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
       } else {
         grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=deriv) else 
              ldetSblock(Sl[[b]]$rS,rho[ind],deriv=deriv,root=root,nt=nt)
+	grp$St <- if (repara) grp$S else grp$E     
 	grp$det0 <- 0     
       }
       Sl[[b]]$lambda <- exp(rho[ind])
@@ -886,20 +948,46 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
             ir <- Sl[[b]]$start:(Sl[[b]]$start+nrow(grp$E)-1)
             E[ir,ic] <- grp$E
 	  }  
-          Sl[[b]]$St <- crossprod(grp$E)
+          #Sl[[b]]$St <- crossprod(grp$E)
+	  Sl[[b]]$St <- grp$St
         } else {  
           ## gam.reparam always returns root penalty in E, but 
           ## ldetSblock returns penalty in E if root==FALSE
-	  if (cholesky) Sl[[b]]$St <- grp$St else
-          Sl[[b]]$St <- if (repara) crossprod(grp$E) else grp$E
+	  #if (cholesky) Sl[[b]]$St <- grp$St else
+          #Sl[[b]]$St <- if (repara) crossprod(grp$E) else grp$E
+	  Sl[[b]]$St <- grp$St
+        }
+	if (Stot) { ## unpack the square root E'E
+          if (sparse) {
+	    E0 <- as(as(as(Sl[[b]]$St, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	    S$i[[b]] <- E0@i + Sl[[b]]$start
+	    S$j[[b]] <- E0@j + Sl[[b]]$start
+	    S$x[[b]] <- E0@x
+          } else {
+	    ic <- Sl[[b]]$start:(Sl[[b]]$start+ncol(grp$St)-1)
+            ir <- Sl[[b]]$start:(Sl[[b]]$start+nrow(grp$St)-1)
+            S[ir,ic] <- grp$St
+	  }  
         }
       } else { ## square root block and St need to be in original parameterization...
         Sl[[b]]$St <- Sl[[b]]$lambda[1]*Sl[[b]]$S[[1]]
         for (i in 2:m) {
           Sl[[b]]$St <- Sl[[b]]$St + Sl[[b]]$lambda[i]*Sl[[b]]$S[[i]]
         }
-        if (root) {
-          Eb <- t(mroot(Sl[[b]]$St,Sl[[b]]$rank))
+        if (Stot) {
+	  if (sparse) {
+	    Eb <- as(as(as(Sl[[b]]$St, "dMatrix"), "generalMatrix"), "TsparseMatrix")
+	    S$i[[b]] <- Eb@i + Sl[[b]]$start
+	    S$j[[b]] <- Eb@j + Sl[[b]]$start
+	    S$x[[b]] <- Eb@x
+	  } else {
+            indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(Sl[[b]]$St)-1)
+            indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(Sl[[b]]$St)-1)
+            S[indr,indc] <- Sl[[b]]$St
+	  }  
+        }
+	if (root) {
+	  Eb <- t(mroot(Sl[[b]]$St,Sl[[b]]$rank))
 	  if (sparse) {
 	    # Eb <- as(Eb,"dgTMatrix") - deprecated
 	    Eb <- as(as(as(Eb, "dMatrix"), "generalMatrix"), "TsparseMatrix")
@@ -917,7 +1005,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
   } ## end of block loop
   if (root) E <- if (sparse) sparseMatrix(i=unlist(E$i),j=unlist(E$j),x=unlist(E$x),dims=c(np,np)) else
                              E[rowSums(abs(E))!=0,,drop=FALSE] ## drop zero rows.
-  list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
+  if (Stot&&sparse) S <- sparseMatrix(i=unlist(S$i),j=unlist(S$j),x=unlist(S$x),dims=c(np,np)) 			     
+  list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E,S=S)
 } ## end ldetS
 
 
