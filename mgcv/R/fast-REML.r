@@ -250,7 +250,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       ## never re-parameterized, but need contribution to penalty square root, E
       Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
       lambda <- c(lambda,Sl[[b]]$lambda)
-      tmp <- Sl[[b]]$St(Sl[[b]],1)
+      tmp <- Sl[[b]]$St(Sl[[b]],2)
       if (sparse) {
         ## E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix") deprecated
 	E0 <- as(as(as(tmp$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
@@ -262,7 +262,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       } else { ## dense
         ind <- Sl[[b]]$start:Sl[[b]]$stop
         E[ind,ind] <- tmp$E ## add to the square root
-	S[ind,ind] <- tmp$St(Sl[[b]],1)$St
+	S[ind,ind] <- tmp$St
       }	
     } else if (length(Sl[[b]]$S)==1) { ## then we have a singleton
       if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
@@ -806,7 +806,10 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,Stot=FALSE,repara=TRUE,nt=1,deriv=2
       k.deriv <- k.deriv + nderiv
       k.sp <- k.sp + Sl[[b]]$n.sp
       Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
-      if (root||Stot) tmp <- Sl[[b]]$St(Sl[[b]],1)
+      if (root||Stot) {
+        tmp <- if (root&&Stot) 2 else if (root) 1 else 0
+        tmp <- Sl[[b]]$St(Sl[[b]],tmp)
+      }	
       if (root) if (sparse) {
         ## E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix") - deprecated
 	E0 <- as(as(as(tmp$E, "dMatrix"), "generalMatrix"), "TsparseMatrix")
