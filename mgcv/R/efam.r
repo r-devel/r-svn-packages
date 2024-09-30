@@ -163,18 +163,21 @@ nb <- function (theta = NULL, link = "log") {
 ## as part of REML optimization. Currently the template for extended family objects.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
-  }
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for nb family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+  #else if (is.character(link)) {
+  #  stats <- make.link(link)
+  #  linktemp <- link
+  #} else {
+  #  if (inherits(link, "link-glm")) {
+  #     stats <- link
+  #          if (!is.null(stats$name))
+  #              linktemp <- stats$name
+  #      }
+  #      else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+  #}
   ## Theta <-  NULL;
   n.theta <- 1
   if (!is.null(theta)&&theta!=0) {
@@ -312,21 +315,25 @@ nb <- function (theta = NULL, link = "log") {
 
 cnorm <- function (theta = NULL, link = "identity") { 
 ## Extended family object for censored Gaussian, as required for Tobit regression or log-normal
-## Accelarated Failure Time models. 
+## Accelarated Failure Time models.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
-  }
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for cnorm family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#       stats <- link
+#            if (!is.null(stats$name))
+#                linktemp <- stats$name
+#        }
+#        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+#  }
   ## Theta <-  NULL;
   n.theta <- 1
   if (!is.null(theta)&&theta!=0) {
@@ -649,17 +656,21 @@ clog <- function(theta=NULL, link="identity") {
   # links
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-      stats <- link
-      if (!is.null(stats$name)) linktemp <- stats$name
-    }
-    else stop(linktemp, "link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
-  }
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for clog family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#      stats <- link
+#      if (!is.null(stats$name)) linktemp <- stats$name
+#    }
+#    else stop(linktemp, "link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+#  }
   
   # theta
   n.theta <- 1
@@ -1073,17 +1084,21 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
 ## weights are ignored. #! is stuff removed under re-definition of ls as 0
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("identity")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-      stats <- link
-      if (!is.null(stats$name))
-            linktemp <- stats$name
-    } else stop(linktemp, " link not available for ordered categorical family; available links are \"identity\"")
-  }
+  okLinks <- c("identity")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for ocat family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#      stats <- link
+#      if (!is.null(stats$name))
+#            linktemp <- stats$name
+#    } else stop(linktemp, " link not available for ordered categorical family; available links are \"identity\"")
+#  }
   if (is.null(theta)&&is.null(R)) stop("Must supply theta or R to ocat")
   if (!is.null(theta)) R <- length(theta) + 2 ## number of catergories
   ## Theta <-  NULL;
@@ -1541,22 +1556,25 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 ##       to cancellation error, which seems unavoidable. Furthermore 
 ##       there are known problems with spurious maxima in the likelihood 
 ##       w.r.t. p when the data are rounded. 
-  
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log", "identity", "sqrt","inverse")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else  stop(gettextf("link \"%s\" not available for Tweedie family.", 
-                linktemp, collapse = ""), domain = NA)
-  }
+  okLinks <- c("log", "identity", "sqrt","inverse")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for tw family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#       stats <- link
+#            if (!is.null(stats$name))
+#                linktemp <- stats$name
+#        }
+#        else  stop(gettextf("link \"%s\" not available for Tweedie family.", 
+#                linktemp, collapse = ""), domain = NA)
+#  }
   ## Theta <-  NULL;
   n.theta <- 1
   if (!is.null(theta)&&theta!=0) {
@@ -1717,21 +1735,25 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
 ## This serves as a prototype for working with -2logLik
 ## as deviance, and only dealing with saturated likelihood 
 ## at the end.
-## Written by Natalya Pya. 'saturated.ll' by Simon Wood 
+## Written by Natalya Pya. 'saturated.ll' by Simon Wood
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("logit", "probit", "cloglog", "cauchit")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\" and \"cauchit\"")
-    }
+  okLinks <- c("logit", "probit", "cloglog", "cauchit")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for betar family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#       stats <- link
+#            if (!is.null(stats$name))
+#                linktemp <- stats$name
+#        }
+#        else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\" and \"cauchit\"")
+#    }
    
     n.theta <- 1
     if (!is.null(theta)&&theta!=0) {
@@ -1825,25 +1847,11 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
             lsth2=0) ##Hessian w.r.t. theta
      } ## ls betar
 
-   
-    ## preinitialization to reset G$y values of <=0 and >=1... 
-    ## code to evaluate in estimate.gam...
-    ## reset G$y values of <=0 and >= 1 to eps and 1-eps... 
-    #preinitialize <- NULL ## keep codetools happy
-    #eval(parse(text=paste("preinitialize <- expression({\n eps <- ",eps,
-    #     "\n G$y[G$y >= 1-eps] <- 1 - eps\n  G$y[G$y<= eps] <- eps })")))
-
     preinitialize <- function(y,family) {
       eps <- get(".betarEps")
       y[y >= 1-eps] <- 1 - eps;y[y<= eps] <- eps
       return(list(y=y))
     }
-
- #   preinitialize <- expression({
- #     eps <- 1e-7 
- #     G$y[G$y >= 1-eps] <- 1 - eps
- #     G$y[G$y<= eps] <- eps
- #   })
 
     saturated.ll <- function(y,wt,theta=NULL){
     ## function to find the saturated loglik by Newton method,
@@ -2010,18 +2018,22 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
 ## Written by Natalya Pya.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("identity", "log", "inverse")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for scaled t distribution; available links are \"identity\", \"log\",  and \"inverse\"")
-    }
+  okLinks <- c("identity", "log", "inverse")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for scat family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+#  else if (is.character(link)) {
+#    stats <- make.link(link)
+#    linktemp <- link
+#  } else {
+#    if (inherits(link, "link-glm")) {
+#       stats <- link
+#            if (!is.null(stats$name))
+#                linktemp <- stats$name
+#        }
+#        else stop(linktemp, " link not available for scaled t distribution; available links are \"identity\", \"log\",  and \"inverse\"")
+#    }
     ## Theta <-  NULL;
     n.theta <- 2
     if (!is.null(theta)&&sum(theta==0)==0) {
@@ -2300,12 +2312,13 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
 ## zero inflated Poisson parameterized in terms of the log Poisson parameter, gamma. 
 ## eta = theta[1] + exp(theta[2])*gamma), and 1-p = exp(-exp(eta)) where p is 
 ## probability of presence.
-
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("identity")) { 
-    stats <- make.link(linktemp)
-  } else  stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"loga\"")
+  okLinks <- c("identity")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for ziP family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+	
   ## Theta <-  NULL;
   n.theta <- 2
   if (!is.null(theta)) {

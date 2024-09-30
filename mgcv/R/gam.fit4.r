@@ -963,14 +963,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
   nobs <- length(y)
   
   if (penalized) {
-    Sb <- attr(Sl,"S") ## balanced penalty sqrt
- 
+    Sb <- attr(Sl,"S") ## balanced penalty 
     ## the stability reparameterization + log|S|_+ and derivs... 
     rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE,Stot=TRUE) 
     x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-    #Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty
-    Sb <- Sl.repa(rp$rp,Sb,l=-2,r=-1)
-    # St <- crossprod(rp$E) ## total penalty matrix
+    Sb <- Sl.repa(rp$rp,Sb,l=-2,r=-1) ## balanced penalty
     St <- rp$S ## total penalty matrix
     E <- rp$E ## root total penalty
     attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be further scaled   

@@ -675,10 +675,8 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
   ## on entry 'nD' is the index of the current set and 'nos' the
   ## norms for these. On exit 'D' contains the indices (from nD)
   ## of the dominant terms, and nD the remainder...
-    #j <- min(which(nos==max(nos))) ## single selector
     j <- which(nos>max(nos)*1e-5)
     D <- nD[j]; nD <- nD[-j]
-   # cat("Dset =",j,"\n")
     return(list(D=D,nD=nD))
   } ## dominant.set
 
@@ -847,7 +845,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,Stot=FALSE,repara=TRUE,nt=1,deriv=2
 	  if (sparse) {
 	    E$i[[b]] <- E$j[[b]] <- ind; E$x[[b]] <- ind*0 + exp(rho[k.sp]*.5)
 	  } else {
-            diag(E)[ind] <- exp(rho[k.sp]*.5) ## sqrt smoothing param
+            ## diag(E)[ind] <- exp(rho[k.sp]*.5) ## sqrt smoothing param
+	    .Call(C_wdiag,E,ind,rep(exp(rho[k.sp]*.5),length(ind)))
 	  }  
         } else { ## root has to be in original parameterization...
           if (sparse) {
@@ -874,7 +873,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,Stot=FALSE,repara=TRUE,nt=1,deriv=2
 	  if (sparse) {
 	    S$i[[b]] <- S$j[[b]] <- ind; S$x[[b]] <- ind*0 + exp(rho[k.sp])
 	  } else {
-            diag(S)[ind] <- exp(rho[k.sp]) ## smoothing param
+            ## diag(S)[ind] <- exp(rho[k.sp]) ## smoothing param
+	    .Call(C_wdiag,S,ind,rep(exp(rho[k.sp]),length(ind)))
 	  }  
         } else { ## root has to be in original parameterization...
           if (sparse) {

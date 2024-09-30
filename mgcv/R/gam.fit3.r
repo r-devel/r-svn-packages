@@ -2570,14 +2570,15 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
 ##       during initialization (only).
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  if (is.character(link)) {
     stats <- make.link(link)
     linktemp <- link
   } else {
     if (inherits(link, "link-glm")) {
        stats <- link
-            if (!is.null(stats$name))
+           if (!is.null(stats$name))
                 linktemp <- stats$name
         }
         else stop(gettextf("%s link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"",linktemp))
@@ -3032,12 +3033,12 @@ if (FALSE) { ## DEBUG disconnection of density terms
 Tweedie <- function(p=1,link=power(0)) {
 ## a restricted Tweedie family
   if (p<=1||p>2) stop("Only 1<p<=2 supported")
-  
+ 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   okLinks <- c("log", "identity", "sqrt","inverse")
   if (linktemp %in% okLinks)
-    stats <- make.link(linktemp) else 
+    stats <- make.link(linktemp) else
   if (is.character(link)) {
     stats <- make.link(link)
     linktemp <- link

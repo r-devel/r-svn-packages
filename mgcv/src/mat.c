@@ -458,6 +458,18 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc FCONE FCONE);
 } /* end mgcv_mmult */
 
+SEXP wdiag(SEXP a,SEXP IND,SEXP B) {
+/* diag(A)[ind] <- b by direct overwriting */
+  int r,k,*ind,*ik;
+  double *A,*b;
+  A = REAL(a); b = REAL(B); ind = INTEGER(IND);
+  r = nrows(a); k = length(B);
+  for (ik = ind + k;ind < ik;ind++, b++) {
+    k = *ind - 1; A[k+k*r] = *b;
+  }
+  return(R_NilValue);
+} /* wdiag */  
+
 SEXP mrow_sum(SEXP x,SEXP M, SEXP K) {
 /* X is n by p matrix, m and k are integer vectors   
    B is m[length(m)-1] by p output matrix.

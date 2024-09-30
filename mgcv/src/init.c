@@ -47,6 +47,7 @@ R_CallMethodDef CallMethods[] = {
   {"dpdev",(DL_FUNC)&dpdev,1},
   {"spdev",(DL_FUNC)&spdev,1},
   {"mvnll",(DL_FUNC)&mvnll,13},
+  {"wdiag",(DL_FUNC)&wdiag,3},
   {NULL, NULL, 0}
 };
 

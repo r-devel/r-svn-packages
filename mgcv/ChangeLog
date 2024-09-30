@@ -21,8 +21,7 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
-* efsud Vb every time? log.detS setting matrix diagonals
-better done with .Call. Fix bam NCV variance comp, to be as gam.
+* efsud Vb every time? Fix bam NCV variance comp, to be as gam.
 
 1.9-2
 
@@ -33,6 +32,8 @@ better done with .Call. Fix bam NCV variance comp, to be as gam.
 
 * names in NCV 'nei' structure modified to better match paper and documentation 
   notation.
+
+* extended families now give a useful error if an illegal link is supplied.
 
 * fix bam to always return a square QR R factor of the model matrix 
   (previously it was possible for it not to be square for a rank deficient 
@@ -72,6 +73,9 @@ better done with .Call. Fix bam NCV variance comp, to be as gam.
 
 * Sl.setup and ldetS changes to return totla penalty matrices directly 
   (avoiding a redundant crossproduct)
+
+* ldetS slight efficiency improvement by direct matrix diagonal modification 
+  in C code, as suggested by Matteo Fasiolo.
 
 1.9-1
 
