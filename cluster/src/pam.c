@@ -138,7 +138,7 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
 	if(trace_lev)
 	    Rprintf("C pam(): computing %d dissimilarities from  %d x %d  matrix: ",
 		    nhalf, n, p);
-	F77_CALL(dysta)((int*)&n, &p, x, dys, diss_kind, jtmd, valmd, &jhalt);
+	dysta((int*)&n, &p, x, dys, diss_kind, jtmd, valmd, &jhalt); /* --> ./dysta.c */
 	if (jhalt != 0) {
 	    if(trace_lev) Rprintf(" dysta()-error: jhalt=%d\n", jhalt);
 	    UNPROTECT(nprot);

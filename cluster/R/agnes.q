@@ -58,7 +58,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	n <- attr(x, "Size")
-	dv <- x[lower.to.upper.tri.inds(n)]
+	dv <- x[lower.to.upper.tri.inds(n)] # is *slow* [c * n^2 ; but large c]  in large cases
 	## prepare arguments for the Fortran call
 	dv <- c(0., dv)# "double", 1st elem. "only for Fortran" (?)
 	jp <- 1L

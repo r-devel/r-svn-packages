@@ -6,7 +6,7 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.7 (2024-..-.., svn r83..)}{
+\section{Changes in version 2.1.7 (2024-10-04, svn r83..)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item . % do not release before we have bug fix or new feature.
@@ -14,7 +14,15 @@
   }
   \subsection{Misc}{
     \itemize{
-      \item \file{man/pam.Rd} set.seed() for \emph{data}, hence reproducible example.
+      \item \file{man/pam.Rd} set.seed() for \emph{data}, hence
+      reproducible example.
+
+      \item \file{src/daisy.c} and \file{src/dysta.c} produced from their
+      Fortran *.f versions by \command{f2c}, my perl script
+      \command{f2c-clean} and manual pretty editing.
+
+      \bold{Goal}: Use \code{.Call()} instead of \code{.C()} and hence allow long
+      vectors for the length \eqn{n(n-1)/2} distance vectors.
     }
   }
 }

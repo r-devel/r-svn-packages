@@ -48,8 +48,7 @@ void twins(int *nn, // = maximal number of objects
 	*jpp = 1;
     } else { // compute distances
 	int jhalt = 0;
-	F77_CALL(dysta)(nn, jpp, x, dys, ndyst, jtmd, valmd, &jhalt);
-	/*       ------ in ./dysta.f */
+	dysta(nn, jpp, x, dys, ndyst, jtmd, valmd, &jhalt);/* --> ./dysta.c */
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
     if (*jdyss >= 10) { /*        save distances for S */
