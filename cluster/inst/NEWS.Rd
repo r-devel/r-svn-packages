@@ -6,7 +6,7 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.7 (2024-10-04, svn r83..)}{
+\section{Changes in version 2.1.7 (2024-10-04, svn r8458)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item . % do not release before we have bug fix or new feature.
@@ -23,6 +23,9 @@
 
       \bold{Goal}: Use \code{.Call()} instead of \code{.C()} and hence allow long
       vectors for the length \eqn{n(n-1)/2} distance vectors.
+
+      \item \file{fanny-ex.R} tests: use IGNORE_RDIFF_BEGIN .. and some
+      explicit cheks to become less platform dependent.
     }
   }
 }
