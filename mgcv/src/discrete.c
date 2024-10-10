@@ -1509,7 +1509,7 @@ void XVXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 	      x += *ep * e[akk] *  Xi[*Kik] * Xj[Kj[akk]];
 	  }    
 	  XWX[ii + (ptrdiff_t) nxwx * jj] += x;
-	  if (i==j) XWX[jj + (ptrdiff_t) nxwx * ii] += x;
+	  if (i==j && jj!=ii) XWX[jj + (ptrdiff_t) nxwx * ii] += x;
         }  
       }
     }  
@@ -2277,7 +2277,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 void XVXd0(double *XWX,double *X,double *e,int *k,int *ks, int *m,int *p, ptrdiff_t  *n, int *nx, int *ts, 
 	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *a,ptrdiff_t *ma) {
 /* Version of XWXd0 in which (diagonal or tri-diagonal) W is replaced by V such that 
-   V[i,j] = e[i]*e[j] if j in nei(i) and 0 othrewise. 
+   V[i,j] = e[i]*e[j] if j in nei(i) and 0 otherwise. 
 
 
    Forms Xt'VXt when Xt is divided into blocks of columns, each stored in compact form
@@ -2828,15 +2828,19 @@ SEXP CNCV(SEXP NCVr, SEXP NCV1r, SEXP NCV2r, SEXP Gr, SEXP rsdr, SEXP betar, SEX
   nthreads = INTEGER(nthreadsr);
   NCV = REAL(NCVr);NCV1 = REAL(NCV1r);NCV2 = REAL(NCV2r);
   /* unpack neighbourhood list, nei */
-  K = getListEl(nei,"k"); K = PROTECT(coerceVector(K,INTSXP));nprot++;
+  K = getListEl(nei,"a"); // was k
+  K = PROTECT(coerceVector(K,INTSXP));nprot++;
   a = INTEGER(K);
-  M = getListEl(nei,"m"); M = PROTECT(coerceVector(M,REALSXP));nprot++;
+  M = getListEl(nei,"ma"); // was m
+  M = PROTECT(coerceVector(M,REALSXP));nprot++;
   mar = REAL(M);nn = length(M);
   ma = (ptrdiff_t *)CALLOC(nn,sizeof(ptrdiff_t));
   for (p1=ma,p2=p1+nn;p1<p2;p1++,mar++) *p1 = (ptrdiff_t) *mar;
-  I = getListEl(nei,"i"); I = PROTECT(coerceVector(I,INTSXP));nprot++;
+  I = getListEl(nei,"d"); // was i
+  I = PROTECT(coerceVector(I,INTSXP));nprot++;
   d = INTEGER(I);
-  MI = getListEl(nei,"mi"); MI = PROTECT(coerceVector(MI,REALSXP));nprot++;
+  MI = getListEl(nei,"md"); // was mi
+  MI = PROTECT(coerceVector(MI,REALSXP));nprot++;
   mdr = REAL(MI);
   md = (ptrdiff_t *)CALLOC(nn,sizeof(ptrdiff_t));
   for (p1=md,p2=p1+nn;p1<p2;p1++,mdr++) *p1 = (ptrdiff_t) *mdr;
@@ -2962,6 +2966,11 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
    S[i] is ith of ns penalty matrices, dimension sr[i] by sr[i] first element penalized soff[i]
    if sr[i] < 0 then S[i] is an identity matrix -sr[i] by -sr[i], but is not actually supplied.
 
+   The first nn entries of 'rsd' are modified on output, containing the first weighted cross 
+   validated residual for each prediction neighbourhood. If prediction neighbourhoods are 
+   all of size one, these are the only weighted cross validated residuals for each prediction 
+   neighbourhood, of course. 
+
    Created below, k1 and k2 are the indexing nk-vectors required to extract the required 
    influence matrix blocks. mk gives the block-ends.
 
@@ -2977,7 +2986,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 */
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp0,*dp1,*dp2,
     *dp3,xx,*L,**beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**L1,*IAdAIAp,***beta2,*mu2,
-    *V2,*U,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp,*work,***L2,***U2,*Vl,*xbdwork;
+    *V2,*U,*ba2,*NCVth,*NCV1th,*NCV2th,*ba2p,*Arp,*Alp,*IAdAIArp,*work,***L2,***U2,*Vl,*xbdwork,*rsd1;
   int ncs=0,dum,i1,i,j,M,q,r,info=1,*k1p,*k2p,*a1p,*a2p,tid=0,maxM,maxM2,*xbiwork,
     *p1,ione=1,l,*cs,srl,*ind,*a1,*a2,nchunk,*ichunk,ch,ch_start,*piv,ncvth=1,*thlim,*l1c,**l2c,*iwork;
   ptrdiff_t nb,nu,nu_size=0,*mk,ii,jj,kk,kk0,target_nk,max_chunk,max_nb,*xbpwork,space[3];
@@ -3005,6 +3014,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   l2c = (int **)CALLOC(ns,sizeof(int **)); // !!
   A1 = (double **)CALLOC(ns,sizeof(double *));
   mu1 = (double **)CALLOC(ns,sizeof(double *));
+  rsd1 = (double *)CALLOC((size_t) *nn,sizeof(double *));
   IAdAIA = (double **)CALLOC(ns,sizeof(double *));ba1 = (double **)CALLOC(ns,sizeof(double *));
   L = (double *)CALLOC((size_t) *pg * *pg,sizeof(double)); // !!
   Vl = (double *)CALLOC((size_t) *pg * *pg,sizeof(double)); // !!
@@ -3253,6 +3263,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
         while (i1 > a[ii+dum] && dum<M) dum++; // NOTE: need to throw an error if dum==M
 	xx = bp[dum];
         if (xx!=0.0) NCVth[tid] += xx*xx/w[i1];
+	if (j==0) rsd1[i] = xx; /* store first (and only in cases where useful) weighted cross validated residual */
       }
    
     } /* neighbourhood, i loop */
@@ -3419,6 +3430,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     }  
   }
   for (j=0;j<ns;j++) for (q=0;q<=j;q++) NCV2[q+j*ns]=NCV2[j+q*ns];
+  for (j=0;j<*nn;j++) rsd[j] = rsd1[j]; /* return first weighted cv residual for each nei */
   /* free memory */
   for (l=0;l<ns;l++) {
     for (r=0;r<=l;r++) {
@@ -3429,8 +3441,8 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     FREE(mu1[l]);FREE(IAdAIA[l]);
     FREE(l2c[l]);
   }
-  FREE(l1c);FREE(l2c);FREE(L);FREE(V2);FREE(U);FREE(Vl);
-  FREE(P);FREE(beta1);FREE(L1);FREE(A1);FREE(ba1);FREE(mu1);FREE(IAdAIA);FREE(piv);FREE(work);FREE(iwork);
+  FREE(l1c);FREE(l2c);FREE(L);FREE(V2);FREE(U);FREE(Vl);FREE(P);FREE(beta1);FREE(L1);FREE(A1);
+  FREE(ba1);FREE(mu1);FREE(rsd1);FREE(IAdAIA);FREE(piv);FREE(work);FREE(iwork);
   FREE(B);FREE(cs);FREE(mk);FREE(A);FREE(Aaa);FREE(IAaa);FREE(IA);FREE(ba);FREE(rp);
   FREE(beta2);FREE(L2);FREE(U2);FREE(mu2);FREE(wij);FREE(A2);FREE(ba2);FREE(ind);FREE(a1);FREE(a2);FREE(thlim);
   if (ncvth>1) {

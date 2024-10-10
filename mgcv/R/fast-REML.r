@@ -1537,7 +1537,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
         Sl.initial.repara(Sl,as.numeric(beta1[,i]),inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=nthreads) 
  
   db <- FALSE
-  if (db) {
+  if (db) { ## NOTE: .Call now modifies rsd - need a forced copy and save to use here! 
     tt1 <- system.time(dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w)
     rcv <- rsd/(1-dA)
     NCV0 <- sum(rcv^2*w)

@@ -824,8 +824,21 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt[1]) ## F%*%object$Vp
 
   if (method=="NCV"&& max(diff(nei$ma))>1 && max(diff(nei$md))==1) { ## replace Vp with NCV estimate 
-    e <- (z-eta)*w ## weighted residuals
+    e <- if (additive) w*(y-object$fitted.values) else (z-eta)*w ## weighted residuals
     XVX <- XVXd(G$Xd,e,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nthreads=1,a=nei$af,ma=nei$maf)
+    ## debug check of XVX
+    debug <- FALSE
+    if (debug) {
+      X <- Xbd(G$Xd,diag(1,nrow=nrow(XVX)),G$kd,G$ks,G$ts,G$dt,G$v,G$qc,drop=NULL,lt=NULL)
+      Ve <- matrix(0,nobs,nobs)
+      j0 <- 1;af <- nei$af + 1; maf <- nei$maf + 1
+      for (i in 1:nobs) {
+        for (j in af[j0:maf[i]]) Ve[i,j] <- e[i]*e[j]
+        j0 <- maf[i]+1
+      }
+      XVX1 <- t(X)%*%Ve%*%X
+    }  
+    ## debug end
     inflate <- max(1,(prop$NCV/sum(e[nei$d]^2/w[nei$d])-1)/2+1)
     V1 <- PP %*% XVX %*% PP *inflate
     object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
