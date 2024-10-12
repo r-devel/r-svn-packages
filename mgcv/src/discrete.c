@@ -2983,6 +2983,8 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 
    nthreads passed to diagXVXt can make a big difference, but too
    many threads harms performance.
+   
+   On exit rsd contains first weighted cross-validated residual for each neighbourhood.  
 */
   double *A,*A2,**A1,*Aaa,*IAaa,*Ap,*Aaap,*IA,*IAp,*ba,*bp,*rp,one=1.0,zero=0.0,*dp0,*dp1,*dp2,
     *dp3,xx,*L,**beta1,**mu1,**P,*wij,*wp,**ba1,**IAdAIA,*B,*ba1p,**L1,*IAdAIAp,***beta2,*mu2,

@@ -839,8 +839,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
       XVX1 <- t(X)%*%Ve%*%X
     }  
     ## debug end
-    inflate <- max(1,(prop$NCV/sum(e[nei$d]^2/w[nei$d])-1)/2+1)
-    V1 <- PP %*% XVX %*% PP *inflate
+    ## note: prop$rsd contains weighted cross validated residuals
+    inflate <- max(1,1 + .6*(mad(prop$rsd)/mad(e)-1))
+    #inflate <- max(1,(prop$NCV/sum(e[nei$d]^2/w[nei$d])-1)/2+1)
+    V1 <- PP %*% XVX %*% PP *inflate^2
     object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
     ## NOTE: generally we will not have cross validated residuals for all data points.
     ##       This is because we usually base NCV on a sample for large data. But average

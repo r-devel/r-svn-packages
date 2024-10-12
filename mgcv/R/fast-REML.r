@@ -1490,7 +1490,8 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=0,drop=NULL,tol=0,nthreads=1) {
 ## given X'WX in XX and f=X'Wy solves the penalized least squares problem
 ## with penalty defined by Sl and rho, and evaluates an NCV Newton step, the NCV 
-## gradient and the estimated coefs beta.
+## gradient and the estimated coefs beta. rsd contains cross validated weighted residuals for first
+## element in prediction neighbourhood on exit. 
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
   if (length(rho)<length(rho0)) rho <- rho0
   sp <- exp(rho)
@@ -1537,7 +1538,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
         Sl.initial.repara(Sl,as.numeric(beta1[,i]),inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=nthreads) 
  
   db <- FALSE
-  if (db) { ## NOTE: .Call now modifies rsd - need a forced copy and save to use here! 
+  if (db) { ## NOTE: above .Call now modifies rsd - need a forced copy and save to use here! 
     tt1 <- system.time(dA <- diagXVXd(Xd,G,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)*w)
     rcv <- rsd/(1-dA)
     NCV0 <- sum(rcv^2*w)
@@ -1559,7 +1560,7 @@ Sl.ncv <- function(y,Xd,k,ks,ts,dt,v,qc,nei,Sl,XX,w,f,rho,nt=c(1,1),L=NULL,rho0=
   }
   uconv.ind <- (abs(NCV1) > tol)|(abs(diag(NCV2))>tol)
   robj <- list(beta=beta,grad=NCV1,db=beta1,PP=G0,R=R,piv=piv,rank=r,
-               hess=NCV2,NCV=NCV)
+               hess=NCV2,NCV=NCV,rsd=rsd[1:length(nei$md)])
   if (length(NCV1)>0 && sum(uconv.ind)>0) {
     if (sum(uconv.ind)!=ncol(NCV2)) { 
       NCV1 <- NCV1[uconv.ind]
