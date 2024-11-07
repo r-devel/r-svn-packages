@@ -146,9 +146,10 @@ pcls <- function(M)
   }
   o<-.C(C_RPCLS,as.double(M$X),as.double(M$p),as.double(M$y),as.double(M$w),as.double(M$Ain),as.double(M$bin)
         ,as.double(M$C),as.double(Sa),as.integer(M$off),as.integer(df),as.double(M$sp),
-        as.integer(length(M$off)),as.integer(nar))
+        as.integer(length(M$off)),as.integer(nar),active=integer(length(M$p)+1))
   p <- array(o[[2]],length(M$p))
   if (qra.exist) p <- qr.qy(qra,c(rep(0,j),p))
+  attr(p,"active") <- if (o$active[1]>0) o$active[1:o$active[1]+1]+1 else integer(0) ## the active set
   p
 } ## pcls
 

@@ -400,7 +400,7 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
       vectors and the indexing arrays, obtain Z, and return.
 
 
-   On exit active[] contains the number of active inequlity constraints in active[0], 
+   On exit active[] contains the number of active inequality constraints in active[0], 
    and the row number of these constraints in Ain in the remaining elements of
    active[], active must be initialized to length p.r+1 on entry.
 
@@ -579,8 +579,97 @@ void PCLS(matrix *X,matrix *p,matrix *y,matrix *w,matrix *Ain,matrix *b,
   freemat(B);
   /* freeing storage .... */
   freemat(F);freemat(z);freemat(W);freemat(Z);
-}
+} /*PCLS*/
 
+void RUnpackSarray(int m,matrix *S,double *RS)
+/* unpacks the R array RS into an array of matrices initialized to the correct dimensions 
+   let kk = sum_{i=0}^k S[i].r*S[i].c
+   Then the kth matrix starts at element kk of RS and stops at element k(k+1)
+   ... let this extracted array be M. S[k].M[i][j]=M[i+S[k].r*j] - in this way we ensure that 
+   M can be extracted straight to a matrix in R with 
+   A<-matrix(M,S[k].r,S[k].c) 
+*/ 
+{ int start,i,j,k;
+  start=0;
+  for (k=0;k<m;k++)
+  { for (i=0;i<S[k].r;i++) for (j=0;j<S[k].c;j++) S[k].M[i][j]=RS[start+i+S[k].r*j];
+    start += S[k].r*S[k].c;
+  }
+} /* RUnpackSarray */
+
+
+void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,
+            double *Afd,double *Sd,
+            int *off,int *dim,double *theta, int *m,int *nar,int *active)
+
+/* Interface routine for PCLS the constrained penalized weighted least squares solver.
+   nar is an array of dimensions. Let:
+   n=nar[0] - number of data
+   np=nar[1] - number of parameters
+   nai=nar[2] - number of inequality constraints
+   naf=nar[3] - number of fixed constraints
+   
+   
+   Problem to be solved is:
+
+   minimise      ||W^0.5 (y - Xp)||^2 + p'Bp
+   subject to    Ain p >= b  & Af p = "constant"
+
+   where B = \sum_{i=1}^m \theta_i S_i and W=diag(w)
+
+   - in fact S_i are not stored whole - rather the smallest non-zero sub-matrix of each S_i is 
+   stored in a densely packed form in S[]: see routines RpackSarray() and RUnpackSarray() for 
+   details of the sub-matrix packing. off[i],off[i] is the location within the full S_i to
+   insert the sub-matrix actually stored which is of dimension dim[i] by dim[i].
+
+   W = diag(w) 
+
+   on exit p contains the best fit parameter vector. 
+
+*/
+{ matrix y,X,p,w,Ain,Af,b,*S;
+  int n,np,i;
+ 
+  np=nar[1];n=nar[0];
+  /* unpack from R into matrices */
+  X=Rmatrix(Xd,(long)n,(long)np);
+  p=Rmatrix(pd,(long)np,1L);
+  y=Rmatrix(yd,(long)n,1L);
+  w=Rmatrix(wd,(long)n,1L);
+  if (nar[2]>0) Ain=Rmatrix(Aind,(long)nar[2],(long)np); else Ain.r=0L;
+  if (nar[3]>0) Af=Rmatrix(Afd,(long)nar[3],(long)np); else Af.r=0L;
+  if (nar[2]>0) b=Rmatrix(bd,(long)nar[2],1L);else b.r=0L;
+ 
+  if (*m) S=(matrix *)CALLOC((size_t) *m,sizeof(matrix));
+  else S=NULL; /* avoid spurious compiler warning */
+  for (i=0;i< *m;i++) S[i]=initmat((long)dim[i],(long)dim[i]);
+  RUnpackSarray(*m,S,Sd);
+  
+  //if (nar[4]) H=initmat(y.r,y.r); else H.r=H.c=0L;
+  //active=(int *)CALLOC((size_t)(p.r+1),sizeof(int)); /* array for active constraints at best fit active[0] will be  number of them */
+  /* call routine that actually does the work */
+ 
+  PCLS(&X,&p,&y,&w,&Ain,&b,&Af,S,off,theta,*m,active);
+
+  /* copy results back into R arrays */ 
+  for (i=0;i<p.r;i++) pd[i]=p.V[i];
+ 
+  //if (H.r) RArrayFromMatrix(Hd,H.r,&H);
+  /* clear up .... */
+  //FREE(active);
+ 
+  for (i=0;i< *m;i++) freemat(S[i]);
+  if (*m) FREE(S);
+ 
+  freemat(X);freemat(p);freemat(y);freemat(w);
+  //if (H.r) freemat(H);
+  if (Ain.r) freemat(Ain);
+  if (Af.r) freemat(Af);
+  if (b.r) freemat(b);
+  //#ifdef MEM_CHECK
+  //dmalloc_log_unfreed();  dmalloc_verify(NULL);
+  //#endif
+} /* RPCLS */
 
 
 /***************************************************************************/
