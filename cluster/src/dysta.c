@@ -9,28 +9,26 @@
  Compute Distances from X matrix {also for agnes() and diana()}:
  -----------------------------------------------------------
 
- was part of  pam.f --- now called both from Fortran & C
+ was part of  pam.f (then called both from Fortran & C)
  "keep in sync" with  daisy.c {now both moved to C}
+ ((*no* longer called from ../tests/dysta-ex.R ...))
 */
-void dysta(int *nn, int *p,
-	   double *x,  // [nn x p] matrix
-	   double *dys,// length 1 + nn*(nn-1)/2 -- with first entry := 0.  (FIXME: drop that)
-	   int *ndyst, /* ndyst = 1 : euclidean ; "else"(2) : manhattan */
-	   int *jtmd, double *valmd,
-	   int *jhalt)
+int dysta(int *nn, int *p,
+	  double *x,  // [nn x p] matrix
+	  double *dys,// length 1 + nn*(nn-1)/2 -- with first entry := 0.  (FIXME: drop that)
+	  int *ndyst, /* ndyst = 1 : euclidean ; "else"(2) : manhattan */
+	  int *jtmd, double *valmd)
 {
 /* VARs Parameter adjustments --- all this just so we can use 1-indexing  (FIXME?) */
-    --dys;
     --valmd;
     --jtmd;
     int x_dim1 = *nn,
 	x_offset = 1 + x_dim1;
     x -= x_offset;
 
-    /* Function Body */
-    int nlk = 1;
-    dys[1] = 0.;
-/*  ---------- is used potentially for  d[i,i] == dys[1] == 0  (FIXME) */
+    int nlk = 0, jhalt = 0;
+    dys[nlk] = 0.;
+/*  -----------== is used potentially for  d[i,i] == dys[1] == 0  (FIXME) */
     double pp = (double) (*p);
     for (int l = 2; l <= *nn; ++l) {
 	for (int k = 1; k <= l-1; ++k) {
@@ -52,17 +50,15 @@ void dysta(int *nn, int *p,
 	    }
 	    double rpres = (double) npres;
 	    if (npres == 0) {
-		*jhalt = 1;
+		jhalt = 1;
 		dys[nlk] = -1.;
+	    } else if(*ndyst == 1) {
+		dys[nlk] = sqrt(clk * (pp / rpres));
 	    } else {
-		if (*ndyst == 1) {
-		    dys[nlk] = sqrt(clk * (pp / rpres));
-		} else {
-		    dys[nlk] = clk * (pp / rpres);
-		}
+		dys[nlk] = clk * (pp / rpres);
 	    }
 	}
     }
-    return;
+    return jhalt;
 } /* dysta_ */
 

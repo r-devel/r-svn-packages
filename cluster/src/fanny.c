@@ -9,7 +9,8 @@
 #include <R_ext/Print.h>/* for diagnostics */
 
 #include "cluster.h"
-/* dysta3() declared in cluster.h */
+static int
+dysta3(int *nn, int *p, double *x, double *dys, int *ndyst, int *jtmd, double *valmd);
 
 static void
 fuzzy(int nn, int k, double *p,
@@ -44,8 +45,7 @@ void cl_fanny(int *nn,  /* = number of objects */
     Rboolean all_stats = (obj[0] == 0.);/* TODO: consider *not* doing caddy() */
 
     if (*jdyss != 1) { /* compute dissimilarities from data */
-	int jhalt = 0;
-	dysta3(nn, jpp, x, dss, ndyst, jtmd, valmd, &jhalt);
+	int jhalt = dysta3(nn, jpp, x, dss, ndyst, jtmd, valmd);
 	if (jhalt) {
 	    *jdyss = -1; return;
 	}
@@ -72,14 +72,13 @@ void cl_fanny(int *nn,  /* = number of objects */
 } /* cl_fanny */
 
 
-void dysta3(int *nn, int *p, double *x, double *dys,
-	    int *ndyst, int *jtmd, double *valmd, int *jhalt)
+static
+int dysta3(int *nn, int *p, double *x, double *dys,
+	   int *ndyst, int *jtmd, double *valmd)
 {
-    int k, l, nlk, x_d = *nn;
-
-    nlk = 0;
-    for (l = 0; l < (*nn - 1); ++l) {
-	for (k = l + 1; k < *nn; ++k, ++nlk) {
+    int jhalt = 0, nlk = 0, x_d = *nn;
+    for (int l = 0; l < (*nn - 1); ++l) {
+	for (int k = l + 1; k < *nn; ++k, ++nlk) {
 	    double clk = 0.;
 	    int j, jj, npres = 0;
 	    for (j = 0, jj = 0; j < *p; j++, jj+=x_d) {
@@ -98,13 +97,14 @@ void dysta3(int *nn, int *p, double *x, double *dys,
 		    clk += fabs(d);
 	    }
 	    if (npres == 0) {
-		dys[nlk] = -1.;	*jhalt = 1;
+		dys[nlk] = -1.;	jhalt = 1;
 	    } else {
 		clk *= (*p) / (double) npres;
 		dys[nlk] = (*ndyst == 1) ? sqrt(clk) : /*ndyst = 2 or 3 */ clk;
 	    }
 	}
     }
+    return jhalt;
 } /* dysta3 */
 
 

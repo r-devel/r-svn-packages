@@ -1,14 +1,13 @@
-## NB: patterns are matched case insensitively
+## -*-sh-*-  using reg.exp (==> no initial or final '.*' ), *but* case is ignored!
 
 \.rsync
 ^MM-
 -MM$
-.*-todo
-.*/.*-MM
+-todo
+/.*-MM
 cluster_gower
 cluster_..-po
 fasterpam
-Changelog.
 svn-
 ^\.Rbuildignore.
 ^inst/NEWS\.Rd.
@@ -24,16 +23,16 @@ svn-
 \.tgz$
 \.txt$
 \.zip$
-.*-warnings
-.*references
+-warnings
+references
 mail-
-.*mail
+mail
 resort-INDEX
 Rnews-
 do-
-.*_1\.[89]
+_1\.[89]
 R/.*_1\.[89]
-.*/TAGS
+/TAGS
 R/.*\+
 R/README-Splus
 man/.*\+
@@ -56,5 +55,6 @@ tests/.*\.Rout-[3264]
 tests/.*\.Rout.save-R[1-9]
 tests/R-tests-swaplink-
 tests/to-
+tests/Examples/.*\.md
 00-orig-src
 po/translator

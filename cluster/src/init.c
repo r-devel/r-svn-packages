@@ -69,13 +69,8 @@ static const R_CMethodDef CEntries[]  = {
     CDEF(R_bncoef),
     CDEF(cl_clara),
     {"cl_daisy", (DL_FUNC) &cldaisy, 11},/* ./daisy.c */
-    {"dysta",    (DL_FUNC) &dysta,    8},/* ./dysta.c */
-    {"dysta3",   (DL_FUNC) &dysta3,   8},/* ./fanny.c */
     CDEF(cl_fanny),
     {"cl_mona", (DL_FUNC) &clmona, 9},/* ./mona.c */
-#ifdef _UNUSED_C_pam
-    CDEF(cl_pam),
-#endif
     CDEF(spannel),
     CDEF(cl_sweep),
     CDEF(sildist),

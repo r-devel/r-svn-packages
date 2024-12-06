@@ -60,11 +60,6 @@ void cl_clara(int *n,  /* = number of objects */
 	      int *itmp	/* = integer[ 6 * nsam ] */
     );
 
-void dysta2(int nsam, int jpp, int *nsel,
-	    double *x, int n, double *dys, DISS_KIND diss_kind,
-	    int *jtmd, double *valmd, Rboolean has_NA, Rboolean *toomany_NA);
-
-
 void bswap2(int kk, int nsam, double s, const double dys[],
 	    Rboolean pam_like, int trace_lev,
 	    // result:
@@ -90,8 +85,8 @@ void black(int kk, int jpp, int nsam, int *nbest,
 	   double *syl, double *srank);
 
 /* -------- ./dysta.c --- (dysta.f was in pam.f) -------------------- */
-void dysta(int *nn, int *jpp, double *x, double *dys, int *ndyst,
-		    int *jtmd, double *valmd, int *jhalt);
+int dysta(int *nn, int *jpp, double *x, double *dys, int *ndyst,
+	  int *jtmd, double *valmd);
 /* --------- ./pam.c ------------------*/
 
 #ifdef _UNUSED_C_pam
@@ -178,11 +173,6 @@ void cldaisy(int *nn, int *jpp, double *x,
 		       double *valmd, double *weights,
 		       int *jtmd, int *jdat, int *vtype,
 		       int *ndyst, int *mdata, double *disv);
-
-/* -------- ./fanny.c ---------------------------------- */
-/* R-level: called only from ../tests/dysta-ex.R  (now via .C()): */
-void dysta3(int *nn, int *p, double *x, double *dys,
-	    int *ndyst, int *jtmd, double *valmd, int *jhalt);
 
 /* -------- ./mona.c ---------------------------------- */
 void clmona(int *nn, int *pp, int *x, int *jerr,
