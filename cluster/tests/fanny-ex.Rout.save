@@ -298,6 +298,8 @@ Available components:
 [11] "data"       
 > ## IGNORE_RDIFF_END
 > 
+> ## CRAN-relevant M1 mac: aarch64-apple-darwin24.1.0 / Apple clang version 16.0.0 (clang-1600.0.26.6) / macOS Sequoia 15.1.1
+> ## IGNORE_RDIFF_BEGIN
 > (fanny(x,2, memb.exp = 1.5))
 Fuzzy Clustering object of class 'fanny' :                      
 m.ship.expon.      1.5
@@ -347,6 +349,7 @@ Available components:
  [1] "membership"  "coeff"       "memb.exp"    "clustering"  "k.crisp"    
  [6] "objective"   "convergence" "diss"        "call"        "silinfo"    
 [11] "data"       
+> ## IGNORE_RDIFF_END
 > (fanny(x,2, memb.exp = 1.2))
 Fuzzy Clustering object of class 'fanny' :                      
 m.ship.expon.      1.2

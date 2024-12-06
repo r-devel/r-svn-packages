@@ -6,7 +6,7 @@
 
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.7 (2024-12-06, svn r8465)}{
+\section{Changes in version 2.1.7 (2024-12-06, svn r8466)}{
   %% \subsection{Bug Fixes}{
   %%   \itemize{
   %%     \item . % do not release within 1 year before we have bug fix or new feature.

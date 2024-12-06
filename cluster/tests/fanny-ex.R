@@ -29,7 +29,10 @@ str(fannyx)
 summary(fanny(x,3))# one extra cluster
 ## IGNORE_RDIFF_END
 
+## CRAN-relevant M1 mac: aarch64-apple-darwin24.1.0 / Apple clang version 16.0.0 (clang-1600.0.26.6) / macOS Sequoia 15.1.1
+## IGNORE_RDIFF_BEGIN
 (fanny(x,2, memb.exp = 1.5))
+## IGNORE_RDIFF_END
 (fanny(x,2, memb.exp = 1.2))
 (fanny(x,2, memb.exp = 1.1))
 (fanny(x,2, memb.exp = 3))
