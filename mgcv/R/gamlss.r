@@ -2733,7 +2733,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
         rsd <- 2*((y-mu)/mu-log(y/mu))*exp(-rho)
         rsd <- sqrt(pmax(0,rsd))*sign(y-mu)
       } else if (type=="pearson") {
-        rsd <- (y-mu)/(exp(rho)*mu)
+        rsd <- (y-mu)/(exp(rho*.5)*mu)
       } else {
         rsd <- y-mu
       }

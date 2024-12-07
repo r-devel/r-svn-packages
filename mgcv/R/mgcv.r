@@ -1845,9 +1845,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     }
   }
 
-  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$rank,G$off,
-                                  offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))
-  else lsp2 <- rep(0,0)
+  lsp2 <- if (length(G$sp)>0) log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$rank,G$off,
+                       offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))  else rep(0,0)
 
   if (!outer.looping) { ## additive GCV/UBRE
     object <- am.fit(G,control=control,gamma=gamma,...)
@@ -4630,7 +4629,6 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
       mu.eta2 <-family$mu.eta(family$linkfun(mustart))^2 
       w <- .5 * as.numeric(Ddo$Dmu2 * mu.eta2)
       if (any(w<0)) w <- .5 * as.numeric(Ddo$EDmu2 * mu.eta2) 
-      #w <- .5 * as.numeric(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
     } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
     w <- sqrt(w)
     if (type==1) { ## what PI would have used
@@ -4653,7 +4651,7 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
 
   lambda ## initial values
 
-}
+} ## initial.spg
 
 initial.sp <- function(X,S,off,expensive=FALSE,XX=FALSE)
 # Find initial smoothing parameter guesstimates based on model matrix X 

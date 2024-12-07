@@ -77,6 +77,9 @@ present, and reparameterization needs checking (also for bam).
 * Sl.setup and ldetS changes to return totla penalty matrices directly 
   (avoiding a redundant crossproduct)
 
+* Fix to Pearson residuals in gammals family - thanks to gavin Simpson and 
+  Arthur Fendrich
+
 * ldetS slight efficiency improvement by direct matrix diagonal modification 
   in C code, as suggested by Matteo Fasiolo.
 
