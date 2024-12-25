@@ -1473,7 +1473,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
     #  ret$ghost1 <- ll$ghost1; ret$ghost2 <- ret$ghost2
     #} 
     ret
-} ## end of gam.fit5 crossprod
+} ## end of gam.fit5 
 
 efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
                      control=gam.control(),Mp=-1,start=NULL) {

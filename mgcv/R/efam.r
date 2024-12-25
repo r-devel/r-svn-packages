@@ -61,7 +61,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
     pdef <- sum(eh$values <= 0)==0
     if (!pdef) { ## Make the Hessian pos def
       eh$values <- abs(eh$values)
-      thresh <- max(eh$values) * 1e-7
+      thresh <- max(eh$values) * 1e-5
       eh$values[eh$values<thresh] <- thresh
     }
     ## compute step = -solve(H,g) (via eigen decomp)...
@@ -73,7 +73,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
 
     nll1 <- nlogl(theta+step,family,y,mu,scale,wt,2)
     iter <- 0
-    while (nll1$nll > nll$nll) { ## step halving 
+    while (nll1$nll - nll$nll > .Machine$double.eps^.75*abs(nll$nll)) { ## step halving 
       step <- step/2; iter <- iter + 1
       if (sum(theta!=theta+step)==0||iter>25) {
         step.failed <- TRUE

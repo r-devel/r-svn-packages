@@ -728,9 +728,7 @@ tensor.prod.penalties <- function(S)
     TS[[i]] <- if (ncol(M0)==nrow(M0)) (M0+t(M0))/2 else M0 # ensure exactly symmetric 
   }
   TS
-}## end tensor.prod.penalties
-
-
+} ## end tensor.prod.penalties
 
 
 smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
@@ -827,8 +825,25 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
       r <- r[-i]   # remove corresponding rank from list
   }
 
+  ## code to handle any marginal inequality constraints (only for te terms, not ti)...
+  if (!inter && any(sapply(object$margin,function(x) !is.null(x$Ain)))) {
+    Ain <- matrix(0,0,prod(d));bin0 <- bin <- numeric(0)
+    for (i in 1:m) if (!is.null(object$margin[[i]]$Ain)) {
+      I0 <- if (i>1) diag(1,nrow=prod(d[1:(i-1)])) else 1
+      I1 <- if (i<m) diag(1,nrow=prod(d[(i+1):m])) else 1
+      Ain <- if (is.null(XP[[i]])) rbind(Ain,I0 %x% object$margin[[i]]$Ain %x% I1) else
+             rbind(Ain,I0 %x% (object$margin[[i]]$Ain%*%XP[[i]]) %x% I1)
+      I0 <- if (i>1) rep(1,prod(d[1:(i-1)])) else 1
+      I1 <- if (i<m) rep(1,prod(d[(i+1):m])) else 1
+      bin <- c(bin,I0 %x% object$margin[[i]]$bin %x% I1)
+      bin0 <- c(bin0,I0 %x% object$margin[[i]]$bin0 %x% I1)
+    }
+    object$Ain <- Ain; object$bin <- bin; object$bin0 <- bin0
+  }
+
   ## code for dropping unused basis functions from X and adjusting penalties appropriately
-  if (!is.null(object$margin[[1]]$xt$dropu)&&object$margin[[1]]$xt$dropu) {
+  if (is.list(object$margin[[1]]$xt)&&!is.null(object$margin[[1]]$xt$dropu)
+      &&object$margin[[1]]$xt$dropu) {
     ind <- which(colSums(abs(X))!=0)
     X <- X[,ind]
     if (!is.null(object$g.index)) object$g.index <- object$g.index[ind]

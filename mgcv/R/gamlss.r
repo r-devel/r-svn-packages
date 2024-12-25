@@ -1019,7 +1019,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	              v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank") 
@@ -1034,7 +1035,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
 	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(eta1)))
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
+	  R <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	       v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
 	  piv <- attr(R,"pivot")
 	  rrank <- attr(R,"rank")

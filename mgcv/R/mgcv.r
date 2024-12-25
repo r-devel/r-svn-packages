@@ -114,6 +114,9 @@ pcls <- function(M)
     res <- mean(res)
     if (res<.Machine$double.eps^.5) 
       warning("initial parameters very close to inequality constraints")
+  } else { ## dummy constraint
+    M$Ain <- numeric(nar[2])
+    M$bin <- -1; nar[3] <- 1
   }
   
   if (nrow(M$C)>0) if (ncol(M$C)!=nar[2]) stop("ncol(M$C) != length(M$p)")  
@@ -806,7 +809,7 @@ gam.setup.list <- function(formula,pterms,
 ## key difference to gam.setup is an attribute to the model matrix, "lpi", which is a list
 ## of column indices for each linear predictor 
   if (!is.null(paraPen)) stop("paraPen not supported for multi-formula models")
-  if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
+#  if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
   d <- length(pterms) ## number of formulae
   if (is.null(drop.intercept)) drop.intercept <- rep(FALSE, d)
   if (length(drop.intercept) != d) stop("length(drop.intercept) should be equal to number of model formulas")
@@ -867,7 +870,16 @@ gam.setup.list <- function(formula,pterms,
     G$assign[[i]] <- um$assign
     G$rank <- c(G$rank,um$rank)
     pstart[i] <- pof+1
+
+    if (!is.null(um$C)||!is.null(G$C)) { ## extend and constraint matrix
+      if (is.null(G$C)) G$C <- matrix(0,0,ncol(G$X))
+      if (is.null(um$C)) um$C <- matrix(0,0,ncol(um$X))
+      G$C <- rbind(cbind(G$C,matrix(0,nrow(G$C),ncol(um$C))),
+                   cbind(matrix(0,nrow(um$C),ncol(G$C)),um$C))
+    }
+    
     G$X <- cbind(G$X,um$X) ## extend model matrix
+    
     ## deal with the smooths...
     k <- G$m
     if (um$m) for (j in 1:um$m) {
@@ -886,6 +898,7 @@ gam.setup.list <- function(formula,pterms,
       G$L <- rbind(cbind(G$L,matrix(0,nrow(G$L),ncol(um$L))),cbind(matrix(0,nrow(um$L),ncol(G$L)),um$L))
     }
 
+ 
     G$off <- c(G$off,um$off+pof)
     if (M) for (j in 1:M) {
       ks <- ks + 1
@@ -916,7 +929,8 @@ gam.setup.list <- function(formula,pterms,
     rt <- olid(G$X,G$nsdf,pstart,flpi,lpi)
     if (length(rt$dind)>0) { ## then columns have to be dropped
       warning("dropping unidentifiable parametric terms from model",call.=FALSE)
-      G$X <- G$X[,-rt$dind] ## drop cols 
+      G$X <- G$X[,-rt$dind,drop=FALSE] ## drop cols
+      if (!is.null(G$C)) G$C <- G$C[,-rt$dind,drop=FALSE]
       G$cmX <- G$cmX[-rt$dind]
       G$term.names <- G$term.names[-rt$dind]
       ## adjust indexing in smooth list, noting that coefs of smooths 
@@ -4092,7 +4106,6 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE,
       if (!fx&&object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
         res <- if (re.test) reTest(object,i) else NULL
       } else { ## Inverted Nychka interval statistics
-       
         if (est.disp) rdf <- residual.df else rdf <- -1
         res <- testStat(p,Xt,V,min(ncol(Xt),edf1i),type=0,res.df = rdf)
       }
@@ -4160,7 +4173,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   if (!is.null(x$r.sq)) cat("R-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5),"  ")
   if (length(x$dev.expl)>0) cat("Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%",sep="")
   cat("\n")
-  if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
+  if (!is.na(x$sp.criterion) && !is.null(x$method) && !(x$method%in%c("PQL","lme.ML","lme.REML")))  
     cat(x$method," = ",formatC(x$sp.criterion,digits=5),sep="")
  
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
