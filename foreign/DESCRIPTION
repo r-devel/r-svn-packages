@@ -6,8 +6,9 @@ Title: Read Data Stored by 'Minitab', 'S', 'SAS', 'SPSS', 'Stata', 'Systat', 'We
 Depends: R (>= 4.0.0)
 Imports: methods, utils, stats
 Authors@R: c(
-   person("R Core Team",
-      email = "R-core@R-project.org", role = c("aut", "cph", "cre")),
+    person("R Core Team", email = "R-core@R-project.org",
+ 	   role = c("aut", "cph", "cre"),
+	   comment = c(ROR = "02zz1nj61")),
     person("Roger", "Bivand", role = c("ctb", "cph")),
     person(c("Vincent", "J."), "Carey", role = c("ctb", "cph")),
     person("Saikat", "DebRoy", role = c("ctb", "cph")),
