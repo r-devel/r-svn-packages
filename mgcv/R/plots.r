@@ -1034,7 +1034,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
          
         ## plot the smooth...
         
-        if (scheme==2) {
+        if (scheme == 2) {
           plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=ylimit,
                  xlim=P$xlim,ylab=P$ylab,main=P$main,...)
           dx <- diff(P$xlim); dy <- diff(ylimit)
@@ -1048,7 +1048,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
           ll <- P$fit - P$se/2 ## lower CL  
           polygon(c(P$x,P$x[n:1],P$x[1]),
                     trans(c(ul,ll[n:1],ul[1])+shift),col = "blue",border = NA) 
-          lines(P$x,trans(P$fit+shift),col="white",...)
+          lines(P$x,trans(P$fit+shift),...)
         } else if (scheme==1) { 
           plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=ylimit,
                  xlim=P$xlim,ylab=P$ylab,main=P$main,...)

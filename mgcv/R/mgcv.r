@@ -871,11 +871,16 @@ gam.setup.list <- function(formula,pterms,
     G$rank <- c(G$rank,um$rank)
     pstart[i] <- pof+1
 
-    if (!is.null(um$C)||!is.null(G$C)) { ## extend and constraint matrix
-      if (is.null(G$C)) G$C <- matrix(0,0,ncol(G$X))
-      if (is.null(um$C)) um$C <- matrix(0,0,ncol(um$X))
+    if (!is.null(um$C)||!is.null(G$C)) { ## extend any constraint matrix
+      if (is.null(G$C)) {
+        G$C <- matrix(0,0,ncol(G$X)); G$d <- numeric(0)
+      }	
+      if (is.null(um$C)) { 
+        um$C <- matrix(0,0,ncol(um$X)); um$d <- numeric(0)
+      }	
       G$C <- rbind(cbind(G$C,matrix(0,nrow(G$C),ncol(um$C))),
                    cbind(matrix(0,nrow(um$C),ncol(G$C)),um$C))
+      G$d <- c(G$d,um$d)		   
     }
     
     G$X <- cbind(G$X,um$X) ## extend model matrix
@@ -1413,15 +1418,16 @@ gam.setup <- function(formula,pterms,
   names(G$lsp0) <- lsp.names ## names of all smoothing parameters (not just underlying)
 
   if (absorb.cons==FALSE) {  ## need to accumulate constraints 
-    G$C <- matrix(0,0,n.p)
+    G$C <- matrix(0,0,n.p); G$d <- numeric(0)
     if (m>0) {
       for (i in 1:m) {
-        if (is.null(G$smooth[[i]]$C)) n.con<-0 
-        else n.con<- nrow(G$smooth[[i]]$C)
+        n.con <- if (is.null(G$smooth[[i]]$C)) 0 else nrow(G$smooth[[i]]$C)
         C <- matrix(0,n.con,n.p)
-        C[,G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]<-G$smooth[[i]]$C
+        C[,G$smooth[[i]]$first.para:G$smooth[[i]]$last.para] <- G$smooth[[i]]$C
         G$C <- rbind(G$C,C)
-        G$smooth[[i]]$C <- NULL
+	dd <- if (is.null(G$smooth[[i]]$d)) numeric(n.con) else G$smooth[[i]]$d
+	G$d <- c(G$d,dd)
+        G$smooth[[i]]$d <- G$smooth[[i]]$C <- NULL
       }
       rm(C)
     }
