@@ -8,6 +8,20 @@
 
 %% NB 2: do not release within 1 year before we have bug fix or new feature.
 
+\section{Changes in version 2.1.9 (2025-01-.., svn r...)}{
+  \subsection{Bug Fixes}{
+    \itemize{
+      \item .
+    }
+  }
+  \subsection{Misc}{
+    \itemize{
+      \item use complete argument names in most cases to satisfy lovers of
+      \code{options(warnPartialMatch* = TRUE)}.
+    }
+  }
+}
+
 \section{Changes in version 2.1.8 (2024-12-10, svn r8468)}{
   \subsection{Bug Fixes}{
      \itemize{

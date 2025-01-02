@@ -30,8 +30,8 @@ static double min_dis(double dys[], int ka, int kb, int ner[]);
 
 void twins(int *nn, // = maximal number of objects
 	   int *jpp,// = maximal number of variables used in the analysis
-	   double *x,
-	   double *dys,
+	   double *x,   // n x p matrix or "empty"  if(diss)
+	   double *dys, // input
 	   double *dys2,// dys2(.) can have length 1, if(!keep.diss)
 	   int *jdyss, /* jdyss (in/out): initially, jdyss mod 10 = 1 : <==> diss = TRUE
 			* jdyss < 10 : don't save dissimilarities (C.keep.diss = FALSE) */
@@ -50,9 +50,14 @@ void twins(int *nn, // = maximal number of objects
 	int jhalt = dysta(nn, jpp, x, dys, ndyst, jtmd, valmd);/* --> ./dysta.c */
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
-    if (*jdyss >= 10) { /*        save distances for S */
+    // MM: really hate to prepend an unused entry to dist[] inside R <--> ../R/agnes.q & ../R/diana.q
+    if(dys[0] != 0.) REprintf("C level twins(): dys[0] != 0 but = %g\n\n", dys[0]);
+
+    if (*jdyss >= 10) { /* return distances to R  if(C.keep.diss) */
+	// TODO: once we allow "large" nn, use  (double)*nn  here
 	Memcpy(dys2, dys, (*nn * (*nn - 1) / 2 + 1));
     }
+
     if (*jalg != 2) {
 	// AGNES
 	agnes(*nn, kwan, ner, ban, dys, *method, alpha, merge, trace_lev[0]);
@@ -76,7 +81,7 @@ agnes(int nn, int *kwan, int *ner, double *ban,
 {
 
 /* VARs */
-    int n_1 = nn - 1, _d, j, k, la = -1, lb = -1; // -Wall]
+    int n_1 = nn - 1, _d, j, k, la = -1, lb = -1; // -Wall
     Rboolean has_a3 = FALSE, has_a4 = FALSE,// is alpha[3] or [4] != 0 -- for Lance-Williams
 	flex_meth = (method == 6 || method == 7);
     // 6: "flexible": "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams'
@@ -315,7 +320,6 @@ splyt(int nn, int *kwan, int *ner, double *ban,
     --ban;
     --ner;
     --kwan;
-
 
     /*     initialization */
     nclu = 1;
