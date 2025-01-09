@@ -83,7 +83,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
 	}
-	dv <- double(1 + (n * (n - 1))/2)
+	dv <- double(1 + (n * (n - 1))/2) # FIXME: an allocation waste for large n !!
     }
     if(n <= 1) stop("need at least 2 objects to cluster")
     stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
@@ -92,7 +92,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    as.integer(n),
 		    as.integer(jp),
 		    x2,
-		    dv,
+		    dv, # input \\ output:
 		    dis = double(if(C.keep.diss) length(dv) else 1L),
 		    jdyss = if(C.keep.diss) diss + 10L else as.integer(diss),
 		    if(mdata && jp) rep(valmisdat, jp) else double(1L),
@@ -114,6 +114,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
         if(keep.diss) {
             ## adapt Fortran output to S:
             ## convert lower matrix,read by rows, to upper matrix, read by rows.
+            stopifnot(res$dis[1] == 0) # proving it carries no info
             disv <- res$dis[-1]
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)]

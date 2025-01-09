@@ -166,8 +166,6 @@ void cl_fanny(int *nn, int *jpp, int *kk,
 	      int *ncluv, double *sylinf, double *r, double *tol, int *maxit);
 
 
-/* ================= Fortran things (remainder) ======================== */
-
 /* -------- ./daisy.c ---------------------------------- */
 void cldaisy(int *nn, int *jpp, double *x,
 		       double *valmd, double *weights,

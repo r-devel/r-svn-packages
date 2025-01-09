@@ -14,11 +14,11 @@
 #include "ind_2.h"
 
 // the auxiliary routines
-static void agnes(int nn, int *kwan, int *ner, double *ban, double dys[],
-		  int method, double *alpha, int *merge, int trace_lev);
-static void splyt(int nn, int *kwan, int *ner, double *ban, double dys[],
-		  int stop_at_k,             int *merge, int trace_lev);
-static double min_dis(double dys[], int ka, int kb, int ner[]);
+static void agnes(int nn, int *kwan, int *ner, double *ban, double *dys,
+		  int method, const double alpha[4], int *merge, int trace_lev);
+static void splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
+		  int stop_at_k,                     int *merge, int trace_lev);
+static double min_dis(const double dys[], int ka, int kb, const int ner[]);
 
 /*     This program performs agglomerative nesting (AGNES) using the */
 /*     group average method (_or others_) of Sokal and Michener (1958), */
@@ -46,7 +46,7 @@ void twins(int *nn, // = maximal number of objects
 {
     if (*jdyss % 10 == 1) { // have distances; do not access x[]
 	*jpp = 1;
-    } else { // compute distances
+    } else { // compute distances  dys[]
 	int jhalt = dysta(nn, jpp, x, dys, ndyst, jtmd, valmd);/* --> ./dysta.c */
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
@@ -55,7 +55,7 @@ void twins(int *nn, // = maximal number of objects
 
     if (*jdyss >= 10) { /* return distances to R  if(C.keep.diss) */
 	// TODO: once we allow "large" nn, use  (double)*nn  here
-	Memcpy(dys2, dys, (*nn * (*nn - 1) / 2 + 1));
+	Memcpy(dys2, dys, (*nn * (*nn - 1) / 2 + 1)); /* dys2 := dys */
     }
 
     if (*jalg != 2) {
@@ -65,6 +65,8 @@ void twins(int *nn, // = maximal number of objects
 	// DIANA
 	splyt(*nn, kwan, ner, ban, dys, *method,        merge, trace_lev[0]);
     }
+    if(dys[0] != 0.) REprintf("C level twins() *after* computation: dys[0] != 0 but = %g\n\n", dys[0]);
+
     // Compute agglomerative/divisive coefficient from banner:
     *coef = bncoef(*nn, ban);
     return;
@@ -76,8 +78,8 @@ void twins(int *nn, // = maximal number of objects
 /*     ----------------------------------------------------------- */
 /*     AGNES agglomeration */
 static void
-agnes(int nn, int *kwan, int *ner, double *ban,
-      double dys[], int method, double *alpha, int *merge, int trace_lev)
+agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
+      int method, const double alpha[4], int *merge, int trace_lev)
 {
 
 /* VARs */
@@ -274,7 +276,6 @@ agnes(int nn, int *kwan, int *ner, double *ban,
     }// for(nmerge ..)
     return;
 } /* agnes */
-
 /*     ----------------------------------------------------------- */
 
 /*       cf = ac := "Agglomerative Coefficient" from AGNES banner */
@@ -307,8 +308,8 @@ double bncoef(int n, double *ban)
 /*     DIANA "splitting" */
 
 static void
-splyt(int nn, int *kwan, int *ner, double *ban,
-      double dys[], int stop_at_k, int *merge, int trace_lev)
+splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
+      int stop_at_k,               int *merge, int trace_lev)
 {
     /* Local variables */
     int j, ja, jb, k, l;
@@ -513,7 +514,7 @@ L30:
 
 /*     ----------------------------------------------------------- */
 /*     used in splyt() above */
-static double min_dis(double dys[], int ka, int kb, int ner[])
+static double min_dis(const double dys[], int ka, int kb, const int ner[])
 {
     double dm = 0.;
     for(int k = ka -1; k < kb -1; ++k) {

@@ -45,7 +45,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
 	}
-	dv <- double(1 + (n * (n - 1))/2)
+	dv <- double(1 + (n * (n - 1))/2) # FIXME: `1+` = an allocation waste for large n !
     }
     stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
     stopifnot(is.logical(stop.at.k) ||
@@ -55,7 +55,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    n,
 		    jp,
 		    as.double(x2),
-		    dv, # w/ length >= 1
+		    dv, # input, w/ length >= 1 \\  output:
 		    dis = double(if(C.keep.diss) length(dv) else 1L),
 		    jdyss = if(C.keep.diss) diss + 10L else as.integer(diss),
 		    if(mdata && jp) rep(valmisdat, jp) else double(1L),
@@ -78,6 +78,7 @@ diana <- function(x, diss = inherits(x, "dist"),
         if(keep.diss) {
             ## adapt Fortran output to S:
             ## convert lower matrix, read by rows, to upper matrix, read by rows.
+            stopifnot(res$dis[1] == 0) # proving it carries no info
             disv <- res$dis[-1]
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)] # <==> n >= 2 or error

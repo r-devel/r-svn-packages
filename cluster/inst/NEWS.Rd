@@ -18,6 +18,11 @@
     \itemize{
       \item use complete argument names in most cases to satisfy lovers of
       \code{options(warnPartialMatch* = TRUE)}.
+
+      %% NOT_YET
+      \item \code{agnes()} and \code{diana()} and C-level \code{twins()},
+      \code{dysta()}, no longer pre-pend \code{0.} to the distances (which
+      is an allocation waste for largish \code{n}).
     }
   }
 }
