@@ -217,7 +217,7 @@ int CG(double *A,double *Mi,double *b, double *x,int n,double tol,double *cgwork
 SEXP nei_cov(SEXP v,SEXP d, SEXP d1, SEXP M, SEXP K) {
 /* Computes a direct estimate of the parameter covariance matrix V, given neighbourhood structure 
    encoded in m and k, and parameters under leave one out perturbation in D, and D1. Otherwise 
-   computing correction terms in similar way, but with D deing the lett term and D1 the right.   
+   computing correction terms in similar way, but with D being the lett term and D1 the right.   
 */
   int *m,*k,n,p,i,j,i0,i1=0,ii,q;
   double *D,*D1,*V,*Ds;

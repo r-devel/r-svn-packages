@@ -1656,6 +1656,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         rsd1 <- residuals.gam(object) ## CV residuals
 	ii <- !is.finite(rsd1);if (any(ii)) rsd1[ii] <- rsd0[ii]
 
+        if (FALSE) {
+	## version based on estimating correction factors for Vj. Not as well founded as current version.
         ## adaptive weighting to avoid underestimating mu error, while accounting for higher variance in
 	## cv mu relative to mu...
         alpha <- 0.4 ## half way between full shrinkage compensation (.3) and none (.5)  
@@ -1671,23 +1673,30 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         #dd0 <- dd*(rsd0-rsd)/rsd0
         V0 <- V0+neicov(dd0,dd0,nei)
         Vj <- V0
-
-        ## get nearest +ve def matrix
+	## get nearest +ve def matrix
         ev <- eigen(Vj)
         mev <- mean(ev$values)
         ev$values[ev$values<0] <- 0
-	if (mev>0) ev$values <- ev$values*mev/mean(ev$values)
+	#if (mev>0) ev$values <- ev$values*mev/mean(ev$values)
 	V0 <- sqrt(ev$values)*t(ev$vectors);
 	Vj <- crossprod(V0) *n/(n-sum(object$edf))
+        }
 	
-        dd1 <- dd*rsd1/rsd0
-        Vcv <- neicov(dd1,nei=nei) ## cross validated V (too large)
-
-	alpha <- max(sum(diag(Vj))/sum(diag(object$Ve)),1) ## inverse learning rate - does lower limit make sense? 
-	alpha1 <- max(sum(Vj*object$Ve)/sum(object$Ve^2),1)
-	Vcv <- Vcv + (object$Vp-object$Ve)*alpha1 ## bias correct conservative (too large)
-	Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
-	attr(Vj,"Vcv") <- Vcv ## conservative as attribute
+        Vj <- neicov(dd,nei=nei)*n/(n-sum(object$edf)) ## estimate based on raw residuals
+        rat <- rsd1/rsd0; rat[!is.finite(rat)] <- 1
+        Vcv <- neicov(dd*rat,nei=nei)*n/(n-sum(object$edf)) ## based on cross validated resdiduals
+	ev <- eigen(Vj,symmetric=TRUE,only.values=TRUE)$values 
+        trVj <- sum(ev[ev>0]) # trace of closest pdef matrix if Vj not pdef
+	alpha <- max(trVj/sum(diag(object$Ve)),1) ## inverse learning rate (conservative Vj)
+	#alpha1 <- sum(Vj*object$Ve)/sum(object$Ve^2) ## LS version - little difference
+	Vj <- Vcv + (object$Vp-object$Ve)*alpha ## bias correct conservative (too large)
+	#Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
+	ev <- eigen(Vj,symmetric=TRUE)
+	if (any(ev$values<0)) { ## find closest pdef matrix
+	  ev$values[ev$values<0] <- 0
+	  Vj <- crossprod(sqrt(ev$values)*t(ev$vectors))
+	}
+	#attr(Vj,"Vcv") <- Vcv ## conservative as attribute
       } else { ## LOO or straight jackknife requested
         Vj <- pdef(crossprod(dd)) ## straight jackknife is fine.
 	alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate (do not impose lower limit)

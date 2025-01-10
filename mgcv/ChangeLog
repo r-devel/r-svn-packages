@@ -30,6 +30,8 @@ present, and reparameterization needs checking (also for bam).
 
 * 'clog' censored logistic family added for AFT models. Written by Chris Shen.
 
+* improved cov matrix estimation under NCV used with correlated errors.
+
 * names in NCV 'nei' structure modified to better match paper and documentation 
   notation.
 
