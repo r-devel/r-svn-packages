@@ -1,7 +1,7 @@
 Package: cluster
 Version: 2.1.9
 VersionNote: Last CRAN: 2.1.8 on 2024-12-10;  2.1.7 on 2024-12-06;  2.1.6 on 2023-11-30;  2.1.5 on 2023-11-27
-Date: 2025-01-02
+Date: 2025-01-12
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from

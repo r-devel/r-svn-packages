@@ -18,7 +18,9 @@ clara <- function(x, k,
     n <- nrow(x)
     if((k <- as.integer(k)) < 1 || k > n - 1)
 	stop("The number of cluster should be at least 1 and at most n-1." ) # ==> n >= 2
-    if((sampsize <- as.integer(sampsize)) < max(2,k+1))
+    if(is.na(sampsize <- as.integer(sampsize)) || sampsize <= 0)
+        stop("'sampsize' must be a positive integer, not larger than .Machine$integer.max")
+    if(sampsize < max(2,k+1))
 	stop(gettextf("'sampsize' should be at least %d = max(2, 1+ number of clusters)",
                       max(2,k+1)), domain=NA)
     if(n < sampsize)

@@ -127,12 +127,12 @@ agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
 	j = 1; do { j++; } while(kwan[j] == 0);
 	if(trace_lev >= 2) Rprintf(" nmerge=%*d, j=%*d, ", _d,nmerge, _d,j);
 
-	double d_min = dys[ind_2(1, j)] * 1.1f + 1.;
+	double d_min = dys_2(dys, 1, j) * 1.1f + 1.;
 	for (k = 1; k <= n_1; ++k) if (kwan[k] > 0) {
 		for (j = k + 1; j <= nn; ++j) if (kwan[j] > 0) {
-			int k_j = ind_2(k, j);
-			if (d_min >= dys[k_j]) { // Note: also when "==" !
-			    d_min =  dys[k_j];
+			double d_k_j = dys_2(dys, k, j); /* 1 <= k < j */
+			if (d_min >= d_k_j) { // Note: also when "==" !
+			    d_min =  d_k_j;
 			    la = k;
 			    lb = j;
 			}
@@ -197,9 +197,10 @@ agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
 
 	    if (lq == la || lq == lb || kwan[lq] == 0)
 		continue;
-
+	    /* ==> naq, nbq  >= 1 */
 	    int naq = ind_2(la, lq);
 	    int nbq = ind_2(lb, lq);
+	    if(naq == 0 || nbq == 0) error("C agnes(), naq or nbq == 0  should not happen");
 	    if(trace_lev >= 3)
 		Rprintf(" old D(A, j), D(B, j), j=%*d  = (%g,%g); ",
 			_d,lq, dys[naq], dys[nbq]);
@@ -239,7 +240,7 @@ agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
 		break;
 	    case 6: { //   6: "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams'
 		double dNew = alpha[1] * dys[naq] + alpha[2] * dys[nbq];
-		if(has_a3) dNew += alpha[3] * dys[ind_2(la, lb)];
+		if(has_a3) dNew += alpha[3] * dys_2(dys, la, lb);
 		if(has_a4) dNew += alpha[4] * fabs(dys[naq] - dys[nbq]);
 		dys[naq] = dNew;
 		/* Lance-Williams would allow alpha(1:2) to *depend* on |cluster|
@@ -256,7 +257,7 @@ agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
 		    fa = alpha[1] * ta / (ta + tb),
 		    fb = alpha[2] * tb / (ta + tb),
 		    dNew = fa * dys[naq] + fb * dys[nbq];
-		if(has_a3) dNew += alpha[3] * dys[ind_2(la, lb)];
+		if(has_a3) dNew += alpha[3] * dys_2(dys, la, lb);
 		if(has_a4) dNew += alpha[4] * fabs(dys[naq] - dys[nbq]);
 		dys[naq] = dNew;
 		break;
@@ -313,9 +314,9 @@ splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
 {
     /* Local variables */
     int j, ja, jb, k, l;
-    int jma, jmb, lmm, llq, lmz,
-	lxx, lmma, lmmb, lner, nclu;
-    int lchan, nhalf, n_1 = nn - 1, splyn;
+    int jma, jmb, llq, lmz,
+	lxx, lner;
+    int lchan;
 
     /* Parameter adjustments */
     --ban;
@@ -323,8 +324,9 @@ splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
     --kwan;
 
     /*     initialization */
-    nclu = 1;
-    nhalf = nn * n_1 / 2 + 1;
+    int nclu = 1,
+	n_1 = nn - 1,
+	nhalf = nn * n_1 / 2 + 1;
     for (l = 1; l <= nn; ++l) {
 	kwan[l] = 0;
 	ban[l] = 0.;
@@ -336,7 +338,7 @@ splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
 /*     cs :=  diameter of data set */
 
     double cs = 0.;
-    for(k = 0; k < nhalf; ++k) {
+    for(k = 1; k < nhalf; ++k) { /* k >= 1  as dys[0] :=== 0 */
 	if (cs < dys[k])
 	    cs = dys[k];
     }
@@ -353,7 +355,7 @@ L30:
     if (kwan[ja] == 2) { // special case of a pair of objects
 	kwan[ja] = 1;
 	kwan[jb] = 1;
-	ban [jb] = dys[ind_2(ner[ja], ner[jb])];
+	ban [jb] = dys_2(dys, ner[ja], ner[jb]);
     }
     else {
 	/*     finding first object to be shifted */
@@ -363,7 +365,7 @@ L30:
 	    lner = ner[l];
 	    double sd = 0.;
 	    for (j = ja; j <= jb; ++j)
-		sd += dys[ind_2(lner, ner[j])];
+		sd += dys_2(dys, lner, ner[j]);
 	    if (bygsd < sd) {
 		bygsd = sd;
 		lndsd = l;
@@ -375,18 +377,16 @@ L30:
 	kwan[jb] = 1;
 	if (jb != lndsd) {
 	    lchan = ner[lndsd];
-	    lmm = jb - 1;
-	    for (lmma = lndsd; lmma <= lmm; ++lmma) {
-		lmmb = lmma + 1;
-		ner[lmma] = ner[lmmb];
+	    for (int lmma = lndsd; lmma <= jb - 1; ++lmma) {
+		ner[lmma] = ner[lmma + 1];
 	    }
 	    ner[jb] = lchan;
 	}
-	splyn = 0;
 	jma = jb - 1;
 
 /*     finding the next object to be shifted */
 
+	int splyn = 0;
 	do {
 	    splyn++;
 	    int rest = (jma - ja), jaway = -1;
@@ -395,10 +395,10 @@ L30:
 		lner = ner[l];
 		double da = 0., db = 0.;
 		for (j = ja; j <= jma; ++j)
-		    da += dys[ind_2(lner, ner[j])];
+		    da += dys_2(dys, lner, ner[j]);
 		da /= rest;
 		for (j = jma + 1; j <= jb; ++j)
-		    db += dys[ind_2(lner, ner[j])];
+		    db += dys_2(dys, lner, ner[j]);
 		db /= splyn;
 		double dyff = da - db;
 		if (bdyff < dyff) {

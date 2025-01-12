@@ -34,7 +34,7 @@ void cl_clara(int *n,  /* = number of objects */
 	      int *nran,	/* = #{random samples} drawn	   (= `samples' in R)*/
 	      int *nsam,	/* = #{objects} drawn from data set (`sampsize' in R) */
 	      double *dys,/* [1:(1 + (nsam * (nsam - 1))/2)]
-			   * Output: to contain the distances */
+			   * Output: to contain the distances,  -1. instead of NA */
 	      int *mdata,	/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
 	      double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
 	      int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */

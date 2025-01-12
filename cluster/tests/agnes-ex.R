@@ -46,7 +46,7 @@ dim(agr5 <- agriculture[i5, ])
 ##' Check equivalence of method "flexible" (par=...)  with one
 ##' of ("single", "complete", "weighted")
 chk <- function(d, method=c("single", "complete", "weighted"),
-                trace.lev = 1,
+                trace = 1,
                 iC = -(6:7), # <- not using 'call' and 'method' for comparisons
                 doplot = FALSE, tol = 1e-12)
 {
@@ -55,9 +55,9 @@ chk <- function(d, method=c("single", "complete", "weighted"),
     par.meth <- list("single" =  c(.5, .5, 0, -.5),
                      "complete"= c(.5, .5, 0, +.5),
                      "weighted"= c(0.5))
-    a.s <- agnes(d, method=method, trace.lev=trace.lev)
+    a.s <- agnes(d, method=method, trace.lev=trace)
     ## From theory, this should give the same, but it does not --- why ???
-    a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace.lev)
+    a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace)
 
     if(doplot) {
 	op <- par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
@@ -72,7 +72,7 @@ chk <- function(d, method=c("single", "complete", "weighted"),
 chk(agr5, trace = 3)
 
 stopifnot(chk(agr5), chk(agr5, "complete", trace = 2), chk(agr5, "weighted"),
-          chk(agr8), chk(agr8, "complete"), chk(agr8, "weighted", trace.lev=2),
+          chk(agr8), chk(agr8, "complete"), chk(agr8, "weighted", trace = 2),
           chk(agriculture), chk(agriculture, "complete"),
           chk(ruspini), chk(ruspini, "complete"), chk(ruspini, "weighted"))
 
@@ -88,4 +88,5 @@ a.x <- tryCatch(agnes(dx, method="flexible", par = -.2),
 if(!inherits(a.x, "error")) stop("invalid 'par' in \"flexible\" did not give error")
 if(!all(vapply(c("par[.]method", "merge"), grepl, NA, x=a.x$message)))
    stop("error message did not contain expected words")
+showProc.time()
 

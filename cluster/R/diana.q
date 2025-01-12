@@ -38,6 +38,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	n <- nrow(x2)
 	jp <- ncol(x2)
         if(!jp) stop("x has zero columns") # easier to read than later error
+        stopifnot(is.integer(n), is.integer(jp)) # always currently
 	if((mdata <- any(inax <- is.na(x2)))) { # TRUE if x[] has any NAs
 	    jtmd <- integer(jp)
 	    jtmd[apply(inax, 2L, any)] <- -1L

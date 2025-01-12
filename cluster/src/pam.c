@@ -210,7 +210,7 @@ void bswap(int kk, int n, int *nrepr,
 	   double *dysma, double *dysmb, double *beter,
 	   const double dys[], double s, double *obj, int pamonce)
 {
-    int i, j, ij, k,h, dig_n;
+    int i, j, k,h, dig_n;
     double sky;
 
     /* Parameter adjustments */
@@ -238,9 +238,9 @@ void bswap(int kk, int n, int *nrepr,
 	for (i = 1; i <= n; ++i) {
 	    if (nrepr[i] == 1)
 		for (j = 1; j <= n; ++j) {
-		    ij = ind_2(i, j);
-		    if (dysma[j] > dys[ij])
-			dysma[j] = dys[ij];
+		    double dij = dys_2(dys, i, j);
+		    if (dysma[j] > dij)
+			dysma[j] = dij;
 		}
 	}
     }
@@ -263,7 +263,7 @@ void bswap(int kk, int n, int *nrepr,
 		if (nrepr[i] == 0) {
 		    beter[i] = 0.;
 		    for (j = 1; j <= n; ++j) {
-			cmd = dysma[j] - dys[ind_2(i, j)];
+			cmd = dysma[j] - dys_2(dys, i, j);
 			if (cmd > 0.)
 			    beter[i] += cmd;
 		    }
@@ -281,9 +281,9 @@ void bswap(int kk, int n, int *nrepr,
 
 	    /* update dysma[] : dysma[j] = D(j, nearest_representative) */
 	    for (j = 1; j <= n; ++j) {
-		ij = ind_2(nmax, j);
-		if (dysma[j] > dys[ij])
-		    dysma[j] = dys[ij];
+		double dij = dys_2(dys, nmax, j);
+		if (dysma[j] > dij)
+		    dysma[j] = dij;
 	    }
 	}
 	/* output of the above loop:  nrepr[], dysma[], ... */
@@ -361,12 +361,12 @@ void bswap(int kk, int n, int *nrepr,
 		dysmb[j] = s;
 		for (i = 1; i <= n; ++i) {
 		    if (nrepr[i]) {
-			ij = ind_2(i, j);
-			if (dysma[j] > dys[ij]) {
+			double dij = dys_2(dys, i, j);
+			if (dysma[j] > dij) {
 			    dysmb[j] = dysma[j];
-			    dysma[j] = dys[ij];
-			} else if (dysmb[j] > dys[ij]) {
-			    dysmb[j] = dys[ij];
+			    dysma[j] = dij;
+			} else if (dysmb[j] > dij) {
+			    dysmb[j] = dij;
 			}
 		    }
 		}
@@ -377,7 +377,7 @@ void bswap(int kk, int n, int *nrepr,
 		 *  dysmb[j] := E_j  d(j, <2-nd cl.medi>)  [p.103] */
 		double dysmaj = s, dysmbj = s;
 		for(k = 1; k <= kk; k++) {
-		    double dysij = dys[ind_2(medoids[k], j)];
+		    double dysij = dys_2(dys, medoids[k], j);
 		    if (dysmaj > dysij) {
 			clustmembershipb[j] = clustmembership[j];
 			dysmbj = dysmaj;
@@ -399,14 +399,14 @@ void bswap(int kk, int n, int *nrepr,
 		dysmb[j] = s;
 		for(k = 1; k <= kk; k++) {
 		    i = medoids[k];
-		    ij = ind_2(i, j);
-		    if (dysma[j] > dys[ij]) {
+		    double dij = dys_2(dys, i, j);
+		    if (dysma[j] > dij) {
 			//store cluster membership
 			clustmembership[j] = i;
 			dysmb[j] = dysma[j];
-			dysma[j] = dys[ij];
-		    } else if (dysmb[j] > dys[ij]) {
-			dysmb[j] = dys[ij];
+			dysma[j] = dij;
+		    } else if (dysmb[j] > dij) {
+			dysmb[j] = dij;
 		    }
 		}
 	    }
@@ -423,13 +423,13 @@ L60b:
 			    double dz = 0.;
 			    /* dz := T_{ih} := sum_j C_{jih}  [p.104] : */
 			    for (j = 1; j <= n; ++j) { /* if (!nrepr[j]) { */
-				int hj = ind_2(h, j);
-				ij = ind_2(i, j);
-				if (dys[ij] == dysma[j]) {
-				    double small = dysmb[j] > dys[hj] ? dys[hj] : dysmb[j];
+				double dhj = dys_2(dys, h, j);
+				double dij = dys_2(dys, i, j);
+				if (dij == dysma[j]) {
+				    double small = dysmb[j] > dhj ? dhj : dysmb[j];
 				    dz += (- dysma[j] + small);
-				} else if (dys[hj] < dysma[j]) /* 1c. */
-				    dz += (- dysma[j] + dys[hj]);
+				} else if (dhj < dysma[j]) /* 1c. */
+				    dz += (- dysma[j] + dhj);
 			    }
 			    if (dzsky > dz) {
 				dzsky = dz; /* dzsky := min_{i,h} T_{i,h} */
@@ -460,9 +460,9 @@ L60b:
 			    double addGain = removeCost;
 			    // Compute gain of adding h as a medoid:
 			    for (j = 1; j <= n; ++j) {
-				int hj = ind_2(h, j);
-				if(dys[hj] < fvect[j])
-				    addGain += (dys[hj]-fvect[j]);
+				double dhj = dys_2(dys, h, j);
+				if(dhj < fvect[j])
+				    addGain += (dhj-fvect[j]);
 			    }
 			    if (dzsky > addGain) {
 				dzsky = addGain; /* dzsky := min_{i,h} T_{i,h} */
@@ -479,14 +479,14 @@ L60b:
 			    double addGain = removeCost - fvect[h]; // - fvect[h] since dys[h,h]=0;
 			    // Compute gain of adding h as a medoid:
 			    int ijbase = (h-2)*(h-1)/2;
-			    for (j = 1; j < h; ++j) {
-				int hj = ijbase+j;
-				if(dys[hj] < fvect[j])
-				    addGain += (dys[hj]-fvect[j]);
+			    for (j = 1; j < h; ++j) { // ijbase+j >= 0 + j >= 1
+				double dhj = dys[ijbase+j];
+				if(dhj < fvect[j])
+				    addGain += (dhj-fvect[j]);
 			    }
-			    ijbase += h;// = (h-2)*(h-1)/2 + h
+			    ijbase += h;// = (h-2)*(h-1)/2 + h  >= 1
 			    for (j = h+1; j <= n; ++j) {
-				ijbase += j-2;
+				ijbase += j-2; // >= 1 (as j-2 >= 0)
 				if(dys[ijbase] < fvect[j])
 				    addGain += (dys[ijbase]-fvect[j]);
 			    }
@@ -515,7 +515,7 @@ L60b:
 		    double acc = 0;
 		    // Compute gain of substituting h for each other medoid:
 		    for (j = 1; j <= n; ++j) {
-			double dist_h = dys[ind_2(h, j)]; // New medoid
+			double dist_h = dys_2(dys, h, j); // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest
@@ -549,7 +549,7 @@ L60b:
 		    // Compute gain of substituting h for each other medoid:
 		    double acc = 0;
 		    for (j = 1; j <= n; ++j) {
-			double dist_h = dys[ind_2(h, j)]; // New medoid
+			double dist_h = dys_2(dys, h, j); // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest
@@ -607,7 +607,7 @@ L60b:
 		    }
 		    ijbase += h;// = (h-2)*(h-1)/2 + h
 		    for (j = h+1; j <= n; ++j) {
-			ijbase += j-2;
+			ijbase += j-2; // (j-2) >= 0
 			double dist_h = dys[ijbase]; // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
@@ -720,7 +720,7 @@ L60b:
 		for (j = 1; j <= n; ++j) {
 		    /*  dysma[j] := D_j  d(j, <closest medi>)  [KR p.102, 104]
 		     *  dysmb[j] := E_j  d(j, <2-nd cl.medi>)  [p.103] */
-		    double dnew = dys[ind_2(hbest, j)];
+		    double dnew = dys_2(dys, hbest, j);
 		    if (clustmembership[j] == kbest) {
 			if (dnew < dysmb[j]) {
 			    // Clustmembership already kbest
@@ -728,7 +728,7 @@ L60b:
 			} else {
 			    double dysmaj = s, dysmbj = s;
 			    for(k = 1; k <= kk; k++) {
-				double dysij = dys[ind_2(medoids[k], j)];
+				double dysij = dys_2(dys, medoids[k], j);
 				if (dysmaj > dysij) {
 				    clustmembershipb[j] = clustmembership[j];
 				    dysmbj = dysmaj;
@@ -752,7 +752,7 @@ L60b:
 			} else if (clustmembershipb[j] == kbest) {
 			    double dysmaj = s, dysmbj = s;
 			    for(k = 1; k <= kk; k++) {
-				double dysij = dys[ind_2(medoids[k], j)];
+				double dysij = dys_2(dys, medoids[k], j);
 				if (dysmaj > dysij) {
 				    clustmembershipb[j] = clustmembership[j];
 				    dysmbj = dysmaj;
@@ -802,26 +802,26 @@ L60b:
 			dysmb[j] = s;
 			for(k = 1; k <= kk; k++) {
 			    i = medoids[k];
-			    ij = ind_2(i, j);
-			    if (dysma[j] > dys[ij]) {
+			    double dij = dys_2(dys, i, j);
+			    if (dysma[j] > dij) {
 				//store cluster membership
 				clustmembership[j] = k; // Use medoid k, not i
 				dysmb[j] = dysma[j];
-				dysma[j] = dys[ij];
-			    } else if (dysmb[j] > dys[ij]) {
-				dysmb[j] = dys[ij];
+				dysma[j] = dij;
+			    } else if (dysmb[j] > dij) {
+				dysmb[j] = dij;
 			    }
 			}
 		    }
 		    // Recompute dzsky value, again.
 		    dzsky = 0;
 		    for (j = 1; j <= n; ++j) { /* if (!nrepr[j]) { */
-			int hj = ind_2(hbest, j);
-			ij = ind_2(nbest, j);
-			if (dys[ij] == dysma[j]) {
-			    dzsky += (- dysma[j] + fmin2(dysmb[j], dys[hj]) );
-			} else if (dys[hj] < dysma[j]) /* 1c. */
-			    dzsky += (- dysma[j] + dys[hj]);
+			double dhj = dys_2(dys, hbest, j),
+			       dij = dys_2(dys, nbest, j);
+			if (dij == dysma[j]) {
+			    dzsky += (- dysma[j] + fmin2(dysmb[j], dhj) );
+			} else if (dhj < dysma[j]) /* 1c. */
+			    dzsky += (- dysma[j] + dhj);
 		    }
 		    if(dzsky >= - 16*DBL_EPSILON * fabs(sky))
 			break;
@@ -864,9 +864,9 @@ void cstat(int kk, int nn, int *nsend, int *nrepr, Rboolean all_stats,
 	    double dsmal = ss;
 	    for (k = 1; k <= nn; ++k) {
 		if (nrepr[k] == 1) {
-		    int kj_ = ind_2(k, j);
-		    if (dsmal > dys[kj_]) {
-			dsmal = dys[kj_];
+		    double dkj = dys_2(dys, k, j);
+		    if (dsmal > dkj) {
+			dsmal = dkj;
 			ksmal = k;
 		    }
 		}
@@ -917,7 +917,7 @@ void cstat(int kk, int nn, int *nsend, int *nrepr, Rboolean all_stats,
 		    ++ntt;
 		    m = nsend[j];
 		    nelem[ntt] = j;
-		    djm = dys[ind_2(j, m)];
+		    djm = dys_2(dys, j, m);
 		    ttt += djm;
 		    if (radus[k] < djm)
 			radus[k] = djm;
@@ -981,13 +981,13 @@ void cstat(int kk, int nn, int *nsend, int *nrepr, Rboolean all_stats,
 		    int jb, nvna = nelem[ja];
 		    double aja = -1., ajb = ss;
 		    for (jb = 1; jb <= nn; ++jb) {
-			int jndz = ind_2(nvna, jb);
+			double djndz = dys_2(dys, nvna, jb);
 			if (ncluv[jb] == k) {
-			    if (aja < dys[jndz])
-				aja = dys[jndz];
+			    if (aja < djndz)
+				aja = djndz;
 			} else {
-			    if (ajb > dys[jndz])
-				ajb = dys[jndz];
+			    if (ajb > djndz)
+				ajb = djndz;
 			}
 		    }
 		    if (kand && aja >= ajb)
@@ -1062,7 +1062,7 @@ void dark(
 		for (l = 1; l <= nn; ++l) if (ncluv[l] == k_) {
 		    ++nbb;
 		    if (l != nj)
-			db += dys[ind_2(nj, l)];
+			db += dys_2(dys, nj, l);
 		}
 		db /= nbb; /* now  db(k_) := mean( d[j, l]; l in C_{k_} ) */
 		if (dysb > db) {
@@ -1075,7 +1075,7 @@ void dark(
 		for (l = 0; l < ntt; ++l) {
 		    int nl = nelem[l];
 		    if (nj != nl)
-			dysa += dys[ind_2(nj, nl)];
+			dysa += dys_2(dys, nj, nl);
 		}
 		dysa /= ntt - 1;
 		if (dysa > 0.) {

@@ -1,7 +1,7 @@
 
-R version 4.0.3 Patched (2021-01-18 r79850) -- "Bunny-Wunnies Freak Out"
-Copyright (C) 2021 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
+R Under development (unstable) (2025-01-09 r87552) -- "Unsuffered Consequences"
+Copyright (C) 2025 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -22,7 +22,6 @@ Type 'q()' to quit R.
 > ## IGNORE_RDIFF_BEGIN
 > source(system.file("test-tools.R", package = "cluster"), keep.source = FALSE)
 Loading required package: tools
-doExtras <- cluster:::doExtras() :  TRUE
 > ## IGNORE_RDIFF_END
 > ## -> showProc.time() ...  & doExtras
 > 
@@ -486,7 +485,7 @@ List of 9
  - attr(*, "class")= chr [1:2] "agnes" "twins"
 > 
 > showProc.time()
-Time (user system elapsed): 0.602 0.061 0.667 
+Time (user system elapsed): 0.117 0.004 0.123 
 > 
 > summary(ar2 <- agnes(ruspini, metric="manhattan", method = "weighted"))
 Object of class 'agnes' from call:
@@ -595,7 +594,7 @@ Available components:
 [7] "method"    "order.lab" "data"     
 > print  (ar3 <- agnes(ruspini, metric="manhattan", method = "flexible",
 +                      par.method = 0.5))
-Call:	 agnes(x = ruspini, metric = "manhattan", method = "flexible",      par.method = 0.5) 
+Call:	 agnes(x = ruspini, metric = "manhattan", method = "flexible", par.method = 0.5) 
 Agglomerative coefficient:  0.942387 
 Order of objects:
  [1] 1  2  3  5  9  10 14 16 18 19 15 17 4  6  8  7  11 12 13 20 61 64 68 65 67
@@ -611,7 +610,7 @@ Available components:
 > stopifnot(all.equal(ar2[1:4], ar3[1:4], tol=1e-12))
 > 
 > showProc.time()
-Time (user system elapsed): 0.003 0.001 0.004 
+Time (user system elapsed): 0.012 0.003 0.015 
 > 
 > ## Small example, testing "flexible" vs "single"
 > i8 <- -c(1:2, 9:10)
@@ -624,7 +623,7 @@ Time (user system elapsed): 0.003 0.001 0.004
 > ##' Check equivalence of method "flexible" (par=...)  with one
 > ##' of ("single", "complete", "weighted")
 > chk <- function(d, method=c("single", "complete", "weighted"),
-+                 trace.lev = 1,
++                 trace = 1,
 +                 iC = -(6:7), # <- not using 'call' and 'method' for comparisons
 +                 doplot = FALSE, tol = 1e-12)
 + {
@@ -633,9 +632,9 @@ Time (user system elapsed): 0.003 0.001 0.004
 +     par.meth <- list("single" =  c(.5, .5, 0, -.5),
 +                      "complete"= c(.5, .5, 0, +.5),
 +                      "weighted"= c(0.5))
-+     a.s <- agnes(d, method=method, trace.lev=trace.lev)
++     a.s <- agnes(d, method=method, trace.lev=trace)
 +     ## From theory, this should give the same, but it does not --- why ???
-+     a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace.lev)
++     a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace)
 + 
 +     if(doplot) {
 + 	op <- par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
@@ -681,7 +680,7 @@ C agnes(n=5, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 4 mergin
 [1] TRUE
 attr(,"fits")
 attr(,"fits")$s
-Call:	 agnes(x = d, method = method, trace.lev = trace.lev) 
+Call:	 agnes(x = d, method = method, trace.lev = trace) 
 Agglomerative coefficient:  0.587879 
 Order of objects:
 [1] D   F   E   IRL GR 
@@ -694,7 +693,7 @@ Available components:
 [7] "method"    "order.lab"
 
 attr(,"fits")$f
-Call:	 agnes(x = d, method = "flex", par.method = par.meth[[method]],      trace.lev = trace.lev) 
+Call:	 agnes(x = d, method = "flex", par.method = par.meth[[method]], trace.lev = trace) 
 Agglomerative coefficient:  0.587879 
 Order of objects:
 [1] D   F   E   IRL GR 
@@ -708,7 +707,7 @@ Available components:
 
 > 
 > stopifnot(chk(agr5), chk(agr5, "complete", trace = 2), chk(agr5, "weighted"),
-+           chk(agr8), chk(agr8, "complete"), chk(agr8, "weighted", trace.lev=2),
++           chk(agr8), chk(agr8, "complete"), chk(agr8, "weighted", trace = 2),
 +           chk(agriculture), chk(agriculture, "complete"),
 +           chk(ruspini), chk(ruspini, "complete"), chk(ruspini, "weighted"))
 C agnes(n=5, method = 2, ..): 4 merging steps
@@ -757,7 +756,7 @@ C agnes(n=75, method = 5, ..): 74 merging steps
 C agnes(n=75, method = 6, ..): 74 merging steps
 > 
 > showProc.time()
-Time (user system elapsed): 0.04 0.001 0.041 
+Time (user system elapsed): 0.164 0.005 0.172 
 > 
 > ## an invalid "flexible" case - now must give error early:
 > x <- rbind(c( -6, -9), c(  0, 13),
@@ -778,8 +777,10 @@ Number of objects : 5
 > if(!inherits(a.x, "error")) stop("invalid 'par' in \"flexible\" did not give error")
 > if(!all(vapply(c("par[.]method", "merge"), grepl, NA, x=a.x$message)))
 +    stop("error message did not contain expected words")
+> showProc.time()
+Time (user system elapsed): 0.003 0 0.003 
 > 
 > 
 > proc.time()
    user  system elapsed 
-  0.767   0.094   0.859 
+  3.215   0.389   3.643 

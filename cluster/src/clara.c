@@ -79,8 +79,13 @@ void cl_clara(int *n,  /* = number of objects */
     *jstop = 0;
     double rnn = (double) (*n), zba = -1., sx = -1.;/* Wall */
 
-    /* n_dys := size of distance array dys[] (-1): dys[0] remains unused */
-    int n_dys = *nsam * (*nsam - 1) / 2;/* >= 0 */
+// maximal integer m such that  m*(m-1)  does *not* overflow
+#define max_m 46341
+    /* n_dys := size of distance array dys[] */
+    int n_dys = // integer multiplication must not overflow
+	(*nsam <= max_m)
+	? *nsam * (*nsam - 1) / 2
+	: (int) (((double) *nsam)*(*nsam - 1) / 2);
     int nsamb = *nsam * 2, n_sam;
     Rboolean
 	full_sample = (*n == *nsam), /* only one sub sample == full data */
@@ -94,6 +99,12 @@ void cl_clara(int *n,  /* = number of objects */
 			   *nsam, *nran, *n,
 			   full_sample ? " 'full_sample',":
 			   (lrg_sam ? " 'large_sample',": ""));
+
+    if(*nsam > 65536)
+	error(_("'clara(*, sampsize): sampsize = %d > 65536"), *nsam);
+    // to fix, would need  `R_xlen_t` instead of `int`  n_dys
+
+
     if(*rng_R && !full_sample)
 	GetRNGstate();
     else /* << initialize `random seed' of the very simple randm() below */
@@ -354,7 +365,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 {
     int nlk = 0;
     int current_group = 0; // for GOWER only: Counter for overall index
-    dys[0] = 0.;/* very first index; *is* used because ind_2(i,i) |-> 0 ! */
+//    dys[0] = 0.;/* very first index; *is* used because ind_2(i,i) |-> 0 ! */
     for (int l = 1; l < nsam; ++l) {
 	int lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
@@ -365,7 +376,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    if(ksel <= 0 || ksel > n)
 		error(_("C level dysta2(): nsel[%s= %d] = %d is outside 0..n, n=%d"),
 		      "k", k, ksel, n);
-	    ++nlk;
+	    ++nlk; // nlk >= 1
 	    int npres = 0, j, lj, kj, N_ones = 0;
 	    double clk = 0.;
 	    for (j = 0, lj = lsel-1, kj = ksel-1; j < jpp;
@@ -458,7 +469,7 @@ void bswap2(int kk, int n, /* == nsam == 'sampsize', here in clara */
 	    double *sky, int *nrepr,
 	    double *dysma, double *dysmb, double *beter)
 {
-    int i, j, ij, k,h, hbest = -1, nbest = -1;/* init for -Wall */
+    int i, j, k,h, hbest = -1, nbest = -1;/* init for -Wall */
     double dzsky;
 
     /* Parameter adjustments */
@@ -490,7 +501,7 @@ void bswap2(int kk, int n, /* == nsam == 'sampsize', here in clara */
 	    if (nrepr[i] == 0) {
 		beter[i] = 0.;
 		for (j = 1; j <= n; ++j) {
-		    double cmd = dysma[j] - dys[ ind_2(i, j)];
+		    double cmd = dysma[j] - dys_2(dys, i, j); // i==j  happens here
 		    if (cmd > 0.)
 			beter[i] += cmd;
 		}
@@ -512,9 +523,9 @@ void bswap2(int kk, int n, /* == nsam == 'sampsize', here in clara */
 
 	/* update dysma[] : dysma[j] = D(j, nearest_representative) */
 	for (j = 1; j <= n; ++j) {
-	    ij = ind_2(nmax, j);
-	    if (dysma[j] > dys[ij])
-		dysma[j] = dys[ij];
+	    double dij = dys_2(dys, nmax, j); // = 0. for  j == nmax  (happens here)
+	    if (dysma[j] > dij)
+		dysma[j] = dij;
 	}
     }
     // output of the above loop:  nrepr[], dysma[], ...
@@ -555,12 +566,12 @@ L60:
 	dysmb[j] = s;
 	for (i = 1; i <= n; ++i) {
 	    if (nrepr[i]) {
-		ij = ind_2(i, j);
-		if (dysma[j] > dys[ij]) {
+		double dij = dys_2(dys, i, j);  // i==j  happens here
+		if (dysma[j] > dij) {
 		    dysmb[j] = dysma[j];
-		    dysma[j] = dys[ij];
-		} else if (dysmb[j] > dys[ij]) {
-		    dysmb[j] = dys[ij];
+		    dysma[j] = dij;
+		} else if (dysmb[j] > dij) {
+		    dysmb[j] = dij;
 		}
 	    }
 	}
@@ -572,19 +583,19 @@ L60:
 	    double dz = 0.;
 	    /* dz := T_{ih} := sum_j C_{jih}  [p.104] : */
 	    for (j = 1; j <= n; ++j) {
-		int ij = ind_2(i, j),
-		    hj = ind_2(h, j);
-		if (dys[ij] == dysma[j]) {
+		double dij = dys_2(dys, i, j),
+		       dhj = dys_2(dys, h, j);
+		if (dij == dysma[j]) {
 		    double small;
 		    if(pam_like)
-			small = dysmb[j] > dys[hj] ? dys[hj] : dysmb[j];
+			small = dysmb[j] > dhj ? dhj : dysmb[j];
 		    else // old clara code which differs from pam()'s
 			// and seems a bit illogical:
-			small = dysmb[j] > dys[ij] ? dys[hj] : dysmb[j];
+			small = dysmb[j] > dij ? dhj : dysmb[j];
 		    dz += (- dysma[j] + small);
 		}
-		else if (dys[hj] < dysma[j])
-		    dz += (- dysma[j] + dys[hj]);
+		else if (dhj < dysma[j])
+		    dz += (- dysma[j] + dhj);
 	    }
 	    if (dzsky > dz) {
 		dzsky = dz; // dzsky := min_{i,h} T_{i,h}
@@ -807,14 +818,14 @@ void selec(int kk, int n, int jpp, DISS_KIND diss_kind,
 		if (kb == ka)
 		    continue /* next kb */;
 
-		int npb = np[kb],
-		    npab = ind_2(npa, npb);
+		int npb = np[kb];
+		double dnpab = dys_2(dys, npa, npb);
 		if (first)
 		    first = FALSE;
-		else if (dys[npab] >= ratt[ka])
+		else if (dnpab >= ratt[ka])
 		    continue /* next kb */;
 
-		ratt[ka] = dys[npab];
+		ratt[ka] = dnpab;
 		if (ratt[ka] == 0.)
 		    ratt[ka] = -1.;
 	    }
@@ -976,7 +987,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 		    for (l = 1; l <= nsam; ++l) {
 			if (ncluv[l] == nclu) {
 			    ++nbb;
-			    db += dys[ind_2(nj, l)];
+			    db += dys_2(dys, nj, l);
 			}
 		    }
 		    db /= (double) nbb;
@@ -993,7 +1004,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 	    dysa = 0.;
 	    for (l = 1; l <= ntt; ++l) {
 		int nl = nelem[l];
-		dysa += dys[ind_2(nj, nl)];
+		dysa += dys_2(dys, nj, nl);
 	    }
 	    dysa /= (double) (ntt - 1);
 	    if (dysa <= 0.) {
