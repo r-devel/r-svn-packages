@@ -24,9 +24,6 @@ USA. */
 #include <omp.h>
 #endif
 
-//#include <Rmath.h>
-//#include <Rinternals.h>
-//#include <Rconfig.h>
 #include "mgcv.h"
 #include <R.h>
 

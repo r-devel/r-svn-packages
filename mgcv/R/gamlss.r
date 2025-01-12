@@ -3104,10 +3104,12 @@ gumbls <- function(link=list("identity","log"),b=-7) {
     discrete <- is.list(X)
     jj <- attr(X,"lpi") ## extract linear predictor index
     if (is.null(eta)) {
-      eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+      eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else
+                           X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
       if (!is.null(offset[[1]])) eta <- eta + offset[[1]] ## mu
     
-      etab <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]]
+      etab <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else
+                            X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]]
       if (!is.null(offset[[2]])) etab <- etab + offset[[2]]
     } else {
       etab <- eta[,2]
@@ -3227,7 +3229,7 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
 	  lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(eta1))^2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  lres1 <- family$linfo[[2]]$linkfun(lres1)
+	  #lres1 <- family$linfo[[2]]$linkfun(lres1)
 	  R1 <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
 	            qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]])))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
@@ -3258,7 +3260,7 @@ gumbls <- function(link=list("identity","log"),b=-7) {
           start[jj[[1]]] <- startji
           lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]]))^2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  lres1 <- family$linfo[[2]]$linkfun(lres1)
+	  #lres1 <- family$linfo[[2]]$linkfun(lres1)
           x2 <-  x[,jj[[2]],drop=FALSE];e2 <- E[,jj[[2]],drop=FALSE]
           if (use.unscaled) {
             x2 <- rbind(x2,e2)

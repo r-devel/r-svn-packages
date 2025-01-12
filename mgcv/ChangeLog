@@ -68,6 +68,9 @@ present, and reparameterization needs checking (also for bam).
 * XWXd fix for row col interchange bug introduced with long vector support in 
   1.9-1.
 
+* fix of gumbls initializtion code bug. Initial parameters were so bad that 
+  fit could fail. 
+
 * zoom in bfgs modified so that start values always the same to avoid
   occasional step failures from repeatedly changing initial values.
 
