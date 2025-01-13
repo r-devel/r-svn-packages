@@ -3110,9 +3110,9 @@ Tweedie <- function(p=1,link=power(0)) {
 rTweedie <- function(mu,p=1.5,phi=1) {
 ## generate Tweedie random variables, with 1<p<2, 
 ## adapted from rtweedie in the tweedie package
-  if (p<=1||p>=2) stop("p must be in (1,2)")
+  if (any(p<=1|p>=2)) stop("p must be in (1,2)")
   if (sum(mu<0)) stop("mean, mu, must be non negative")
-  if (phi<=0) stop("scale parameter must be positive")
+  if (sum(phi<=0)) stop("scale parameter must be positive")
   
   lambda <- mu^(2-p)/((2-p)*phi)
   shape <- (2-p)/(p-1)

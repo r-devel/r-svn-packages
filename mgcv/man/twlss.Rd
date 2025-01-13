@@ -78,9 +78,10 @@ b <- gam(list(y~s(x0)+s(x1)+s(x2)+s(x3),~1,~1),family=twlss(),
          data=dat)
 plot(b,pages=1)
 print(b)
-eb <- exp(coef(b));eb[38] ## scale
-(1+2*eb[39])/(1+eb[39]) ## p
 
+eb <- exp(coef(b));nb <- length(eb)
+eb[nb-1] ## scale
+(1+2*eb[nb])/(1+eb[nb]) ## p
 
 rm(dat)
 }
