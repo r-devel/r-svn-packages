@@ -1,7 +1,7 @@
 Package: cluster
 Version: 2.1.9
 VersionNote: Last CRAN: 2.1.8 on 2024-12-10;  2.1.7 on 2024-12-06;  2.1.6 on 2023-11-30;  2.1.5 on 2023-11-27
-Date: 2025-01-12
+Date: 2025-01-13
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
@@ -27,7 +27,7 @@ Authors@R: c(person("Martin","Maechler", role = c("aut","cre"),
  ,person("Keefe",  "Murphy", role="ctb", comment = "volume.ellipsoid({d >= 3})")
  #not yet ,person("Fischer-Rasmussen", "Kasper", role = "ctb", comment = "Gower distance for CLARA")
  )
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.6.0)
 Imports: graphics, grDevices, stats, utils
 Suggests: MASS, Matrix
 SuggestsNote: MASS: two examples using cov.rob() and mvrnorm(); Matrix tools for testing

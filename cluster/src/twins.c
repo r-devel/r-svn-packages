@@ -47,7 +47,7 @@ void twins(int *nn, // = maximal number of objects
     if (*jdyss % 10 == 1) { // have distances; do not access x[]
 	*jpp = 1;
     } else { // compute distances  dys[]
-	int jhalt = dysta(nn, jpp, x, dys, ndyst, jtmd, valmd);/* --> ./dysta.c */
+	int jhalt = dysta(*nn, *jpp, x, dys, *ndyst, jtmd, valmd);/* --> ./dysta.c */
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
     // MM: really hate to prepend an unused entry to dist[] inside R <--> ../R/agnes.q & ../R/diana.q

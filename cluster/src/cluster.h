@@ -85,7 +85,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 	   double *syl, double *srank);
 
 /* -------- ./dysta.c --- (dysta.f was in pam.f) -------------------- */
-int dysta(int *nn, int *jpp, double *x, double *dys, int *ndyst,
+int dysta(int nn, int jpp, double *x, double *dys, int ndyst,
 	  int *jtmd, double *valmd);
 /* --------- ./pam.c ------------------*/
 

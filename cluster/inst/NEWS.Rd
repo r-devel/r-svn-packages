@@ -8,10 +8,16 @@
 
 %% NB 2: do not release within 1 year before we have bug fix or new feature.
 
-\section{Changes in version 2.1.9 (2025-01-.., svn r...)}{
+\section{Changes in version 2.1.9 (2025-01-13, svn r...)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item .
+    }
+  }
+  \subsection{Tweaks in C}{
+    \itemize{
+      \item Remove more \code{<var>--} in C code; try improving speed of C
+      level \code{dysta()}.
     }
   }
   \subsection{Misc}{
