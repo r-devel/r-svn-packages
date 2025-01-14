@@ -34,13 +34,13 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	if(n > nMax)
 	    stop(gettextf("have %d observations, but not more than %d are allowed",
 			  n, nMax))
-	dv <- x[lower.to.upper.tri.inds(n)]
+	dv <- x[lower.to.upper.tri.inds(n)] # is *slow* [c * n^2 ; but large c]  in large cases
 	## prepare arguments for the Fortran call
-	dv <- c(0, dv) ## <- internally needed {FIXME! memory hog!}
+	## dv <- c(0, dv) ## <- internally needed {FIXME! memory hog!}
 	storage.mode(dv) <- "double"
 	jp <- 1
 	mdata <- FALSE
-	ndyst <- 0
+	ndyst <- 0L
     }
     else {
 	## check input matrix and standardize, if necessary
@@ -60,6 +60,8 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	    jtmd <- integer(jp)
 	    jtmd[apply(inax, 2L, any)] <- -1L
 	    ## VALue for MISsing DATa
+            ## __ FIXME __ now have C and R only, could use true NA (double | int.) or 'Inf'
+            ##    =====   the following fails e.g. when max(x2) == double.xmax
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
 	}
@@ -110,9 +112,8 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     res <- pamDo(medoids)
     ## Error if have NA's in diss:
     if(!diss && is.integer(res))
-        stop("No clustering performed, NAs in the computed dissimilarity matrix.")
+        stop("No clustering performed, NA values in the dissimilarity matrix.")
     if(randIni && nstart >= 2) {
-        it <- 0L
         for(it in 2:nstart) {
             r <- pamDo(medoids = sample.int(n, k))
             if(r$obj[2] < res$obj[2]) {
@@ -148,7 +149,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	if(keep.diss) {
 	    ## adapt Fortran output to S:
 	    ## convert lower matrix, read by rows, to upper matrix, read by rows.
-	    disv <- res$dys[-1]
+	    disv <- res$dys
 	    disv[disv == -1] <- NA
 	    disv <- disv[upper.to.lower.tri.inds(n)]
 	    class(disv) <- dissiCl

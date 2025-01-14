@@ -89,7 +89,7 @@ void cldaisy(int *nn, int *jpp, double *x,
 		    }
 		    /* L420: -- continue -- */
 		} // for(j ..)
-		if (ppa == 0.f) {
+		if (ppa == 0.) {
 		    disv[nlk] = -1.;
 		} else {
 		    disv[nlk] = dlk / ppa;
@@ -127,13 +127,12 @@ void cldaisy(int *nn, int *jpp, double *x,
 		    }
 		    /* L530: ; */
 		}
-		double rpres = (double) npres;
 		if (npres == 0) { /* all missing */
-		    disv[nlk] = -1.f;
+		    disv[nlk] = -1.;
 		} else if (*ndyst == 1) {
-		    disv[nlk] = sqrt(clk * (pp / rpres));
+		    disv[nlk] = sqrt(clk * (pp / (double) npres));
 		} else {
-		    disv[nlk] = clk * (pp / rpres);
+		    disv[nlk] = clk * (pp / (double) npres);
 		}
 		++nlk;
 	    } // for( k ..)

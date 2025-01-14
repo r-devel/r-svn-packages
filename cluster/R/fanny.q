@@ -115,7 +115,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
     else {
 	## give warning if some dissimilarities are missing.
 	if(res$ok == -1)
-	    stop("No clustering performed, NA-values in the dissimilarity matrix.")
+	    stop("No clustering performed, NA values in the dissimilarity matrix.")
         labs <- dimnames(x)[[1]]
         if(keep.diss) {
             disv <- res$dis[ - (1 + (n * (n - 1))/2)] # drop the extra one

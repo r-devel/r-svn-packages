@@ -135,6 +135,8 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 	jtmd <- integer(p)
 	jtmd[apply(inax, 2L, any)] <- -1L
 	## VALue for MISsing DATa
+        ## __ FIXME __ now have C and R only, could use true NA (double | int.) or 'Inf'
+        ##    =====   the following fails e.g. when max(x) == double.xmax
 	valmisdat <- 1.1* max(abs(range(x, na.rm=TRUE)))
 	x[inax] <- valmisdat
     }
@@ -151,7 +153,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 		     iType,		# vtype
 		     ndyst,
 		     as.integer(mdata),
-		     dis = double(if(n <= 2L) 1L else (n * (n - 1))/2), # at least 1: C has  `disv--`
+		     dis = double(if(n <= 2L) 1L else (n * (n - 1))/2), # at least 1: C
 		     NAOK = TRUE # only to allow "+- Inf"
 		     )$dis
     ## adapt Fortran output to S:

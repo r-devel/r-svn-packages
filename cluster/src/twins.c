@@ -51,7 +51,7 @@ void twins(int *nn, // = maximal number of objects
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
     // MM: really hate to prepend an unused entry to dist[] inside R <--> ../R/agnes.q & ../R/diana.q
-    if(dys[0] != 0.) REprintf("C level twins(): dys[0] != 0 but = %g\n\n", dys[0]);
+    /* if(dys[0] != 0.) REprintf("C level twins(): dys[0] != 0 but = %g\n\n", dys[0]); */
 
     if (*jdyss >= 10) { /* return distances to R  if(C.keep.diss) */
 	// TODO: once we allow "large" nn, use  (double)*nn  here
@@ -65,7 +65,7 @@ void twins(int *nn, // = maximal number of objects
 	// DIANA
 	splyt(*nn, kwan, ner, ban, dys, *method,        merge, trace_lev[0]);
     }
-    if(dys[0] != 0.) REprintf("C level twins() *after* computation: dys[0] != 0 but = %g\n\n", dys[0]);
+    /* if(dys[0] != 0.) REprintf("C level twins() *after* computation: dys[0] != 0 but = %g\n\n", dys[0]); */
 
     // Compute agglomerative/divisive coefficient from banner:
     *coef = bncoef(*nn, ban);
@@ -197,10 +197,10 @@ agnes(int nn, int *kwan, int *ner, double *ban, double* dys,
 
 	    if (lq == la || lq == lb || kwan[lq] == 0)
 		continue;
-	    /* ==> naq, nbq  >= 1 */
+	    /* ==> lq is neither la nor lb  ==> ind_2(.,.) are "non-trivial" : */
 	    int naq = ind_2(la, lq);
 	    int nbq = ind_2(lb, lq);
-	    if(naq == 0 || nbq == 0) error("C agnes(), naq or nbq == 0  should not happen");
+//	    if(naq == 0 || nbq == 0) error("C agnes(), naq or nbq == 0  should not happen");
 	    if(trace_lev >= 3)
 		Rprintf(" old D(A, j), D(B, j), j=%*d  = (%g,%g); ",
 			_d,lq, dys[naq], dys[nbq]);
@@ -338,7 +338,7 @@ splyt(int nn, int *kwan, int *ner, double *ban, double *dys,
 /*     cs :=  diameter of data set */
 
     double cs = 0.;
-    for(k = 1; k < nhalf; ++k) { /* k >= 1  as dys[0] :=== 0 */
+    for(k = 0; k < nhalf; ++k) {
 	if (cs < dys[k])
 	    cs = dys[k];
     }
@@ -520,9 +520,9 @@ static double min_dis(const double dys[], int ka, int kb, const int ner[])
     for(int k = ka -1; k < kb -1; ++k) {
 	int ner_k = ner[k];
 	for (int j = k+1; j < kb; ++j) {
-	    int k_j = ind_2(ner_k, ner[j]);
-	    if (dm < dys[k_j])
-		dm = dys[k_j];
+	    double dkj = dys_2(dys, ner_k, ner[j]);
+	    if (dm < dkj)
+		dm = dkj;
 	}
     }
     return dm;

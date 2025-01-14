@@ -53,12 +53,12 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
     }
 #endif
 
-    int i, nhalf; // nhalf := #{distances}+1 = length(dys)
+    int i, nhalf; // nhalf := #{distances} = length(dys)
     double s;
     if (n % 2 == 0) { // avoid overflow of n * (n - 1)
-	nhalf = n / 2 * (n - 1) + 1;
+	nhalf = n / 2 * (n - 1);
     } else {
-	nhalf = (n - 1) / 2 * n + 1;
+	nhalf = (n - 1) / 2 * n;
     }
 
     int   *nsend = (int*) R_alloc(n, sizeof(int))
@@ -149,7 +149,7 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
     }
 
     /* s := max( dys[.] ), the largest distance */
-    for (i = 1, s = 0.; i < nhalf; ++i) /* dys[0] == 0. not used here */
+    for (i = 0, s = 0.; i < nhalf; ++i)
 	if (s < dys[i])
 	    s = dys[i];
 
@@ -481,15 +481,15 @@ L60b:
 			    // Compute gain of adding h as a medoid:
 			    int ijbase = (h-2)*(h-1)/2;
 			    for (j = 1; j < h; ++j) { // ijbase+j >= 0 + j >= 1
-				double dhj = dys[ijbase+j];
+				double dhj = dys[ijbase+j-1];
 				if(dhj < fvect[j])
 				    addGain += (dhj-fvect[j]);
 			    }
 			    ijbase += h;// = (h-2)*(h-1)/2 + h  >= 1
 			    for (j = h+1; j <= n; ++j) {
 				ijbase += j-2; // >= 1 (as j-2 >= 0)
-				if(dys[ijbase] < fvect[j])
-				    addGain += (dys[ijbase]-fvect[j]);
+				if(dys[ijbase-1] < fvect[j])
+				    addGain += (dys[ijbase-1]-fvect[j]);
 			    }
 			    if (dzsky > addGain) {
 				dzsky = addGain; /* dzsky := min_{i,h} T_{i,h} */
@@ -594,7 +594,7 @@ L60b:
 		    // Compute gain of substituting h for each other medoid:
 		    int ijbase = (h-2)*(h-1)/2;
 		    for (j = 1; j < h; ++j) {
-			double dist_h = dys[ijbase+j]; // New medoid
+			double dist_h = dys[ijbase+j-1]; // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest
@@ -609,7 +609,7 @@ L60b:
 		    ijbase += h;// = (h-2)*(h-1)/2 + h
 		    for (j = h+1; j <= n; ++j) {
 			ijbase += j-2; // (j-2) >= 0
-			double dist_h = dys[ijbase]; // New medoid
+			double dist_h = dys[ijbase-1]; // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest
@@ -653,7 +653,7 @@ L60b:
 		    // Compute gain of substituting h for each other medoid:
 		    int ijbase = (h-2)*(h-1)/2;
 		    for (j = 1; j < h; ++j) {
-			double dist_h = dys[ijbase+j]; // New medoid
+			double dist_h = dys[ijbase+j-1]; // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest
@@ -668,7 +668,7 @@ L60b:
 		    ijbase += h;// = (h-2)*(h-1)/2 + h
 		    for (j = h+1; j <= n; ++j) {
 			ijbase += j-2;
-			double dist_h = dys[ijbase]; // New medoid
+			double dist_h = dys[ijbase-1]; // New medoid
 			int memb = clustmembership[j]; // Medoid nr of nearest
 			double distcur = dysma[j]; // Nearest
 			double distsec = dysmb[j]; // Second nearest

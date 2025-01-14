@@ -9,7 +9,6 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     meth <- pmatch(method, METHODS)
     if(is.na(meth)) stop("invalid clustering method")
     if(meth == -1) stop("ambiguous clustering method")
-    cl. <- match.call()
     method <- METHODS[meth]
     if(method == "flexible") {
 	## Lance-Williams formula (but *constant* coefficients):
@@ -45,7 +44,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 
     if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(anyNA(x)) stop("NA-values in the dissimilarity matrix not allowed.")
+	if(anyNA(x)) stop("NA values in the dissimilarity matrix not allowed.")
 	if(data.class(x) != "dissimilarity") { # try to convert to
 	    if(!is.null(dim(x))) {
 		x <- as.dist(x) # or give an error
@@ -58,32 +57,34 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	    class(x) <- dissiCl
 	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
-	n <- attr(x, "Size")
-	dv <- x[lower.to.upper.tri.inds(n)] # is *slow* [c * n^2 ; but large c]  in large cases
+	n <- as.integer(attr(x, "Size"))
+	dv <- x[lower.to.upper.tri.inds(n)] # <==> n >= 2 or error;  *slow* [c * n^2 ; but large c]  in large cases
 	## prepare arguments for the Fortran call
-	dv <- c(0., dv)# "double", 1st elem. "only for Fortran" (?)
 	jp <- 1L
 	mdata <- FALSE
-	ndyst <- 0
+	ndyst <- 0L
 	x2 <- double(1)
     }
     else {
 	## check input matrix and standardize, if necessary
 	x <- data.matrix(x)
 	if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
-	x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
-        storage.mode(x2) <- "double"
-	ndyst <- if(metric == "manhattan") 2 else 1
+	x2 <- if(stand) scale(x, scale = apply(x, 2L, meanabsdev)) else x
+	ndyst <- if(metric == "manhattan") 2L else 1L
 	n <- nrow(x2)
 	jp <- ncol(x2)
+        if(!jp) stop("x has zero columns") # easier to read than later error
+        stopifnot(is.integer(n), is.integer(jp)) # always currently
 	if((mdata <- any(inax <- is.na(x2)))) { # TRUE if x[] has any NAs
 	    jtmd <- integer(jp)
 	    jtmd[apply(inax, 2L, any)] <- -1L
 	    ## VALue for MISsing DATa
+            ## __ FIXME __ now have C and R only, could use true NA (double | int.) or 'Inf'
+            ##    =====   the following fails e.g. when max(x2) == double.xmax
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
 	}
-	dv <- double(1 + (n * (n - 1))/2) # FIXME: an allocation waste for large n !!
+	dv <- double((n * (n - 1))/2) # FIXME: an allocation waste for large n !
     }
     if(n <= 1) stop("need at least 2 objects to cluster")
     stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
@@ -91,33 +92,32 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     res <- .C(twins,
 		    as.integer(n),
 		    as.integer(jp),
-		    x2,
+		    as.double(x2),
 		    dv, # input \\ output:
 		    dis = double(if(C.keep.diss) length(dv) else 1L),
 		    jdyss = if(C.keep.diss) diss + 10L else as.integer(diss),
 		    if(mdata && jp) rep(valmisdat, jp) else double(1L),
 		    if(mdata) jtmd else integer(jp),
-		    as.integer(ndyst),
+		    ndyst,
 		    1L,# jalg = 1 <==> AGNES
 		    meth,# integer
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
-		    ac = double(1), # coef
+		    ac = double(1L), # coef
                     par.method, # = alpha (of length 1, 3, or 4)
-		    merge = matrix(0L, n - 1, 2), # integer
+		    merge = matrix(0L, n - 1L, 2L), # integer
                     trace = trace.lev)[c("dis", "jdyss", "ner", "ban", "ac", "merge")]
     if(!diss) {
 	##give warning if some dissimilarities are missing.
 	if(res$jdyss == -1)
-	    stop("No clustering performed, NA-values in the dissimilarity matrix.\n" )
+	    stop("No clustering performed, NA values in the dissimilarity matrix.")
         if(keep.diss) {
             ## adapt Fortran output to S:
-            ## convert lower matrix,read by rows, to upper matrix, read by rows.
-            stopifnot(res$dis[1] == 0) # proving it carries no info
-            disv <- res$dis[-1]
+            ## convert lower matrix, read by rows, to upper matrix, read by rows.
+            disv <- res$dis
             disv[disv == -1] <- NA
-            disv <- disv[upper.to.lower.tri.inds(n)]
+            disv <- disv[upper.to.lower.tri.inds(n)] # <==> n >= 2 or error
             class(disv) <- dissiCl
             attr(disv, "Size") <- nrow(x)
             attr(disv, "Metric") <- metric
@@ -135,12 +135,12 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     }
     clustering <- list(order = res$ner, height = res$ban[-1], ac = res$ac,
 		       merge = res$merge, diss = if(keep.diss)disv,
-		       call = cl., method = METHODS[meth])
+		       call = match.call(), method = METHODS[meth])
     if(exists("order.lab"))
 	clustering$order.lab <- order.lab
     if(keep.data && !diss) {
 	if(mdata) x2[x2 == valmisdat] <- NA
-	clustering$data <- x2
+	clustering$data <- x2 # NB: in non-NA cases, x2 may still be "integer"
     }
     class(clustering) <- c("agnes", "twins")
     clustering

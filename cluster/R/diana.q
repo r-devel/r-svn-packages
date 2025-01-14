@@ -21,12 +21,11 @@ diana <- function(x, diss = inherits(x, "dist"),
 	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	n <- as.integer(attr(x, "Size"))
-	dv <- x[lower.to.upper.tri.inds(n)] # <==> n >= 2 or error
+	dv <- x[lower.to.upper.tri.inds(n)] # <==> n >= 2 or error;  *slow* [c * n^2 ; but large c]  in large cases
 	## prepare arguments for the Fortran call
-	dv <- c(0., dv)# double {FIXME: an allocation waste for large n !!!}
 	jp <- 1L
 	mdata <- FALSE
-	ndyst <- 0
+	ndyst <- 0L
 	x2 <- double(1)
     }
     else {
@@ -34,7 +33,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	x <- data.matrix(x)
 	if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
 	x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
-	ndyst <- if(metric == "manhattan") 2 else 1
+	ndyst <- if(metric == "manhattan") 2L else 1L
 	n <- nrow(x2)
 	jp <- ncol(x2)
         if(!jp) stop("x has zero columns") # easier to read than later error
@@ -43,14 +42,16 @@ diana <- function(x, diss = inherits(x, "dist"),
 	    jtmd <- integer(jp)
 	    jtmd[apply(inax, 2L, any)] <- -1L
 	    ## VALue for MISsing DATa
+            ## __ FIXME __ now have C and R only, could use true NA (double | int.) or 'Inf'
+            ##    =====   the following fails e.g. when max(x2) == double.xmax
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
 	}
-	dv <- double(1 + (n * (n - 1))/2) # FIXME: `1+` = an allocation waste for large n !
+	dv <- double((n * (n - 1))/2) # FIXME: an allocation waste for large n !
     }
-    stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
     stopifnot(is.logical(stop.at.k) ||
 	      (is.numeric(stop.at.k) && 1 <= stop.at.k && stop.at.k <= n))
+    stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
     C.keep.diss <- keep.diss && !diss
     res <- .C(twins,
 		    n,
@@ -61,26 +62,24 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    jdyss = if(C.keep.diss) diss + 10L else as.integer(diss),
 		    if(mdata && jp) rep(valmisdat, jp) else double(1L),
 		    if(mdata) jtmd else integer(jp),
-		    as.integer(ndyst),
+		    ndyst,
 		    2L,# jalg = 2 <==> DIANA
                     as.integer(stop.at.k),# 'method'; default = 0L  :  do *not* stop early
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
-		    dc = double(1L),
+		    dc = double(1L), # coef
 		    double(1L), # { unused for diana() }
 		    merge = matrix(0L, n - 1L, 2L), # integer or error if(n == 0) !
                     trace = trace.lev)[c("dis", "jdyss", "ner", "ban", "dc", "merge")]
-
     if(!diss) {
 	## give warning if some dissimilarities are missing.
 	if(res$jdyss == -1)
-	    stop("No clustering performed, NA's in dissimilarity matrix.\n")
+	    stop("No clustering performed, NA values in the dissimilarity matrix.")
         if(keep.diss) {
             ## adapt Fortran output to S:
             ## convert lower matrix, read by rows, to upper matrix, read by rows.
-            stopifnot(res$dis[1] == 0) # proving it carries no info
-            disv <- res$dis[-1]
+            disv <- res$dis
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)] # <==> n >= 2 or error
             class(disv) <- dissiCl
@@ -105,7 +104,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	clustering$order.lab <- order.lab
     if(keep.data && !diss) {
 	if(mdata) x2[x2 == valmisdat] <- NA
-	clustering$data <- x2
+	clustering$data <- x2 # NB: in non-NA cases, x2 may still be "integer"
     }
     class(clustering) <- c("diana", "twins")
     clustering

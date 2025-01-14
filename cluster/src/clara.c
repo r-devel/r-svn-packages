@@ -256,7 +256,7 @@ void cl_clara(int *n,  /* = number of objects */
 	} else if(*trace_lev) Rprintf(";%s", nl);
 
 	double s = 0., sky;
-	for(l = 1; l <= n_dys; l++) /* dys[0] is not used here */
+	for(l = 0; l <= n_dys; l++)
 	    if (s < dys[l])
 		s = dys[l];
 	if(*trace_lev >= 2)
@@ -376,7 +376,6 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    if(ksel <= 0 || ksel > n)
 		error(_("C level dysta2(): nsel[%s= %d] = %d is outside 0..n, n=%d"),
 		      "k", k, ksel, n);
-	    ++nlk; // nlk >= 1
 	    int npres = 0, j, lj, kj, N_ones = 0;
 	    double clk = 0.;
 	    for (j = 0, lj = lsel-1, kj = ksel-1; j < jpp;
@@ -444,6 +443,7 @@ void dysta2(int nsam, int jpp, int *nsel,
                     : (diss_kind == MANHATTAN) ? d1
                     : /* diss_kind == GOWER */ d1 / jpp;
 	    }
+	    ++nlk;
 	} /* for( k ) */
     } /* for( l ) */
     return;

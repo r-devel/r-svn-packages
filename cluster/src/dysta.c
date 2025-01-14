@@ -27,7 +27,6 @@ int dysta(int nn, int p,
     for (int l = 1; l < nn; ++l) {
 	for (int k = 0; k < l; ++k) {
 	    double clk = 0.;
-	    ++nlk;
 	    int npres = 0;
 	    for (int j = 0; j < p; ++j) {
 		if (jtmd[j] < 0) { /* some  x(*,j) are missing (NA) */
@@ -50,7 +49,8 @@ int dysta(int nn, int p,
 	    } else {
 		dys[nlk] = clk * (pp / (double) npres);
 	    }
-	}
+	    ++nlk;
+	} // for( k )
     }
     return jhalt;
 } /* dysta_ */

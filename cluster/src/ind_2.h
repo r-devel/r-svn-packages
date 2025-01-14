@@ -24,15 +24,16 @@ int ind_2(int l, int j)
 	return (j-2)*(j-1)/2 + l;
 #else
     /* from Li Long -- optimizes particularly well on Itanium2 */
-    int result = 0;
-    if (l != j) {
+    if (l == j) return 0;
+    // else  l != j
+    {
 	int m = l>j ? l : j;
 	int n = l>j ? j : l;
-	result = (m <= max_m)
+	--n; // 1 less: dys[] no longer starts with 0.
+	return (m <= max_m)
 	    ? (m-2)*(m-1)/2 + n
 	    : (int) (((double) m-2)*(m-1)/2 + n);
     }
-    return result;
 #endif
 }
 
@@ -44,6 +45,7 @@ double dys_2(const double dys[], int l, int j)
     // else
     int m = l>j ? l : j; // m := max(l,j) >= 2
     if     (l>j)  l = j; // l := min(l,j) >= 1
+    --l; // 1 less: dys[] no longer starts with 0.
     return dys[(m <= max_m)
 	?                 (m-2)*(m-1)/2 + l
 	: (int) (((double) m-2)*(m-1)/2 + l)];

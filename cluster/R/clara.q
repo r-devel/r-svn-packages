@@ -48,6 +48,8 @@ clara <- function(x, k,
 	jtmd <- integer(jp)
 	jtmd[apply(inax, 2L, any)] <- -1L
 	## VALue for MISsing DATa
+        ## __ FIXME __ now have C and R only, could use true NA (double | int.) or 'Inf'
+        ##    =====   the following fails e.g. when max(x2) == double.xmax
 	valmisdat <- 1.1* max(abs(range(x, na.rm=TRUE)))
 	x[inax] <- valmisdat
 	if(missing(correct.d))
@@ -65,7 +67,7 @@ to suppress this warning.")
 	      clu = as.double(x),
 	      samples,			# = nran
 	      sampsize, 		# = nsam		## 6
-	      dis   = double(1 + (sampsize * (sampsize - 1))/2),
+	      dis   = double((sampsize * (sampsize - 1))/2),
 	      as.integer(mdata),	# = mdata
 	      valmd = if(mdata) rep(valmisdat, jp) else -1.,	## 9
 	      jtmd  = if(mdata) jtmd else integer(1),
@@ -129,7 +131,7 @@ to suppress this warning.")
         return(clustering)
     ## adapt C output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
-    disv <- res$dis[-1]
+    disv <- res$dis
     disv[disv == -1] <- NA
     disv <- disv[upper.to.lower.tri.inds(sampsize)]
     class(disv) <- dissiCl
