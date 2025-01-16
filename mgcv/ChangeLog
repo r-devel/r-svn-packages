@@ -28,6 +28,8 @@ present, and reparameterization needs checking (also for bam).
 ** 'NCV' added as a method option for bam(...,discrete=TRUE). More efficient 
   than gam(...,method='NCV'), but much less efficient than default REML.
 
+* default margins changed for plot.gam(...,pages=1)
+
 * 'clog' censored logistic family added for AFT models. Written by Chris Shen.
 
 * improved cov matrix estimation under NCV used with correlated errors.

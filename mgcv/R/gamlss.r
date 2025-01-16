@@ -1430,8 +1430,8 @@ pen.reg <- function(x,e,y) {
     qrr <- qr(rbind(R,e*k));
     edf <- sum(qr.Q(qrr)[1:r,]^2)
   } 
-  while (edf<.7*rr) { ## reduce penalization
-    k <- k/20
+  while (edf<.85*rr) { ## reduce penalization (was .7)
+    k <- k/5 ## was 20! 
     qrr <- qr(rbind(R,e*k));
     edf <- sum(qr.Q(qrr)[1:r,]^2)
   } 

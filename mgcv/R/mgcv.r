@@ -1358,6 +1358,7 @@ gam.setup <- function(formula,pterms,
       k.sp <- k.sp+1
       G$off[k.sp] <- sm$first.para 
       G$S[[k.sp]] <- sm$S[[j]]
+      if (!is.null(sm$C)) attr(G$S[[k.sp]],"C") <- sm$C 
       G$rank[k.sp]<-sm$rank[j]
       if (!is.null(min.sp)) {
         if (is.null(H)) H<-matrix(0,n.p,n.p)
@@ -4611,7 +4612,22 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
   if (inherits(family,"general.family")) { ## Cox, gamlss etc...   
-    lbb <- family$ll(y,x,start,weights,family,offset=offset,deriv=1)$lbb ## initial Hessian 
+    lbb <- family$ll(y,x,start,weights,family,offset=offset,deriv=1)$lbb ## initial Hessian
+    lambda <- rep(0,length(S))
+    if (TRUE) { ## experimental
+      for (i in 1:length(S)) {
+        ind <- off[i]:(off[i]+ncol(S[[i]])-1)
+	if (rank[i]<ncol(S[[i]])) { ## find a basis for row/col space of S[[i]] and project into that.
+          suppressWarnings(cs <- chol(S[[i]],pivot=TRUE))
+          piv <- attr(cs,"pivot")
+	  Z <- S[[i]][,piv[1:rank[i]]] ## basis for the space of S[[i]]
+          Z <- Z/norm(Z)
+	  ZHZ <- -t(Z)%*%lbb[ind,ind]%*%Z
+          ZSZ <- t(Z)%*%S[[i]]%*%Z
+        } else { ZHZ <- -lbb[ind,ind];ZSZ <- S[[i]] }
+	lambda[i] <- .3*norm(ZHZ,"M")/norm(ZSZ,"M")
+      }
+    } else { ## original
     ## initially work out the number of times that each coefficient is penalized
     pcount <- rep(0,ncol(lbb))
     for (i in 1:length(S)) {
@@ -4621,8 +4637,6 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
       ind <- ind[indp] ## drop indices of unpenalized
       pcount[ind] <- pcount[ind] + 1 ## add up times penalized
     }
-
-    lambda <- rep(0,length(S))
     ## choose lambda so that corresponding elements of lbb and S[[i]]
     ## are roughly in balance...
     for (i in 1:length(S)) {
@@ -4644,6 +4658,7 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
       while (sqrt(mean(dlb/(dlb + lami * dS * rm))*mean(dlb)/mean(dlb+lami*dS*rm)) < 0.4) lami <- lami/5
       lambda[i] <- lami 
       ## norm(lbb[ind,ind])/norm(S[[i]])
+    }
     }
   } else { ## some sort of conventional regression
     if (is.null(mukeep)) {

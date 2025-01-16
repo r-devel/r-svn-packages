@@ -1416,7 +1416,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
     if (c<1) r <- c <- 1
     if (c*r < ppp) c <- c + 1
     if (c*r < ppp) r <- r + 1  
-    oldpar<-par(mfrow=c(r,c))
+    oldpar<-par(mfrow=c(r,c),mar=c(5,5,1,1))
   
   } else
   { ppp<-1;oldpar<-par()}
