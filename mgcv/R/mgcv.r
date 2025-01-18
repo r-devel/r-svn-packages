@@ -75,6 +75,96 @@ strip.offset <- function(x)
   x
 }
 
+lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit = 1000) {
+## Solves linear program min c'x s.t. Ax = b x>=0 given m initial
+## active indices Bi, where A is m by p. The condition on Bi is that
+## The solution to A[,Bi] x* = b must exist and x* >= 0.
+## If Bi not supplied then a phase 1 LP is used to find it.
+## Alternatively if both C and d are non-NULL then solves
+## min  c'x s.t. Ax>b Cx=d, x otherwise unrestricted. (C and d
+## can have no rows without counting as NULL.)
+ 
+  sf <- is.null(C)||is.null(d) ## standard form
+  if (!sf) { ## re-write in standard form
+    pa <- ncol(A);ma <- nrow(A)
+    A <- rbind(A,C)
+    m <- nrow(A)
+    A <- if (ma) cbind(A,-A,-diag(1,m)[,1:ma]) else cbind(A,-A)
+    b <- c(b,d)
+    c <- c(c,-c,rep(0,ma))
+    if (!is.null(Bi)) {
+      warning("Bi ignored when LP not in standard form")
+      Bi <- NULL
+    }
+  }
+  p <- ncol(A);m <- nrow(A)
+  if (is.null(Bi)) { ## find Bi
+    x <- feasible(A,b)
+    Bi <- which(x!=0)
+  }
+  Ni <- (1:p)[-Bi] ## currently excluded
+  conv <- FALSE
+  B <- A[,Bi];
+  qrb <- qr(t(B)); Q <- qr.Q(qrb); R <- qr.R(qrb)
+  for (i in 1:maxit) {  
+    N <- A[,Ni]
+    # equivalent to xb <- solve(B,b)...
+    xb <- Q%*%forwardsolve(R,b,upper.tri=TRUE,transpose=TRUE)
+    # equivalent to sn <- c[Ni] - drop(t(N)%*%solve(t(B),c[Bi]))...
+    v <- drop(c[Bi]%*%Q)
+    sn <- c[Ni] - drop(t(N)%*%backsolve(R,v))
+    eps <- kappa(R)*max(abs(v))*norm(N,"M")*.Machine$double.eps^.9
+    if (all(sn >= -eps)) { conv <- TRUE; break }
+    Nk <- which(sn==min(sn))[1] ## index of k within Ni
+    k <- Ni[Nk] ## index in Ni to include
+    # equivalent to w <- solve(B,A[,k])...
+    w <- Q%*%forwardsolve(R,A[,k],upper.tri=TRUE,transpose=TRUE)
+    if (all(w<=0)) stop("unbounded")
+    ii <- w>0; xbd.min <- min(xb[ii]/w[ii])
+    Bq <- which(xb/w==xbd.min&ii)[1] ## index (in Bi) to exclude
+    q <- Bi[Bq] ## col of A to exclude
+    ## now update Bi and Ni
+    Ni[Nk] <- q; Bi[Bq] <- k
+    .Call(C_QRdrop,Q,R,as.integer(Bq-1))
+    .Call(C_QRadd,Q,R,A[,k])
+    if (Bq<m) { Qm <- Q[m,]; Q[(Bq+1):m,] <- Q[Bq:(m-1),];Q[Bq,] <- Qm} 
+  }
+  if (!conv) stop("not converged")
+  xb[xb<0] <- 0
+  x <- rep(0,p)
+  x[Bi] <- xb;
+  if (!sf) x <- x[1:pa] - x[1:pa+pa] ## assemble +ve and negative parts of solution
+  #cat(sum(c[Bi]*xb),"\n")  ## final objective 
+  x
+} ## lp
+
+feasible <- function(A,b,C=NULL,d=NULL) {
+## Finds feasible initial parameter vector x, satisfying
+## C x = d and A x >= b. First re-writes in standard form...
+## [ A -A I ] [x'] = [b]  x' >= 0, z >= 0
+## [ C -C 0 ] [z ]   [d]
+## ... using slack variables and +/- parts of x in x'. Then constructs
+## phase I LP to solve to find feasible x', and hence x.
+## If C or d are NULL then it is assumed that the problem is already
+## in standard form Ax=b x>=0. A 0-row C matrix is not NULL!
+  sf <- is.null(C)||is.null(d)
+  if (sf) { ## already in standard form Ax=b, x>=0 
+    A1 <- A;b1 <- b; m <- nrow(A1); p <- ncol(A1)
+  } else { ## in C x = d and A x >= b form
+    ma <- nrow(A)
+    A1 <- rbind(A,C)
+    m <- nrow(A1);p <- ncol(A)
+    A1 <- if (ma) cbind(A1,-A1,-diag(1,m)[,1:ma]) else cbind(A1,-A1) 
+    b1 <- c(b,d)
+  }  
+  ## A1 is first matrix in above standard form, and b1 is r.h.s. vector
+  ## Now form the phase 1 problem...
+  Bi <- 1:m + ncol(A1);c1 <- c(rep(0,ncol(A1)),rep(1,m))
+  A1 <- cbind(A1,diag(1*(b1>=0)-1*(b1<0),m))
+  x0 <- lp(c1,A1,b1,Bi=Bi)
+  x1 <- if (sf) x0[1:p] else x0[1:p] - x0[1:p+p] ## assemble +ve and negative parts of solution
+} ## feasible
+
 
 pcls <- function(M)
 # Function to perform penalized constrained least squares.

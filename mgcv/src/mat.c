@@ -1352,6 +1352,122 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
 
 } /* mgcv_piqr */
 
+
+void qradd(double *Q,double *R,double *a,int n,int p) {
+/* A = QR where A is n-1 by p. Q is supplied as n by n with Q factor in 
+   upper left n-1 by n-1 part. R is supplied as the p by p upper triangular 
+   part of the R factor. 'a' is the row to append to A, making it n by p.
+   Returns Q and R factors of updated A, using Givens based method somewhat 
+   similar to Golub and Van Loan 5.1.3 p240 and 6.5.3 p337. Difference is 
+   that a is added as final, not initial row.  
+
+   Not designed for n<p.
+*/
+  double *p0,*p1,*Rjj,*Rji,tau,s,c,ai,Qj;
+  int i,j;
+  /* ensure last row and col of Q are zero, except for final element
+     which is 1... */
+  for (p0=Q+n-1,p1=Q+n*n;p0<p1;p0+=n) *p0=0.0;
+  for (p0=Q+n*(n-1);p0<p1;p0++) *p0=0.0;
+  p1--;*p1=1.0;Rjj = R;
+  for (j=0;j<p;j++,a++,Rjj+=p+1) if (*a) { /* zero a[j] into R[j,j] */
+    if (fabs(*a)>fabs(*Rjj)) { /* compute Givens rotation */
+      tau = - *Rjj / *a; s = 1/sqrt(1+tau*tau); c = s*tau;
+    } else {
+      tau = - *a / *Rjj; c = 1/sqrt(1+tau*tau); s = c*tau;
+    }
+    *Rjj = c * *Rjj - s * *a; *a = 0.0;
+    Rji = Rjj + p;p0 = a + 1;
+    for (i=j+1;i<p;i++,Rji+=p,p0++) { /* work over remaining cols of R */
+      ai = c * *p0 + s * *Rji;
+      *Rji = c * *Rji - s * *p0;
+      *p0 = ai; /* *p0 is a[i] */
+    }
+    p0 = Q + n*j;p1 = Q + n*(n-1); /* cols j and n-1 of Q */
+    for (i=0;i<n;i++,p0++,p1++) { /* apply transposed Givens to Q */
+      Qj = *p0 * c - *p1 * s;
+      *p1 = *p1 * c + *p0 * s;
+      *p0 = Qj;
+    }  
+  } /* j loop over cols of R */   
+} /* qradd */  
+
+
+void qrdrop(double *Q,double *R,int k,int n,int p) {
+/* A = QR where A is n by p. Q is supplied as n by n. R is supplied as 
+   the p by p upper triangular part of the R factor. Row k of A is to 
+   be dropped. Returns updated Q factor in upper left n-1 by n-1 block of 
+   Q and updated R. Given based method - see Golub and Van Loan 5.1.3 p240 
+   and 6.5.3 p337 - but operates by first moving row k to end.
+
+   Not designed for n<p (n==p fine).
+*/
+  double qk,*p0,*p1,*p2,*rn,*qn,*qj,tau,s,c,Qj,Rji,rnp=0.0;
+  int i,j;
+  /* first move the rows of Q up */
+  for (j=0;j<n;j++) {
+    p0 = Q + n * j;p2 = p0 + n;p0 += k; p1 = p0 + 1;
+    qk = *p0; /* Q[k,j] */
+    for (;p1<p2;p0++,p1++) *p0 = *p1; /* Q[i-1,j] = Q[i,j] i>k */
+    p2--; *p2 = qk; /* Q[n-1,j] = Q[k,j] */
+  }
+  rn = R + 1; /* storage for notional nth row of R (first p-1) */
+  if (n==p) rnp = R[p*p-1];
+  qn = Q + n * n - 1; qj = qn - n; /* nth and jth elements of q=Q[n-1,] */
+  for (j=n-2;j>=0;j--,qj -= n) if (*qj) { /* zero col j of q to col n */
+    if (fabs(*qn)>fabs(*qj)) { /* compute Givens rotation */
+      tau = - *qj / *qn; s = 1/sqrt(1+tau*tau); c = s*tau;
+    } else {
+      tau = - *qn / *qj; c = 1/sqrt(1+tau*tau); s = c*tau;
+    }
+    //*qn = *qj * c - *qn * s; *qj = 0; - not needed done in loop below
+    /* apply to columns of Q */
+    p0 = Q + j * n; p1 = Q + (n-1)*n; p2 = p1 + n;
+    for (;p1<p2;p0++,p1++) {
+      Qj = *p0 * s + *p1 * c;
+      *p1 = *p0 * c - *p1 * s;
+      *p0 = Qj;
+    }
+    /* and now apply to the rows of R... */
+    if (j<p) {
+      p1 = R + (p-1) * p + j; // R[j,p-1]
+      Rji = rnp * c + *p1 * s;
+      rnp = *p1 * c - rnp * s;
+      *p1 = Rji;p1 -= p;p0 = rn + p-2;
+      for (i=p-2;i>=j;i--,p1 -= p,p0--) {
+        Rji = *p0 * c + *p1 * s;
+	*p0 = *p1 * c - *p0 * s;
+	*p1 = Rji;
+      }
+    } /* R update */
+  }
+  for (i=0;i<p-1;i++) rn[i] = 0.0;
+  if (n==p) R[p*p-1] = 0.0;
+} /* qrdrop */  
+
+
+SEXP QRdrop(SEXP q,SEXP r,SEXP K) {
+/* .Call wrapper for qrdrop */
+  int n,p,*k;
+  double *Q,*R;
+  n = nrows(q); p = nrows(r);
+  k = INTEGER(K);Q = REAL(q); R = REAL(r);
+  qrdrop(Q,R,*k,n,p);
+  return(R_NilValue);
+} /* QRdrop */  
+
+SEXP QRadd(SEXP q,SEXP r,SEXP A) {
+/* .Call wrapper for qrdrop */
+  int n,p;
+  double *Q,*R,*a;
+  n = nrows(q); p = nrows(r);
+  a = REAL(A);Q = REAL(q); R = REAL(r);
+  qradd(Q,R,a,n,p);
+  return(R_NilValue);
+} /* QRdrop */  
+
+
+
 void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n,int *nt) {
   /* 
      Forms r by c product, A, of B and C, transposing each according to bt and ct.

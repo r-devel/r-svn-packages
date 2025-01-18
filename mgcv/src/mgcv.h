@@ -265,6 +265,9 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	  int ns,int *sr,int *soff,double *sp,int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads);
 void chol_up(double *R,double *u, int *n,int *up,double *eps);
 void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work);
+SEXP QRdrop(SEXP q,SEXP r,SEXP K);
+SEXP QRadd(SEXP q,SEXP r,SEXP A);
+
 
 /* sparse matrix routines */
 SEXP isa1p(SEXP L,SEXP S,SEXP NT);
@@ -276,7 +279,9 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
 SEXP AddBVB(SEXP A,SEXP bt, SEXP vbt);
 SEXP spdev(SEXP A);
 SEXP getListEl(SEXP list, const char *str);
-  
+
+
+
 /* basis constructor/prediction routines*/
 
 void crspl(double *x,int *n,double *xk, int *nk,double *X,double *S, double *F,int *Fsupplied);

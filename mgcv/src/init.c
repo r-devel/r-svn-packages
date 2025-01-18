@@ -48,6 +48,8 @@ R_CallMethodDef CallMethods[] = {
   {"spdev",(DL_FUNC)&spdev,1},
   {"mvnll",(DL_FUNC)&mvnll,13},
   {"wdiag",(DL_FUNC)&wdiag,3},
+  {"QRdrop",(DL_FUNC)&QRdrop,3},
+  {"QRadd",(DL_FUNC)&QRadd,3},
   {NULL, NULL, 0}
 };
 
