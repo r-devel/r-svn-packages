@@ -37,6 +37,8 @@ present, and reparameterization needs checking (also for bam).
 * names in NCV 'nei' structure modified to better match paper and documentation 
   notation.
 
+* estimate.theta improved for semi-definite case (e.g. infinite DoF in scat).  
+
 * extended families now give a useful error if an illegal link is supplied.
 
 * pcls now returns indices of active set constraints as attribute of return 

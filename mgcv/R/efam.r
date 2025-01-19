@@ -1,5 +1,5 @@
-## (c) Simon N. Wood & Natalya Pya (scat, beta), 
-## 2013-2023. Released under GPL2.
+## (c) Simon N. Wood,  Natalya Pya (scat, beta), Chris Shen (clog), 
+## 2013-2025. Released under GPL2.
 ## See gam.fit4.r for testing functions fmud.test and fetad.test.
 
 estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE) {
@@ -29,7 +29,6 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
       g <- if (get.scale) c(g1,-dev/2) else g1
       ind <- 1:length(g)
       g <- g - ls$lsth1[ind]
-      ## g <- if (deriv>0) colSums(as.matrix(Dd$Dth))/(2*scale) - ls$lsth1[1:nth] else NULL
     } else g <- NULL
     if (deriv>1) {
       x <- colSums(as.matrix(Dd$Dth2))/(2*scale)
@@ -41,7 +40,6 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
       }
       if (get.scale) Dth2 <- rbind(cbind(Dth2,-g1),c(-g1,dev/2))
       H <- Dth2 - as.matrix(ls$lsth2)[ind,ind]
-      # H <- Dth2 - as.matrix(ls$lsth2)[1:nth,1:nth]
     } else H <- NULL
     list(nll=nll,g=g,H=H)
   } ## nlogl
@@ -54,10 +52,9 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
   g <- if (family$n.theta==0) nll$g[-del.ind] else nll$g
   H <- if (family$n.theta==0) nll$H[-del.ind,-del.ind,drop=FALSE] else nll$H
   step.failed <- FALSE
-  for (i in 1:100) { ## main Newton loop
-    #H <- if (family$n.theta==0) nll$H[-del.ind,-del.ind,drop=FALSE] else nll$H
-    #g <- if (family$n.theta==0) nll$g[-del.ind] else nll$g
-    eh <- eigen(H,symmetric=TRUE)
+  uconv <- abs(g) > tol*(abs(nll$nll)+1)
+  if (sum(uconv)) for (i in 1:100) { ## main Newton loop
+    eh <- eigen(H[uconv,uconv,drop=FALSE],symmetric=TRUE)
     pdef <- sum(eh$values <= 0)==0
     if (!pdef) { ## Make the Hessian pos def
       eh$values <- abs(eh$values)
@@ -65,12 +62,13 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
       eh$values[eh$values<thresh] <- thresh
     }
     ## compute step = -solve(H,g) (via eigen decomp)...
-    step <- - drop(eh$vectors %*% ((t(eh$vectors) %*% g)/eh$values))
-    if (family$n.theta==0) step <- c(rep(0,n.theta),step)
+    step0 <- - drop(eh$vectors %*% ((t(eh$vectors) %*% g[uconv])/eh$values))
+    if (family$n.theta==0) step0 <- c(rep(0,n.theta),step0)
     ## limit the step length...
-    ms <- max(abs(step))
-    if (ms>4) step <- step*4/ms
-
+    ms <- max(abs(step0))
+    if (ms>4) step0 <- step0*4/ms
+    step <- theta*0;step[uconv] <- step0
+    
     nll1 <- nlogl(theta+step,family,y,mu,scale,wt,2)
     iter <- 0
     while (nll1$nll - nll$nll > .Machine$double.eps^.75*abs(nll$nll)) { ## step halving 
@@ -88,7 +86,8 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
     g <- if (family$n.theta==0) nll$g[-del.ind] else nll$g
     H <- if (family$n.theta==0) nll$H[-del.ind,-del.ind,drop=FALSE] else nll$H
     ## convergence checking...
-    if (sum(abs(g) > tol*abs(nll$nll))==0) break 
+    uconv <- abs(g) > tol*(abs(nll$nll)+1)
+    if (sum(uconv)==0) break 
   } ## main Newton loop
   if (step.failed) warning("step failure in theta estimation")
   if (attachH) attr(theta,"H") <- H #nll$H
