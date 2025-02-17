@@ -570,7 +570,7 @@ pqr2 <- function(x,nt=1,nb=30) {
   ## by .Call *in environment from which function is called*
   x <- x*1  
   rank <- .Call(C_mgcv_Rpiqr,x,beta,piv,nt,nb)
-  ret <- list(qr=x,rank=rank,qraux=beta,pivot=piv+1)
+  ret <- list(qr=x,rank=rank,qraux=beta[1:rank],pivot=piv+1)
   attr(ret,"useLAPACK") <- TRUE
   class(ret) <- "qr"
   ret

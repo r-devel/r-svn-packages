@@ -478,7 +478,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
             np=np,id=id,sp=sp,inter=FALSE)
   if (!is.null(pc)) {
     if (!is.list(pc)||!is.list(pc[[1]])) { ## a list of lists specifies general constraint, otherwise...  
-      if (length(pc) < d) stop("supply a value for each variable for a point constraint")
+      if (length(pc) < dim) stop("supply a value for each variable for a point constraint")
       if (!is.list(pc)) pc <- as.list(pc)
       if (is.null(names(pc))) names(pc) <- unlist(lapply(vars,all.vars))
     }  
@@ -837,7 +837,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
     for (i in 1:m) if (!is.null(object$margin[[i]]$Ain)) {
       I0 <- if (i>1) diag(1,nrow=prod(d[1:(i-1)])) else 1
       I1 <- if (i<m) diag(1,nrow=prod(d[(i+1):m])) else 1
-      Ain <- if (is.null(XP[[i]])) rbind(Ain,I0 %x% object$margin[[i]]$Ain %x% I1) else
+      Ain <- if (i>length(XP)||is.null(XP[[i]])) rbind(Ain,I0 %x% object$margin[[i]]$Ain %x% I1) else
              rbind(Ain,I0 %x% (object$margin[[i]]$Ain%*%XP[[i]]) %x% I1)
       I0 <- if (i>1) rep(1,prod(d[1:(i-1)])) else 1
       I1 <- if (i<m) rep(1,prod(d[(i+1):m])) else 1
@@ -3875,8 +3875,8 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
 
   sm$S.scale <- rep(1,length(sm$S))
 
-  if (scale.penalty && length(sm$S)>0 && is.null(sm$no.rescale)) # then the penalty coefficient matrix is rescaled
-  {  maXX <- norm(sm$X,type="I")^2 ##mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
+  if (scale.penalty && length(sm$S)>0 && is.null(sm$no.rescale)) { # then the penalty coefficient matrix is rescaled
+    maXX <- norm(sm$X,type="I")^2 ##mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
       for (i in 1:length(sm$S)) {
         maS <- norm(sm$S[[i]])/maXX  ## mean(abs(sm$S[[i]])) / maXX
         sm$S[[i]] <- sm$S[[i]] / maS
@@ -3960,6 +3960,10 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
      sm$null.space.dim <- max(0,sm$null.space.dim-1)
   }
 
+  ########################################
+  ## by variables and summation convention
+  ########################################
+  check.rank <- FALSE
   if (matrixArg||(object$by!="NA"&&is.null(sm$by.done))) { ## apply by variables
     if (is.factor(by)) { ## generates smooth for each level of by
       if (matrixArg) stop("factor `by' variables can not be used with matrix arguments.")
@@ -4025,7 +4029,10 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
             }      
           } ## finished all rows
           attr(sml[[1]]$X,"offset") <- offX
-        } 
+        }
+	## will need to establish rank as summation can lead to loss of identifiability...
+	check.rank <- TRUE
+
       } else {  ## arguments not matrices => not in packed form + no summation needed
         sml[[1]]$X <- as.numeric(by)*sm$X
         if (!is.null(offs)) attr(sml[[1]]$X,"offset") <- if (apply.by) offs*as.numeric(by) else offs
@@ -4263,6 +4270,30 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       sml[[i]]$X0 <- PredictMat(sml[[i]],data)
       sml[[i]]$by <- by.name
     }
+  }
+  if (check.rank) {
+    XX <- crossprod(sml[[1]]$X); XX <- XX/norm(XX); m <- length(sml[[1]]$S)
+    St <- sml[[1]]$S[[1]]/norm(sml[[1]]$S[[1]])
+    if (m>1) for (i in 2:m) St <- St + sml[[1]]$S[[i]]/norm(sml[[1]]$S[[i]])
+    suppressWarnings(R <- chol(XX+St,pivot=TRUE))
+    r <- attr(R,"rank");p <- ncol(XX)
+    if (r<p) {
+      idrop <- (r+1):p ## index redundant/unidentifiable coefficients
+      sml[[1]]$X <- sml[[1]]$X[,-idrop,drop=FALSE]
+      for (i in 1:m) {
+        sml[[1]]$S[[i]] <- sml[[1]]$S[[i]][-idrop,-idrop,drop=FALSE]
+        suppressWarnings(R <- chol(sml[[1]]$S[[i]],pivot=TRUE))
+        sml[[1]]$rank[i] <- attr(R,"rank")
+      }
+      if (!is.null(sml[[1]]$Sp)) for (i in 1:m) sml[[1]]$Sp[[i]] <- sml[[1]]$Sp[[i]][-idrop,-idrop,drop=FALSE]
+      if (!is.null(sml[[1]]$Xp)) sml[[1]]$Xp <- sml[[1]]$Xp[,-idrop,drop=FALSE]
+      suppressWarnings(R <- chol(St[-idrop,-idrop,drop=FALSE],pivot=TRUE))
+      sml[[1]]$null.space.dim <- ncol(R) - attr(R,"rank")
+      sml[[1]]$df <- ncol(R)
+      if (!is.null(sml[[1]]$C)) sml[[1]]$C <- sml[[1]]$C[,-idrop,drop=FALSE]
+      if (!is.null(sml[[1]]$Ain)) sml[[1]]$Ain <- sml[[1]]$Ain[,-idrop,drop=FALSE]
+      attr(sml[[1]],"del.index") <- idrop
+    }  
   }
   sml
 } ## end of smoothCon

@@ -991,7 +991,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
    strategy is only described in words). 
    A is n by p.
 */ 
-  int jb,pb,i,j,k=0,m,*p0,nb0,q,one=1,ok_norm=1,*mb,*kb,rt,nth;
+  int jb,pb,i,j,k=0,m,*p0,nb0,q,one=1,ok_norm=1,*mb,*kb,rt,nth,min_np;
   double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
   char trans='T',nottrans='N';
 #ifdef OMP_REPORT
@@ -1014,7 +1014,8 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
   jb=0; /* start column of current block */
   pb = p; /* columns left to process */
   F = (double *)CALLOC((size_t) p * nb0,sizeof(double));
-  while (jb < p) {
+  if (n<p)  min_np = n; else min_np = p;
+  while (jb < min_np) { // was jb<p
     nb = p-jb;if (nb>nb0) nb = nb0;/* attempted block size */
     for (a0=F,a1=F+nb*pb;a0<a1;a0++) *a0 = 0.0; /* F[1:pb,1:nb] = 0 - i.e. clear F */
     for (j=0;j<nb;j++) { /* loop through cols of this block */
@@ -1052,7 +1053,6 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
 	    /* Only 10th argument (of 11) changed on exit... */ 
             F77_CALL(dgemv)(&nottrans, mb+i, &j,&dmone,A+jb*(ptrdiff_t)n+kb[i],&n,F+j,&pb,&done,
 	                    A + (ptrdiff_t)n*k + kb[i], &one FCONE);
-            //F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
           }
         }
       }
@@ -1065,26 +1065,20 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
       /* F[j+1:pb-1,j] = tau[k] * A[k:n-1,k+1:p-1]'v */ 
       
       if (k<p-1) { /* up to O(np) step - most expensive after block */
-        // i=p-k-1;
         q = p - k - 1 ; /* total number of rows to split between threads */
         rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
         nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
         kb[0] = j+1;
         for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
         mb[nth-1]=q-(nth-1)*rt;
-	//  #ifdef OPENMP_ON
-        //#pragma omp parallel private(i) num_threads(nth)
-        //#endif 
         { /* start of parallel section */
           #ifdef OPENMP_ON
           #pragma omp parallel for private(i) num_threads(nth)
           #endif
           for (i=0;i<nth;i++) {
-            //#pragma flush(trans,m,mb,tau,k,A,kb,jb,n,Ak,one,dzero,F,pb)
-	  F77_CALL(dgemv)(&trans, &m, mb+i,tau+k,A+(kb[i]+jb) * (ptrdiff_t) n+k,&n,
+        	  F77_CALL(dgemv)(&trans, &m, mb+i,tau+k,A+(kb[i]+jb) * (ptrdiff_t) n+k,&n,
                           Ak,&one,&dzero,F+kb[i]+(ptrdiff_t)j*pb, &one FCONE);
           }
-          //F77_CALL(dgemv)(&trans, &m, &i,tau+k,A+(k+1)*n+k,&n,Ak,&one,&dzero,F+j+1+j*pb, &one);
         } /* end of parallel section */
       } 
       /* F[0:pb-1,j] -= tau[k] F[0:pb-1,0:j-1] A[k:n-1,jb:k-1]'v */
@@ -1105,8 +1099,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           for (i=0;i<nth;i++) {
   	    F77_CALL(dgemv)(&trans, &m, mb+i,&dmone,A+kb[i]* (ptrdiff_t)n+k,&n,Ak,&one,
 			    &dzero,work+kb[i]-jb, &one FCONE);
-          // F77_CALL(dgemv)(&trans, &m, &j,&dmone,A+jb*n+k,&n,Ak,&one,&dzero,work, &one);
-          }
+           }
         }
         q = pb ; /* total number of rows to split between threads */
         rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
@@ -1116,7 +1109,6 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
         mb[nth-1]=q-(nth-1)*rt;
         for (i=0;i<nth;i++) { 
 	  F77_CALL(dgemv)(&nottrans, mb+i, &j,tau+k,F+kb[i],&pb,work,&one,&done,F+(ptrdiff_t)j*pb+kb[i], &one FCONE);
-	  // F77_CALL(dgemv)(&nottrans, &pb, &j,tau+k,F,&pb,work,&one,&done,F+j*pb, &one);
         }
       }
       /* update pivot row A[k,k+1:p-1] -= A[k,jb:k]F(j+1:pb-1,1:j)' */
@@ -1140,8 +1132,6 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
 	                    &n,&done,A+(kb[i]+jb)*(ptrdiff_t)n+k, &n FCONE); 
           }
         }
-        //m=pb-j-1;i=j+1;
-        //F77_CALL(dgemv)(&nottrans, &m, &i,&dmone,F+j+1,&pb,A + jb * n + k,&n,&done,Ak+n, &n);
       }
       *Ak = xx; /* restore A[k,k] */
       /* Now down date the column norms */
@@ -1162,18 +1152,18 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     } /* for j */
     j--; /* make compatible with current k */
 
-    /* now the block update - about half the work is here*/    
-    if (k<p-1) {
+    /* now the block update - about half the work is here*/
+    m = n - k - 1 ;
+    if (m>0 && k<p-1) { // m>0 is new
       /* A[k+1:n,k+1:p] -= A[k+1:n,jb:k]F[j+1:pb,0:nb-1]'
          dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)*/ 
-      m = n - k - 1 ;
+      //m = n - k - 1 ;
       rt = m/nt;if (rt*nt < m) rt++; /* rows per thread */
       nth = nt; while (nth>1&&(nth-1)*rt>m) nth--; /* reduce number of threads if some empty */
       kb[0] = k+1;
       for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
       mb[nth-1]=m-(nth-1)*rt;
       rt = p - k - 1;  
-      //Rprintf("nth = %d  nt = %d\n",nth,nt);   
       #ifdef OPENMP_ON
       #pragma omp parallel private(i,Ak,Aq) num_threads(nth)
       #endif 
@@ -1185,8 +1175,6 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           Ak = A + (k+1)*(ptrdiff_t) n + kb[i];Aq = A + jb * (ptrdiff_t) n + kb[i];
           /* Argument 12 changed on exit... */
           F77_CALL(dgemm)(&nottrans,&trans,mb+i,&rt,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n FCONE FCONE);
-          // Ak = A + (k+1)*n + k + 1;Aq = A + jb * n + k + 1;
-          // F77_CALL(dgemm)(&nottrans,&trans,&m,&rt,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
         }
       } /* end of parallel section */
     }
@@ -1204,7 +1192,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     }
     pb -= nb;
     jb += nb;
-  } /* end while (jb<p) */
+  } /* end while (jb<min_np) */
   FREE(F); FREE(mb); FREE(kb);
   FREE(cn);
   FREE(icn);
@@ -1212,7 +1200,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
 #ifdef OMP_REPORT
   Rprintf("done\n");
 #endif
-  return(p); /* NOTE: not really rank!! */
+  return(min_np); /* NOTE: not really rank!! */
 } /* bpqr */
 
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
@@ -1329,7 +1317,7 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
 /* routine to QR decompose N by P matrix X with pivoting.
    Work is done by bpqr.
 
-   Designed for use with .call rather than .C
+   Designed for use with .Call rather than .C
    Return object is as 'qr' in R.
 
 */
@@ -1350,7 +1338,7 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
   UNPROTECT(1);
   return(rr);
 
-} /* mgcv_piqr */
+} /* mgcv_Rpiqr */
 
 
 void qradd(double *Q,double *R,double *a,int n,int p) {
@@ -1397,7 +1385,7 @@ void qrdrop(double *Q,double *R,int k,int n,int p) {
 /* A = QR where A is n by p. Q is supplied as n by n. R is supplied as 
    the p by p upper triangular part of the R factor. Row k of A is to 
    be dropped. Returns updated Q factor in upper left n-1 by n-1 block of 
-   Q and updated R. Given based method - see Golub and Van Loan 5.1.3 p240 
+   Q and updated R. Givens based method - see Golub and Van Loan 5.1.3 p240 
    and 6.5.3 p337 - but operates by first moving row k to end.
 
    Not designed for n<p (n==p fine).

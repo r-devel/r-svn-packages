@@ -63,10 +63,10 @@ rig <- function(n,mean,scale) {
   x ## E(x) = mean; var(x) = scale*mean^3
 }
 
-strip.offset <- function(x)
+strip.offset <- function(x) {
 # sole purpose is to take a model frame and rename any "offset(a.name)"
 # columns "a.name"
-{ na <- names(x)
+  na <- names(x)
   for (i in 1:length(na)) {
     if (substr(na[i],1,7)=="offset(") 
       na[i] <- substr(na[i],8,nchar(na[i])-1)
@@ -75,7 +75,7 @@ strip.offset <- function(x)
   x
 }
 
-lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit = 1000) {
+lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit=max(1000,nrow(A)*10),phase1=FALSE) {
 ## Solves linear program min c'x s.t. Ax = b x>=0 given m initial
 ## active indices Bi, where A is m by p. The condition on Bi is that
 ## The solution to A[,Bi] x* = b must exist and x* >= 0.
@@ -114,7 +114,10 @@ lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit = 1000) {
     v <- drop(c[Bi]%*%Q)
     sn <- c[Ni] - drop(t(N)%*%backsolve(R,v))
     eps <- kappa(R)*max(abs(v))*norm(N,"M")*.Machine$double.eps^.9
-    if (all(sn >= -eps)) { conv <- TRUE; break }
+    if (phase1) {
+      conv <- sum(c[Bi]*xb)==0 ## in phase 1 objective should end up at zero
+      if (conv||all(sn>=0)) break
+    } else if (all(sn >= -eps)) { conv <- TRUE; break }
     Nk <- which(sn==min(sn))[1] ## index of k within Ni
     k <- Ni[Nk] ## index in Ni to include
     # equivalent to w <- solve(B,A[,k])...
@@ -138,7 +141,7 @@ lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit = 1000) {
   x
 } ## lp
 
-feasible <- function(A,b,C=NULL,d=NULL) {
+feasible <- function(A,b,C=NULL,d=NULL,maxit=max(1000,nrow(A)*10)) {
 ## Finds feasible initial parameter vector x, satisfying
 ## C x = d and A x >= b. First re-writes in standard form...
 ## [ A -A I ] [x'] = [b]  x' >= 0, z >= 0
@@ -161,7 +164,7 @@ feasible <- function(A,b,C=NULL,d=NULL) {
   ## Now form the phase 1 problem...
   Bi <- 1:m + ncol(A1);c1 <- c(rep(0,ncol(A1)),rep(1,m))
   A1 <- cbind(A1,diag(1*(b1>=0)-1*(b1<0),m))
-  x0 <- lp(c1,A1,b1,Bi=Bi)
+  x0 <- lp(c1,A1,b1,Bi=Bi,maxit=maxit,phase1=TRUE)
   x1 <- if (sf) x0[1:p] else x0[1:p] - x0[1:p+p] ## assemble +ve and negative parts of solution
 } ## feasible
 
@@ -185,7 +188,10 @@ pcls <- function(M)
 # M$C  - fixed constraint matrix
 # M$S  - List of (minimal) penalty matrices
 # M$off - used for unpacking M$S
-# M$sp - array of theta_i's 
+# M$sp - array of theta_i's
+# M$active - currently active constraints - i.e. those for
+#            which Ain p = bin. Must not be >= length(p)
+#            - typically used when calling sequentially
 # Ain, bin and p are not in the object needed to call mgcv....
 #
 { nar<-c(length(M$y),length(M$p),dim(M$Ain)[1],dim(M$C)[1])
@@ -197,13 +203,16 @@ pcls <- function(M)
   if (nrow(M$Ain)>0) {
     if (ncol(M$Ain)!=nar[2]) stop("nrow(M$Ain) != length(M$p)") 
     res <- as.numeric(M$Ain%*%M$p) - as.numeric(M$bin)
-    if (sum(res<0)>0) stop("initial parameters not feasible")
-    res <- abs(res)
-    if (sum(res<.Machine$double.eps^.5)>0) 
-      warning("initial point very close to some inequality constraints")
-    res <- mean(res)
-    if (res<.Machine$double.eps^.5) 
-      warning("initial parameters very close to inequality constraints")
+    if (min(res)< -max(c(abs(M$bin),norm(M$Ain,"M")))*.Machine$double.eps^.8) stop("initial parameters not feasible")
+
+    if (is.null(M$active)||length(M$active)==0||M$active[1]==0) {
+      res <- abs(res)
+      if (sum(res<.Machine$double.eps^.5)>0) 
+        warning("initial point very close to some inequality constraints")
+      res <- mean(res)
+      if (res<.Machine$double.eps^.5) 
+        warning("initial parameters very close to inequality constraints")
+    }	
   } else { ## dummy constraint
     M$Ain <- numeric(nar[2])
     M$bin <- -1; nar[3] <- 1
@@ -223,10 +232,10 @@ pcls <- function(M)
     if (M$off[i]+df[i]-1>nar[2]) stop(gettextf("M$S[%d] is too large given M$off[%d]", i, i))
   }
   qra.exist <- FALSE
-  if (ncol(M$X)>nrow(M$X)) {
+  if (ncol(M$X)>nrow(M$X)) { ## p>n branch
     if (m>0) stop("Penalized model matrix must have no more columns than rows") 
     else { ## absorb M$C constraints
-      qra <- qr(t(M$C))
+      qra <- qr(t(M$C)) ## note only absorbed in p>n case
       j <- nrow(M$C);k <- ncol(M$X)
       M$X <- t(qr.qty(qra,t(M$X))[(j+1):k,])
       M$Ain <- t(qr.qty(qra,t(M$Ain))[(j+1):k,])
@@ -237,9 +246,14 @@ pcls <- function(M)
       if  (ncol(M$X)>nrow(M$X)) stop("Model matrix not full column rank")
     }
   }
+  active <- integer(length(M$p)+1)
+  if (!is.null(M$active)&&length(M$active>0)&&M$active[1]>1) {
+    active[1] <- length(M$active);active[1:length(M$active)+1] <- M$active
+    if (active[1]>=length(M$p)) stop("too many active constraints!")
+  }  
   o<-.C(C_RPCLS,as.double(M$X),as.double(M$p),as.double(M$y),as.double(M$w),as.double(M$Ain),as.double(M$bin)
         ,as.double(M$C),as.double(Sa),as.integer(M$off),as.integer(df),as.double(M$sp),
-        as.integer(length(M$off)),as.integer(nar),active=integer(length(M$p)+1))
+        as.integer(length(M$off)),as.integer(nar),active=active)
   p <- array(o[[2]],length(M$p))
   if (qra.exist) p <- qr.qy(qra,c(rep(0,j),p))
   attr(p,"active") <- if (o$active[1]>0) o$active[1:o$active[1]+1]+1 else integer(0) ## the active set
@@ -518,29 +532,35 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0,strict=FAL
 } ## fixDependence
 
 
-augment.smX <- function(sm,nobs,np) {
+augment.smX <- function(sm,nobs,np,nc) {
 ## augments a smooth model matrix with a square root penalty matrix for
 ## identifiability constraint purposes.
   ns <- length(sm$S) ## number of penalty matrices
-  if (ns==0) { ## nothing to do
+  nco <- if (is.null(sm$C)||!is.matrix(sm$C)) 0 else nrow(sm$C)
+  if (ns==0&&nc==0) { ## nothing to do
     return(rbind(sm$X,matrix(0,np,ncol(sm$X))))
   }
-  ind <- colMeans(abs(sm$S[[1]]))!=0
-  sqrmaX  <- mean(abs(sm$X[,ind]))^2
-  alpha <- sqrmaX/mean(abs(sm$S[[1]][ind,ind]))
-  St <- sm$S[[1]]*alpha
-  if (ns>1) for (i in 2:ns) { 
-    ind <- colMeans(abs(sm$S[[i]]))!=0
-    alpha <- sqrmaX/mean(abs(sm$S[[i]][ind,ind]))
-    St <- St +  sm$S[[i]]*alpha
+  if (ns) {
+    ind <- colMeans(abs(sm$S[[1]]))!=0
+    sqrmaX  <- mean(abs(sm$X[,ind]))^2
+    alpha <- sqrmaX/mean(abs(sm$S[[1]][ind,ind]))
+    St <- sm$S[[1]]*alpha
+    if (ns>1) for (i in 2:ns) { 
+      ind <- colMeans(abs(sm$S[[i]]))!=0
+      alpha <- sqrmaX/mean(abs(sm$S[[i]][ind,ind]))
+      St <- St +  sm$S[[i]]*alpha
+    }
+    rS <- mroot(St,rank=ncol(St)) ## get sqrt of penalty
+    X <- rbind(sm$X,matrix(0,np+nc,ncol(sm$X))) ## create augmented model matrix
+    X[nobs+sm$p.ind,] <- t(rS) ## add in
   }
-  rS <- mroot(St,rank=ncol(St)) ## get sqrt of penalty
-  X <- rbind(sm$X,matrix(0,np,ncol(sm$X))) ## create augmented model matrix
-  X[nobs+sm$p.ind,] <- t(rS) ## add in 
+  if (nco) {
+    X[nobs+np+1:nco,] <- sm$C/norm(sm$C)
+  }
   X ## scaled augmented model matrix
 } ## augment.smX
 
-gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
+gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=TRUE)
 # works through a list of smooths, sm, aiming to identify nested or partially
 # nested terms, and impose identifiability constraints on them.
 # Xp is the parametric model matrix. It is needed in order to check whether
@@ -605,11 +625,12 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
   ## Now set things up to enable term specific model matrices to be
   ## augmented with square root penalties, on the fly...
   if (with.pen) {
-    k <- 1
+    k <- 1; nc <- 0
     for (i in 1:m) { ## create parameter indices for each term
       k1 <- k + ncol(sm[[i]]$X) - 1
       sm[[i]]$p.ind <- k:k1
       k <- k1 + 1
+      if (!is.null(sm[[i]]$C)&&is.matrix(sm[[i]]$C)) nc <- max(nrow(sm[[i]]$C),nc) ## largest constraint
     }
     np <- k-1 ## number of penalized parameters
   }
@@ -618,7 +639,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
   for (d in 1:maxDim) { ## work up through dimensions 
     for (i in 1:m) { ## work through smooths
       if (sm[[i]]$dim == d&&sm[[i]]$side.constrain) { ## check for nesting
-        if (with.pen) X1 <- matrix(c(rep(1,nobs),rep(0,np)),nobs+np,as.integer(intercept)) else
+        if (with.pen) X1 <- matrix(c(rep(1,nobs),rep(0,np+nc)),nobs+np+nc,as.integer(intercept)) else
         X1 <- matrix(1,nobs,as.integer(intercept))
 	X1comp <- rep(0,0) ## list of components of X1 to avoid duplication
         for (j in 1:d) { ## work through variables
@@ -627,24 +648,24 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
           if (k>1) for (l in 1:(k-1)) if (!b[l] %in% X1comp) { ## collect X columns
            X1comp <- c(X1comp,b[l]) ## keep track of components to avoid adding same one twice
            if (with.pen) { ## need to use augmented model matrix in testing 
-              if (is.null(sm[[b[l]]]$Xa)) sm[[b[l]]]$Xa <- augment.smX(sm[[b[l]]],nobs,np)
+              if (is.null(sm[[b[l]]]$Xa)) sm[[b[l]]]$Xa <- augment.smX(sm[[b[l]]],nobs,np,nc)
               X1 <- cbind(X1,sm[[b[l]]]$Xa)
             } else X1 <- cbind(X1,sm[[b[l]]]$X) ## penalties not considered
           }
         } ## Now X1 contains columns for all lower dimensional terms
         if (ncol(X1)==as.integer(intercept)) ind <- NULL else {
           if (with.pen) {
-             if (is.null(sm[[i]]$Xa)) sm[[i]]$Xa <- augment.smX(sm[[i]],nobs,np)
+             if (is.null(sm[[i]]$Xa)) sm[[i]]$Xa <- augment.smX(sm[[i]],nobs,np,nc)
              ind <- fixDependence(X1,sm[[i]]$Xa,tol=tol) 
           } else ind <- fixDependence(X1,sm[[i]]$X,tol=tol)        
         }
         ## ... the columns to zero to ensure independence
         if (!is.null(ind)) { 
-          sm[[i]]$X <- sm[[i]]$X[,-ind]
+          sm[[i]]$X <- sm[[i]]$X[,-ind,drop=FALSE]
           ## work through list of penalty matrices, applying constraints...
           nsmS <- length(sm[[i]]$S)
           if (nsmS>0) for (j in nsmS:1) { ## working down so that dropping is painless
-            sm[[i]]$S[[j]] <- sm[[i]]$S[[j]][-ind,-ind]
+            sm[[i]]$S[[j]] <- sm[[i]]$S[[j]][-ind,-ind,drop=FALSE]
             if (sum(sm[[i]]$S[[j]]!=0)==0) rank <- 0 else
             rank <- qr(sm[[i]]$S[[j]],tol=tol,LAPACK=FALSE)$rank
             sm[[i]]$rank[j] <- rank ## replace previous rank with new rank
@@ -665,13 +686,18 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
             sm[[i]]$null.space.dim <- sum(es$values<max(es$values)*.Machine$double.eps^.75) 
           } ## rank found
 
+          ## deal with any constraints (e.g. when not pre-absorbed)
+	  if (!is.null(sm[[i]]$C)) sm[[i]]$C <- sm[[i]]$C[,-ind,drop=FALSE]
+	  if (!is.null(sm[[i]]$Ain)) sm[[i]]$Ain <- sm[[i]]$Ain[,-ind,drop=FALSE]
+
           if (!is.null(sm[[i]]$L)) {
             ind <- as.numeric(colSums(sm[[i]]$L!=0))!=0
             sm[[i]]$L <- sm[[i]]$L[,ind,drop=FALSE] ## retain only those sps that influence something!
           }
 
           sm[[i]]$df <- ncol(sm[[i]]$X)
-          attr(sm[[i]],"del.index") <- ind
+	  ind0 <- attr(sm[[i]],"del.index")
+          attr(sm[[i]],"del.index") <- c(ind0,ind)
           ## Now deal with case in which prediction constraints differ from fit constraints
           if (!is.null(sm[[i]]$Xp)) { ## need to get deletion indices under prediction parameterization
             ## Note that: i) it doesn't matter what the identifiability con on X1 is
@@ -680,11 +706,11 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
               smi <- sm[[i]]  ## clone smooth 
               smi$X <- smi$Xp ## copy prediction Xp to X slot.
               smi$S <- smi$Sp ## and make sure penalty parameterization matches. 
-              Xpa <- augment.smX(smi,nobs,np)
+              Xpa <- augment.smX(smi,nobs,np,nc)
               ind <- fixDependence(X1,Xpa,rank.def=length(ind)) 
             } else ind <- fixDependence(X1,sm[[i]]$Xp,rank.def=length(ind)) 
             sm[[i]]$Xp <- sm[[i]]$Xp[,-ind,drop=FALSE]
-            attr(sm[[i]],"del.index") <- ind ## over-writes original
+            attr(sm[[i]],"del.index") <- c(ind0,ind) ## over-writes original
           }
         }
         sm[[i]]$vn <- NULL

@@ -1237,7 +1237,7 @@ md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
     mtext(parse(text=paste(vname[3],"%->% \" \"")),1,at=mean(at[2:nc]),line=2,cex=c1*c3)
     ii <- ((nr-1)*nr+1):(nc*nr)
     for (i in 1:nc) mtext(lab[ii[i]],3,at=at[i],line=.5,cex=c1*c3)
-    mtext(parse(text=paste(vname[3],"%->% \" \"")),3,at=mean(at),line=2,cex=c1*c3)
+    mtext(parse(text=paste(vname[3],"%->% \" \"")),3,at=mean(at),line=1.5,cex=c1*c3)
     mtext(main,2,at=1/nr+0.5*(nr-1)/nr,line=1,cex=c1*c3)
   }
 } ## md.plot
@@ -1416,7 +1416,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
     if (c<1) r <- c <- 1
     if (c*r < ppp) c <- c + 1
     if (c*r < ppp) r <- r + 1  
-    oldpar<-par(mfrow=c(r,c),mar=c(5,5,1,1))
+    oldpar<-par(mfrow=c(r,c),mar=c(5,5,2,1))
   
   } else
   { ppp<-1;oldpar<-par()}

@@ -16,7 +16,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA.*/
 
-/* Routines for quadratic programming and other constrained optimization. */
+/* Routines for quadratic programming and other constrained optimization.
+   NOTE: most of the ancient loops that look rather inefficient are better
+         optimized by the compiler than hand re-writing.
+	 It is unlikely that any tweaking short of a full BLAS/LAPACK
+	 re-write will get better efficiency.
+*/
 
 
 #include <stdlib.h>
@@ -46,10 +51,11 @@ matrix addconQT(matrix *Q,matrix T,matrix a,matrix *u)
    set to correct length. */
 
 { int q,i,j;
-  double la,ra=0.0,*cV,*bV,*T1V;
+  double la,ra=0.0,*cV,*bV,*T1V,**QM;
   matrix b,c;
   c=initmat(Q->r,1);b=initmat(Q->r,1);(*u)=initmat(Q->r,1);
-  for (i=0;i<c.r;i++) for (j=0;j<a.c;j++) c.V[i]+=a.V[j]*Q->M[j][i];
+  QM = Q->M;
+  for (i=0;i<c.r;i++) for (j=0;j<a.c;j++) c.V[i]+=a.V[j]*QM[j][i];
   la=dot(c,c);
   cV=c.V;bV=b.V;
   q=T.c-T.r-1;
@@ -85,14 +91,14 @@ void GivensAddconQT(matrix *Q,matrix *T,matrix *a,matrix *s,matrix *c)
    */
 
 { int q,i,j;
-  double Qi,r,cc,ss,*bV,*sV,*cV,**QM,*QV,bb,bb1;
+  double Qi,r,cc,ss,*bV,*sV,*cV,*aV,**QM,*QV,bb,bb1;
   matrix b;
-  b.V=T->M[T->r]; b.r=Q->r;b.c=1;
-  for (i=0;i<T->c;i++) b.V[i]=0.0;
-  for (i=0;i<b.r;i++) for (j=0;j<Q->r;j++) b.V[i]+=Q->M[j][i]*a->V[j];
+  b.V=T->M[T->r]; b.r=Q->r;b.c=1;QM=Q->M; bV=b.V;aV=a->V;
+  for (i=0;i<T->c;i++) bV[i]=0.0;
+  for (i=0;i<b.r;i++) for (j=0;j<Q->r;j++) bV[i]+=QM[j][i]*aV[j];
   /* now calculate a series of Givens rotations that will rotate the null basis
      so that it is orthogonal to new constraint a */
-  bV=b.V;cV=c->V;sV=s->V;QM=Q->M;
+  cV=c->V;sV=s->V;
   q=T->c-T->r-1; /* number of Givens transformations needed */
   for (i=0;i<q;i++)
   { /* first calculate the Givens transformation */
@@ -100,7 +106,7 @@ void GivensAddconQT(matrix *Q,matrix *T,matrix *a,matrix *s,matrix *c)
     r=bb*bb+bb1*bb1;r=sqrt(r);
     if (r==0.0) { ss=sV[i]=0.0;cc=cV[i]=1.0;} else
     { ss=sV[i]=bb/r;cc=cV[i]= -bb1/r;
-      bV[i]=0.0; /* non-essential */
+      //bV[i]=0.0; /* non-essential */
       bV[i+1]=r;
     }
     /* now apply it to Q */
@@ -198,7 +204,7 @@ int LSQPstep(int *ignore,matrix *Ain,matrix *b,matrix *p1,matrix *p,matrix *pk)
     if (!ignore[i])     /* skip any already in working set */
     { Ap1=0.0;
       for (j=0;j<Ain->c;j++) Ap1+=AV[j]*p1V[j]; /* form  A p1 = A(p+pk) */
-      if ((b->V[i]-Ap1)>0.0) /* does p+pk violate the ith constraint? */
+      if ((b->V[i]-Ap1)>0) /* does p+pk violate the ith constraint? */
       { ap=0.0;apk=0.0;        /* working out quantities needed to find distance to constraint from p */
 	for (j=0;j<Ain->c;j++)
 	{ ap+=AV[j]*pV[j];
@@ -455,6 +461,10 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
   P=initmat(b->r,1); /* used solely for feasibility checking */
   Pd=initmat(y->r,1);pz=initmat(p->r,1);pk=initmat(p->r,1);
   tk=0;             /* The number of inequality constraints currently active */
+  for (i=0;i<active[0];i++) { /* immediately add supplied active set to constraints */
+    k = active[i+1];ignore[k]=1;I[tk] = k;
+    LSQPaddcon(Ain,&Q,&T,&Rf,&Py,&PX,&s,&c,k);tk++;
+  }  
   /*printf("\nLSQ");*/
   while(1) { /* Form Pd=Py-PXp and minimize ||R pz - Pd|| */
     vmult(&PX,p,&Pd,0); /* Pd = PXp */
@@ -468,7 +478,7 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
     for (i=0;i<pk.r;i++)
     { pk.V[i]=0.0; for (j=0;j<pz.r;j++) pk.V[i]+=Q.M[i][j]*pz.V[j];}
     /* Take a step from p along pk to minimum or a constraint ... */
-    k=LSQPstep(ignore,Ain,b,&p1,p,&pk);   /* s is the constraint to include or -1 */
+    k=LSQPstep(ignore,Ain,b,&p1,p,&pk);   /* k is the constraint to include or -1 */
     mcopy(&p1,p); /* updating the parameter vector */
     if (k>-1) /* add a constraint to the working set and update Rf, Py and PX */
     { I[tk]=k;ignore[k]=1; /* keeping track of what's in working set */
