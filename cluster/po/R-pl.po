@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: cluster 1.15.1\n"
+"Project-Id-Version: cluster 2.1.9\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2021-01-30 22:00\n"
+"POT-Creation-Date: 2025-01-14 15:25\n"
 "PO-Revision-Date: 2014-03-27 17:34+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -10,8 +10,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Poedit-SourceCharset: iso-8859-1\n"
 "X-Generator: Poedit 1.5.4\n"
 
@@ -38,7 +37,7 @@ msgstr "'par.method' musi być długości 1, 3, lub 4"
 # stop("NA values in the dissimilarity matrix not allowed.")
 # cluster/R/fanny.R: 12
 # stop("NA values in the dissimilarity matrix not allowed.")
-msgid "NA-values in the dissimilarity matrix not allowed."
+msgid "NA values in the dissimilarity matrix not allowed."
 msgstr "wartości NA w macierzy różnic nie są dozwolone."
 
 # cluster/R/agnes.R: 35
@@ -67,6 +66,10 @@ msgstr ""
 msgid "x is not a numeric dataframe or matrix."
 msgstr "argument 'x' nie jest ramką liczbową ani też macierzą"
 
+#, fuzzy
+msgid "x has zero columns"
+msgstr "posiada stałe kolumny"
+
 # cluster/R/agnes.R: 68
 # stop("need at least 2 objects to cluster")
 msgid "need at least 2 objects to cluster"
@@ -76,7 +79,8 @@ msgstr "potrzeba co najmniej 2 obiektów do grupowania"
 # stop("No clustering performed, NA values in the dissimilarity matrix.", "\n", sep = "" )
 # cluster/R/fanny.R: 120
 # stop("No clustering performed, NA values in the dissimilarity matrix.")
-msgid "No clustering performed, NA-values in the dissimilarity matrix."
+#, fuzzy
+msgid "No clustering performed, NA values in the dissimilarity matrix."
 msgstr "Nie wykonano grupowania, wartości NA w macierzy różnic."
 
 # cluster/R/clara.R: 13
@@ -88,6 +92,10 @@ msgstr "'x' jest obiektem klasy \"dist\", ale powinien być macierzą lub ramką
 # stop("The number of cluster should be at least 1 and at most n-1." )
 msgid "The number of cluster should be at least 1 and at most n-1."
 msgstr "Liczba grup powinna wynosić conajmniej 1 oraz co najwyżej n-1."
+
+msgid ""
+"'sampsize' must be a positive integer, not larger than .Machine$integer.max"
+msgstr ""
 
 # cluster/R/clara.R: 20
 # stop(gettextf("'sampsize' should be at least %d = max(2, 1+ number of clusters)", max(2,k+1)), domain = "R-cluster")
@@ -228,22 +236,6 @@ msgstr "'weights' musi być o długości 'p' (lub 1)"
 msgid "invalid type %s for column numbers %s"
 msgstr "niepoprawny typ %s dla liczb kolumn %s"
 
-# cluster/R/agnes.R: 28
-# stop("NA values in the dissimilarity matrix not allowed.")
-# cluster/R/diana.R: 11
-# stop("NA values in the dissimilarity matrix not allowed.")
-# cluster/R/pam.R: 13
-# stop("NA values in the dissimilarity matrix not allowed.")
-# cluster/R/fanny.R: 12
-# stop("NA values in the dissimilarity matrix not allowed.")
-msgid "NA values in the dissimilarity matrix not allowed."
-msgstr "wartości NA w macierzy różnic nie są dozwolone."
-
-# cluster/R/diana.R: 76
-# stop("No clustering performed, NA's in dissimilarity matrix.\n")
-msgid "No clustering performed, NA's in dissimilarity matrix."
-msgstr "Nie wykonano grupowania, wartości NA w macierzy różnic"
-
 # cluster/R/ellipsoidhull.R: 14
 # stop("'x' must be numeric  n x p matrix")
 msgid "'x' must be numeric  n x p matrix"
@@ -327,6 +319,28 @@ msgstr "macierz przynależności 'm' musi być nieujemna z rowSums == 1"
 msgid "'n' must be >= 2"
 msgstr "argument 'n' musi być >= 2"
 
+msgid "'diss' must be one of {TRUE, FALSE}"
+msgstr ""
+
+msgid ""
+"'diss = TRUE' is not implemented yet.  Please write to "
+"maintainer(\"cluster\")"
+msgstr ""
+
+# cluster/R/agnes.R: 53
+# stop(gettextf("%s is not a numeric dataframe or matrix.", dataname))
+# cluster/R/clara.R: 15
+# stop(gettextf("%s is not a numeric dataframe or matrix.", dataname))
+# cluster/R/diana.R: 36
+# stop(gettextf("%s is not a numeric dataframe or matrix.", dataname))
+# cluster/R/pam.R: 40
+# stop(gettextf("%s is not a numeric dataframe or matrix.", dataname))
+# cluster/R/fanny.R: 37
+# stop(gettextf("%s is not a numeric dataframe or matrix.", dataname))
+#, fuzzy
+msgid "'x' is not a numeric dataframe or matrix."
+msgstr "argument 'x' nie jest ramką liczbową ani też macierzą"
+
 # cluster/R/mona.R: 6
 # stop("'x' must be a matrix or data frame.")
 msgid "x must be a matrix or data frame."
@@ -395,11 +409,6 @@ msgid ""
 msgstr ""
 "argument 'medoids' musi być wartością NULL lub wektorem %d różnych indeksów "
 "w {1,2, .., n}, n=%d"
-
-# cluster/R/pam.R: 109
-# stop("No clustering performed, NAs in the computed dissimilarity matrix.")
-msgid "No clustering performed, NAs in the computed dissimilarity matrix."
-msgstr "Nie wykonano grupowania, wyliczono wartości NA w macierzy różnic."
 
 # cluster/R/pam.R: 116
 # stop("error from .C(cl_pam, *): invalid medID's")
@@ -487,7 +496,8 @@ msgstr "nie znaleziono różnic ani danych, ani oryginalnego argumentu %s"
 
 # cluster/R/plotpart.R: 514
 # stop("no diss nor data found for 'clusplot()' function")
-msgid "no diss nor data found for clusplot()'"
+#, fuzzy
+msgid "no diss nor data found for 'clusplot()'"
 msgstr "nie znaleziono różnic ani danych dla funkcji 'clusplot()'"
 
 # cluster/R/silhouette.R: 7
@@ -587,6 +597,27 @@ msgstr[0] "ustawianie zmiennej 'logical' %s na tym 'asymm'"
 msgstr[1] "ustawianie zmiennych 'logical' %s na tym 'asymm'"
 msgstr[2] "ustawianie zmiennych 'logical' %s na tym 'asymm'"
 
+# cluster/R/agnes.R: 28
+# stop("NA values in the dissimilarity matrix not allowed.")
+# cluster/R/diana.R: 11
+# stop("NA values in the dissimilarity matrix not allowed.")
+# cluster/R/pam.R: 13
+# stop("NA values in the dissimilarity matrix not allowed.")
+# cluster/R/fanny.R: 12
+# stop("NA values in the dissimilarity matrix not allowed.")
+#~ msgid "NA-values in the dissimilarity matrix not allowed."
+#~ msgstr "wartości NA w macierzy różnic nie są dozwolone."
+
+# cluster/R/diana.R: 76
+# stop("No clustering performed, NA's in dissimilarity matrix.\n")
+#~ msgid "No clustering performed, NA's in dissimilarity matrix."
+#~ msgstr "Nie wykonano grupowania, wartości NA w macierzy różnic"
+
+# cluster/R/pam.R: 109
+# stop("No clustering performed, NAs in the computed dissimilarity matrix.")
+#~ msgid "No clustering performed, NAs in the computed dissimilarity matrix."
+#~ msgstr "Nie wykonano grupowania, wyliczono wartości NA w macierzy różnic."
+
 #~ msgid "NAdiss"
 #~ msgstr "NAdiss"
 
@@ -621,9 +652,6 @@ msgstr[2] "ustawianie zmiennych 'logical' %s na tym 'asymm'"
 
 #~ msgid "x"
 #~ msgstr "x"
-
-#~ msgid "has constant columns"
-#~ msgstr "posiada stałe kolumny"
 
 # cluster/R/ellipsoidhull.R: 42
 # warning(gettextf("algorithm possibly not converged in %d iterations", maxit))

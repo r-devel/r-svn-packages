@@ -1,12 +1,13 @@
 # Translation of src/library/Recommended/cluster/po/R-cluster.pot to German
-# Copyright (C) 2013-2019 The R Foundation
+# Copyright (C) 2013-2025 The R Foundation
 # This file is distributed under the same license as the R package.
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: R-4.1.0 cluster 2.1.2\n"
+"Project-Id-Version: R-4.4.2 cluster 2.1.9\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2021-01-30 22:00\n"
-"PO-Revision-Date: 2021-05-04 15:37+0200\n"
+"POT-Creation-Date: 2025-01-14 15:25\n"
+"PO-Revision-Date: 2025-01-14 15:46+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core Team <r-core@r-project.org\n"
 "Language: de\n"
@@ -24,8 +25,8 @@ msgstr "zweideutige Clustermethode"
 msgid "'par.method' must be of length 1, 3, or 4"
 msgstr "'par.method' muss Länge 1, 3 oder 4 haben"
 
-msgid "NA-values in the dissimilarity matrix not allowed."
-msgstr "NAs in der Unähnlichkeitsmatrix nicht zulässig."
+msgid "NA values in the dissimilarity matrix not allowed."
+msgstr "NAs in der Unähnlichkeitsmatrix nicht erlaubt."
 
 msgid "'x' is not and cannot be converted to class \"dissimilarity\""
 msgstr ""
@@ -35,10 +36,13 @@ msgstr ""
 msgid "x is not a numeric dataframe or matrix."
 msgstr "x ist weder numerischer Dataframe noch Matrix"
 
+msgid "x has zero columns"
+msgstr "hat keine Spalten"
+
 msgid "need at least 2 objects to cluster"
 msgstr "benötige zum Clustern mindestens 2 Objekte"
 
-msgid "No clustering performed, NA-values in the dissimilarity matrix."
+msgid "No clustering performed, NA values in the dissimilarity matrix."
 msgstr "Keine Clusterung durchgeführt. NAs in der Unähnlichkeitsmatrix."
 
 msgid "'x' is a \"dist\" object, but should be a data matrix or frame"
@@ -46,6 +50,10 @@ msgstr "'x' ist ein \"dist\"-Objekt, sollte aber Datenmatrix oder -frame sein"
 
 msgid "The number of cluster should be at least 1 and at most n-1."
 msgstr "Die Anzahl der Cluster sollte mindestens 1, höchstens n-1 sein."
+
+msgid ""
+"'sampsize' must be a positive integer, not larger than .Machine$integer.max"
+msgstr "'sampsize' sollte ganzzahlig und nicht grösser als .Machine$integer.max sein"
 
 msgid "'sampsize' should be at least %d = max(2, 1+ number of clusters)"
 msgstr "'sampsize' sollte mindestens %d = max(2, 1+ Anzahl Cluster sein)"
@@ -142,12 +150,6 @@ msgstr "'weights' muss von Länge p (oder 1) sein"
 msgid "invalid type %s for column numbers %s"
 msgstr "ungültiger Typ %s für Spaltennummern %s"
 
-msgid "NA values in the dissimilarity matrix not allowed."
-msgstr "NAs in der Unähnlichkeitsmatrix nicht erlaubt."
-
-msgid "No clustering performed, NA's in dissimilarity matrix."
-msgstr "Keine Clusterung durchgeführt, NAs in Unähnlichkeitsmatrix."
-
 msgid "'x' must be numeric  n x p matrix"
 msgstr "'x' muss numerische n x p - Matrix sein"
 
@@ -198,6 +200,17 @@ msgstr ""
 msgid "'n' must be >= 2"
 msgstr "'n' muss >= 2 sein"
 
+msgid "'diss' must be one of {TRUE, FALSE}"
+msgstr ""
+
+msgid ""
+"'diss = TRUE' is not implemented yet.  Please write to "
+"maintainer(\"cluster\")"
+msgstr ""
+
+msgid "'x' is not a numeric dataframe or matrix."
+msgstr "x ist weder numerischer Dataframe noch Matrix"
+
 msgid "x must be a matrix or data frame."
 msgstr "x muss eine Matrix oder Dataframe sein"
 
@@ -235,14 +248,13 @@ msgstr ""
 "fehlenden Wert."
 
 msgid "Cannot keep data when 'x' is a dissimilarity!"
-msgstr ""
-"Kann Datenmatrix 'data' nicht beibehalten wenn 'x' eine 'dissimilarity' ist!"
+msgstr "Kann keine Datenmatrix 'data' zurückgeben, wenn 'x' eine 'dissimilarity' ist!"
 
 msgid "have %d observations, but not more than %d are allowed"
 msgstr "habe %d Beobachtungen, aber mehr als %d nicht erlaubt"
 
 msgid "Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2"
-msgstr "Anzahl der Cluster 'k' muss auch {1, 2, ..., n-1} sein; deshalb n >= 2"
+msgstr "Anzahl der Cluster 'k' muss in {1, 2, ..., n-1} sein; deshalb n >= 2"
 
 msgid "Set either 'variant' or 'pamonce', but not both"
 msgstr "Entweder 'variant' oder 'pamonce' setzen, aber nicht beide"
@@ -252,10 +264,6 @@ msgid ""
 msgstr ""
 "'medoids' muss NULL oder ein Vektor von %d verschiedenen Indizes aus {1, "
 "2,..., n}, n=%d sein"
-
-msgid "No clustering performed, NAs in the computed dissimilarity matrix."
-msgstr ""
-"Keine Clusterung durchgeführt, NAs in der berechneten Unähnlichkeitsmatrix."
 
 msgid "error from .C(cl_pam, *): invalid medID's"
 msgstr "Fehler aus .C(cl_pam, *): unzulässige medID's"
@@ -310,7 +318,8 @@ msgid "no diss nor data found, nor the original argument of %s"
 msgstr ""
 "weder diss noch data gefunden, ebensowenig das ursprüngliche Argument von %s"
 
-msgid "no diss nor data found for clusplot()'"
+#, fuzzy
+msgid "no diss nor data found for 'clusplot()'"
 msgstr "weder diss noch data für 'clusplot()' gefunden"
 
 msgid "invalid partition object"
@@ -367,6 +376,17 @@ msgid_plural "setting 'logical' variables %s to type 'asymm'"
 msgstr[0] "setze 'logical' Variable %s auf Typ 'asymm'"
 msgstr[1] "setze 'logical' Variablen %s auf Typ 'asymm'"
 
+#~ msgid "NA-values in the dissimilarity matrix not allowed."
+#~ msgstr "NAs in der Unähnlichkeitsmatrix nicht zulässig."
+
+#~ msgid "No clustering performed, NA's in dissimilarity matrix."
+#~ msgstr "Keine Clusterung durchgeführt, NAs in Unähnlichkeitsmatrix."
+
+#~ msgid "No clustering performed, NAs in the computed dissimilarity matrix."
+#~ msgstr ""
+#~ "Keine Clusterung durchgeführt, NAs in der berechneten "
+#~ "Unähnlichkeitsmatrix."
+
 #~ msgid "NAdiss"
 #~ msgstr "NAdiss"
 
@@ -401,9 +421,6 @@ msgstr[1] "setze 'logical' Variablen %s auf Typ 'asymm'"
 
 #~ msgid "x"
 #~ msgstr "x"
-
-#~ msgid "has constant columns"
-#~ msgstr "hat konstante Spalten"
 
 #~ msgid "possibly not converged in"
 #~ msgstr "evtl nicht konvergiert in "

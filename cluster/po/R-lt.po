@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cluster 2.1.1\n"
-"POT-Creation-Date: 2021-01-30 22:00\n"
+"POT-Creation-Date: 2025-01-14 15:25\n"
 "PO-Revision-Date: 2021-05-05 10:17+0200\n"
 "Last-Translator: Gabrielė Stupurienė <gabriele.stupuriene@mif.vu.lt>\n"
 "Language-Team: none\n"
@@ -10,8 +10,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.4.2\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && (n%100<11 || n%100>19) ? 0 : n"
-"%10>=2 && n%10<=9 && (n%100<11 || n%100>19) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && (n%100<11 || n%100>19) ? 0 : "
+"n%10>=2 && n%10<=9 && (n%100<11 || n%100>19) ? 1 : 2);\n"
 
 msgid "invalid clustering method"
 msgstr "neleistinas grupavimo metodas"
@@ -22,7 +22,7 @@ msgstr "neaiškus klasterizavimo metodas"
 msgid "'par.method' must be of length 1, 3, or 4"
 msgstr "'par.method' turi būti 1, 3 arba 4 ilgio"
 
-msgid "NA-values in the dissimilarity matrix not allowed."
+msgid "NA values in the dissimilarity matrix not allowed."
 msgstr "NA reikšmės skirtumo matricoje neleidžiamos."
 
 msgid "'x' is not and cannot be converted to class \"dissimilarity\""
@@ -31,10 +31,14 @@ msgstr "'x' nėra ir negali būti konvertuojamas į klasę \"dissimilarity\""
 msgid "x is not a numeric dataframe or matrix."
 msgstr "x nėra skaitinė duomenų sistema ar matrica."
 
+msgid "x has zero columns"
+msgstr ""
+
 msgid "need at least 2 objects to cluster"
 msgstr "reikia bent 2 objektų į klasterį"
 
-msgid "No clustering performed, NA-values in the dissimilarity matrix."
+#, fuzzy
+msgid "No clustering performed, NA values in the dissimilarity matrix."
 msgstr "Nebuvo atliktas grupavimas, NA reikšmės skirtumo matricoje."
 
 msgid "'x' is a \"dist\" object, but should be a data matrix or frame"
@@ -44,6 +48,10 @@ msgstr ""
 msgid "The number of cluster should be at least 1 and at most n-1."
 msgstr ""
 "Klasterio skaičius turi būti ne mažesnis kaip 1 ir ne daugiau kaip n-1."
+
+msgid ""
+"'sampsize' must be a positive integer, not larger than .Machine$integer.max"
+msgstr ""
 
 msgid "'sampsize' should be at least %d = max(2, 1+ number of clusters)"
 msgstr "'sampsize' turi būti bent %d = max(2, 1+ klasterių skaičius)"
@@ -142,12 +150,6 @@ msgstr "'weights' ilgis turi būti p (arba 1)"
 msgid "invalid type %s for column numbers %s"
 msgstr "neleistinas tipas %s stulpelių numeriams %s"
 
-msgid "NA values in the dissimilarity matrix not allowed."
-msgstr "NA reikšmės skirtumo matricoje neleidžiamos."
-
-msgid "No clustering performed, NA's in dissimilarity matrix."
-msgstr "Nebuvo atliktas grupavimas, NA skirtumo matricoje."
-
 msgid "'x' must be numeric  n x p matrix"
 msgstr "'x' turi būti skaitinė [n x p] matrica"
 
@@ -192,6 +194,18 @@ msgstr "'m', priklausomybių matrica, turi būti neneigiama su rowSums == 1"
 
 msgid "'n' must be >= 2"
 msgstr "'n' turi būti >= 2"
+
+msgid "'diss' must be one of {TRUE, FALSE}"
+msgstr ""
+
+msgid ""
+"'diss = TRUE' is not implemented yet.  Please write to "
+"maintainer(\"cluster\")"
+msgstr ""
+
+#, fuzzy
+msgid "'x' is not a numeric dataframe or matrix."
+msgstr "x nėra skaitinė duomenų sistema ar matrica."
 
 msgid "x must be a matrix or data frame."
 msgstr "x turi būti matrica arba duomenų sistema."
@@ -242,9 +256,6 @@ msgstr "Nustatykite 'variant' arba 'pamonce', bet ne abu"
 msgid ""
 "'medoids' must be NULL or vector of %d distinct indices in {1,2, .., n}, n=%d"
 msgstr "'medoids' turi būti NULL arba %d indeksai { 1,2, .., n}, n=%d"
-
-msgid "No clustering performed, NAs in the computed dissimilarity matrix."
-msgstr "Nebuvo atliktas grupavimas, NA apskaičiuotoje skirtumo matricoje."
 
 msgid "error from .C(cl_pam, *): invalid medID's"
 msgstr "klaida iš . C(cl_pam, *): negaliojantis medID"
@@ -297,7 +308,8 @@ msgstr "'col.clus' turi būti ilgis 4, kai spalva yra TRUE"
 msgid "no diss nor data found, nor the original argument of %s"
 msgstr "nerasta nei diss, nei duomenų, nei pradinio %s argumento"
 
-msgid "no diss nor data found for clusplot()'"
+#, fuzzy
+msgid "no diss nor data found for 'clusplot()'"
 msgstr "nerasta jokių diss ir clusplot()' duomenų"
 
 msgid "invalid partition object"
@@ -353,3 +365,12 @@ msgid_plural "setting 'logical' variables %s to type 'asymm'"
 msgstr[0] "'logical' kintamojo %s nustatymas į tipą 'asymm'"
 msgstr[1] "'logical' kintamųjų %s nustatymas į tipą 'asymm'"
 msgstr[2] "'logical' kintamųjų %s nustatymas į tipą 'asymm'"
+
+#~ msgid "NA-values in the dissimilarity matrix not allowed."
+#~ msgstr "NA reikšmės skirtumo matricoje neleidžiamos."
+
+#~ msgid "No clustering performed, NA's in dissimilarity matrix."
+#~ msgstr "Nebuvo atliktas grupavimas, NA skirtumo matricoje."
+
+#~ msgid "No clustering performed, NAs in the computed dissimilarity matrix."
+#~ msgstr "Nebuvo atliktas grupavimas, NA apskaičiuotoje skirtumo matricoje."

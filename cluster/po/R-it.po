@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R-cluster 2.0.8\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2021-01-30 22:00\n"
-"PO-Revision-Date: \n"
+"POT-Creation-Date: 2025-01-14 15:25\n"
+"PO-Revision-Date: 2025-01-14 16:02+0100\n"
 "Last-Translator: Daniele Medri <dmedri@gmail.com>\n"
 "Language-Team: Italian https://github.com/dmedri/R-italian-lang\n"
 "Language: it\n"
@@ -27,7 +27,7 @@ msgstr "metodo di clustering ambiguo"
 msgid "'par.method' must be of length 1, 3, or 4"
 msgstr "'par.method' dev'essere di lunghezza 1, 3 o 4"
 
-msgid "NA-values in the dissimilarity matrix not allowed."
+msgid "NA values in the dissimilarity matrix not allowed."
 msgstr "I valori NA non sono ammessi in una matrice di dissimilarità."
 
 msgid "'x' is not and cannot be converted to class \"dissimilarity\""
@@ -36,10 +36,13 @@ msgstr "'x' non è e non può essere convertito alla classe \"dissimilarity\""
 msgid "x is not a numeric dataframe or matrix."
 msgstr "x non è un data frame o una matrice numerica."
 
+msgid "x has zero columns"
+msgstr ""
+
 msgid "need at least 2 objects to cluster"
 msgstr "richiede almeno 2 oggetti per l'analisi cluster"
 
-msgid "No clustering performed, NA-values in the dissimilarity matrix."
+msgid "No clustering performed, NA values in the dissimilarity matrix."
 msgstr "Nessun cluster generato, valori NA nella matrice di dissomiglianza."
 
 msgid "'x' is a \"dist\" object, but should be a data matrix or frame"
@@ -48,6 +51,10 @@ msgstr ""
 
 msgid "The number of cluster should be at least 1 and at most n-1."
 msgstr "Il numerod i cluster dovrebbe essere almeno 1 e al massimo n-1."
+
+msgid ""
+"'sampsize' must be a positive integer, not larger than .Machine$integer.max"
+msgstr ""
 
 msgid "'sampsize' should be at least %d = max(2, 1+ number of clusters)"
 msgstr "'sampsize' dovrebbe essere almeno %d = max(2, 1+ numero di cluster)"
@@ -147,12 +154,6 @@ msgstr "'weights' dev'essere di lunghezza p (o 1)"
 msgid "invalid type %s for column numbers %s"
 msgstr "tipo %s non valido per i numeri di colonna %s"
 
-msgid "NA values in the dissimilarity matrix not allowed."
-msgstr "I valori NA non sono ammessi in una matrice di dissimilarità."
-
-msgid "No clustering performed, NA's in dissimilarity matrix."
-msgstr "Nessun cluster generato, valori NA nella matrice di dissomiglianza."
-
 msgid "'x' must be numeric  n x p matrix"
 msgstr "'x' dev'essere una matrice numerica n x p"
 
@@ -200,6 +201,18 @@ msgstr ""
 
 msgid "'n' must be >= 2"
 msgstr "'n' dev'essere >= 2"
+
+msgid "'diss' must be one of {TRUE, FALSE}"
+msgstr ""
+
+msgid ""
+"'diss = TRUE' is not implemented yet.  Please write to "
+"maintainer(\"cluster\")"
+msgstr ""
+
+#, fuzzy
+msgid "'x' is not a numeric dataframe or matrix."
+msgstr "x non è un data frame o una matrice numerica."
 
 msgid "x must be a matrix or data frame."
 msgstr "x dev'essere una matrice o un data frame."
@@ -250,9 +263,6 @@ msgid ""
 msgstr ""
 "'medoids' dev'essere NULL o un vettore di %d indici distinti in {1,2, .., "
 "n}, n=%d"
-
-msgid "No clustering performed, NAs in the computed dissimilarity matrix."
-msgstr "Nessun cluster generato, valori NA nella matrice di dissomiglianza."
 
 msgid "error from .C(cl_pam, *): invalid medID's"
 msgstr "errore in .C(cl_pam, *): medID non valido"
@@ -306,7 +316,8 @@ msgstr "'col.clus' dev'essere di lunghezza 4 quando color è TRUE"
 msgid "no diss nor data found, nor the original argument of %s"
 msgstr "nessun diss o dato trovato, neppure l'argomento originale di %s"
 
-msgid "no diss nor data found for clusplot()'"
+#, fuzzy
+msgid "no diss nor data found for 'clusplot()'"
 msgstr "nessun diss o dato trovato per clusplot()'"
 
 msgid "invalid partition object"
@@ -360,3 +371,12 @@ msgid "setting 'logical' variable %s to type 'asymm'"
 msgid_plural "setting 'logical' variables %s to type 'asymm'"
 msgstr[0] "configurazione della variabile 'logical' %s nel tipo 'asymm'"
 msgstr[1] "configurazione delle variabili 'logical' %s nel tipo 'asymm'"
+
+#~ msgid "NA-values in the dissimilarity matrix not allowed."
+#~ msgstr "I valori NA non sono ammessi in una matrice di dissimilarità."
+
+#~ msgid "No clustering performed, NA's in dissimilarity matrix."
+#~ msgstr "Nessun cluster generato, valori NA nella matrice di dissomiglianza."
+
+#~ msgid "No clustering performed, NAs in the computed dissimilarity matrix."
+#~ msgstr "Nessun cluster generato, valori NA nella matrice di dissomiglianza."

@@ -8,7 +8,12 @@
 
 %% NB 2: do not release within 1 year before we have bug fix or new feature.
 
-\section{Changes in version 2.1.9 (2025-01-14, svn r8488)}{
+      %% FIXME ?:  pam() is 3 x  SLOWER than in 2021 only on nb-mm5  ?!?!?
+      % nb-mm5:  ~/R/Pkgs/cluster.Rcheck-64b.bak/tests/pam.Rout
+      % already  cluster 2.1.7 is  10--25 % slower  (but that's "nothing"
+      % compared with the slow down to 2.1.9 which uses dys_2(.)
+
+\section{Changes in version 2.1.9 (2025-03-11, svn r8499)}{
   \subsection{Tweaks in C}{
     \itemize{
       \item Remove more \code{<var>--} in C code; try improving speed of C
@@ -28,10 +33,7 @@
       \code{twins()}, \code{dysta()}, etc, no longer prepend \code{0.} to
       the distances (which is an allocation waste for largish \code{n}).
 
-      %% FIXME ?:  pam() is 3 x  SLOWER than in 2021 only on nb-mm5  ?!?!?
-      % nb-mm5:  ~/R/Pkgs/cluster.Rcheck-64b.bak/tests/pam.Rout
-      % already  cluster 2.1.7 is  10--25 % slower  (but that's "nothing"
-      % compared with the slow down to 2.1.9 which uses dys_2(.)
+      \item updated messages (for translation) from source.
     }
   }
 }
