@@ -49,7 +49,8 @@ present, and reparameterization needs checking (also for bam).
   model matrix, which could cause a failure in summary). Thanks to Amy Hughes
 
 * Fixed bam/bam.update to pick up weights correctly, rather than failing. 
-  Thanks to Max Moldovan.
+  Thanks to Max Moldovan. Also adjusted to allow correct behaviour if model
+  frame has been deleted.
 
 * Added sparse matrix Cholesky routine, mchol, a wrapper for 
   Matrix::Cholesky, giving the same functionality as Matrix::chol prior 

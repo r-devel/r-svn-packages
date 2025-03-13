@@ -2787,7 +2787,7 @@ bam.update <- function(b,data,chunk.size=10000) {
   if (is.null(b$qrx)) { 
     stop("Model can not be updated")
   }
-  gp<-interpret.gam(b$formula) # interpret the formula 
+  gp <- interpret.gam(b$formula) # interpret the formula 
 
   ## next 2 lines problematic if there are missings in the response, so now constructed from mf below...
   ## X <- predict(b,newdata=data,type="lpmatrix",na.action=b$NA.action) ## extra part of model matrix
@@ -2827,7 +2827,7 @@ bam.update <- function(b,data,chunk.size=10000) {
   b$G$y <- c(b$G$y,y)
   b$G$offset <- c(b$G$offset,offset)
   b$G$w <- c(b$G$w,w)
-  b$G$n <- nrow(b$model)
+  b$G$n <- length(b$G$y) ## nrow(b$model) - allow user to drop b$model...
   n <- b$G$n;
   ## update the qr decomposition...
 

@@ -3004,7 +3004,7 @@ void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,i
 
    This version matches mgcv_pqr0, which scales less well than current code. 
 */
-  int i,j,k,l,left=1,n,nb,nbf,nq,TRUE=1,FALSE=0;
+  int i,j,k,l,left=1,n,nb,nbf,nq,True=1,False=0;
   double *x0,*x1,*Qb;  
   #ifdef OMP_REPORT
   Rprintf("mgcv_pqrqy0...");
@@ -3041,7 +3041,7 @@ void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,i
   if (*tp) { /* Q'b */
     /* first the component Q matrices are applied to the blocks of b */
     if (*cb > 1) { /* matrix case - repacking needed */
-      row_block_reorder(b,r,cb,&nb,&FALSE);
+      row_block_reorder(b,r,cb,&nb,&False);
     }
     #ifdef OPENMP_ON
     #pragma omp parallel private(i,j,l,n,x1) num_threads(k)
@@ -3102,13 +3102,13 @@ void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,i
       }
     } /* end of parallel section */
     /* now need to unscramble separate blocks back into b as regular matrix */
-    if (*cb>1) row_block_reorder(b,r,cb,&nb,&TRUE);
+    if (*cb>1) row_block_reorder(b,r,cb,&nb,&True);
   } 
   #ifdef OMP_REPORT
   Rprintf("done\n");
   #endif
   FREE(Qb);
-}  /* mgcv_pqrqy0 */
+}  /* mgcv_pqrqy0*/
 
 
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt) {
