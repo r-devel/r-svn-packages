@@ -3210,7 +3210,7 @@ void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
    - this is old code, which is uniformly less efficient than replacement.
 */
 
-  int i,j,k,l,*piv,nb,nbf,n,TRUE=1,FALSE=0,nr; 
+  int i,j,k,l,*piv,nb,nbf,n,True=1,False=0,nr; 
   double *R,*R1,*xi; 
   #ifdef OMP_REPORT
   Rprintf("mgcv_pqr0...");
@@ -3221,7 +3221,7 @@ void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
     nb = (int)ceil(*r/(double)k); /* block size */
     nbf = *r - (k-1)*nb; /* end block size */
     /* need to re-arrange row blocks so that they can be split between qr calls */
-    row_block_reorder(x,r,c,&nb,&FALSE); 
+    row_block_reorder(x,r,c,&nb,&False); 
     piv = (int *)CALLOC((size_t) (k * *c),sizeof(int));
     R = x + *r * *c ; /* pointer to combined unpivoted R matrix */
     nr = *c * k; /* number of rows in R */
@@ -3240,7 +3240,7 @@ void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
         R1 = (double *)CALLOC((size_t)(*c * *c),sizeof(double));
         for (l=0;l<*c;l++) for (j=l;j<*c;j++) R1[l + *c * j] = xi[l + n * j]; 
         /* What if final nbf is less than c? - can't happen  */
-        pivoter(R1,c,c,piv + i * *c,&TRUE,&TRUE); /* unpivoting the columns of R1 */
+        pivoter(R1,c,c,piv + i * *c,&True,&True); /* unpivoting the columns of R1 */
         for (l=0;l<*c;l++) for (j=0;j<*c;j++) R[i * *c +l + nr *j] = R1[l+ *c * j];
         FREE(R1);
       }
