@@ -1855,7 +1855,7 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
   ##start <- etastart <- mustart <- NULL
   family <- G$family
   eval(family$initialize) ## have to do this to ensure y numeric
-  y <- as.numeric(y)
+  #y <- as.numeric(y)
   mum <- mean(y)+0*y
   etam <- family$linkfun(mum)
   null.coef <- qr.coef(qr(G$X),etam)

@@ -16,7 +16,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
     nth <- length(theta) - if (scale<0) 1 else 0
     if (scale < 0) {
       scale <- exp(theta[nth+1])
-      theta <- theta[1:nth]
+      theta <- theta[-(nth+1)]
       get.scale <- TRUE
     } else get.scale <- FALSE
     dev <- sum(family$dev.resids(y, mu, wt,theta))/scale
@@ -308,13 +308,12 @@ nb <- function (theta = NULL, link = "log") {
         class = c("extended.family","family"))
 } ## nb
 
-#########################
-## Censored normal family
-#########################
+##########################
+## Censored Poisson family
+##########################
 
-cnorm <- function (theta = NULL, link = "identity") { 
-## Extended family object for censored Gaussian, as required for Tobit regression or log-normal
-## Accelarated Failure Time models.
+cpois <- function (link = "log") { 
+## Extended family object for censored Poisson
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   okLinks <- c("log", "identity", "sqrt")
@@ -322,18 +321,227 @@ cnorm <- function (theta = NULL, link = "identity") {
   stop(gettextf("link \"%s\" not available for cnorm family; available links are %s", 
                 linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
 
-#  else if (is.character(link)) {
-#    stats <- make.link(link)
-#    linktemp <- link
-#  } else {
-#    if (inherits(link, "link-glm")) {
-#       stats <- link
-#            if (!is.null(stats$name))
-#                linktemp <- stats$name
-#        }
-#        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
-#  }
-  ## Theta <-  NULL;
+  n.theta <- 0
+ 
+  env <- new.env(parent = .GlobalEnv)
+    #assign(".Theta", iniTheta, envir = env)
+  getTheta <- function(trans=FALSE) {} # get(".Theta")
+  putTheta <- function(theta) {}
+
+  validmu <- if (link=="identity") function(mu) all(is.finite(mu)) else
+             if (link=="log") function(mu) all(mu>0) else function(mu) all(mu>=0)
+
+  dev.resids <- function(y, mu, wt,theta=NULL) { ## cpois
+    
+      yat <- attr(y,"censor") ## determines censoring type as below
+      if (is.null(yat)) yat <- y 
+
+      ii <- which(yat==y) ## uncensored observations
+      d <- rep(0,length(y))
+      if (length(ii)) d[ii] <- 2*(dpois(y[ii],y[ii],log=TRUE)-dpois(y[ii],mu[ii],log=TRUE))
+
+      ii <- which(is.finite(yat)&yat!=y) ## interval censored
+      if (length(ii)) {
+        y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+        ## get mu for saturated likelihood... 
+        musat <- exp((lgamma(floor(y1)+1)-lgamma(floor(y0)+1))/(floor(y1)-floor(y0)))
+        d[ii] <- 2*(log(ppois(y1,musat)-ppois(y0,musat))  - log(ppois(y1,mu[ii])-ppois(y0,mu[ii])))
+      }
+      
+      ii <- which(yat == -Inf) ## left censored (sat lik is 1)
+      if (length(ii)) d[ii] <- -2*ppois(y[ii],mu[ii],lower.tail=TRUE,log.p=TRUE)
+      
+      ii <- which(yat == Inf) ## right censored
+      if (length(ii)) d[ii] <- -2*ppois(y[ii],mu[ii],lower.tail=FALSE,log.p=TRUE)
+      d
+    } ## dev.resids cpoi
+    
+    Dd <- function(y, mu, theta, wt, level=0) {
+    ## derivatives of the cpois deviance...
+     
+      yat <- attr(y,"censor")
+      if (is.null(yat)) yat <- y
+      ## get case indices...
+      iu <- which(yat==y) ## uncensored observations
+      ii <- which(is.finite(yat*y)&yat!=y) ## interval censored
+      il <- which(yat == -Inf) ## left censored
+      ir <- which(yat == Inf) ## right censored
+      n <- length(mu)
+      Dmu <- Dmu2 <- rep(0,n)
+      if (level>0) Dmu3 <- Dmu
+      if (level>1) Dmu4 <- Dmu
+      if (length(iu)) { ## uncensored
+        yiu <- y[iu]; miu <- mu[iu]
+	lf <- dpois(yiu,miu,log=TRUE)
+	f1 <- exp(dpois(yiu-1,miu,log=TRUE)-lf)
+        Dmu[iu] <- f1 - 1
+	f2 <- exp(dpois(yiu-2,miu,log=TRUE)-lf)
+	Dmu2[iu] <- f2 - f1^2
+	if (level>0) {
+	  f3 <- exp(dpois(yiu-3,miu,log=TRUE)-lf)
+	  Dmu3[iu] <- f3 - 3*f1*f2 + 2*f1^3
+        }
+	if (level>1) {
+	  f4 <- exp(dpois(yiu-4,miu,log=TRUE)-lf)
+          Dmu4[iu] <- f4 - 4*f3*f1 + 12*f1^2*f2 - 3*f2^2 - 6*f1^4
+        }
+      } ## uncensored done
+      
+      if (length(ii)) { ## interval censored
+        y0 <- pmin(y[ii],yat[ii]); y1 <- pmax(y[ii],yat[ii])
+        mii <- mu[ii]
+        g <- ppois(y1,mii) - ppois(y0,mii)
+	g1 <- (ppois(y1-1,mii) - ppois(y0-1,mii))/g
+        Dmu[ii] <- g1 - 1
+	g2 <- (ppois(y1-2,mii) - ppois(y0-2,mii))/g
+	Dmu2[ii] <- g2 - g1^2
+	if (level>0) {
+          g3 <- (ppois(y1-3,mii) - ppois(y0-3,mii))/g
+	  Dmu3[ii] <- g3 - 3*g1*g2 + 2*g1^3
+        }
+	if (level>1) {
+	  g4 <- (ppois(y1-4,mii) - ppois(y0-4,mii))/g
+          Dmu4[ii] <- g4 - 4*g3*g1 + 12*g1^2*g2 -3*g2^2 -6*g1^4
+        }
+      } ## interval censored done
+
+      for (lt in c(TRUE,FALSE)) { ## do left then right censoring...
+        ii <- if (lt) il else ir # left or right censoring
+        if (length(ii)) {
+          yil <- y[ii]; mil <- mu[ii] 
+          lf <- ppois(yil,mil,lower.tail=lt,log.p=TRUE)
+	  f1 <- exp(ppois(yil-1,mil,lower.tail=lt,log.p=TRUE)-lf)
+          Dmu[ii] <- f1 - 1
+	  f2 <- exp(ppois(yil-2,mil,lower.tail=lt,log.p=TRUE)-lf)
+	  Dmu2[ii] <- f2-f1^2
+	  if (level>0) {
+	    f3 <- exp(ppois(yil-3,mil,lower.tail=lt,log.p=TRUE)-lf)
+	    Dmu3[ii] <-  f3 - 3*f1*f2 + 2*f1^3
+          }
+	  if (level>1) {
+	    f4 <- exp(ppois(yil-4,mil,lower.tail=lt,log.p=TRUE)-lf)
+            Dmu4[ii] <- f4 - 4*f3*f1 + 12*f1^2*f2 -3*f2^2 -6*f1^4
+          }
+        } 
+      } ## lt TRUE/FALSE
+      r <- list(Dmu=-2*Dmu,Dmu2=-2*Dmu2,EDmu2=-2*Dmu2)
+      if (level>0) {
+        r$Dmu3 <- -2*Dmu3
+      }
+      if (level>1) {
+        r$Dmu4 <- -2*Dmu4
+      }
+      r
+    } ## Dd cpois
+
+    aic <- function(y, mu, theta=NULL, wt, dev) { ## cpois AIC
+      
+	yat <- attr(y,"censor")
+        if (is.null(yat)) yat <- y
+        ii <- which(is.na(yat)|yat==y) ## uncensored observations
+        d <- rep(0,length(y))
+        if (length(ii)) d[ii] <- dpois(y[ii],mu[ii],log=TRUE)
+	
+        ii <- which(is.finite(yat)&yat!=y) ## interval censored
+        if (length(ii)) {
+          y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+          d[ii] <- log(ppois(y1,mu[ii])-ppois(y0,mu[ii]))
+        }
+	
+        ii <- which(yat == -Inf) ## left censored
+        if (length(ii)) d[ii] <- ppois(y[ii],mu[ii],log.p=TRUE)
+        ii <- which(yat == Inf) ## right censored
+        if (length(ii)) d[ii] <- ppois(y[ii],mu[ii],lower.tail=FALSE,log.p=TRUE)
+        -2*sum(d) ## -2*log likelihood
+    } ## AIC cpois
+    
+    ls <- function(y,w,theta,scale) {
+       ## the cpois log saturated likelihood function.
+      
+       yat <- attr(y,"censor")
+       if (is.null(yat)) yat <- y
+
+       ii <- which(yat==y) ## uncensored observations
+       d2 <- d1 <- d <- rep(0,length(y))
+       if (length(ii)) {
+         d[ii] <- dpois(y[ii],y[ii],log=TRUE)
+       }
+       
+       ii <- which(is.finite(yat)&yat!=y) ## interval censored
+       if (length(ii)) {
+         y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+	 mus <- exp((lgamma(floor(y1)+1)-lgamma(floor(y0)+1))/(floor(y1)-floor(y0)))
+         d[ii] <- log(ppois(y1,mus)-ppois(y0,mus))  ## log saturated likelihood
+       }
+       ## right or left censored saturated log likelihoods are zero.
+       list(ls=sum(d), ## saturated log likelihood
+            lsth1=0, ## first deriv vector w.r.t theta - last element relates to scale, if free
+	    LSTH1=matrix(d1,ncol=1),
+            lsth2=0) ## Hessian w.r.t. theta, last row/col relates to scale, if free
+    } ## ls cpois
+
+    initialize <- expression({ ## cpois
+        if (is.matrix(y)) {
+	 .yat <- y[,2]
+	 y <- y[,1]
+	 attr(y,"censor") <- .yat
+	} 
+        mustart <- if (family$link=="identity") y else pmax(y,min(y>0))
+    })
+  
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept){
+      posr <- list()
+      if (is.matrix(y)) {
+	 .yat <- y[,2]
+	 y <- y[,1]
+	 attr(y,"censor") <- .yat
+      } 
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
+      posr$family <- "cpois"
+      posr
+    } ## postproc cpoi
+
+    rd <- function(mu,wt,scale) { ## NOTE - not done
+      
+    }
+
+    qf <- function(p,mu,wt,scale) { ## NOTE - not done
+     
+    }
+
+    subsety <- function(y,ind) { ## function to subset response
+      if (is.matrix(y)) return(y[ind,])
+      yat <- attr(y,"censor")
+      y <- y[ind]
+      if (!is.null(yat)) attr(y,"censor") <- yat[ind]
+      y
+    } ## subsety
+
+     environment(dev.resids) <- environment(aic) <- 
+     environment(rd)<- environment(qf)<- environment(putTheta) <- env
+    structure(list(family = "cnorm", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,subsety=subsety,#variance=variance,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
+        validmu = validmu, valideta = stats$valideta,n.theta=0,putTheta=putTheta,getTheta=getTheta),
+        class = c("extended.family","family"))
+} ## cpois
+
+
+
+#########################
+## Censored normal family
+#########################
+
+cnorm <- function (theta = NULL, link = "identity") { 
+## Extended family object for censored Gaussian, as required for Tobit regression or log-normal
+## Accelerated Failure Time models.
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for cnorm family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
   n.theta <- 1
   if (!is.null(theta)&&theta!=0) {
       if (theta>0) { 
