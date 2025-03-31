@@ -324,7 +324,6 @@ cpois <- function (link = "log") {
   n.theta <- 0
  
   env <- new.env(parent = .GlobalEnv)
-    #assign(".Theta", iniTheta, envir = env)
   getTheta <- function(trans=FALSE) {} # get(".Theta")
   putTheta <- function(theta) {}
 
@@ -367,42 +366,27 @@ cpois <- function (link = "log") {
       il <- which(yat == -Inf) ## left censored
       ir <- which(yat == Inf) ## right censored
       n <- length(mu)
-      Dmu <- Dmu2 <- rep(0,n)
-      if (level>0) Dmu3 <- Dmu
-      if (level>1) Dmu4 <- Dmu
+      f1 <- f2  <- rep(0,n)
+      if (level>0) f3 <- f1
+      if (level>1) f4 <- f1
+      
       if (length(iu)) { ## uncensored
         yiu <- y[iu]; miu <- mu[iu]
 	lf <- dpois(yiu,miu,log=TRUE)
-	f1 <- exp(dpois(yiu-1,miu,log=TRUE)-lf)
-        Dmu[iu] <- f1 - 1
-	f2 <- exp(dpois(yiu-2,miu,log=TRUE)-lf)
-	Dmu2[iu] <- f2 - f1^2
-	if (level>0) {
-	  f3 <- exp(dpois(yiu-3,miu,log=TRUE)-lf)
-	  Dmu3[iu] <- f3 - 3*f1*f2 + 2*f1^3
-        }
-	if (level>1) {
-	  f4 <- exp(dpois(yiu-4,miu,log=TRUE)-lf)
-          Dmu4[iu] <- f4 - 4*f3*f1 + 12*f1^2*f2 - 3*f2^2 - 6*f1^4
-        }
+	f1[iu] <- exp(dpois(yiu-1,miu,log=TRUE)-lf)
+	f2[iu] <- exp(dpois(yiu-2,miu,log=TRUE)-lf)
+	if (level>0) f3[iu] <- exp(dpois(yiu-3,miu,log=TRUE)-lf)
+	if (level>1) f4[iu] <- exp(dpois(yiu-4,miu,log=TRUE)-lf)
       } ## uncensored done
       
       if (length(ii)) { ## interval censored
         y0 <- pmin(y[ii],yat[ii]); y1 <- pmax(y[ii],yat[ii])
         mii <- mu[ii]
         g <- ppois(y1,mii) - ppois(y0,mii)
-	g1 <- (ppois(y1-1,mii) - ppois(y0-1,mii))/g
-        Dmu[ii] <- g1 - 1
-	g2 <- (ppois(y1-2,mii) - ppois(y0-2,mii))/g
-	Dmu2[ii] <- g2 - g1^2
-	if (level>0) {
-          g3 <- (ppois(y1-3,mii) - ppois(y0-3,mii))/g
-	  Dmu3[ii] <- g3 - 3*g1*g2 + 2*g1^3
-        }
-	if (level>1) {
-	  g4 <- (ppois(y1-4,mii) - ppois(y0-4,mii))/g
-          Dmu4[ii] <- g4 - 4*g3*g1 + 12*g1^2*g2 -3*g2^2 -6*g1^4
-        }
+	f1[ii] <- (ppois(y1-1,mii) - ppois(y0-1,mii))/g
+	f2[ii] <- (ppois(y1-2,mii) - ppois(y0-2,mii))/g
+	if (level>0) f3[ii] <- (ppois(y1-3,mii) - ppois(y0-3,mii))/g
+	if (level>1) f4[ii] <- (ppois(y1-4,mii) - ppois(y0-4,mii))/g
       } ## interval censored done
 
       for (lt in c(TRUE,FALSE)) { ## do left then right censoring...
@@ -410,27 +394,16 @@ cpois <- function (link = "log") {
         if (length(ii)) {
           yil <- y[ii]; mil <- mu[ii] 
           lf <- ppois(yil,mil,lower.tail=lt,log.p=TRUE)
-	  f1 <- exp(ppois(yil-1,mil,lower.tail=lt,log.p=TRUE)-lf)
-          Dmu[ii] <- f1 - 1
-	  f2 <- exp(ppois(yil-2,mil,lower.tail=lt,log.p=TRUE)-lf)
-	  Dmu2[ii] <- f2-f1^2
-	  if (level>0) {
-	    f3 <- exp(ppois(yil-3,mil,lower.tail=lt,log.p=TRUE)-lf)
-	    Dmu3[ii] <-  f3 - 3*f1*f2 + 2*f1^3
-          }
-	  if (level>1) {
-	    f4 <- exp(ppois(yil-4,mil,lower.tail=lt,log.p=TRUE)-lf)
-            Dmu4[ii] <- f4 - 4*f3*f1 + 12*f1^2*f2 -3*f2^2 -6*f1^4
-          }
+	  f1[ii] <- exp(ppois(yil-1,mil,lower.tail=lt,log.p=TRUE)-lf)
+	  f2[ii] <- exp(ppois(yil-2,mil,lower.tail=lt,log.p=TRUE)-lf)
+	  if (level>0) f3[ii] <- exp(ppois(yil-3,mil,lower.tail=lt,log.p=TRUE)-lf)
+	  if (level>1) f4[ii] <- exp(ppois(yil-4,mil,lower.tail=lt,log.p=TRUE)-lf)
         } 
       } ## lt TRUE/FALSE
-      r <- list(Dmu=-2*Dmu,Dmu2=-2*Dmu2,EDmu2=-2*Dmu2)
-      if (level>0) {
-        r$Dmu3 <- -2*Dmu3
-      }
-      if (level>1) {
-        r$Dmu4 <- -2*Dmu4
-      }
+      
+      r <- list(Dmu=-2*(f1-1),Dmu2=-2*(f2-f1^2)); r$EDmu2 = r$Dmu2
+      if (level>0) r$Dmu3 <-  -2*(f3 - 3*f1*f2 + 2*f1^3)
+      if (level>1) r$Dmu4 <- -2*(f4 - 4*f3*f1 + 12*f1^2*f2 - 3*f2^2 - 6*f1^4)
       r
     } ## Dd cpois
 

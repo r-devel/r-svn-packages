@@ -21,7 +21,8 @@ which is a sum of independent terms, each corresponding to a single response obs
 \itemize{
 \item \code{\link{betar}} for proportions data on (0,1) when the binomial is not appropriate.
 \item \code{\link{cnorm}} censored normal distribution, for log normal accelerated failure time models, Tobit regression and rounded data, for example.
-\item \code{\link{clog}} censored logistic distribution, for accelerated failure time models. 
+\item \code{\link{clog}} censored logistic distribution, for accelerated failure time models.
+\item \code{\link{cpois}} censored Poisson distribution. 
 \item \code{\link{nb}} for negative binomial data when the \code{theta} parameter is to be estimated.
 \item \code{\link{ocat}} for ordered categorical data.
 \item \code{\link{scat}} scaled t for heavy tailed data that would otherwise be modelled as Gaussian.
