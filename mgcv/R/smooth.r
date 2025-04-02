@@ -4290,7 +4290,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       suppressWarnings(R <- chol(St[-idrop,-idrop,drop=FALSE],pivot=TRUE))
       sml[[1]]$null.space.dim <- ncol(R) - attr(R,"rank")
       sml[[1]]$df <- ncol(R)
-      if (!is.null(sml[[1]]$C)) sml[[1]]$C <- sml[[1]]$C[,-idrop,drop=FALSE]
+      if (!is.null(sml[[1]]$C)&&is.matrix(sml[[1]]$C)) sml[[1]]$C <- sml[[1]]$C[,-idrop,drop=FALSE]
       if (!is.null(sml[[1]]$Ain)) sml[[1]]$Ain <- sml[[1]]$Ain[,-idrop,drop=FALSE]
       attr(sml[[1]],"del.index") <- idrop
     }  

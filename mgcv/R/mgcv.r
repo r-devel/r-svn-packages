@@ -115,7 +115,7 @@ lp <- function(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit=max(1000,nrow(A)*10),phase1=FAL
     sn <- c[Ni] - drop(t(N)%*%backsolve(R,v))
     eps <- kappa(R)*max(abs(v))*norm(N,"M")*.Machine$double.eps^.9
     if (phase1) {
-      conv <- sum(c[Bi]*xb)==0 ## in phase 1 objective should end up at zero
+      conv <- sum(c[Bi]*xb)==0 ## in phase 1, objective should end up at zero
       if (conv||all(sn>=0)) break
     } else if (all(sn >= -eps)) { conv <- TRUE; break }
     Nk <- which(sn==min(sn))[1] ## index of k within Ni
@@ -639,8 +639,10 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=TRUE)
   for (d in 1:maxDim) { ## work up through dimensions 
     for (i in 1:m) { ## work through smooths
       if (sm[[i]]$dim == d&&sm[[i]]$side.constrain) { ## check for nesting
-        if (with.pen) X1 <- matrix(c(rep(1,nobs),rep(0,np+nc)),nobs+np+nc,as.integer(intercept)) else
-        X1 <- matrix(1,nobs,as.integer(intercept))
+        if (with.pen) {
+	  X1 <- if (intercept) matrix(c(rep(1,nobs),rep(0,np+nc)),nobs+np+nc,1) else
+	                       matrix(0,nobs+np+nc,0)
+	} else X1 <- matrix(1,nobs,as.integer(intercept))
 	X1comp <- rep(0,0) ## list of components of X1 to avoid duplication
         for (j in 1:d) { ## work through variables
           b <- sm.id[[sm[[i]]$vn[j]]] # list of smooths dependent on this variable
@@ -4736,7 +4738,7 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
 	if (rank[i]<ncol(S[[i]])) { ## find a basis for row/col space of S[[i]] and project into that.
           suppressWarnings(cs <- chol(S[[i]],pivot=TRUE))
           piv <- attr(cs,"pivot")
-	  Z <- S[[i]][,piv[1:rank[i]]] ## basis for the space of S[[i]]
+	  Z <- S[[i]][,piv[1:rank[i]],drop=FALSE] ## basis for the space of S[[i]]
           Z <- Z/norm(Z)
 	  ZHZ <- -t(Z)%*%lbb[ind,ind]%*%Z
           ZSZ <- t(Z)%*%S[[i]]%*%Z

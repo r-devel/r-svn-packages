@@ -1,7 +1,9 @@
 Package: mgcv
 Version: 1.9-2
-Author: Simon Wood <simon.wood@r-project.org>
-Maintainer: Simon Wood <simon.wood@r-project.org>
+Authors@R: person(given = "Simon",
+                    family = "Wood",
+                    role = c("aut", "cre"),
+                    email = "simon.wood@r-project.org")
 Title: Mixed GAM Computation Vehicle with Automatic Smoothness Estimation
 Description: Generalized additive (mixed) models, some of their extensions and 
              other generalized ridge regression with multiple smoothing 

@@ -28,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
 ** 'NCV' added as a method option for bam(...,discrete=TRUE). More efficient 
   than gam(...,method='NCV'), but much less efficient than default REML.
 
+* added basic linear programming routine, lp, mainly to find initial values 
+  under linear constraint. 
+
 * default margins changed for plot.gam(...,pages=1)
 
 * 'clog' censored logistic family added for AFT models. Written by Chris Shen.

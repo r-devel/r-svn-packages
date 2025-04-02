@@ -14,8 +14,8 @@ A lightweight implementation of the simplex method, designed for problems of mod
 \code{feasible} finds starting values meeting the constraints, which is also useful for finding feasible initial values for quadratic programming.  
 }
 \usage{
-lp(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit = 1000)
-feasible(A,b,C=NULL,d=NULL)
+lp(c,A,b,C=NULL,d=NULL,Bi=NULL,maxit=max(1000, nrow(A) * 10), phase1 = FALSE)
+feasible(A,b,C=NULL,d=NULL,maxit = max(1000, nrow(A) * 10))
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -33,6 +33,8 @@ feasible(A,b,C=NULL,d=NULL)
 \item{Bi}{For a problem in standard form, index of the elements of \eqn{\bf x}{x} initially non-zero. \eqn{{\bf A}[,Bi]{\bf x}^* = {\bf b}}{A[,Bi]x*=b} must have a unique solution with \eqn{{\bf x}^*\ge {\bf 0}}{x*>=0}. \code{NULL} to have this set found automatically by solution of a phase 1 linear program.}
 
 \item{maxit}{Maximum number of iterations of the simplex method to allow.}
+
+\item{phase1}{signals that function is being called to solve a phase 1 problem.}
 
 }
 
