@@ -4307,7 +4307,8 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   if (!is.null(x$r.sq)) cat("R-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5),"  ")
   if (length(x$dev.expl)>0) cat("Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%",sep="")
   cat("\n")
-  if (!is.na(x$sp.criterion) && !is.null(x$method) && !(x$method%in%c("PQL","lme.ML","lme.REML")))  
+  if ((!is.null(x$sp.criterion)&&!is.na(x$sp.criterion)) &&
+      !is.null(x$method) && !(x$method%in%c("PQL","lme.ML","lme.REML")))  
     cat(x$method," = ",formatC(x$sp.criterion,digits=5),sep="")
  
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
