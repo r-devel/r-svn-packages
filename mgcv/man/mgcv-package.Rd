@@ -91,6 +91,10 @@ Part funded by EPSRC: EP/K005251/1
 These provide details for the underlying mgcv methods, and fuller 
 references to the large literature on which the methods are based.
 
+Wood, S.N. (2025) Generalized Additive Models. Annual Review of
+Statistics and Its Applications 12:497-526
+\doi{10.1146/annurev-statistics-112723-034249}
+
 Wood, S. N. (2020) Inference and computation with generalized
 additive models and their extensions. Test 29(2): 307-339.
 \doi{10.1007/s11749-020-00711-5}

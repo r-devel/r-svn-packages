@@ -278,6 +278,10 @@ See package \code{gam}, for GAMs via the original Hastie and Tibshirani approach
 
 Key References on this implementation:
 
+Wood, S.N. (2025) Generalized Additive Models. Annual Review of
+Statistics and Its Applications 12:497-526
+\doi{10.1146/annurev-statistics-112723-034249}
+
 Wood, S.N., N. Pya and B. Saefken (2016), Smoothing parameter and
 model selection for general smooth models (with discussion).
 Journal of the American Statistical Association 111, 1548-1575

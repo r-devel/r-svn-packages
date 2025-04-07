@@ -1,5 +1,5 @@
 Package: mgcv
-Version: 1.9-3
+Version: 1.9-4
 Authors@R: person(given = "Simon",
                     family = "Wood",
                     role = c("aut", "cre"),
@@ -10,11 +10,12 @@ Description: Generalized additive (mixed) models, some of their extensions and
              parameter estimation by (Restricted) Marginal Likelihood, 
              Generalized Cross Validation and similar, or using iterated 
              nested Laplace approximation for fully Bayesian inference. See 
-             Wood (2017) <doi:10.1201/9781315370279> for an overview. 
-             Includes a gam() function, a wide variety of smoothers, 'JAGS' 
-             support and distributions beyond the exponential family. 
+             Wood (2025) <doi:10.1146/annurev-statistics-112723-034249> for 
+             an overview. Includes a gam() function, a wide variety of 
+             smoothers, 'JAGS' support and distributions beyond the 
+             exponential family. 
 Priority: recommended
-Depends: R (>= 3.6.0), nlme (>= 3.1-64)
+Depends: R (>= 4.4.0), nlme (>= 3.1-64)
 Imports: methods, stats, graphics, Matrix, splines, utils
 Suggests: parallel, survival, MASS
 LazyLoad: yes
