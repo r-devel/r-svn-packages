@@ -23,6 +23,13 @@ present, and reparameterization needs checking (also for bam).
 
 * efsud Vb every time? Fix bam NCV variance comp, to be as gam.
 
+1.9-4
+
+* 4-D plotting code axis error fix (y axis labels were being recycled from 
+  x axis labels).
+
+* Long ignored argumenty 'shade' removed from 'plot.gam'.  
+
 1.9-3
 
 * fixes a read-one-beyond-allocated memory error (in a redundant check with no

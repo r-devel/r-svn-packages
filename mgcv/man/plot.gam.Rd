@@ -10,7 +10,7 @@
 \method{plot}{gam}(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,
          n=100,n2=40,n3=3,theta=30,phi=30,jit=FALSE,xlab=NULL,
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
-         all.terms=FALSE,shade=FALSE,shade.col="gray80",shift=0,
+         all.terms=FALSE,shade.col="gray80",shift=0,
          trans=I,seWithMean=FALSE,unconditional=FALSE,by.resids=FALSE,
          scheme=0,...)
 }
@@ -84,10 +84,7 @@ interpretation of plots.}
 model components are also plotted, via a call to \code{\link{termplot}}. Only
 terms of order 1 can be plotted in this way. Also see warnings.}
 
-\item{shade}{Set to \code{TRUE} to produce shaded regions as confidence bands
-for smooths (not avaliable for parametric terms, which are plotted using \code{termplot}).}
-
-\item{shade.col}{define the color used for shading confidence bands.}
+\item{shade.col}{define the color used for shading confidence bands, for schemes that use this.}
 
 \item{shift}{constant to add to each smooth (on the scale of the linear
 predictor) before plotting. Can be useful for some diagnostics, or with \code{trans}.}
