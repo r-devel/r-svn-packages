@@ -66,7 +66,8 @@ smoothing parameters. Negative elements signal auto-initialization. Over-rides v
 \code{sp} argument to \code{\link{gam}}. Ignored by \code{gamm}.}
 \item{pc}{If not \code{NULL}, signals a point constraint: the smooth should pass through zero at the
 point given here (as a vector or list with names corresponding to the smooth names). Never ignored
-if supplied. See \code{\link{identifiability}}. }
+if supplied as a number. See \code{\link{identifiability}}. Can also be supplied as a list of lists to
+specify general linear constraints as described in \code{\link{scasm}} - ignored by other modelling routines. }
   }
 
 \details{The function does not evaluate the variable arguments. To use this function to specify use of
