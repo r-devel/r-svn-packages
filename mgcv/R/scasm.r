@@ -374,7 +374,7 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nste
      bSb <- bSbfun(start,G$S,G$off)
      eta <- drop(G$X %*% start)
      mu <- linkinv(eta <- eta + offset)
-     dev <- sum(dev.resids(G$y, mu, weights))
+     dev <- sum(dev.resids(y, mu, weights))
      pdev <- dev + sum(exp(lsp)*bSb)
      if (control$trace) cat("pdev = ", pdev, " Iterations - ", iter,"\n", sep = "")
      boundary <- FALSE
@@ -389,7 +389,7 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nste
          start <- (start + coefold)/2
          eta <- drop(G$X %*% start)
          mu <- linkinv(eta <- eta + offset)
-         dev <- sum(dev.resids(G$y, mu, weights))
+         dev <- sum(dev.resids(y, mu, weights))
 	 bSb <- bSbfun(start,G$S,G$off)
 	 pdev <- dev + sum(exp(lsp)*bSb)
        }
@@ -1064,7 +1064,7 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
   object <- list(coefficients = fit$coef,sp=exp(lsp),Vp=v$Vb*scale,Ve=F%*%v$Vb*scale,
        scale=scale,edf=v$edf,prior.weights=fit$weights,family=G$family,deviance=fit$deviance,
        residuals=fit$residuals,scale.known=scale.known,F = F,R=t(mroot(v$H)),
-       outer.info=list(converged = i<200,niter=i),y=G$y,aic=fit$aic+2*sum(v$edf),
+       outer.info=list(converged = i<200,niter=i),y=fit$y,aic=fit$aic+2*sum(v$edf),
        linear.predictors=fit$linear.predictors,fitted.values=fit$fitted.values)
 
   Vrho <- lsp.cov(G,object$Vp,fit$coef,n=1000) ## approx lsp cov matrix 

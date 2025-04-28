@@ -3632,7 +3632,7 @@ smooth.construct3 <- function(object,data,knots) {
 ## the evaluated `object$term's and the `by' variable... it
 ## obtains such a data object from `data' and also deals with
 ## multiple evaluations at the same covariate points efficiently
-## In contrast to smooth.constuct2 it returns an object in which
+## In contrast to smooth.construct2 it returns an object in which
 ## `X' contains the rows required to make the full model matrix,
 ## and ind[i] tells you which row of `X' is the ith row of the
 ## full model matrix. If `ind' is NULL then `X' is the full model matrix.

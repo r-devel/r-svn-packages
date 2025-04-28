@@ -107,7 +107,11 @@ An object of class \code{"gam"} as described in \code{\link{gamObject}}.
 
 \details{Operates much as \code{\link{gam}}, but allows linear constraints on smooths to facilitate shape constraints. Smoothness selection uses the extended Fellner-Schall method of Wood and Fasiolo (2017). Model coefficient estimation uses linear programming to find initial feasible coefficients, and then sequential quadratic programming to maximize the penalized likelihood given smooting parameters.
 
-For simple shape constraints on univariate smooths (and hence tensor product smooths) see \code{\link{smooth.construct.sc.smooth.spec}}. General linear constraints can be imposed on any smooth term via the \code{pc} argument to \code{\link{s}} etc. To do this \code{pc} is provided as a list of two lists. The first list component specifies the linear inequality constraints, and the second, if present specifies linear equality constraints. The first list has 3 elements: 2 matrices of the same dimensions and a vector with the same numebrt of rows as the matrices. The elements need not be named, but call them \eqn{\bf X}{X}, \eqn{\bf W}{W} and \eqn{\bf b}{b}. Then the constraints encoded are \deqn{\sum_j f(X_{ij}) W_{ij} > b_i}{sum_j f(X_ij) W_ij > b_i} where \eqn{f}{f} is the smooth term and the summation is over all columns of the matrices. There is one constraint for each row of the \code{\bf b}{b}. The second list, if present, has the same structure, but encodes equality constraints. If the first list is empty then there are no inequality constraints.
+For simple shape constraints on univariate smooths (and hence tensor product smooths) see \code{\link{smooth.construct.sc.smooth.spec}}. General linear constraints can be imposed on any smooth term via the \code{pc} argument to \code{\link{s}} etc. To do this \code{pc} is provided as a list of two lists. The first list component specifies the linear inequality constraints, and the second, if present specifies linear equality constraints.
+
+The first list has a matrix element for each covariate of the smooth, named as the covariates. Two further elements are un-named: a matrix of weights and a vector specifying the right hand side of the condition to be met. For example, suppose that a constraint is to be applied to a smooth term term \eqn{f(X,Z)}{f(X,Z)}. The list would contain named matrices \eqn{\bf X}{X} and \eqn{\bf Z}{Z} and a third unnamed matrix, \eqn{\bf W}{W}, say. All are of the same dimension. The list also contains an unnaed vector with the same number of rows as the matrices, \eqn{\bf b}{b}, say. The constraints encoded are
+\deqn{\sum_j f(X_{ij},Z_{ij}) W_{ij} > b_i}{sum_j f(X_ij,Z_ij) W_ij > b_i}
+where the summation is over all columns of the matrices. There is one constraint for each row of the \eqn{\bf b}{b}. The second list, if present, has the same structure, but encodes equality constraints. If the first list is empty then there are no inequality constraints.
 
 Notice that this structure is quite general - derivative and integral constraints are easily implemented numerically. Also note that the simple constraints of \code{\link{smooth.construct.sc.smooth.spec}} can be combined with general \code{pc} constraints.  
 
@@ -139,7 +143,7 @@ This is generally slower than gam, and can only use EFS soothness estimation
 
 \examples{
 library(mgcv)
-## a density estimation example... 
+## a density estimation example, illustrating general constraint use... 
 n <- 400; set.seed(4)
 x <- c(rnorm(n*.8,.4,.13),runif(n*.2))
 y <- rep(1e-10,n)

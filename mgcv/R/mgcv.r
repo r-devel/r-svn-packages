@@ -5015,7 +5015,7 @@ print.mgcv.version <- function()
   version <- version[pmatch("Version",version)]
   um <- strsplit(version," ")[[1]]
   version <- um[nchar(um)>0][2]
-  hello <- paste("This is mgcv ",version,". For overview type 'help(\"mgcv-package\")'.",sep="")
+  hello <- paste("This is mgcv ",version,". For overview type '?mgcv'.",sep="")
   packageStartupMessage(hello)
 }
 
