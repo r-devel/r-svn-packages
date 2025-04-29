@@ -225,6 +225,8 @@ Li, Z & S.N. Wood (2020) Faster model matrix crossproducts for large generalized
 
 \section{WARNINGS }{
 
+With \code{discrete=TRUE}, the smoothness criterion value (REML/NCV) for the model itself is returned, otherwise for the working model. The former is comparable to \code{gam}, the latter not.   
+
 The routine may be slower than optimal if the default \code{"tp"} basis is used. 
 
 This routine is less stable than `gam' for the same dataset.

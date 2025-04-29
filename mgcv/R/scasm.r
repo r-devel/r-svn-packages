@@ -447,7 +447,7 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nste
       start <- coefold + alpha*(start-coefold)
       if (!is.null(G$Ain) && nrow(G$Ain)>0) {
         active <- attr(start,"active")
-        attr(start,"active")  <- active[abs(G$Ain[active,]%*%start-G$bin[active])<norm(G$Ain[active,],"M")*.Machine$double.eps^.9]
+        attr(start,"active")  <- active[abs(G$Ain[active,,drop=FALSE]%*%start-G$bin[active])<norm(G$Ain[active,,drop=FALSE],"M")*.Machine$double.eps^.9]
       }
       eta <- etaold + alpha*(eta-etaold)
       mu <- linkinv(eta)
@@ -478,9 +478,9 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nste
     
   } ## main iteration
   if (!conv) warn[length(warn)+1] <- "scasm.pirls not converged"
-
+  ## weights are iterative and w prior below (w can be changed by initialization!)
   list(coef=coef,bSb=bSb,niter=iter,pearson = sum(w*(z-eta)^2),weights=w, H = crossprod(G$X,w*G$X),
-       fitted.values=mu,linear.predictors=eta,residuals=z-eta,pdev=pdev,n=n,warn=warn,n=n,y=y)
+       fitted.values=mu,linear.predictors=eta,residuals=z-eta,pdev=pdev,warn=warn,n=n,y=y,w=weights) 
 } ## scasm.pirls
 
 gH2ls <- function(b,g,H,eta=NULL,WX=NULL) {
@@ -1090,7 +1090,7 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
   laml <- (-fit$pdev/scale + ldetS$ldet -lpdgDet(z$Hp)$ldet)/2 +M*log(2*pi)/2
   if (!inherits(G$family,"general.family")) laml <- laml +
      if (inherits(G$family,"extended.family")) G$family$ls(fit$y,G$w,G$family$getTheta(),scale)$ls else
-                                               G$family$ls(G$y,G$w,fit$n,scale)[1]
+                                               G$family$ls(fit$y,fit$w,fit$n,scale)[1]
   object$laml <- laml   
   object 
 } ## scasm.fit

@@ -442,7 +442,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   y <- G$y
   weights <- G$w 
   conv <- FALSE
-  nobs <- nrow(mf)
+  n <- nobs <- nrow(mf)
   offset <- G$offset 
 
   if (method=="NCV") {
@@ -774,11 +774,16 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object <- list(mgcv.conv=conv,rank=prop$r,
                  scale.estimated = scale<=0,
 		 outer.info=NULL, optimizer=c("perf","chol")) 
-  Mp <- G$nsdf
+  #Mp <- G$nsdf
   if (length(G$smooth)>1) for (i in 1:length(G$smooth)) Mp <- Mp + G$smooth[[i]]$null.space.dim
   scale <- exp(log.phi)
-  crit <- if (method=="NCV") prop$NCV else (dev/(scale*gamma) - prop$ldetS + prop$ldetXXS +
-                                     (length(y)/gamma-Mp)*log(2*pi*scale)+Mp*log(gamma))/2
+
+  lsat <- if (inherits(family,"extended.family")) family$ls(y,weights,family$getTheta(),scale)$ls else
+                                                  family$ls(y,weights,n,scale)[1]
+
+  crit <- if (method=="NCV") prop$NCV else ((dev-2*lsat*scale)/(scale*gamma) - prop$ldetS + prop$ldetXXS)/2 
+                                      ## +Mp*log(gamma))/2  + (length(y)/gamma-Mp)*log(2*pi*scale)
+                                     (length(y)/gamma-Mp)*log(2*pi*scale)
   if (rho!=0) { ## correct REML score for AR1 transform
     df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")
     crit <- crit - (nobs/gamma-df)*log(ld)
@@ -2180,7 +2185,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
-    family <- fix.family(family) ## apply any general family patches (e.g. gaussian log link initialization)  
+    family <- fix.family(fix.family.ls(family)) ## apply any general family patches (e.g. gaussian log link initialization)  
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family %in% c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","GACV.Cp","GCV.Cp","REML",
