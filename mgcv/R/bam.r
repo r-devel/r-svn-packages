@@ -1226,6 +1226,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
                              nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt,gamma=gamma)
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE,L=G$L,nt=npt)
+	attr(fit$reml,"ml.pen") <- fit$reml.pen  
         object <- list(coefficients=res$beta,db.drho=fit$d1b,
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
                        message=fit$conv),rank=ncol(um$X),
@@ -2763,9 +2764,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
   object$aic <- if (efam) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
                 family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
-  object$aic <- object$aic -
-                2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2)) + ## correction for AR
-                2*sum(object$edf)
+  if (rho!=0) object$aic <- object$aic -
+              2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2))  ## correction for AR
+  ml.pen <- attr(object$gcv.ubre,"ml.pen")
+  if (!is.null(ml.pen)) { ## correct RE/ML by replacing working log-lik by actual  
+    object$gcv.ubre <- object$aic/(2*gamma) + ml.pen
+  }
+  object$aic <- object$aic + 2*sum(object$edf)
   if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf1
   if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(object$y,object$prior.weights),object$prior.weights))
   if (!is.null(object$full.sp)) {

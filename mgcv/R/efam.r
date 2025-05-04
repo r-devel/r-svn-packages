@@ -47,7 +47,8 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
   if (scale>=0&&family$n.theta==0) stop("erroneous call to estimate.theta - no free parameters")
   n.theta <- length(theta) ## dimension of theta vector (family$n.theta==0 => all fixed)
   del.ind <- 1:n.theta
-  if (scale<0) theta <- c(theta,log(var(y)*.1))
+  if (scale<0) theta <- c(theta,if (all.equal(y,mu)==TRUE) log(var(y)*.1) else
+                          log(mean((y-mu)^2/family$variance(mu))))
   nll <- nlogl(theta,family,y,mu,scale,wt,2)
   g <- if (family$n.theta==0) nll$g[-del.ind] else nll$g
   H <- if (family$n.theta==0) nll$H[-del.ind,-del.ind,drop=FALSE] else nll$H

@@ -733,7 +733,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      lsth2 <- if (nt>0) as.matrix(ls$lsth2)[1:nt,1:nt] else matrix(0,0,0) ## exclude any derivs w.r.t log scale here
      REML <- ((dev+oo$P)/(2*scale) - ls$ls)/gamma + (oo$ldet - rp$det)/2 - 
              as.numeric(scoreType=="REML") * Mp * (log(2*pi*scale)/2-log(gamma)/2)
-     
+     attr(REML,"ml.pen") <- oo$P/(2*scale*gamma) + (oo$ldet - rp$det)/2 - 
+                            as.numeric(scoreType=="REML") * Mp * (log(2*pi*scale)/2-log(gamma)/2)
      if (deriv) {
        det1 <- oo$ldet1
        if (nSp) {
