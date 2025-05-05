@@ -512,6 +512,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
     if (!is.null(start0)) start <- start0
     efam <- FALSE; llf <- family$ll
     WX <- eta <- NULL; scale1 <- 1
+    ucstart <- 2 ## number of iterations before inequality constraints used
   } else { ## extended family initialization
     ## get initial mu and hence initial Hessian and grad
     dev.resids <- G$family$dev.resids;
@@ -520,15 +521,29 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
     mu <- mustart; eta <- G$family$linkfun(mu); efam <- TRUE
     scale1 <- if (is.null(G$family$scale)) 1 else G$family$scale
     theta <- G$family$getTheta()
+    ucstart <- 1
   }
   if (is.null(start)) {
     feasible <- FALSE; coef <- NULL
   } else {
     coef <- as.numeric(start)
     feasible <- ((is.null(G$Ain)||!nrow(G$Ain)||min(G$Ain%*%coef - G$bin) >= -.Machine$double.eps^.5) &&
-                   (is.null(G$C)||!nrow(G$C)||all.equal(G$C%*%coef,G$C%*%G$beta0)==TRUE))
+                   (is.null(G$C)||!nrow(G$C)||all.equal(G$C%*%coef,G$C%*%G$beta0)==TRUE))	   
   }
-  
+
+  if (!feasible) { ## start not feasible so use G$beta0 as initial feasible point 
+    if (efam) {
+      mu <- G$family$linkinv(as.numeric(G$X %*% G$beta0 + G$offset))
+      dev <- sum(dev.resids(y, mu, G$w,theta))
+    } else { ## general family
+      ll <- llf(y,G$X,G$beta0,G$w,G$family,offset=G$offset,deriv=0)
+      dev <- -2*ll$l
+    }
+    bSb <- bSbfun(G$beta0,G$S,G$off); penalty <- sum(exp(lsp)*bSb)
+    pdev.feasible <- dev + penalty ## penalized deviance according to G$beta0
+    if (!is.finite(pdev.feasible))  pdev.feasible <- Inf
+    pdev0 <- pdev.feasible; 
+  } else ucstart <- 0 ## no unconstrained initialization if start already feasible
 
   w <- rep(1,ncol(G$X)); pdev <- pdev0 <- Inf;conv <- FALSE
   dth0 <- theta0 <- NULL; thmult <- 1
@@ -538,10 +553,20 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
   
     if (iter>1) { ## convert to equivalent least squares problem and solve...
       ls <- gH2ls(coef,g,H,eta=eta,WX=WX)
+      if (iter<=ucstart) { ## run without inequality constraints to initialize
+        Ain <- matrix(0,0,0);bin <- rep(0,0);feasible <- TRUE
+      } else { ## inequality constraints imposed
+        if (iter==ucstart+1&&is.finite(pdev.feasible)) { ## note never triggered if ucstart<=0
+	  coef <- G$beta0
+	  pdev0 <- pdev.feasible
+	  feasible <- TRUE
+	}  
+        Ain <- G$Ain;bin <- G$bin
+      }
       start <- pcls(list(y=ls$z,w=w,X=ls$R,C=G$C,S=G$S,off=G$off-1L,sp=exp(lsp),
-                    p=G$beta0,Ain=G$Ain,bin = G$bin))
+                    p=G$beta0,Ain=Ain,bin=bin))
       if (efam) mu <- G$family$linkinv(as.numeric(G$X %*% start + G$offset))		    
-    }
+    } ## if (iter>1)
     not.ok <- TRUE
     while (not.ok) { ## step control
       if (efam) {
@@ -567,7 +592,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
         } else not.ok <- FALSE
       }  
     } ## not.ok step control loop
-    if (iter > 1 && feasible && abs(pdev-pdev0)<control$epsilon*abs(pdev)) { conv <- TRUE;break}
+    if (iter > ucstart+1 && feasible && abs(pdev-pdev0)<control$epsilon*abs(pdev)) { conv <- TRUE;break}
     pdev0 <- pdev
     if (!is.null(start) && efam && (G$family$n.theta>0||scale1<0)) {
       ## deal with any scale and theta parameter estimation
@@ -596,11 +621,11 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
       G$family$putTheta(theta)
       ## need to recompute pdev0, with new theta...
       pdev0 <- sum(dev.resids(y, mu, G$w,theta)) + penalty
-    }  
+    } ## theta estimation
   
     coef <- start ## current coef acceptable
     
-    if (!feasible && iter > 1) { ## check whether coef vector feasible yet 
+    if ((!feasible||iter<=ucstart) && iter > 1) { ## check whether coef vector feasible yet 
       feasible <- ((is.null(G$Ain)||!nrow(G$Ain)||min(G$Ain%*%coef - G$bin) >= -.Machine$double.eps^.5) &&
                    (is.null(G$C)||!nrow(G$C)||all.equal(G$C%*%coef,G$C%*%G$beta0)))
     }

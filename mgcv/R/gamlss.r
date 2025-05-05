@@ -2787,6 +2787,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
 
     l0  <-  etlymt-logy-ethmuy-lgamma(eth) ## l
     l <- sum(l0)
+    if (!is.finite(l)) return(list(l=l,l0=l0))
 
     if (deriv>0) {
       l1 <- matrix(0,n,2)
