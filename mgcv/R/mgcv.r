@@ -251,10 +251,11 @@ pcls <- function(M)
     active[1] <- length(M$active);active[1:length(M$active)+1] <- M$active
     if (active[1]>=length(M$p)) stop("too many active constraints!")
   }  
-  o<-.C(C_RPCLS,as.double(M$X),as.double(M$p),as.double(M$y),as.double(M$w),as.double(M$Ain),as.double(M$bin)
+  o<-.C(C_RPCLS,X=as.double(M$X),p=as.double(M$p),as.double(M$y),as.double(M$w),as.double(M$Ain),as.double(M$bin)
         ,as.double(M$C),as.double(Sa),as.integer(M$off),as.integer(df),as.double(M$sp),
         as.integer(length(M$off)),as.integer(nar),active=active)
-  p <- array(o[[2]],length(M$p))
+  #p <- array(o[[2]],length(M$p))
+  p <- o$p
   if (qra.exist) p <- qr.qy(qra,c(rep(0,j),p))
   attr(p,"active") <- if (o$active[1]>0) o$active[1:o$active[1]+1]+1 else integer(0) ## the active set
   p

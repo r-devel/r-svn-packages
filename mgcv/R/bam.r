@@ -470,8 +470,9 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
     if (!is.null(pini$y)) y <- pini$y
     if (is.null(G$family$scale)) scale <- 1 else scale <- if (G$family$scale<0) scale else G$family$scale
-    scale1 <- scale
-    if (scale < 0) scale <- var(y) *.1 ## initial guess
+    #scale1 <- scale
+    #if (scale < 0) scale <- var(y) *.1 ## initial guess
+    if (scale < 0) log.phi <- log(var(y) *.1) ## initial guess
   } else efam <- FALSE
 
   if (rho!=0) { ## AR1 error model
@@ -612,9 +613,17 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
 	
       if (efam) { ## extended family
 	if (iter>1) { ## estimate theta
-          if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
-          if (!is.null(family$scale) && scale1<0) {
-	    scale <- exp(theta[family$n.theta+1])
+          #if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
+	  if (family$n.theta>0||(scale<0&&iter<5&&method!="NCV")) {
+	    ## optimize log lik wrt scale here early on, but then switch to avoid possibility of cycles...
+	    scale1 <- if (scale<0&&iter<5&&method!="NCV") scale else exp(log.phi) 
+	    theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
+          }
+          #if (!is.null(family$scale) && scale1<0) {
+	  if (!is.null(family$scale) && scale<0 && iter<5&&method!="NCV") {
+	    #scale <- exp(theta[family$n.theta+1])
+	    lsp0[n.sp+1] <- log.phi <- theta[family$n.theta+1] ## overwrite current scale estimate with better at iter=2
+	    Nstep[n.sp+1] <- 0 ## and don't use Newton step this time!
 	    theta <- theta[1:family$n.theta]
 	  }  
           family$putTheta(theta)
@@ -641,7 +650,6 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         w <- (G$w * mu.eta.val^2)/variance(mu)
       }
       
-  
       qrx$y.norm2 <- if (rho==0) sum(w*z^2) else   ## AR mod needed
           sum(rwMatrix(ar.stop,ar.row,ar.weight,sqrt(w)*z,trans=FALSE)^2) 
        
@@ -915,8 +923,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
       if (!is.null(pini$y)) y <- pini$y
       if (is.null(G$family$scale)) scale <- 1 else scale <- if (G$family$scale<0) scale else G$family$scale
-      scale1 <-scale
-      if (scale < 0) scale <- var(y) *.1 ## initial guess
+      #scale1 <-scale
+      #if (scale < 0) scale <- var(y) *.1 ## initial guess
+      if (scale < 0) log.phi <- log(var(y) *.1) ## initial guess
     } else efam <- FALSE
 
  
@@ -1193,9 +1202,15 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       }
 
       if (efam && iter>1) { ## estimate theta
-        if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
-        if (!is.null(family$scale) && scale1<0) {
-	   scale <- exp(theta[family$n.theta+1])
+        #if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
+	if (family$n.theta>0||(scale<0&&iter<5)) {
+	  ## optimize log lik wrt scale here early on, but then switch to avoid possibility of cycles...
+	  scale1 <- if (scale<0&&iter<5) scale else object$scale 
+	  theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
+        }
+        #if (!is.null(family$scale) && scale1<0) {
+	if (!is.null(family$scale) && scale<0 && iter<5) {
+	   object$scale <- exp(theta[family$n.theta+1]) ## overwrite current scale estimate with better at iter=2
 	   theta <- theta[1:family$n.theta]
 	}  
         family$putTheta(theta)

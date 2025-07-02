@@ -48,7 +48,7 @@ allowed in basis construction, but is when predicting.
 
 It is possible to set a \code{deriv} flag in a smooth specification or smooth object, so that a model or prediction matrix produces the requested derivative of the spline, rather than evaluating it.
 
-Shape constrained versions for use with \code{\link{scasm}} are specified by model terms like \code{s(x,bs="sc",xt="m+")} for a monotonic increasing function, or  \code{s(x,bs="sc",xt=c("m+","c-"))} for increasing and concave (negative second derivative). The vector supplied for \code{xt} can contain any meaningful cobination of \code{"+"} (positive), \code{"m+"} (increasing), \code{"m-"} (decreasing), \code{"c+"} (convex) and \code{"c-"} (concave). The constraints will only be processd when used with \code{\link{scasm}}. Constraints can be used in tensor product terms.
+Shape constrained versions for use with \code{\link{scasm}} are specified by model terms like \code{s(x,bs="sc",xt="m+")} for a monotonic increasing function, or  \code{s(x,bs="sc",xt=c("m+","c-"))} for increasing and concave (negative second derivative). The vector supplied for \code{xt} can contain any meaningful combination of \code{"+"} (positive), \code{"m+"} (increasing), \code{"m-"} (decreasing), \code{"c+"} (convex) and \code{"c-"} (concave). The constraints will only be processed when used with \code{\link{scasm}}. Constraints can be used in tensor product terms.
 
 }
 

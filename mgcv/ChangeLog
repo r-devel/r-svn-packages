@@ -40,6 +40,8 @@ present, and reparameterization needs checking (also for bam).
 
 * Long ignored argumenty 'shade' removed from 'plot.gam'.  
 
+* cnorm/clog single vector response fix. 
+
 1.9-3
 
 * fixes a read-one-beyond-allocated memory error (in a redundant check with no

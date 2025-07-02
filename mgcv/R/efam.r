@@ -319,7 +319,7 @@ cpois <- function (link = "log") {
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   okLinks <- c("log", "identity", "sqrt")
   if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
-  stop(gettextf("link \"%s\" not available for cnorm family; available links are %s", 
+  stop(gettextf("link \"%s\" not available for cpois family; available links are %s", 
                 linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
 
   n.theta <- 0
@@ -493,7 +493,7 @@ cpois <- function (link = "log") {
 
      environment(dev.resids) <- environment(aic) <- 
      environment(rd)<- environment(qf)<- environment(putTheta) <- env
-    structure(list(family = "cnorm", link = linktemp, linkfun = stats$linkfun,
+    structure(list(family = "cpois", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,subsety=subsety,#variance=variance,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
         validmu = validmu, valideta = stats$valideta,n.theta=0,putTheta=putTheta,getTheta=getTheta),
@@ -535,7 +535,7 @@ cnorm <- function (theta = NULL, link = "identity") {
       if (is.null(theta)) theta <- get(".Theta")
       th <- theta - log(wt)/2
       yat <- attr(y,"censor")
-      if (is.null(yat)) yat <- rep(NA,length(y))
+      if (is.null(yat)) yat <- y
       ii <- which(yat==y) ## uncensored observations
       d <- rep(0,length(y))
       if (length(ii)) d[ii] <- (y[ii]-mu[ii])^2*exp(-2*th[ii])
@@ -1100,7 +1100,7 @@ clog <- function(theta=NULL, link="identity") {
 	    r$Dmu2th2 <- Dmu2th2; r$Dmu3th <- Dmu3th
     }
     return(r)
-  } ## Dd clogistic
+  } ## Dd clog
 
   # akaike information criterion
   aic <- function(y, mu, theta=NULL, wt, dev) {
@@ -1121,7 +1121,7 @@ clog <- function(theta=NULL, link="identity") {
     if (is.null(theta)) theta <- get(".Theta")
     th <- theta-0.5*log(wt)
     yat <- attr(y,"censor")
-    if (is.null(yat)) yat <- rep(NA,length(y))
+    if (is.null(yat)) yat <- y
     a <- rep(0,length(y))
 
     # get indices
@@ -1156,7 +1156,7 @@ clog <- function(theta=NULL, link="identity") {
       a[ir] <- 2*th[ir]
     }
     return(sum(a))
-  } ## AIC clogistic
+  } ## AIC clog
 
   # saturated log likelihood
   ls <- function(y, w, theta, scale) {
@@ -1224,7 +1224,7 @@ clog <- function(theta=NULL, link="identity") {
       attr(y, "censor") <- .yat
     }
     posr$null.deviance <- find.null.dev(family, y, eta=linear.predictors, offset, prior.weights)
-    posr$family <- paste("clogistic(",round(family$getTheta(TRUE),3),")",sep="")
+    posr$family <- paste("clog(",round(family$getTheta(TRUE),3),")",sep="")
     posr
   } ## postproc clogistic
 
@@ -1247,7 +1247,7 @@ clog <- function(theta=NULL, link="identity") {
   environment(dev.resids) <- environment(aic) <- environment(getTheta) <-
     environment(rd) <- environment(qf) <- environment(putTheta) <- env
 
-  structure(list(family="clogistic", link=linktemp, linkfun=stats$linkfun,
+  structure(list(family="clog", link=linktemp, linkfun=stats$linkfun,
     linkinv=stats$linkinv, dev.resids=dev.resids, Dd=Dd, subsety=subsety,
     aic=aic, mu.eta=stats$mu.eta, initialize=initialize, postproc=postproc,
     ls=ls, validmu=validmu, valideta=stats$valideta, n.theta=n.theta, 

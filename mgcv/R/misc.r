@@ -76,7 +76,7 @@ rmvn <- function(n,mu,V) {
     z <- matrix(rnorm(p*n),n,p)%*%t(R) + mu
   } else { 
     if (length(mu)!=p) stop("mu dimensions wrong")
-    z <- t(R%*% matrix(rnorm(p*n),p,n) + mu)
+    z <- t(R%*% matrix(rnorm(p*n),p,n) + as.numeric(mu))
     if (n==1) z <- as.numeric(z)
   }
   z

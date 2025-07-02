@@ -183,6 +183,7 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
 
   object <- scasm.fit(G,control,gamma=gamma)
 
+  object$Ain <- G$Ain; object$bin <- G$bin; object$beta0 <- G$beta0
   if (!is.null(G$L)) { 
     object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
     names(object$full.sp) <- names(G$lsp0)
@@ -235,7 +236,7 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
 } ## scasm
 
 
-smooth.construct.sc.smooth.spec <- function(object,data,knots) {
+smooth.construct.sc.smooth.spec0 <- function(object,data,knots) {
 ## basic shape constrained smooth based on bs basis...
   xt <- object$xt
   sm <- smooth.construct.bs.smooth.spec(object,data,knots)
@@ -258,6 +259,89 @@ smooth.construct.sc.smooth.spec <- function(object,data,knots) {
   sm$bin0 <- rep(0.01,nrow(Ain)) ## threshold for initializing to ensure > not =
   sm
 } ## smooth.construct.sc.smooth.spec
+
+
+smooth.construct.sc.smooth.spec <- function(object,data,knots) {
+## basic shape constrained smooth based on bs basis, using the
+## relationship between difference constraints on B-spline basis
+## coeffs and constraints on derivative of the corresponding spline. 
+## Options are c+, c-, m+, m-, + for convex, concave, increasing,
+## decreasing and positive. All coherent combinations are possible,
+## and Ain %*% b >= bin imposes the constraints.
+## For c+ with +, Ain will have more rows than columns: all other 
+## combinations there are at most as many rows as columns. 
+  xt <- object$xt
+  sm <- smooth.construct.bs.smooth.spec(object,data,knots)
+  if (is.null(xt)) return(sm)
+  p <- ncol(sm$X)
+  if (is.list(xt)) { 
+    if (is.character(xt[1]))  con <- xt[[1]] else con <- NULL
+  } else con <- xt
+  Ain <- matrix(0,0,p)
+  Ip <- diag(1,nrow = p)
+  ## get start and end, i.e. first and last interior knots...
+  xint <- c(sm$knots[sm$m[1]+1],sm$knots[length(sm$knots)-sm$m[1]])
+  dp <- data.frame(xint[1]); names(dp) <- sm$term ## used for start/end constraints
+  if ("c+" %in% con) { ## increasing first derivative
+    Ain <- rbind(Ain,diff(Ip,diff=2))
+    if ("m+" %in% con) { ## must be monotonic increasing at start
+      sm$deriv <- 1
+      Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      if ("+" %in% con) { ## ... and positive at start
+        sm$deriv <- NULL
+	Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      }
+    } else if ("m-" %in% con) { ## must be monotonic decreasing at end
+      sm$deriv <- 1; dp[[1]] <- xint[2]
+      Ain <- rbind(Ain,-Predict.matrix.Bspline.smooth(sm,dp))
+      if ("+" %in% con) { ## ... and positive at end
+        sm$deriv <- NULL
+	Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      }
+    } else  if ("+" %in% con) { ## +ve but not monotonic
+      Ain <- rbind(Ain,Ip) ## all needed as minimum location not known in advance :-(
+    }
+  } else if ("c-" %in% con) { ## decreasing first derivative
+    Ain <- rbind(Ain,-diff(Ip,diff=2))
+    if ("m+" %in% con) { ## must be monotonic increasing at end
+      sm$deriv <- 1; dp[[1]] <- xint[2]
+      Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      if ("+" %in% con) { ## ... and positive at start
+        sm$deriv <- NULL; dp[[1]] <- xint[1]
+	Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      }
+    } else if ("m-" %in% con) { ## must be monotonic decreasing at start
+      sm$deriv <- 1
+      Ain <- rbind(Ain,-Predict.matrix.Bspline.smooth(sm,dp))
+      if ("+" %in% con) { ## ... and positive at end
+        sm$deriv <- NULL; dp[[1]] <- xint[2]
+	Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+      }
+    } else  if ("+" %in% con) { ## +ve but not nonotonic
+      dp <- data.frame(xint); names(dp) <- sm$term ## +ve both ends
+      Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+    }
+  } else if ("m+" %in% con) { ## not convex/cave but increasing
+    Ain <- rbind(Ain,diff(Ip))
+    if ("+" %in% con) { ## positive at start
+      Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+    }
+  } else  if ("m-" %in% con) { ## not convex/cave but decreasing
+    Ain <- rbind(Ain,-diff(Ip))
+    if ("+" %in% con) { ## positive at end
+      dp[[1]] <- xint[2]
+      Ain <- rbind(Ain,Predict.matrix.Bspline.smooth(sm,dp))
+    }
+  } else if ("+" %in% con) Ain <- Ip ## simply positive
+  
+  if ("+" %in% con) sm$C <- matrix(0,0,p) ## +ve constraint makes no sense unless centering not needed
+  
+  sm$Ain <- Ain; sm$bin <- rep(0,nrow(Ain))
+  sm$bin0 <- rep(0.01,nrow(Ain)) ## threshold for initializing to ensure > not =
+  sm$deriv <- NULL ## make sure turned off
+  sm
+} ## smooth.construct.sc.smooth.spec
+
 
 smooth.construct.scad.smooth.spec <- function(object,data,knots) {
 ## basic shape constrained smooth based on ad basis...
@@ -689,9 +773,8 @@ getVb <- function(G,H,p,zob=list(),project = TRUE,HpSt=FALSE) {
 ## gets cov matrix from pcls fit object, to within the scale parameter
 ## if project==TRUE then if Z is constraint null space return
 ## Vb= Z(Z'HpZ)^{-1}Z', or Z'HpZ and Z'StZ if HPSt==TRUE.
-## p is coefficient vector with "active" attribute giving active
-## inequality constraints. G is pre-fit scasm list, including
-## constraint spec.
+## p is coefficient vector. zob is constraints as returned by
+## getZ. G is pre-fit scasm list, including constraint spec.
   c2inv <- function(Hp) {
   ## returns inverse of Hp if +ve def and pseudoinverse of nearest +ve def
   ## matrix otherwise...
@@ -718,8 +801,6 @@ getVb <- function(G,H,p,zob=list(),project = TRUE,HpSt=FALSE) {
     St[ii,ii] <- St[ii,ii] + G$S[[i]]*G$sp[i]
     pSp[i] <- sum(p[ii]*drop(G$S[[i]]%*%p[ii]))
   }
-  
-  
   
   if (project&&length(zob)) {
     H <- ZtHZproj(H,zob)
@@ -762,12 +843,13 @@ getVb <- function(G,H,p,zob=list(),project = TRUE,HpSt=FALSE) {
     sedf[i] <- sum(Vb1[ii,ii]*G$S[[i]])
   }
   fv <- G$X %*% p ## fitted values.
-  list(Vb=Vb,edf = edf,fv=fv,pSp=pSp,sedf=sedf,H=H)
+  list(Vb=Vb,edf = edf,fv=fv,pSp=pSp,sedf=sedf,H=H,Hp=Hp,St=St)
 } ## getVb
 
 
 trSiSZ <- function(G,zob) {
 ## need tr(S^-Sj) terms, in this case projected into the null space of any constraints
+## zob is result of getZ
   sm <- ZSZproject(G,zob) 
   trS <- numeric(length(G$sp))
   k <- sum(sapply(sm,function(x) length(x$ZSZ)))
@@ -825,21 +907,26 @@ ZSZproject <- function(G,zob) {
   sm
 } ## ZSZproject
 
-ZtHZproj <- function(H,zob) {
+
+
+ZtHZproj <- function(H,zob,left=TRUE) {
 ## Project H into null space of constraints, by forming Z'HZ.
 ## Here Z is in almost block diagonal form with jth block Z_j
 ## it's 'almost' because the Z are not square. So ijth block
 ## of result is Z_i'H_ijZ_j. The non-identity Z_i are stored
 ## in zob, produced by getZ.
+## if left==FALSE, produces HZ
 ## Assumption is that zob is in ascending block order...
   ## work backwards so that ii still index correct rows/cols after
   ## previous dropping...
   if (length(zob)) for (j in length(zob):1) { 
     ii <- zob[[j]]$ii ## what parameters are we looking at?
     q <- zob[[j]]$q
-    H[,ii] <- t(qr.qty(zob[[j]]$qra,H[ii,]))
-    H[ii,] <- qr.qty(zob[[j]]$qra,H[ii,])
-    H <- H[-ii[1:q],-ii[1:q],drop=FALSE] ## now just drop the un-needed rows/cols from H 
+    H[,ii] <- t(qr.qty(zob[[j]]$qra,t(H[,ii])))
+    if (left) {
+      H[ii,] <- qr.qty(zob[[j]]$qra,H[ii,])
+      H <- H[-ii[1:q],-ii[1:q],drop=FALSE] ## now just drop the un-needed rows/cols from H
+    } else H <- H[,-ii[1:q],drop=FALSE]   
   }
   H
 } ## ZtHZproj
@@ -912,7 +999,59 @@ ZHZtproj <- function(H,zob) {
   H
 } ## ZHZtproj
 
-getZ <- function(G,active) {
+Ztbproj <- function(b,zob) {
+## Project b into null space of constraints, by forming Z'b.
+## zob encodes Z as returned by getZ...
+## Assumption is that zob is in ascending block order...
+  ## work backwards so that ii still index correct rows/cols after
+  ## previous dropping...
+  if (length(zob)) for (j in length(zob):1) { 
+    ii <- zob[[j]]$ii ## what parameters are we looking at?
+    q <- zob[[j]]$q
+    b[ii] <- qr.qty(zob[[j]]$qra,b[ii])
+    b <- b[-ii[1:q]] ## now just drop the un-needed rows/cols from H 
+  }
+  b
+} ## Ztbproj
+
+Zbproj <- function(b,zob) {
+## Forms Zb where b is a vector, and zob is the structure returned by getZ defining Z.
+## Assumption is that zob is in ascending block order...
+  qtot <- sum(sapply(zob,function(x) x$q))
+  if (!qtot) return(b)
+  b1 <- rep(0,length(b)+qtot)
+  # First pad out rows... 
+  m <- length(zob)
+  ## get unpenalized row/col indices...
+  iup <- sort(which(!1:length(b1) %in% as.integer(unlist(lapply(zob,function(x) x$ii)))))
+  next.iup <- if (length(iup)) iup[1] else length(b1) ## start of next unpenalized block to process
+  j0 <- 0 ## end of previous source (b) block
+  for (j in 1:m) {
+    if (zob[[j]]$ii[1]>next.iup) { ## next repara is after an unconstrained block
+      ii <- next.iup:(zob[[j]]$ii[1]-1) ## index of unconstrained in target
+      b1[ii] <- b[j0+1:length(ii)] ## copy unchanged from b to correct rows of b1 
+      j0 <- j0 + length(ii) ## update end of processed blocks in source, b
+      next.iup <- if (any(iup>max(ii))) min(iup[iup>max(ii)]) else length(b1) 
+    }
+    ## now copy required block itself...
+    ii <- zob[[j]]$ii[-(1:zob[[j]]$q)] ## target (b1) rows
+    jj <- 1:length(ii) + j0 ## source rows
+    j0 <- max(jj) ## new source block end
+    b1[ii] <- b[jj] 
+  }
+  if (next.iup < length(b1)) { ## deal with any trailing unconstrained elements
+    ii <- iup[iup>=next.iup]
+    b1[ii] <- b[j0+1:length(ii)]
+  }
+  for (j in 1:m) {
+    ii <- zob[[j]]$ii
+    #H[,ii] <- t(qr.qy(zob[[j]]$qra,t(H[,ii])))
+    b1[ii] <- qr.qy(zob[[j]]$qra,b1[ii])
+  }
+  b1
+} ## Zbproj
+
+getZ <- function(G,active=rep(0,0)) {
 ## Given an active set gets an object representing the constraint NULL space, Z.
 ## this is computed smooth by smooth, to ensure that Z'StZ is still block
 ## diagonal. See also ZHZtproj and ZtHZproj
@@ -1109,14 +1248,17 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
     }
   } 
   if (is.null(object$deviance)) object$deviance <- sum(residuals.gam(object,"deviance")^2)
-  ## now get LAML *excluding* acive constraints (removing the 'as.numeric' in next line would re-instate active)
-  z <- getVb(G,H=fit$H,p=as.numeric(fit$coef),project = TRUE,HpSt=TRUE)
+  ## now get LAML *excluding* active constraints (removing the 'as.numeric' in next line would re-instate active)
+  zob <- getZ(G) 
+  z <- getVb(G,H=fit$H,p=fit$coef,zob=zob,project = TRUE,HpSt=FALSE)
   ldetS <- lpdgDet(z$St); M <- ncol(z$Hp) - ldetS$r
   laml <- (-fit$pdev/scale + ldetS$ldet -lpdgDet(z$Hp)$ldet)/2 +M*log(2*pi)/2
   if (!inherits(G$family,"general.family")) laml <- laml +
      if (inherits(G$family,"extended.family")) G$family$ls(fit$y,G$w,G$family$getTheta(),scale)$ls else
                                                G$family$ls(fit$y,fit$w,fit$n,scale)[1]
-  object$laml <- laml   
+  object$laml <- laml
+  object$Vp <- z$Vb*scale; object$Vc<- b1%*%Vrho%*%t(b1) + object$Vp ## no active cons
+  object$Ve = F%*%z$Vb*scale; attr(object$Vp,"zob") <- zob; object$St <- z$St
   object 
 } ## scasm.fit
 
