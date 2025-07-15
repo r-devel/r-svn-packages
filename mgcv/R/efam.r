@@ -813,6 +813,703 @@ cnorm <- function (theta = NULL, link = "identity") {
         class = c("extended.family","family"))
 } ## cnorm
 
+############################
+## Box-Cox censored Gaussian
+############################
+
+bcg <- function (theta = NULL, link = "identity") { 
+## Extended family object for censored Box-Cox Gaussian. theta parameters are Box-Cox lambda and log s.d.
+## if supplied theta = c(lambda,sigma) for fixed, or c(lambda,-sigma) to initialize, sigma=0 also initializes
+## but to (lambda,0).
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  okLinks <- c("log", "identity", "sqrt")
+  if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
+  stop(gettextf("link \"%s\" not available for bcg family; available links are %s", 
+                linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
+
+  n.theta <- 2
+  if (!is.null(theta)) {
+      if (length(theta)!=2) stop("theta should be length 2")
+      if (theta[2]<=0) { ## treat theta[1] as initial
+        iniTheta <- theta
+	if (theta[2]<0) theta[2] <- log(-theta[2])
+      } else {  
+        iniTheta <- c(theta[1],log(theta)) ## fixed theta supplied
+        n.theta <- 0 ## signal that there are no theta parameters to estimate
+      } 
+  } else iniTheta <- c(1,0) ## inital working theta value
+    
+    env <- new.env(parent = .GlobalEnv)
+    assign(".Theta", iniTheta, envir = env)
+    getTheta <- function(trans=FALSE) {
+      th <-  get(".Theta")
+      if (trans) th[2] <- exp(th[2])
+      th
+    }
+    putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
+
+    validmu <- if (link=="identity") function(mu) all(is.finite(mu)) else function(mu) all(mu>0)
+
+    dev.resids <- function(y, mu, wt,theta=NULL) { ## bcg
+      ## '-2*loglik' instead of deviance in REML/ML expression
+      bc <- function(y,l,deriv=0) { ## Box-Cox - surely overkill for this
+	logy <- ylly <- z <- y; nina <- !is.na(z)
+	if (length(l)==1) l <- rep(l,length(z))
+        z1 <- z2 <- rep(NA,length(z))
+        logy[nina] <- log(y[nina])
+	ylly[nina] <- logy[nina]*y[nina]^l[nina]
+
+        ii <- nina & abs(l)<1e-7
+        if (any(ii)) {
+          ylly <- y[ii]^l[ii]*logy[ii]
+          yl2 <- ylly*logy[ii]
+          z[ii] <- ylly - yl2*l[ii]/2 + yl2*logy[ii]*l[ii]^2/6 
+        }
+        ii <- !ii & nina
+	if (any(ii)) z[ii] <- (y[ii]^l[ii]-1)/l[ii]
+
+        ii <- nina & ((y == Inf & l < 0)|(y==0&l>0)) 
+	if (any(ii)) z[ii] -1/l[ii]
+	z[nina & y == Inf & l>=0] <- Inf
+	z[nina & y==0 & l<=0 ] <- -Inf
+        z
+      } ## bc
+
+      if (is.null(theta)) theta <- get(".Theta")
+      th <- theta[2] - log(wt)/2
+      la <- theta[1]
+      yat <- attr(y,"censor")
+      if (is.null(yat)) yat <- y
+      ii <- which(yat==y) ## uncensored observations
+      d <- rep(0,length(y))
+      if (length(ii)) d[ii] <- (bc(y[ii],la)-mu[ii])^2*exp(-2*th[ii])
+      ii <- which(is.finite(yat)&yat>0&yat!=y) ## interval censored
+      if (length(ii)) {
+        y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+	zz <- (bc(y1,la) - bc(y0,la))*exp(-th[ii])/2 
+        d[ii] <- 2*dpnorm(-zz,zz,log.p=TRUE) - ## 2*l_sat
+	2*dpnorm((bc(y0,la)-mu[ii])*exp(-th[ii]),(bc(y1,la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      }
+      ii <- which(yat <=0) ## left censored
+      if (length(ii)) d[ii] <- -2*pnorm((bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      ii <- which(yat == Inf) ## right censored
+      if (length(ii)) d[ii] <- -2*pnorm(-(bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      d
+    } ## dev.resids bcg
+    
+    Dd <- function(y, mu, theta, wt, level=0) {
+    ## derivatives of the bcg deviance...
+      logexm1 <- function(x) {
+      ## compute log(e^x-1), avoiding over or underflow errors
+        xt <- log(1/.Machine$double.eps)+1
+        ii <- x < xt 
+        x[ii] <- log(expm1(x[ii]))
+        x
+      } ## logexm1
+
+      logexp1 <- function(x) {
+      ## compute log(e^x+1), avoiding overflow errors
+        xt <- log(1/.Machine$double.eps)+1
+        ii <- x < xt 
+        x[ii] <- log(exp(x[ii])+1)
+        x
+      } ## logexp1
+
+      ddnorm <- function(x0,x1,a0=0,a1=0,s0=1,s1=1,log.p=TRUE) {
+      ## Cancellation avoiding evaluation of
+      ## c = s1*exp(a1)*dnorm(x1)-s0*exp(a0)*dnorm(x0)
+      ## or log(|c|) where sj = +/- 1.
+      ## because c can be negative then the sign of c is
+      ## also returned in the log.p = TRUE case 
+        if (any(x0>=x1)) warning("some x0>=x1")
+        dp <- p0 <- dnorm(x0,log=TRUE)+a0; p1 <- dnorm(x1,log=TRUE)+a1
+        ii <- (s1<0 & s0>0)|(s1>0 & s0>0 & p1 < p0)|(s1<0 & s0 < 0 & p1>p0)
+        sign <- rep(1,length(x0)); sign[ii] <- -1
+        ii <- p0>p1 ## swap to avoid log of negative
+        d <- p1[ii]; p1[ii] <- p0[ii]; p0[ii] <- d
+        ii <- s0*s1 > 0 ## same sign
+        dp[ii] <- p0[ii] + logexm1(p1[ii]-p0[ii]) ## use log(exp(p1)-exp(p0)) = log(exp(p0)*exp(p1-p0)-1))
+        dp[!ii] <- p0[!ii] + logexp1(p1[!ii]-p0[!ii]) ## use log(exp(p1)+exp(p0)) = log(exp(p0)*exp(p1-p0)+1))
+        if (log.p==FALSE) dp <- sign*exp(dp) else attr(dp,"sign") <- sign 
+        dp
+      } ## ddnorm
+
+      bc <- function(y,l,deriv=0) { ## Box-Cox
+      ## surely overkill for this, but coded so also usable in locat5ion scale setting
+	logy <- ylly <- z <- y; nina <- !is.na(z)
+	if (length(l)==1) l <- rep(l,length(z))
+        z1 <- z2 <- rep(NA,length(z))
+        logy[nina] <- log(y[nina])
+	ylly[nina] <- logy[nina]*y[nina]^l[nina]
+
+        ii <- nina & abs(l)<1e-7
+        if (any(ii)) {
+          ylly <- y[ii]^l[ii]*logy[ii]
+          yl2 <- ylly*logy[ii]
+          z[ii] <- ylly - yl2*l[ii]/2 + yl2*logy[ii]*l[ii]^2/6 
+        }
+        ii <- !ii & nina
+	if (any(ii)) z[ii] <- (y[ii]^l[ii]-1)/l[ii]
+
+        ii <- nina & ((y == Inf & l < 0)|(y==0&l>0)) 
+	if (any(ii)) z[ii] -1/l[ii]
+	z[nina & y == Inf & l>=0] <- Inf
+	z[nina & y==0 & l<=0 ] <- -Inf
+	
+        if (deriv>0) {
+          ii <- nina & abs(l)<1e-4
+	  if (any(ii)) {
+            c0 <- ylly[ii]*logy[ii] ## y^l logy
+	    c1 <- c0*logy[ii] ## y^l log(y)^2
+	    z1[ii] <- c0/2-c1*l[ii]/6
+	    if (deriv>1) {
+              c2 <- c1*logy[ii] ## y^l log(y)^4
+	      z2[ii] <- c1/3 - c2*l[ii]/12
+            }
+          }
+	  ii <- !ii & nina
+	  z1[ii] <- ylly[ii]/l[ii] - z[ii]/l[ii]
+	  if (deriv>1) z2[ii] <- ylly[ii]*(logy[ii]-2/l[ii])/l[ii] + 2*z[ii]/l[ii]^2
+
+          ii <- nina & ((y==Inf & l < 0)|(y==0&l>0))
+	  z1[ii] <- 1/l[ii]^2
+	  if (deriv>1) z2[ii] <- -2*z1[ii]/l[ii]
+	  ii <- nina & y==Inf&l>=0
+	  z1[ii] <- Inf
+	  if (deriv>1) z2[ii] <- Inf
+	  ii <- nina & y==0 & l <=0
+	  z1[ii] <- Inf
+	  if (deriv>1) z2[ii] <- -Inf
+	}
+	ii <- y==0 & l>0
+        list(z=z,z1=z1,z2=z2)
+      } ## bc
+
+      th <- theta[2] - log(wt)/2
+      th2 <- 2*th;th3 <- 3*th
+      la <- theta[1]
+      eth <- exp(-th)
+      e2th <- eth*eth
+      e3th <- e2th*eth
+      yat <- attr(y,"censor") 
+      if (is.null(yat)) yat <- y ## no censoring
+      ## get case indices...
+      iu <- which(yat==y) ## uncensored observations
+      ii <- which(is.finite(yat)&yat>0&yat!=y) ## interval censored
+      il <- which(yat <=0) ## left censored
+      yat[il] <- 0
+      ir <- which(yat == Inf) ## right censored
+ 
+      logy <- log(y)
+
+      n <- length(mu)
+      Dmu <- Dmu2 <- rep(0,n)
+      if (level>0) {
+        Dth <- Dmuth <- Dmu2th <- matrix(0,n,2) ## col order l, t
+	Dmu3 <- Dmu
+      }	
+      if (level>1) { 
+        Dth2 <- Dmuth2 <- Dmu2th2 <- matrix(0,n,3) ## col order ll, lt, tt 
+	Dmu4 <- Dmu; Dmu3th <- Dmu2th
+      }	
+      if (length(iu)) { ## uncensored
+        ethi <- eth[iu]; e2thi <- e2th[iu]
+        b <- bc(y[iu],la,level)
+        z <- (b$z-mu[iu])*ethi; bly <- b$z1; blly <- b$z2
+       
+        Dmu[iu] <- Dmui <- -2*z*ethi
+	Dmu2[iu] <- 2*e2thi  
+	if (level>0) {
+          Dth[iu,1] <- -2*(logy[iu]-ethi*z*bly) ## deriv wrt lambda
+	  Dth[iu,2] <- -2*(z^2-1) ## deriv wrt theta
+          Dmuth[iu,1] <- -2*e2thi*bly
+          Dmuth[iu,2] <- -2*Dmui
+	  Dmu3[iu] <- 0
+	  Dmu2th[iu,1] <- 0
+	  Dmu2th[iu,2] <- -4*e2thi
+        }
+	if (level>1) { ## cols are ll,lt,tt
+          Dmu4[iu] <- 0
+	  Dmu3th[iu,] <- 0
+	  Dth2[iu,1] <- 2*(e2thi*bly^2 + ethi*z*blly) ## ll
+	  Dth2[iu,2] <- -4*ethi*z*bly ## lt
+	  Dth2[iu,3] <- 4*z^2 ## tt
+	  Dmuth2[iu,1] <- -2*e2thi*blly
+	  Dmuth2[iu,2] <- 4*e2thi*bly
+	  Dmuth2[iu,3] <- 4*Dmui
+	  Dmu2th2[iu,1] <- 0
+	  Dmu2th2[iu,2] <- 0
+	  Dmu2th2[iu,3] <- 8*e2thi
+        }
+      } ## uncensored done
+      
+      if (length(ii)) { ## interval censored
+        y0 <- pmin(y[ii],yat[ii]); y1 <- pmax(y[ii],yat[ii])
+	ethi <- eth[ii];e2thi <- e2th[ii];e3thi <- e3th[ii]
+	thi <- th[ii];th3i <- th3[ii];th2i <- th2[ii]
+	b <- bc(y0,la,level)
+        z0 <- (b$z-mu[ii])*ethi; bly0 <- b$z1; blly0 <- b$z2
+	b <- bc(y1,la,level)
+        z1 <- (b$z-mu[ii])*ethi; bly1 <- b$z1; blly1 <- b$z2
+	
+	ldp <- dpnorm(z0,z1,log.p=TRUE)
+        ldd <- ddnorm(z0,z1,log.p=TRUE) ## log(dnorm(z1)-dnorm(z0))
+	## log(|dnorm(z1)*z1-dnorm(z0)*z0|) and sign of argument...
+        ldzdz <- ddnorm(z0,z1,log(abs(z0)),log(abs(z1)),sign(z0),sign(z1),log.p=TRUE)
+
+        Dmui <- Dmu[ii] <- 2*attr(ldd,"sign")*exp(-thi + ldd - ldp) ## 2*ethi*(dnorm1-dnorm0)/dpn
+	Dt <-  2*attr(ldzdz,"sign")*exp(ldzdz-ldp) ##2*(dnorm1*z1-dnorm0*z0)/dpn
+	Dmu2[ii] <- Dmui^2/2 + e2thi*Dt
+	if (level>0) {
+	  ldz2dz2 <- ddnorm(z0,z1,log(z0^2),log(z1^2),log.p=TRUE)
+	  ldz3dz3 <- ddnorm(z0,z1,log(abs(z0^3)),log(abs(z1^3)),sign(z0),sign(z1),log.p=TRUE) 
+          ldbdb <- ddnorm(z0,z1,log(abs(bly0)),log(abs(bly1)),sign(bly0),sign(bly1),log.p=TRUE)
+	  ldbzdbz <- ddnorm(z0,z1,log(abs(bly0*z0)),log(abs(bly1*z1)),sign(bly0*z0),sign(bly1*z1),log.p=TRUE)
+          ldbz2dbz2 <- ddnorm(z0,z1,log(abs(bly0*z0^2)),log(abs(bly1*z1^2)),sign(bly0),sign(bly1),log.p=TRUE)
+
+	  Dmu2i <- Dmu2[ii];z12 <- z1^2;z02 <- z0^2; z13 <- z12*z1;z03 <- z02*z0 
+	  Dmu3[ii] <- Dmui*(3*Dmu2i/2 - Dmui^2/4 - e2thi) +
+	              2 * attr(ldz2dz2,"sign")*exp(ldz2dz2-ldp-th3i)
+	              ## 2*e3thi*(dnorm1*z12-dnorm0*z02)/dpn
+	  Dth[ii,1] <- Dl <- -2* attr(ldbdb,"sign")*exp(ldbdb-ldp-thi)
+	               ## -2*ethi*(dnorm1*bly1-dnorm0*bly0)/dpn ## wrt l
+          Dth[ii,2] <- Dt                                          ## wrt t
+	  Dmuth[ii,1] <- Dml <- Dl*Dmui/2 - 2 * attr(ldbzdbz,"sign")*exp(ldbzdbz-ldp-th2i)
+	                                    ##2*e2thi*(dnorm1*bly1*z1-dnorm0*bly0*z0)/dpn
+	  Dmuth[ii,2] <- Dmt <- Dmui*Dt/2 - Dmui + 2*attr(ldz2dz2,"sign")*exp(ldz2dz2-ldp-thi)
+	                                    ## 2*ethi*(dnorm1*z12-dnorm0*z02)/dpn
+	  Dtt <- Dt^2/2 - Dt + 2*attr(ldz3dz3,"sign")*exp(ldz3dz3-ldp)
+	                       ## 2*(dnorm1*z13-dnorm0*z03)/dpn
+	  Dlt <- Dl * Dt/2 - Dl - 2 * attr(ldbz2dbz2,"sign")*exp(ldbz2dbz2-ldp-thi)
+	                         ## 2*ethi*(dnorm1*bly1*z12-dnorm0*bly0*z02)/dpn
+	  Dmu2th[ii,1] <- Dmui * Dml + e2thi * Dlt
+	  Dmu2th[ii,2] <- Dmui * Dmt + e2thi * (Dtt - 2*Dt)
+        }
+	if (level>1) {
+	  z14 <- z13*z1;z04 <- z03*z0; e4thi <- e3thi*ethi; th4i <- 4*thi
+	  Dmu3i <- Dmu3[ii]; Dmu2t <- Dmu2th[ii,2];Dmu2l <- Dmu2th[ii,1]
+	  a1 <- 2*z13*ethi + Dmui*z12-4*z1*ethi; a0 <- 2*z03*ethi + Dmui*z02-4*z0*ethi
+	  lda1a1 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)
+          Dmu4[ii] <- Dmu2i*(3*Dmu2i/2-Dmui^2/4-e2thi) + Dmui*(3*Dmu3i-Dmui*Dmu2i)/2 +
+                      attr(lda1a1,"sign")*exp(lda1a1-ldp - th3i)
+                      ##e3thi*(dnorm1*(2*z13*ethi + Dmui*z12-4*z1*ethi) -
+		      ##       dnorm0*(2*z03*ethi + Dmui*z02-4*z0*ethi))/dpn
+          a1 <- bly1*z1*(2-z12); a0 <- bly0*z0*(2-z02)
+	  lda2a2 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)
+          Dmu3th[ii,1] <- Dml*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2l-Dmui*Dml)/2 - e2thi * Dml +
+                          Dl * attr(ldz2dz2,"sign")*exp(ldz2dz2-ldp-th3i) +
+                          ## e3thi*Dl*(dnorm1*z12-dnorm0*z02)/dpn +
+			  2*attr(lda2a2,"sign")*exp(lda2a2-ldp-th4i)
+			  ## 2*e4thi*(dnorm1*bly1*z1*(2-z12)-dnorm0*bly0*z0*(2-z02))/dpn
+          ldz4dz4 <- ddnorm(z0,z1,log(z0^4),log(z1^4),log.p=TRUE)
+          Dmu3th[ii,2] <- Dmt*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2t - Dmui*Dmt)/2 + e2thi*(2*Dmui-Dmt) +
+                          (Dt-10) * attr(ldz2dz2,"sign")*exp(ldz2dz2-ldp-th3i) +
+                          ## e3thi*(Dt-10)*(dnorm1*z12-dnorm0*z02)/dpn +
+                          2 * attr(ldz4dz4,"sign")*exp(ldz4dz4-ldp-th3i)
+                          ## 2*e3thi*(dnorm1*z14-dnorm0*z04)/dpn 
+          a1 <- bly1^2*z1*ethi - blly1; a0 <- bly0^2*z0*ethi - blly0
+	  lda3a3 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)
+	  Dth2[ii,1] <- Dll <- Dl^2/2 + 2*attr(lda3a3,"sign")*exp(lda3a3-ldp-thi)
+	                 ## 2*ethi*(dnorm1*(bly1^2*z1*ethi - blly1) - dnorm0*(bly0^2*z0*ethi - blly0))/dpn
+	  Dth2[ii,2] <- Dlt
+	  Dth2[ii,3] <- Dtt
+          a1 <- bly1^2*(z12-1)*ethi-blly1*z1; a0 <- bly0^2*(z02-1)*ethi-blly0*z0
+	  lda4a4 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)
+          Dmuth2[ii,1] <- Dmll <- (Dl*Dml+Dmui*Dll)/2 - Dl*attr(ldbzdbz,"sign")*exp(ldbzdbz-ldp-th2i) + 
+	                  ## e2thi*Dl*(dnorm1*bly1*z12-dnorm0*bly0*z02)/dpn +
+                          2*attr(lda4a4,"sign")*exp(lda4a4-ldp-th2i)
+                          ## 2*e2thi*(dnorm1*(bly1^2*(z12-1)*ethi-blly1*z1)-
+			  ##         dnorm0*(bly0^2*(z02-1)*ethi-blly0*z0))/dpn
+	  ldbz3dbz3 <- ddnorm(z0,z1,log(abs(bly0*z0^3)),log(abs(bly1*z1^3)),sign(bly0*z0),sign(bly1*z1),log.p=TRUE)
+          Dmuth2[ii,2] <- Dmlt <- (Dl*Dmt+Dmui*Dlt)/2 + (6-Dt)*attr(ldbzdbz,"sign")*exp(ldbzdbz-ldp-th2i) -
+	                  ## e2thi*(6-Dt)*(dnorm1*bly1*z1-dnorm0*bly0*z0)/dpn -
+                          2 *attr(ldbz3dbz3,"sign")* exp(ldbz3dbz3-ldp-th2i)
+                          ##2*e2thi*(dnorm1*bly1*z13-dnorm0*bly0*z03)/dpn
+	  Dmuth2[ii,3] <- Dmtt <- (Dmt*Dt+Dmui*Dtt)/2 - Dmt + (Dt-6)*attr(ldz2dz2,"sign")*exp(ldz2dz2-ldp-thi) +
+	                  ##  ethi*(Dt-6)*(dnorm1*z12-dnorm0*z02)/dpn +
+                          2 * attr(ldz4dz4,"sign")*exp(ldz4dz4-ldp-thi)
+                          ##2*ethi*(dnorm1*z14-dnorm0*z04)/dpn
+
+          
+	  a1 <- z1*(bly1^2*(z12-2)*ethi-blly1*z1); a0 <- z0*(bly0^2*(z02-2)*ethi-blly0*z0)
+	  lda5a5 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)
+          Dllt <- (Dl*Dlt+Dt*Dll)/2 - Dll -
+	          Dl * attr(ldbz2dbz2,"sign")* exp(ldbz2dbz2-ldp-thi) + 
+	          ##Dl*ethi*(dnorm1*bly1*z12-dnorm0*bly0*z02)/dpn +
+                  2*attr(lda5a5,"sign")*exp(lda5a5-ldp-thi)
+                  ##2*ethi*(dnorm1*z1*(bly1^2*(z12-2)*ethi-blly1*z1)-
+		  ##	  dnorm0*z0*(bly0^2*(z02-2)*ethi-blly0*z0))/dpn
+          ldbz4dbz4 <- ddnorm(z0,z1,log(abs(bly0*z0^4)),log(abs(bly1*z1^4)),sign(bly0),sign(bly1),log.p=TRUE)
+	  Dltt <- (Dl*Dtt+Dt*Dlt)/2 - Dlt +
+	           (6-Dt)*attr(ldbz2dbz2,"sign")*exp(ldbz2dbz2-ldp-thi) -
+	           ## (6-Dt)*ethi*(dnorm1*bly1*z12-dnorm0*bly0*z02)/dpn -
+		   2 *attr(ldbz4dbz4,"sign")* exp(ldbz4dbz4-ldp-thi)
+	           ## 2*ethi*(dnorm1*bly1*z14-dnorm0*bly0*z04)/dpn
+          a1 <- z13*(z12-3); a0 <- z03*(z02-3)
+	  lda6a6 <-  ddnorm(z0,z1,log(abs(a0)),log(abs(a1)),sign(a0),sign(a1),log.p=TRUE)	   
+          Dttt <- Dtt*(Dt-1) + Dt*attr(ldz3dz3,"sign")*exp(ldz3dz3-ldp) +
+	          ## Dt*(dnorm1*z13-dnorm0*z03)/dpn +
+		  2*attr(lda6a6,"sign")*exp(lda6a6-ldp)
+	          ## 2*(dnorm1*z13*(z12-3)-dnorm0*z03*(z02-3))/dpn		   
+          Dmu2th2[ii,1] <- Dml^2 + Dmui*Dmll + e2thi*Dllt
+          Dmu2th2[ii,2] <- Dml*Dmt + Dmui*Dmlt + e2thi*(Dltt - 2*Dlt)
+          Dmu2th2[ii,3] <- Dmt^2 + Dmui*Dmtt + e2thi*(Dttt-4*Dtt + 4*Dt)
+        }
+      } ## interval censored done
+
+      ## QUESTION: for lambda>0 should y0=0 censoring limit be treated as
+      ##           z0 = -1/lambda, or z0 = -Inf?? as lambda -> 0 the
+      ##           first option tends to -Inf, but what makes sense?
+      ##           If first option then needs to be treated as above interval
+      ##           (for lambda>0 only of course). 
+
+      if (length(il)) { ## left censoring (y0 = 0,z0 = -Inf, basically)
+        y1 <- y[il]
+	ethi <- eth[il];e2thi <- e2th[il];e3thi <- e3th[il]
+	thi <- th[il];th3i <- th3[il];th2i <- th2[il]
+
+	b <- bc(y1,la,level)
+        z1 <- (b$z-mu[il])*ethi; bly1 <- b$z1; blly1 <- b$z2
+
+	ldp <- pnorm(z1,log.p=TRUE)
+        ldn <- dnorm(z1,log=TRUE)
+
+        Dmui <- Dmu[il] <- 2*exp(-thi + ldn - ldp) ## 2*ethi*dnorm1/dpn
+	Dt <-  2*sign(z1)*exp(ldn + log(abs(z1))-ldp) ##2*dnorm1*z1/dpn
+	Dmu2[il] <- Dmui^2/2 + e2thi*Dt
+	if (level>0) {
+
+	  Dmu2i <- Dmu2[il];z12 <- z1^2; z13 <- z12*z1 
+	  Dmu3[il] <- Dmui*(3*Dmu2i/2 - Dmui^2/4 - e2thi) +
+	              2 * sign(z12) * exp(ldn+log(abs(z12))-ldp -th3i)
+	              ## 2*e3thi*dnorm1*z12/dpn
+	  Dth[il,1] <- Dl <- -2*sign(bly1)*exp(ldn + log(abs(bly1))-ldp-thi)
+	               ## -2*ethi*dnorm1*bly1/dpn ## wrt l
+          Dth[il,2] <- Dt                                          ## wrt t
+	  a1 <- bly1*z1
+	  Dmuth[il,1] <- Dml <- Dl*Dmui/2 - 2*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i)
+	                                    ##2*e2thi*dnorm1*bly1*z1/dpn
+	  Dmuth[il,2] <- Dmt <- Dmui*Dt/2 - Dmui + 2 * sign(z12) * exp(ldn+log(abs(z12))-ldp-thi)
+	                                    ## 2*ethi*dnorm1*z12/dpn
+	  Dtt <- Dt^2/2 - Dt + 2* sign(z13) * exp(ldn+log(abs(z13))-ldp)
+	                       ## 2*dnorm1*z13/dpn
+	  a1 <- bly1*z12 		       
+	  Dlt <- Dl * Dt/2 - Dl -  2*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi)
+	                         ## 2*ethi*dnorm1*bly1*z12/dpn
+	  Dmu2th[il,1] <- Dmui * Dml + e2thi * Dlt
+	  Dmu2th[il,2] <- Dmui * Dmt + e2thi * (Dtt - 2*Dt)
+        }
+	if (level>1) {
+	  z14 <- z13*z1; e4thi <- e3thi*ethi; th4i <- 4*thi
+	  Dmu3i <- Dmu3[il]; Dmu2t <- Dmu2th[il,2];Dmu2l <- Dmu2th[il,1]
+	  a1 <- 2*z13*ethi + Dmui*z12-4*z1*ethi
+          Dmu4[il] <- Dmu2i*(3*Dmu2i/2-Dmui^2/4-e2thi) + Dmui*(3*Dmu3i-Dmui*Dmu2i)/2 +
+                      sign(a1)*exp(ldn + log(abs(a1))-ldp - th3i)
+                      ##e3thi*dnorm1*(2*z13*ethi + Dmui*z12-4*z1*ethi)/dpn
+          a1 <- bly1*z1*(2-z12);
+          Dmu3th[il,1] <- Dml*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2l-Dmui*Dml)/2 - e2thi * Dml +
+                          Dl * sign(z12)*exp(ldn+log(abs(z12))-ldp-th3i) +
+                          ## e3thi*Dl*dnorm1*z12/dpn +
+			  2 * sign(a1)*exp(ldn + log(abs(a1))-ldp - th4i)
+			  ## 2*e4thi*dnorm1*bly1*z1*(2-z12)/dpn
+         
+          Dmu3th[il,2] <- Dmt*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2t - Dmui*Dmt)/2 + e2thi*(2*Dmui-Dmt) +
+                          (Dt-10) * exp(ldn+log(z12)-ldp-th3i) +
+                          ## e3thi*(Dt-10)*dnorm1*z12/dpn +
+                          2 * exp(ldn+log(z14)-ldp-th3i)
+                          ## 2*e3thi*dnorm1*z14/dpn 
+          a1 <- bly1^2*z1*ethi - blly1
+	  Dth2[il,1] <- Dll <- Dl^2/2 + 2*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi)
+	                  ## 2*ethi*dnorm1*(bly1^2*z1*ethi - blly1)/dpn
+	  Dth2[il,2] <- Dlt
+	  Dth2[il,3] <- Dtt
+          a2 <- bly1^2*(z12-1)*ethi-blly1*z1;a1 <- bly1*z1
+          Dmuth2[il,1] <- Dmll <- (Dl*Dml+Dmui*Dll)/2 - Dl*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i) +
+	                  ## e2thi*Dl*dnorm1*bly1*z12/dpn +
+			  2*sign(a2)*exp(ldn + log(abs(a2))-ldp - th2i)
+                          ## 2*e2thi*dnorm1*(bly1^2*(z12-1)*ethi-blly1*z1)/dpn
+          a2 <- bly1*z13
+          Dmuth2[il,2] <- Dmlt <- (Dl*Dmt+Dmui*Dlt)/2 + (6-Dt)*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i)-
+	                  ## e2thi*(6-Dt)*dnorm1*bly1*z1/dpn -
+			  2 * sign(a2)*exp(ldn+log(abs(a2))-ldp-th2i) 
+                          ##2*e2thi*dnorm1*bly1*z13/dpn
+	  Dmuth2[il,3] <- Dmtt <- (Dmt*Dt+Dmui*Dtt)/2 - Dmt + (Dt-6)* exp(ldn+log(z12)-ldp-thi) + 
+	                  ##  ethi*(Dt-6)*dnorm1*z12/dpn +
+			  2 * sign(z14)*exp(ldn+log(abs(z14))-ldp-thi) 
+                          ##2*ethi*dnorm1*z14/dpn
+          
+	  a2 <- z1*(bly1^2*(z12-2)*ethi-blly1*z1); a1 <- bly1*z12
+          Dllt <- (Dl*Dlt+Dt*Dll)/2 - Dll - Dl *sign(a1)*exp(ldn + log(abs(a1))-ldp - thi) +
+	          ## Dl*ethi*dnorm1*bly1*z12/dpn +
+		  2*sign(a2)*exp(ldn + log(abs(a2))-ldp - thi)
+                  ##2*ethi*dnorm1*z1*(bly1^2*(z12-2)*ethi-blly1*z1)/dpn
+	  a1 <- bly1*z12; a2 <- bly1*z14
+	  Dltt <- (Dl*Dtt+Dt*Dlt)/2 - Dlt +
+	           (6-Dt)*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi) -
+	           ## (6-Dt)*ethi*dnorm1*bly1*z12/dpn -
+		   2* sign(a2)*exp(ldn + log(abs(a2))-ldp - thi)
+	           ## 2*ethi*dnorm1*bly1*z14/dpn
+          a1 <- z13*(z12-3)	   
+          Dttt <- Dtt*(Dt-1) + Dt* sign(z13)*exp(ldn + log(abs(z13))-ldp) +
+	          ## Dt*dnorm1*z13/dpn +
+		  2*sign(a1)*exp(ldn + log(abs(a1))-ldp)
+	          ## 2*dnorm1*z13*(z12-3)/dpn		   
+          Dmu2th2[il,1] <- Dml^2 + Dmui*Dmll + e2thi*Dllt
+          Dmu2th2[il,2] <- Dml*Dmt + Dmui*Dmlt + e2thi*(Dltt - 2*Dlt)
+          Dmu2th2[il,3] <- Dmt^2 + Dmui*Dmtt + e2thi*(Dttt-4*Dtt + 4*Dt)
+        }
+      } # left censoring done
+
+      if (length(ir)) { ## right censoring - basically y1 = Inf
+        y0 <- y[ir]
+	ethi <- eth[ir];e2thi <- e2th[ir];e3thi <- e3th[ir]
+	thi <- th[ir];th3i <- th3[ir];th2i <- th2[ir]
+	
+	b <- bc(y0,la,level)
+        z0 <- (b$z-mu[ir])*ethi; bly0 <- b$z1; blly0 <- b$z2
+
+	ldp <- pnorm(-z0,log.p=TRUE)
+        ldn <- dnorm(z0,log=TRUE)
+
+        Dmui <- Dmu[ir] <- -2*exp(-thi + ldn - ldp) ## -2*ethi*dnorm0/dpn
+	Dt <-  -2*sign(z0)*exp(ldn + log(abs(z0))-ldp) ## -2*dnorm0*z0/dpn
+	Dmu2[ir] <- Dmui^2/2 + e2thi*Dt
+	if (level>0) {
+	  Dmu2i <- Dmu2[ir];z02 <- z0^2; z03 <- z02*z0 
+	  Dmu3[ir] <- Dmui*(3*Dmu2i/2 - Dmui^2/4 - e2thi) -
+	              2 * sign(z02) * exp(ldn+log(abs(z02))-ldp -th3i)
+	              ## -2*e3thi*dnorm0*z02/dpn
+	  Dth[ir,1] <- Dl <- 2*sign(bly0)*exp(ldn + log(abs(bly0))-ldp-thi)
+	               ## 2*ethi*dnorm0*bly0/dpn ## wrt l
+          Dth[ir,2] <- Dt                                          ## wrt t
+	  a1 <- bly0*z0
+	  Dmuth[ir,1] <- Dml <- Dl*Dmui/2 + 2*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i)
+	                                    ## 2*e2thi*dnorm1*bly1*z1/dpn
+	  Dmuth[ir,2] <- Dmt <- Dmui*Dt/2 - Dmui - 2 * sign(z02) * exp(ldn+log(abs(z02))-ldp-thi)
+	                                    ## -2*ethi*dnorm0*z02/dpn
+	  Dtt <- Dt^2/2 - Dt - 2* sign(z03) * exp(ldn+log(abs(z03))-ldp)
+	                       ## -2*dnorm0*z03/dpn
+	  a1 <- bly0*z02 		       
+	  Dlt <- Dl * Dt/2 - Dl +  2*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi)
+	                         ## 2*ethi*dnorm0*bly0*z02/dpn
+	  Dmu2th[ir,1] <- Dmui * Dml + e2thi * Dlt
+	  Dmu2th[ir,2] <- Dmui * Dmt + e2thi * (Dtt - 2*Dt)
+        }
+	if (level>1) {
+	  z04 <- z03*z0; e4thi <- e3thi*ethi; th4i <- 4*thi
+	  Dmu3i <- Dmu3[ir]; Dmu2t <- Dmu2th[ir,2];Dmu2l <- Dmu2th[ir,1]
+	  a1 <- 2*z03*ethi + Dmui*z02-4*z0*ethi
+          Dmu4[ir] <- Dmu2i*(3*Dmu2i/2-Dmui^2/4-e2thi) + Dmui*(3*Dmu3i-Dmui*Dmu2i)/2 -
+                      sign(a1)*exp(ldn + log(abs(a1))-ldp - th3i)
+                      ## -e3thi*dnorm1*(2*z03*ethi + Dmui*z02-4*z0*ethi)/dpn
+          a1 <- bly0*z0*(2-z02);
+          Dmu3th[ir,1] <- Dml*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2l-Dmui*Dml)/2 - e2thi * Dml -
+                          Dl * sign(z02)*exp(ldn+log(abs(z02))-ldp-th3i) -
+                          ## -e3thi*Dl*dnorm0*z02/dpn +
+			  2 * sign(a1)*exp(ldn + log(abs(a1))-ldp - th4i)
+			  ## -2*e4thi*dnorm1*bly0*z0*(2-z02)/dpn
+         
+          Dmu3th[ir,2] <- Dmt*(3*Dmu2i/2-Dmui^2/4) + Dmui*(3*Dmu2t - Dmui*Dmt)/2 + e2thi*(2*Dmui-Dmt) -
+                          (Dt-10) * exp(ldn+log(z02)-ldp-th3i) -
+                          ## -e3thi*(Dt-10)*dnorm0*z02/dpn +
+                          2 * exp(ldn+log(z04)-ldp-th3i)
+                          ## - 2*e3thi*dnorm0*z04/dpn 
+          a1 <- bly0^2*z0*ethi - blly0
+	  Dth2[ir,1] <- Dll <- Dl^2/2 - 2*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi)
+	                  ## -2*ethi*dnorm0*(bly0^2*z0*ethi - blly0)/dpn
+	  Dth2[ir,2] <- Dlt
+	  Dth2[ir,3] <- Dtt
+          a2 <- bly0^2*(z02-1)*ethi-blly0*z0;a1 <- bly0*z0
+          Dmuth2[ir,1] <- Dmll <- (Dl*Dml+Dmui*Dll)/2 + Dl*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i) -
+	                  ## e2thi*Dl*dnorm0*bly0*z02/dpn +
+			  2*sign(a2)*exp(ldn + log(abs(a2))-ldp - th2i)
+                          ## -2*e2thi*dnorm0*(bly0^2*(z02-1)*ethi-blly0*z0)/dpn
+          a2 <- bly0*z03
+          Dmuth2[ir,2] <- Dmlt <- (Dl*Dmt+Dmui*Dlt)/2 - (6-Dt)*sign(a1)*exp(ldn + log(abs(a1))-ldp - th2i) +
+	                  ## -e2thi*(6-Dt)*dnorm0*bly0*z0/dpn -
+			  2 * sign(a2)*exp(ldn+log(abs(a2))-ldp-th2i) 
+                          ##2*e2thi*dnorm0*bly0*z03/dpn
+	  Dmuth2[ir,3] <- Dmtt <- (Dmt*Dt+Dmui*Dtt)/2 - Dmt - (Dt-6)* exp(ldn+log(z02)-ldp-thi) -
+	                  ## - ethi*(Dt-6)*dnorm0*z02/dpn +
+			  2 * exp(ldn+log(z04)-ldp-thi) 
+                          ##-2*ethi*dnorm0*z04/dpn
+          
+	  a2 <- z0*(bly0^2*(z02-2)*ethi-blly0*z0); a1 <- bly0*z02
+          Dllt <- (Dl*Dlt+Dt*Dll)/2 - Dll + Dl *sign(a1)*exp(ldn + log(abs(a1))-ldp - thi) -
+	          ## Dl*ethi*dnorm0*bly0*z02/dpn +
+		  2*sign(a2)*exp(ldn + log(abs(a2))-ldp - thi)
+                  ##-2*ethi*dnorm0*z0*(bly0^2*(z02-2)*ethi-blly0*z0)/dpn
+	  a0 <- bly0*z02; a2 <- bly0*z04
+	  Dltt <- (Dl*Dtt+Dt*Dlt)/2 - Dlt -
+	           (6-Dt)*sign(a1)*exp(ldn + log(abs(a1))-ldp - thi) +
+	           ## (6-Dt)*ethi*dnorm0*bly0*z02/dpn -
+		   2* sign(a2)*exp(ldn + log(abs(a2))-ldp - thi)
+	           ## 2*ethi*dnorm0*bly0*z04/dpn
+          a1 <- z03*(z02-3)	   
+          Dttt <- Dtt*(Dt-1) - Dt* sign(z03)*exp(ldn + log(abs(z03))-ldp) -
+	          ## Dt*dnorm0*z03/dpn +
+		  2*sign(a1)*exp(ldn + log(abs(a1))-ldp)
+	          ## 2*dnorm0*z03*(z02-3)/dpn		   
+          Dmu2th2[ir,1] <- Dml^2 + Dmui*Dmll + e2thi*Dllt
+          Dmu2th2[ir,2] <- Dml*Dmt + Dmui*Dmlt + e2thi*(Dltt - 2*Dlt)
+          Dmu2th2[ir,3] <- Dmt^2 + Dmui*Dmtt + e2thi*(Dttt-4*Dtt + 4*Dt)
+        }
+      } # right censoring done
+      
+      r <- list(Dmu=Dmu,Dmu2=Dmu2,EDmu2=Dmu2)
+      if (level>0) {
+        r$Dth <- Dth;r$Dmuth <- Dmuth;r$Dmu3 <- Dmu3
+	r$EDmu2th <- r$Dmu2th <- Dmu2th; 
+      }
+      if (level>1) {
+        r$Dmu4 <- Dmu4; r$Dth2 <- Dth2;  r$Dmuth2 <- Dmuth2;
+	r$Dmu2th2 <- Dmu2th2; r$Dmu3th <- Dmu3th
+      }
+      r
+    } ## Dd bcg
+
+    aic <- function(y, mu, theta=NULL, wt, dev) { ## bcg AIC
+      ## basically a clone of dev.resids + sum, but without ls component.
+      bc <- function(y,l,deriv=0) { ## Box-Cox - surely overkill for this
+	logy <- ylly <- z <- y; nina <- !is.na(z)
+	if (length(l)==1) l <- rep(l,length(z))
+        z1 <- z2 <- rep(NA,length(z))
+        logy[nina] <- log(y[nina])
+	ylly[nina] <- logy[nina]*y[nina]^l[nina]
+
+        ii <- nina & abs(l)<1e-7
+        if (any(ii)) {
+          ylly <- y[ii]^l[ii]*logy[ii]
+          yl2 <- ylly*logy[ii]
+          z[ii] <- ylly - yl2*l[ii]/2 + yl2*logy[ii]*l[ii]^2/6 
+        }
+        ii <- !ii & nina
+	if (any(ii)) z[ii] <- (y[ii]^l[ii]-1)/l[ii]
+
+        ii <- nina & ((y == Inf & l < 0)|(y==0&l>0)) 
+	if (any(ii)) z[ii] -1/l[ii]
+	z[nina & y == Inf & l>=0] <- Inf
+	z[nina & y==0 & l<=0 ] <- -Inf
+        z
+      } ## bc
+
+      if (is.null(theta)) theta <- get(".Theta")
+      th <- theta[2] - log(wt)/2
+      la <- theta[1]
+      yat <- attr(y,"censor")
+      if (is.null(yat)) yat <- y
+      ii <- which(yat==y) ## uncensored observations
+      d <- rep(0,length(y))
+      if (length(ii)) d[ii] <- -2*dnorm((bc(y[ii],la)-mu[ii])*exp(-th[ii]),log=TRUE)
+      ii <- which(is.finite(yat)&yat>0&yat!=y) ## interval censored
+      if (length(ii)) {
+        y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+        d[ii] <- -2*dpnorm((bc(y0,la)-mu[ii])*exp(-th[ii]),(bc(y1,la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      }
+      ii <- which(yat == -Inf) ## left censored
+      if (length(ii)) d[ii] <- -2*pnorm((bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      ii <- which(yat == Inf) ## right censored
+      if (length(ii)) d[ii] <- -2*pnorm(-(bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      sum(d) ## -2*log likelihood
+    } ## AIC cnorm
+
+    ls <- function(y,w,theta,scale) {
+       ## the log saturated likelihood function for bcg
+       ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
+      bc <- function(y,l,deriv=0) { ## Box-Cox - surely overkill for this
+	logy <- ylly <- z <- y; nina <- !is.na(z)
+	if (length(l)==1) l <- rep(l,length(z))
+        z1 <- z2 <- rep(NA,length(z))
+        logy[nina] <- log(y[nina])
+	ylly[nina] <- logy[nina]*y[nina]^l[nina]
+
+        ii <- nina & abs(l)<1e-7
+        if (any(ii)) {
+          ylly <- y[ii]^l[ii]*logy[ii]
+          yl2 <- ylly*logy[ii]
+          z[ii] <- ylly - yl2*l[ii]/2 + yl2*logy[ii]*l[ii]^2/6 
+        }
+        ii <- !ii & nina
+	if (any(ii)) z[ii] <- (y[ii]^l[ii]-1)/l[ii]
+
+        ii <- nina & ((y == Inf & l < 0)|(y==0&l>0)) 
+	if (any(ii)) z[ii] -1/l[ii]
+	z[nina & y == Inf & l>=0] <- Inf
+	z[nina & y==0 & l<=0 ] <- -Inf
+        z
+      } ## bc
+
+      if (is.null(theta)) theta <- get(".Theta")
+      th <- theta[2] - log(w)/2
+      la <- theta[1]
+      yat <- attr(y,"censor")
+      if (is.null(yat)) yat <- y
+      ii <- which(yat==y) ## uncensored observations
+      ls <- 0
+      if (length(ii)) ls <- ls + sum((la-1)*log(y[ii]) - th[ii] - log(2*pi)/2)
+      ii <- which(is.finite(yat)&yat>0&yat!=y) ## interval censored
+      if (length(ii)) {
+        y1 <- pmax(yat[ii],y[ii]); y0 <- pmin(yat[ii],y[ii])
+	zz <- (bc(y1,la) - bc(y0,la))*exp(-th[ii])/2 
+        ls <- ls +  sum(dpnorm(-zz,zz,log.p=TRUE)) 
+      }
+
+      list(ls=ls,## saturated log likelihood
+            lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
+	    LSTH1 = matrix(0,length(y),2),
+            lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
+    } ## ls bcg
+
+
+    initialize <- expression({ ## cnorm
+        if (is.matrix(y)) {
+	 .yat <- y[,2]
+	 y <- y[,1]
+	 attr(y,"censor") <- .yat
+	} 
+        mustart <- if (family$link=="identity") y else pmax(y,min(y>0))
+    })
+  
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept){
+      posr <- list()
+      if (is.matrix(y)) {
+	 .yat <- y[,2]
+	 y <- y[,1]
+	 attr(y,"censor") <- .yat
+      } 
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
+      posr$family <- 
+      paste("bcg(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
+      posr
+    } ## postproc bcg
+
+    rd <- function(mu,wt,scale) { ## NOTE - not done
+      Theta <- exp(get(".Theta"))
+    }
+
+    qf <- function(p,mu,wt,scale) { ## NOTE - not done
+      Theta <- exp(get(".Theta"))
+    }
+
+    subsety <- function(y,ind) { ## function to subset response
+      if (is.matrix(y)) return(y[ind,])
+      yat <- attr(y,"censor")
+      y <- y[ind]
+      if (!is.null(yat)) attr(y,"censor") <- yat[ind]
+      y
+    } ## subsety
+
+    environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
+    environment(rd)<- environment(qf)<- environment(putTheta) <- env
+    structure(list(family = "bcg", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,subsety=subsety,#variance=variance,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
+        ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),#,rd=rd,qf=qf),
+        class = c("extended.family","family"))
+} ## bcg
+
 
 #################################################
 ## censored logistic family (Chris Shen)
@@ -1205,7 +1902,7 @@ clog <- function(theta=NULL, link="identity") {
     # right and left censored are zero
     result <- list(ls=sum(l), lsth1=sum(l1), LSTH1=matrix(l1,ncol=1),lsth2=sum(l2))
     return(result)
-  } ## ls clogistic
+  } ## ls clog
 
   initialize <- expression({
     if (is.matrix(y)) {
