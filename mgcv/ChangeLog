@@ -28,6 +28,8 @@ present, and reparameterization needs checking (also for bam).
 *** scasm function provided for shape constrained additive smooth models, via
  linear and quadratic programming, with smoothness by extended Fellner-Schall. 
 
+* Censored Box-Cox Gaussian, bcg, family introduced. 
+
 * bam now returns approx REML/ML for the model itself, rather than for the 
   working linearized model (other smoothness criteria still reported for 
   working model only). 
@@ -41,6 +43,8 @@ present, and reparameterization needs checking (also for bam).
 * Long ignored argumenty 'shade' removed from 'plot.gam'.  
 
 * cnorm/clog single vector response fix. 
+
+* cnorm improved numerical stability.
 
 1.9-3
 
