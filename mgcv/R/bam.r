@@ -1660,7 +1660,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
        }
        yX.last <- c(G$y[n],G$X[n,])  ## store final row, in case of update
        X <- rwMatrix(stop,row,weight,sqrt(G$w)*G$X)
-       y <- rwMatrix(stop,row,weight,sqrt(G$w)*G$y)
+       y <- rwMatrix(stop,row,weight,sqrt(G$w)*(G$y-G$offset))
        qrx <- qr_update(X,y,use.chol=use.chol,nt=npt)
    
        rm(X); if (gc.level>1) gc() ## X can be large: remove and reclaim

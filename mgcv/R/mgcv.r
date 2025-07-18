@@ -1657,7 +1657,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (optimizer[1]=="efs"&& optimizer[2] != "no.sps" ) { ## experimental extended efs
     ##warning("efs is still experimental!")
     if (inherits(family,"general.family")) {
-      object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offxset,family=family,
+      object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offset,family=family,
                      control=control,Mp=G$Mp,start=start)
     } else {
       family <- fix.family.ls(family)

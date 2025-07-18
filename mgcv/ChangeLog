@@ -46,6 +46,9 @@ present, and reparameterization needs checking (also for bam).
 
 * cnorm improved numerical stability.
 
+* fix of one letter typo in cag.outer call to efsud that cuased offsets to be 
+ignored. Thanks to Brian Montgomery for reporting the problem. 
+
 1.9-3
 
 * fixes a read-one-beyond-allocated memory error (in a redundant check with no

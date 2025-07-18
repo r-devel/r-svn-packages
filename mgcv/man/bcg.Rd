@@ -8,7 +8,9 @@ data that can be modelled as Gaussian after Box-Cox transformation. If \eqn{y>0}
 \end{array} \right . }{z = log(y) if lambda=0 and (y^lambda-1)/lambda otherwise.}
 with mean \eqn{\mu}{m} and standard deviation \eqn{w^{-1/2}\exp(\theta)}{w^{-1/2}exp(theta)},
 then \eqn{w^{1/2}(z-\mu)\exp(-\theta)}{w^{1/2}(z-m)exp(-theta)} follows an \eqn{N(0,1)}{N(0,1)} distribution. That is
-\deqn{z \sim N(\mu,e^{2\theta}w^{-1}).}{z ~ N(m,exp(2 theta)/w).} \eqn{\theta}{theta} is a single scalar for all observations, and similarly Box-Cox parameter \eqn{\lambda}{lambda} is a single scalar. Observations may be left, interval or right censored or uncensored. 
+\deqn{z \sim N(\mu,e^{2\theta}w^{-1}).}{z ~ N(m,exp(2 theta)/w).} \eqn{\theta}{theta} is a single scalar for all observations, and similarly Box-Cox parameter \eqn{\lambda}{lambda} is a single scalar. Observations may be left, interval or right censored or uncensored.
+
+Note that the regression model here specifies the mean of the Box-Cox transformed response, not the mean of the response itself: this is rather different to the usual GLM approach. 
 }
 
 \usage{
