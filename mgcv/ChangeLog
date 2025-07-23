@@ -44,9 +44,9 @@ present, and reparameterization needs checking (also for bam).
 
 * cnorm/clog single vector response fix. 
 
-* cnorm improved numerical stability.
+* cnorm and cpois improved numerical stability.
 
-* fix of one letter typo in cag.outer call to efsud that cuased offsets to be 
+* Fix of one letter typo in gam.outer call to efsud that caused offsets to be 
 ignored. Thanks to Brian Montgomery for reporting the problem. 
 
 1.9-3
