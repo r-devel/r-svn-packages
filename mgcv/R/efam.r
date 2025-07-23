@@ -1130,7 +1130,7 @@ cnorm <- function (theta = NULL, link = "identity") {
 	 y <- y[,1]
 	 attr(y,"censor") <- .yat
       } 
-      posr$null.deviance <- mgcv:::find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
       posr$family <- 
       paste("cnorm(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
       posr

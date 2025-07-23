@@ -13,7 +13,7 @@
 ##############################
 
 nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm=TRUE) {
-## X is an n by p model matrix. 
+## X is a full rank n by p model matrix. 
 ## S is a p by p +ve semi definite penalty matrix, with the 
 ## given rank. 
 ## * type 0 reparameterization leaves
@@ -85,6 +85,7 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
 
   qrx <- qr(X,tol=.Machine$double.eps^.8)
   R <- qr.R(qrx)
+  if (Rrank(R)<ncol(R)) warning("smooth model matrix not full rank")
   RSR <- forwardsolve(t(R),t(forwardsolve(t(R),t(S))))
   er <- eigen(RSR,symmetric=TRUE)
   if (is.null(rank)||rank<1||rank>ncol(S)) { 

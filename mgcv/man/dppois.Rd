@@ -5,7 +5,7 @@
 \description{Evaluates the difference between two Poisson cumulative distribution functions avoiding cancellation error.  
 }
 \usage{
-dppois(x0,x1,mu,log.p=TRUE)
+dppois(y0,y1,mu,log.p=TRUE)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{

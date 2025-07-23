@@ -49,6 +49,8 @@ present, and reparameterization needs checking (also for bam).
 * Fix of one letter typo in gam.outer call to efsud that caused offsets to be 
 ignored. Thanks to Brian Montgomery for reporting the problem. 
 
+* nat.param now warns is model matrix not full rank.
+
 1.9-3
 
 * fixes a read-one-beyond-allocated memory error (in a redundant check with no
