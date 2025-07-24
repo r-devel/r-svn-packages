@@ -872,8 +872,8 @@ cnorm <- function (theta = NULL, link = "identity") {
         y0 <- pmin(y[ii],yat[ii]); y1 <- pmax(y[ii],yat[ii])
 	ethi <- eth[ii];e2thi <- e2th[ii];e3thi <- e3th[ii]
 	thi <- th[ii];th3i <- th3[ii];th2i <- th2[ii]
-        z0 <- (y0[ii]-mu[ii])*ethi;
-        z1 <- (y1[ii]-mu[ii])*ethi;
+        z0 <- (y0-mu[ii])*ethi;
+        z1 <- (y1-mu[ii])*ethi;
 	
 	ldp <- dpnorm(z0,z1,log.p=TRUE)
         ldd <- ddnorm(z0,z1,log.p=TRUE) ## log(dnorm(z1)-dnorm(z0))
