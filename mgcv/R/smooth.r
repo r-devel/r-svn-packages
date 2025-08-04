@@ -4208,7 +4208,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
     ## that does not depend on the model matrix (e.g. type=2)
     S11 <- sml[[1]]$S[[1]][1,1];rank <- sml[[1]]$rank;
     p <- ncol(sml[[1]]$X)
-    if (is.null(rank) || max(abs(sml[[1]]$S[[1]] - diag(c(rep(S11,rank),rep(0,p-rank))))) > 
+    if (is.null(rank) || max(abs(sml[[1]]$S[[1]] - diag(c(rep(S11,rank),rep(0,p-rank)),nrow=p))) > 
         abs(S11)*.Machine$double.eps^.8 ) {
       np <- nat.param(sml[[1]]$X,sml[[1]]$S[[1]],rank=sml[[1]]$rank,type=2,unit.fnorm=FALSE) 
       sml[[1]]$X <- np$X;sml[[1]]$S[[1]] <- diag(p)
@@ -4232,7 +4232,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       S11 <- sml[[1]]$S[[1]][1,1]
       rank <- sml[[1]]$rank;
       p <- ncol(sml[[1]]$X)
-      if (is.null(rank) || max(abs(sml[[1]]$S[[1]] - diag(c(rep(S11,rank),rep(0,p-rank))))) > 
+      if (is.null(rank) || max(abs(sml[[1]]$S[[1]] - diag(c(rep(S11,rank),rep(0,p-rank)),nrow=p))) > 
         abs(S11)*.Machine$double.eps^.8 ) need.full <- TRUE else {
         need.full <- FALSE ## matrix is already a suitable diagonal
         if (p>rank) for (i in 1:length(sml)) {
