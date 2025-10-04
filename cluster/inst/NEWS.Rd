@@ -13,7 +13,13 @@
       % already  cluster 2.1.7 is  10--25 % slower  (but that's "nothing"
       % compared with the slow down to 2.1.9 which uses dys_2(.)
 
-\section{Changes in version 2.1.9 (2025-03-11, svn r8499)}{
+\section{Changes in version 2.1.9 (2025-10-04, svn r8500)}{
+  \subsection{Bug Fixes}{
+     \itemize{
+       \item The default method of \code{silhouette(x, dist)} did not check
+       sufficiently for wrong length of \code{dist}; reported as \PR{18947}.
+     }
+  }
   \subsection{Tweaks in C}{
     \itemize{
       \item Remove more \code{<var>--} in C code; try improving speed of C

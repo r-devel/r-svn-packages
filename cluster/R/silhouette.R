@@ -115,6 +115,8 @@ silhouette.default <- function(x, dist, dmatrix, ...) {
         dist <- as.dist(dist) # hopefully
         if(n != attr(dist, "Size"))
             stop("clustering 'x' and dissimilarity 'dist' are incompatible")
+        if(length(dist) != choose(n, 2L)) # fixing PR#18947 {crash in C}
+            stop("'dist' argument is of wrong length")
     }
 
     out <- .C(sildist,
