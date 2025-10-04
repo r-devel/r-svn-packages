@@ -236,7 +236,7 @@ if(doExtras) {
   )
   ## and show that it gives the "same":
   not.eq <- c("call", "FUNcluster"); n <- names(gsPam0)
-  eq <- n[!(n \%in\% not.eq)]
+  eq <- n[!(n \%in\% not.eq)]  #%
   stopifnot(identical(gsPam1[eq], gsPam0[eq]))
   print(gsPam1, method="globalSEmax")
   print(gsPam1, method="globalmax")
@@ -250,7 +250,7 @@ gs.pam.RU
 plot(gs.pam.RU, main = "Gap statistic for the 'ruspini' data")
 mtext("k = 4 is best .. and  k = 5  pretty close")
 
-\donttest{## This takes a minute..
+\donttest{## This takes ~ 20 sec
 ## No clustering ==> k = 1 ("one cluster") should be optimal:
 Z <- matrix(rnorm(256*3), 256,3)
 gsP.Z <- clusGap(Z, FUNcluster = pam1, K.max = 8, B = 200)
