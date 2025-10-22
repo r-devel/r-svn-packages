@@ -524,7 +524,7 @@ smooth.construct.so.smooth.spec<-function(object,data,knots)
 
 
 
-smooth.construct.sf.smooth.spec<-function(object,data,knots)
+smooth.construct.sf.smooth.spec <- function(object,data,knots)
 ## a soap film smooth boundary interpolating film only constructor 
 ## method function for integration with mgcv::gam
 { if (is.null(knots)) stop("knots must be specified for soap")
@@ -624,7 +624,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots)
   
   object$sd <- sd
 
-  class(object)<-c("sf","soap.film")  # Give object a class
+  class(object)<-c("sf.film","soap.film")  # Give object a class
   object
 } ## end of boundary film component soap constructor
 
@@ -714,7 +714,7 @@ smooth.construct.sw.smooth.spec<-function(object,data,knots)
   object$sd <- sd
   object$C <- matrix(0,0,ncol(object$X)) ## this is tied to zero
 
-  class(object)<-c("sw","soap.film")  # Give object a class
+  class(object)<-c("sf.wiggly","soap.film")  # Give object a class
   object
 } ## end of wiggly component of soap constructor
 
@@ -730,8 +730,8 @@ Predict.matrix.soap.film<-function(object,data)
   X
 }
 
-Predict.matrix.sf <- function(object,data)
-# prediction method function for the sf smooth class --- the boundary interpolating film
+Predict.matrix.sf.film <- function(object,data)
+# prediction method function for the sf.film smooth class --- the boundary interpolating film
 # component of a soap film smooth 
 { x <- get.var(object$term[1],data)
   y <- get.var(object$term[2],data)
@@ -741,8 +741,8 @@ Predict.matrix.sf <- function(object,data)
   X
 }
 
-Predict.matrix.sw <- function(object,data)
-# prediction method function for the sw smooth class --- the wiggly
+Predict.matrix.sf.wiggly <- function(object,data)
+# prediction method function for the sf.wiggly smooth class --- the wiggly
 # component of a soap film smooth 
 { x <- get.var(object$term[1],data)
   y <- get.var(object$term[2],data)
@@ -781,7 +781,7 @@ plot.soap.film <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
     beta <- unconstrain(x,attr(x,"coefficients"))*x$irng ## coefs
     raw <- data[x$term]
     film <- wiggly <- TRUE
-    if (inherits(x,"sw")) film <- FALSE else if (inherits(x,"sf")) wiggly <- FALSE
+    if (inherits(x,"sf.wiggly")) film <- FALSE else if (inherits(x,"sf.film")) wiggly <- FALSE
     soap.basis(x$sd,film=film,wiggly=wiggly,plot=TRUE,beta=beta) -> G
     if (is.null(xlab)) xlabel<- x$term[1] else xlabel <- xlab
     if (is.null(ylab)) ylabel <- x$term[2] else ylabel <- ylab

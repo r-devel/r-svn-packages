@@ -21,7 +21,7 @@ ucon <- function(A,b) {
 
 scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                   control=list(),scale=0,select=FALSE,knots=NULL,sp=NULL,gamma=1,fit=TRUE,
-                  G=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,...) {
+                  G=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,bs=0,...) {
 ## Shape Constrained Additive Smooth Model function. Modified from 'gam'. Smoothing parameter selection by EFS,
 ## constrained coefficient estimation by quadratic programming using 'pcls'.
 
@@ -34,7 +34,7 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
     mf <- match.call(expand.dots=FALSE)
     mf$formula <- gp$fake.formula 
     mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$select <- mf$drop.intercept  <-
-                 mf$gamma<-mf$fit<-mf$G <- mf$...<-NULL
+                 mf$gamma<-mf$fit<-mf$G <- mf$bs <- mf$... <-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
@@ -181,7 +181,7 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
 
   if (scale>0) G$family$scale <- scale
 
-  object <- scasm.fit(G,control,gamma=gamma)
+  object <- scasm.fit(G,control,gamma=gamma,bs=bs)
 
   object$Ain <- G$Ain; object$bin <- G$bin; object$beta0 <- G$beta0
   if (!is.null(G$L)) { 
@@ -380,7 +380,8 @@ bSbfun <- function(beta,S,off) {
   bSb
 } ## bSbfun
 
-scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nstep=control$maxit+10,eps=1e-4) {
+scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,
+                        nstep=control$maxit+10,eps=1e-4,bs=0) {
 ## penalized IRLS for constrained GAM fit. Weighted least squares is performed by
 ## pcls. Note that 'start' is never used as the pcls initial parameter value...
 ## G$beta0 is designed for that purpose.
@@ -562,17 +563,23 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,nste
     
   } ## main iteration
   if (!conv) warn[length(warn)+1] <- "scasm.pirls not converged"
+  bsr <- matrix(0,length(start),bs)
+  ng <- length(w)
+  if (bs>0) for (k in 1:bs) { ## non-parametric bootstrap   
+    bsr[,k] <- pcls(list(y=z,w=w*tabulate(sample(ng,replace=TRUE),ng),X=G$X[good,],C=G$C,S=G$S,off=G$off-1L,sp=exp(lsp),
+                   p=start,Ain=G$Ain,bin = G$bin,active=attr(start,"active")))
+  }		   
   ## weights are iterative and w prior below (w can be changed by initialization!)
   list(coef=coef,bSb=bSb,niter=iter,pearson = sum(w*(z-eta)^2),weights=w, H = crossprod(G$X,w*G$X),
-       fitted.values=mu,linear.predictors=eta,residuals=z-eta,pdev=pdev,warn=warn,n=n,y=y,w=weights) 
+       fitted.values=mu,linear.predictors=eta,residuals=z-eta,pdev=pdev,warn=warn,n=n,y=y,w=weights,bs=bsr) 
 } ## scasm.pirls
 
-gH2ls <- function(b,g,H,eta=NULL,WX=NULL) {
-## Produces a least squares problem ||z-Rb||^2 with gradient g and Hessian H at b. If H is
+gH2ls <- function(b,g,R,eta=NULL,WX=NULL) {
+## Produces a least squares problem ||z-Rb||^2 with gradient g and Hessian H at b.
+## H = 2 P'R'RP, where P is a pivot matrix and R a pivoted Colesky factor. If H is
 ## not full rank then the least squares problem includes an extra ridge penalty on the
 ## unidentifiable coefficient subspace. 
-  suppressWarnings(R <- chol(H/2,pivot=TRUE)) ## PHP'/2 = R'R
-  p <- ncol(H); r <- attr(R,"rank")
+  p <- ncol(R); r <- attr(R,"rank")
   if (r<p ) { ii <- (r+1):p; R[ii,ii] <- diag(1,nrow=p-r) } ## deal with rank deficiency
   pi <- attr(R,"pivot"); ip <- order(pi) ## pivot and inverse pivot sequences
   if (is.null(b)) {
@@ -583,12 +590,12 @@ gH2ls <- function(b,g,H,eta=NULL,WX=NULL) {
   list(z=z,R=R[,ip]) ## R = RP here
 } ## gH2ls
 
-scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
+scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
 ## Newton sequential QP fitting of shape constrained models for extended and general families
   warn <- list()
-  y <- G$y; nobs <- length(y); family <- G$family; weights <- G$w
+  y <- G$y; nobs <- length(G$w); family <- G$family; weights <- G$w
   mustart <- etastart <- NULL
-  if (inherits(G$family,"general.family")) { ## general family initiualization
+  if (inherits(G$family,"general.family")) { ## general family initialization
     ## get unconstrained initial coefs, from which Hessian and grad can be computed
     start0 <- start
     x <- G$X; offset <- G$offset; E <- G$Eb
@@ -636,7 +643,8 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
   for (iter in 1L:control$maxit) { ## Main loop
   
     if (iter>1) { ## convert to equivalent least squares problem and solve...
-      ls <- gH2ls(coef,g,H,eta=eta,WX=WX)
+      suppressWarnings(R <- chol(H/2,pivot=TRUE)) ## PHP'/2 = R'R
+      ls <- gH2ls(coef,g,R,eta=eta,WX=WX)
       if (iter<=ucstart) { ## run without inequality constraints to initialize
         Ain <- matrix(0,0,0);bin <- rep(0,0);feasible <- TRUE
       } else { ## inequality constraints imposed
@@ -754,8 +762,41 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE) {
   if (iter==control$maxit) warning("scasm.newton failed to converge")
   aic.model <- if (inherits(G$family,"general.family")) dev else G$family$aic(y,mu,theta,G$w,scale*sum(G$w))
 
+  bsr <- matrix(0,length(start),bs)
+  if (bs>0) { ## always fixed Hessian version
+    if (efam) {
+      g <- matrix(0,ncol(G$X),bs)
+      for (k in 1:bs) { ## bootstrap gradient vectors
+         wb <- tabulate(sample(nobs,replace=TRUE),nobs) ## np bootstrap weights
+         g[,k] <- drop((dd$Deta*wb) %*% G$X) ## bootstrap gradient
+      }
+    } else g <- -2*llf(y,G$X,start,G$w,G$family,offset=G$offset,deriv=-bs)$lb
+    if (ncol(g)) for (k in 1:bs) { ## non-parametric bootstrap for coefs
+      ls <- gH2ls(coef,g[,k],R,eta=eta) ## convert to LS using original Hessian
+      bsr[,k] <- pcls(list(y=ls$z,w=w,X=ls$R,C=G$C,S=G$S,off=G$off-1L,sp=exp(lsp),##p=G$beta0,Ain=Ain,bin=bin)) 
+                      p=coef,Ain=G$Ain,bin=G$bin,active=attr(coef,"active"))) ## seems to work just as well as above
+     	    
+    } else bsr <- matrix(0,length(start),0) ## for ll that can't yet do this		    
+  }
+  if (FALSE&&bs>0) {
+    for (k in 1:bs) {
+      if (efam) {
+        wb <- tabulate(sample(nobs,replace=TRUE),nobs)
+        g <- drop((dd$Deta*wb) %*% G$X) ## bootstrap gradient
+	## NOTE: probably need to add Hessian BS
+      } else {
+        lf <- llf(y,G$X,start,G$w,G$family,offset=G$offset,deriv=-1)
+	g <- -2*lf$lb; suppressWarnings(R <- chol(-lf$lbb,pivot=TRUE)) ## PHP'/2 = R'R
+      }
+      ls <- gH2ls(coef,g,R,eta=eta) ## convert to LS using original Hessian
+      bsr[,k] <- pcls(list(y=ls$z,w=w,X=ls$R,C=G$C,S=G$S,off=G$off-1L,sp=exp(lsp),
+                      p=coef,Ain=G$Ain,bin=G$bin,active=attr(coef,"active")))
+    }		      
+  }
+
   list(coef=coef,bSb=bSb,niter=iter,pearson = NA ,weights=G$w, H = H/2,scale=scale,pdev=pdev,aic=aic.model,
-       fitted.values=mu,linear.predictors=eta,residuals=rsd,y=y,deviance= if (efam) dev else NULL,warn=warn)
+       fitted.values=mu,linear.predictors=eta,residuals=rsd,y=y,deviance= if (efam) dev else NULL,warn=warn,
+       bs=bsr)
 } ## scasm.newton
 
 check.psdef <- function(A,eps=.Machine$double.eps^.75) {
@@ -796,11 +837,14 @@ getVb <- function(G,H,p,zob=list(),project = TRUE,HpSt=FALSE) {
   
   St <- H*0
   m <- length(G$S); sedf <- pSp <- numeric(m)
-  if (m) for (i in 1:m) { ## get total penalty matrix and p'S_jp terms
-    ii <- 1:ncol(G$S[[i]]) + G$off[i] - 1
-    St[ii,ii] <- St[ii,ii] + G$S[[i]]*G$sp[i]
-    pSp[i] <- sum(p[ii]*drop(G$S[[i]]%*%p[ii]))
-  }
+  if (m) {
+    for (i in 1:m) { ## get total penalty matrix and p'S_jp terms
+      ii <- 1:ncol(G$S[[i]]) + G$off[i] - 1
+      St[ii,ii] <- St[ii,ii] + G$S[[i]]*G$sp[i]
+      pSp[i] <- sum(p[ii]*drop(G$S[[i]]%*%p[ii]))
+    }
+    pSp <- pmax(pSp,.Machine$double.xmin)
+  }  
   
   if (project&&length(zob)) {
     H <- ZtHZproj(H,zob)
@@ -1134,7 +1178,7 @@ imp.diff <- function(G,Hi,sp,beta) {
   b1
 } ## imp.diff
 
-scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
+scasm.fit <- function(G,control=gam.control(),gamma=1,bs=0,...) {
 ## fits shape constrained additive model, alternating pirls and EFS,
 ## having first obtained initial smoothing parameters.
 
@@ -1193,7 +1237,8 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
     dlsp0 <- dlsp;
     dlsp <- log(scale) + log(redf) - log(drop(t(L)%*%(v$pSp*G$sp)))
     maxstep <- max(abs(dlsp))
-    if (i>2 && maxstep>4) dlsp <- 4*dlsp/maxstep ## avoid overly long steps
+    if (i==1 && maxstep > 8)  dlsp <- 8*dlsp/maxstep
+    if (i>2 && maxstep > 4) dlsp <- 4*dlsp/maxstep ## avoid overly long steps
     ## don't increase if already too close to total suppression,
     ## or decrease if already too close to no suppression
     dlsp[(redf<.05 & dlsp>0)|(sedf<.05 & dlsp<0)] <- 0
@@ -1257,8 +1302,11 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,...) {
      if (inherits(G$family,"extended.family")) G$family$ls(fit$y,G$w,G$family$getTheta(),scale)$ls else
                                                G$family$ls(fit$y,fit$w,fit$n,scale)[1]
   object$laml <- laml
+  if (bs) object$bs <- if (inherits(G$family,"extended.family"))
+               scasm.newton(G,log(G$sp),start=start,control=control,scale.known=scale.known,bs=bs)$bs else
+               scasm.pirls(G,log(G$sp),start=start,control=control,eps=eps,bs=bs)$bs
   object$Vp <- z$Vb*scale; object$Vc<- b1%*%Vrho%*%t(b1) + object$Vp ## no active cons
-  object$Ve = F%*%z$Vb*scale; attr(object$Vp,"zob") <- zob; object$St <- z$St
+  object$Ve = z$Vb%*%z$H%*%z$Vb*scale; attr(object$Vp,"zob") <- zob; object$St <- z$St
   object 
 } ## scasm.fit
 

@@ -37,8 +37,8 @@ export("%.%",anova.gam, bam, bam.update,bandchol, bcg, betar,
        Predict.matrix.ts.smooth,
        Predict.matrix.sos.smooth,
        Predict.matrix.soap.film,
-       Predict.matrix.sf,
-       Predict.matrix.sw,
+       Predict.matrix.sf.film,
+       Predict.matrix.sf.wiggly,
        Predict.matrix.mrf.smooth,
        Predict.matrix.pspline.smooth,
        Predict.matrix.random.effect,
@@ -195,8 +195,8 @@ S3method(Predict.matrix,ts.smooth)
 S3method(Predict.matrix,tensor.smooth)
 S3method(Predict.matrix,t2.smooth)
 S3method(Predict.matrix,soap.film)
-S3method(Predict.matrix,sf)
-S3method(Predict.matrix,sw)
+S3method(Predict.matrix,sf.film)
+S3method(Predict.matrix,sf.wiggly)
 S3method(Predict.matrix,sz.interaction)
 S3method(Predict.matrix,sos.smooth)
 S3method(Predict.matrix,gp.smooth)

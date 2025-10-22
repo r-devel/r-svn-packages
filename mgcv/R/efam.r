@@ -737,7 +737,7 @@ cnorm <- function (theta = NULL, link = "identity") {
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   okLinks <- c("log", "identity", "sqrt")
   if (linktemp %in% okLinks) stats <- make.link(linktemp) else 
-  stop(gettextf("link \"%s\" not available for bcg family; available links are %s", 
+  stop(gettextf("link \"%s\" not available for cnorm family; available links are %s", 
                 linktemp, paste(sQuote(okLinks), collapse = ", ")),domain = NA)
 
   n.theta <- 1
@@ -1552,6 +1552,7 @@ bcg <- function (theta = NULL, link = "identity") {
       if (length(ii)) d[ii] <- -2*pnorm((bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
       ii <- which(yat == Inf) ## right censored
       if (length(ii)) d[ii] <- -2*pnorm(-(bc(y[ii],la)-mu[ii])*exp(-th[ii]),log.p=TRUE)
+      attr(d, "sign") <- sign(bc(y,la)-mu)
       d
     } ## dev.resids bcg
     

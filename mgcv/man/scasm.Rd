@@ -10,7 +10,7 @@
 
 scasm(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,
       offset=NULL,control=list(),scale=0,select=FALSE,knots=NULL,sp=NULL,gamma=1,
-      fit=TRUE,G=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,...)
+      fit=TRUE,G=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,bs=0,...)
 
 }
 %- maybe also `usage' for other objects documented here.
@@ -94,9 +94,12 @@ involving factor variables you might want to turn this off. Only do so if you kn
 \item{drop.intercept}{Set to \code{TRUE} to force the model to really not have the a constant in the parametric model part,
 even with factor variables present.}
 
+\item{bs}{number of bootstrap replicates to use to approximate sampling distribution of model coefficients. If not zero or \code{FALSE} then results in a matrix \code{bs} being returned in the fit object, whose columns are the bootstrap replicate coefficients.}
 
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
+
+
 
 }
 
