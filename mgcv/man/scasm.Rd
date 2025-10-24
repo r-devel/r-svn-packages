@@ -8,9 +8,10 @@
 }
 \usage{
 
-scasm(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,
-      offset=NULL,control=list(),scale=0,select=FALSE,knots=NULL,sp=NULL,gamma=1,
-      fit=TRUE,G=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,bs=0,...)
+scasm(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
+      na.action, offset=NULL,control=list(),scale=0,select=FALSE,
+      knots=NULL,sp=NULL,gamma=1,fit=TRUE,G=NULL,drop.unused.levels=TRUE,
+      drop.intercept=NULL,bs=0,...)
 
 }
 %- maybe also `usage' for other objects documented here.

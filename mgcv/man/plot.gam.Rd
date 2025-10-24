@@ -12,7 +12,7 @@
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade.col="gray80",shift=0,
          trans=I,seWithMean=FALSE,unconditional=FALSE,by.resids=FALSE,
-         scheme=0,...)
+         scheme=0,deriv=FALSE,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -111,12 +111,16 @@ Usually the answer is no, they would be meaningless.}
 
 \item{scheme}{Integer or integer vector selecting a plotting scheme for each plot. See details.}
 
+\item{deriv}{set to \code{TRUE} to plot derivative of smooth w.r.t covariate for 1-D terms supporting this.}
+
 \item{...}{ other graphics parameters to pass on to plotting commands. See details for smooth plot specific options.}
 
 }
 \details{ Produces default plot showing the smooth components of a
   fitted GAM, and optionally parametric terms as well, when these can be
   handled by \code{\link{termplot}}.
+
+For 1-D smooths with supporting plot methods \code{deriv=TRUE} specifies plotting of derivative of the smooth w.r.t. the covariate and its confidence band. Such derivatives are the direct analogues of the coefficients in a linear regression, giving the rate of change of the linear predictor w.r.t. the covariate. The plot label is modified to indicate that the derivative is being plotted.  
 
 For smooth  terms \code{plot.gam} actually calls plot method functions depending on the 
 class of the smooth. Currently \code{\link{random.effects}}, Markov random fields (\code{\link{mrf}}), 
@@ -231,6 +235,7 @@ x0 <- factor(x0)
 b<-gam(y~x0+s(x1)+s(x2)+s(x3))
 plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
 plot(b,pages=1,seWithMean=TRUE) ## better coverage intervals
+plot(b,pages=1,scale=0,scheme=2,deriv=TRUE) ## plot derivs of smooths
 
 ## just parametric term alone...
 termplot(b,terms="x0",se=TRUE)

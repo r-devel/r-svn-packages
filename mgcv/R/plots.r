@@ -804,7 +804,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
                      theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,shade.col="gray80",
                      shift=0,trans=I,by.resids=FALSE,scheme=0,hcolors=heat.colors(50),
-                     contour.col=4,...) {
+                     contour.col=4,deriv=FALSE,...) {
 ## default plot method for smooth objects `x' inheriting from "mgcv.smooth"
 ## `x' is a smooth object, usually part of a `gam' fit. It has an attribute
 ##     'coefficients' containing the coefs for the smooth, but usually these
@@ -927,6 +927,15 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=2,se2.mult=1,
         dat<-data.frame(x=xx);names(dat) <- x$term
       } ## prediction data.frame finished
       X <- PredictMat(x,dat)   # prediction matrix for this term
+      if (deriv) {
+        eps <- diff(range(xx))*1e-7
+	dat[[1]] <- dat[[1]] + eps
+	X <- (PredictMat(x,dat) - X)/eps
+	if (is.null(ylab)&&length(grep("(",label,fixed=TRUE))) {
+          label2 <- strsplit(label,"(",fixed=TRUE)[[1]]
+          label <- paste(label2[1],"'(",label2[-1],sep="")
+        }
+      }
       if (is.null(xlab)) xlabel<- x$term else xlabel <- xlab
       if (is.null(ylab)) ylabel <- label else ylabel <- ylab
       if (is.null(xlim)) xlim <- range(xx)
@@ -1242,9 +1251,9 @@ md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
 } ## md.plot
 
 plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,n3=3,
-                     theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
-                     ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade.col="gray80",
-                     shift=0,trans=I,seWithMean=FALSE,unconditional=FALSE,by.resids=FALSE,scheme=0,...)
+                     theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,
+		     too.far=0.1,all.terms=FALSE,shade.col="gray80",shift=0,trans=I,seWithMean=FALSE,
+		     unconditional=FALSE,by.resids=FALSE,scheme=0,deriv=FALSE,...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object
@@ -1352,7 +1361,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
                      theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,label=term.lab,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade.col=shade.col,
                      se1.mult=se1.mult,se2.mult=se2.mult,shift=shift,trans=trans,
-                     by.resids=by.resids,scheme=scheme[i],...)
+                     by.resids=by.resids,scheme=scheme[i],deriv=deriv,...)
 
     if (is.null(P)) pd[[i]] <- list(plot.me=FALSE) else if (is.null(P$fit)) {
       p <- x$coefficients[first:last]   ## relevent coefficients 

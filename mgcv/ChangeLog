@@ -30,6 +30,9 @@ present, and reparameterization needs checking (also for bam).
 
 * Censored Box-Cox Gaussian, bcg, family introduced. 
 
+* plot.gam now allows plotting of derivatives of 1-D smooth terms, to give 
+  direct analogue of GLM regression coefficients. 
+
 * bam now returns approx REML/ML for the model itself, rather than for the 
   working linearized model (other smoothness criteria still reported for 
   working model only). 
@@ -56,6 +59,8 @@ ignored. Thanks to Brian Montgomery for reporting the problem.
 
 * Slight change to gammals scale link to make interpretation more
   straightforward.	
+
+* gumbls link change and derivative correction.
 
 1.9-3
 

@@ -2660,18 +2660,6 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
 } ## end twlss
 
 
-lb.linkfun <- function(mu,b=-7) {
-## lower bound link function - see gammals for related routines. 
-  eta <- mub <- mu-b
-  ii <- mub < .Machine$double.eps
-  if (any(ii)) eta[ii] <- log(.Machine$double.eps)+b
-  jj <- mub > -log(.Machine$double.eps)
-  if (any(jj)) eta[jj] <- mub[jj]+b
-  jj <- !jj & !ii
-  if (any(jj)) eta[jj] <- log(exp(mub[jj])-1)+b
-  eta
-} ## lb.linkfun
-
 
 gammals <- function(link=list("identity","log"),b=-7) {
 ## General family for gamma location scale model...
@@ -2701,11 +2689,6 @@ gammals <- function(link=list("identity","log"),b=-7) {
   if (link[[2]]=="log") { ## g^{-1}(eta) = b + log(1+exp(eta-b)) link
     stats[[2]]$valideta <- function(eta) TRUE
 
-    #stats[[2]]$linkfun <- eval(parse(text=paste("function(mu,b=",b,") {\n eta <- mub <- mu-b;\n",
-    #  "ii <- mub < .Machine$double.eps;\n if (any(ii)) eta[ii] <- log(.Machine$double.eps);\n",
-    #  "jj <- mub > -log(.Machine$double.eps);if (any(jj)) eta[jj] <- mub[jj];\n",
-    #  "jj <- !jj & !ii;if (any(jj)) eta[jj] <- log(exp(mub[jj])-1);eta }")))
-
     stats[[2]]$linkfun <- eval(parse(text=paste("function(mu,b=",b,") {\n eta <- mub <- mu-b;\n",
       "ii <- mub < .Machine$double.eps;\n if (any(ii)) eta[ii] <- log(.Machine$double.eps)+b;\n",
       "jj <- mub > -log(.Machine$double.eps);if (any(jj)) eta[jj] <- mub[jj]+b;\n",
@@ -2716,12 +2699,6 @@ gammals <- function(link=list("identity","log"),b=-7) {
       "if (any(ii)) { ei <- eta[ii];eta[ii] <- ei/(1+ei)}\n",
       "ii <- !ii;if (any(ii)) eta[ii] <- 1/(1+eta[ii])\n",
       "eta }\n")))
-
-    #stats[[2]]$linkinv <- eval(parse(text=paste("function(eta,b=",b,") {\n",
-    #  "mu <- eta;ii <- eta > -log(.Machine$double.eps)\n",
-    #  "if (any(ii)) mu[ii] <- b + eta[ii]\n",
-    #  "ii <- !ii;if (any(ii)) mu[ii] <- b + log1p(exp(eta[ii]))\n",
-    #  "mu }\n")))
 
     stats[[2]]$linkinv <- eval(parse(text=paste("function(eta,b=",b,") {\n",
       "mu <- eta;ii <- eta-b < -log(.Machine$double.eps)\n",
@@ -3030,46 +3007,38 @@ gumbls <- function(link=list("identity","log"),b=-7) {
     stats[[i]]$d3link <- fam$d3link
     stats[[i]]$d4link <- fam$d4link
   }
-  if (link[[2]]=="log") { ## g^{-1}(eta) = b + log(1+exp(eta)) link
+  if (link[[2]]=="log") { ## g^{-1}(eta) = b + log(1+exp(eta-b)) link
     stats[[2]]$valideta <- function(eta) TRUE
+
     stats[[2]]$linkfun <- eval(parse(text=paste("function(mu,b=",b,") {\n eta <- mub <- mu-b;\n",
-      "ii <- mub < .Machine$double.eps;\n if (any(ii)) eta[ii] <- log(.Machine$double.eps);\n",
-      "jj <- mub > -log(.Machine$double.eps);if (any(jj)) eta[jj] <- mub[jj];\n",
-      "jj <- !jj & !ii;if (any(jj)) eta[jj] <- log(exp(mub[jj])-1);eta }")))
+      "ii <- mub < .Machine$double.eps;\n if (any(ii)) eta[ii] <- log(.Machine$double.eps)+b;\n",
+      "jj <- mub > -log(.Machine$double.eps);if (any(jj)) eta[jj] <- mub[jj]+b;\n",
+      "jj <- !jj & !ii;if (any(jj)) eta[jj] <- log(exp(mub[jj])-1)+b;eta }")))
 
     stats[[2]]$mu.eta <- eval(parse(text=paste("function(eta,b=",b,") {\n",
-      "ii <- eta < 0;eta <- exp(-eta*sign(eta))\n",
+      "eta <- eta - b; ii <- eta < 0;eta <- exp(-eta*sign(eta))\n",
       "if (any(ii)) { ei <- eta[ii];eta[ii] <- ei/(1+ei)}\n",
       "ii <- !ii;if (any(ii)) eta[ii] <- 1/(1+eta[ii])\n",
       "eta }\n")))
 
     stats[[2]]$linkinv <- eval(parse(text=paste("function(eta,b=",b,") {\n",
-      "mu <- eta;ii <- eta > -log(.Machine$double.eps)\n",
-      "if (any(ii)) mu[ii] <- b + eta[ii]\n",
-      "ii <- !ii;if (any(ii)) mu[ii] <- b + log(1 + exp(eta[ii]))\n",
+      "mu <- eta;ii <- eta-b < -log(.Machine$double.eps)\n",
+      "if (any(ii)) mu[ii] <- b + log1p(exp(eta[ii]-b))\n",
       "mu }\n")))
 
     stats[[2]]$d2link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
-      "eta <- lb.linkfun(mu,b=b); ii <- eta > 0\n",
-      "eta <- exp(-eta*sign(eta))\n",
-      "if (any(ii)) { ei <- eta[ii];eta[ii] <- -(ei^2 + ei) }\n",
-      "ii <- !ii;if (any(ii)) { ei <- eta[ii];eta[ii] <- -(1+ei)/ei^2 }\n",
-      "eta }\n")))
+      "mub <- mu - b; mub <-  exp(-mub*sign(mub))\n",
+      "-mub/(mub-1)^2 }\n")))
 
     stats[[2]]$d3link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
-      "eta <- lb.linkfun(mu,b=b);ii <- eta > 0\n",
-      "eta <- exp(-eta*sign(eta))\n",
-      "if (any(ii)) { ei <- eta[ii]; eta[ii] <- (2*ei^2+ei)*(ei+1) }\n",
-      "ii <- !ii;if (any(ii)) { ei <- eta[ii]; eta[ii] <- (2+ei)*(1+ei)/ei^3 }\n",
-      "eta }\n")))
+      "mub <- mu - b; sm <- -sign(mub);mub <- exp(mub*sm) \n",
+      "sm*(mub+mub^2)/(mub-1)^3 }\n")))
     
     stats[[2]]$d4link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
-      "eta <- lb.linkfun(mu,b=b);ii <- eta > 0\n",
-      "eta <- exp(-eta*sign(eta))\n",
-      "if (any(ii)) { ei <- eta[ii];eta[ii] <- -(6*ei^3+6*ei^2+ei)*(ei+1) }\n",
-      "ii <- !ii;if (any(ii)) { ei <- eta[ii]; eta[ii] <- -(6+6*ei+ei^2)*(1+ei)/ei^4 }\n",
-      "eta }\n")))
+      "mub <- mu - b; sm <- -sign(mub);mub <- exp(mub*sm)\n",
+      "sm*(mub+4*mub^2+mub^3)/(mub-1)^4 }\n")))
   }
+
 
   residuals <- function(object,type=c("deviance","pearson","response")) {
       mean <- object$fitted.values[,1]
