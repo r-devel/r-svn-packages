@@ -4,8 +4,8 @@
 \title{Default GAM plotting}
 \description{ Takes a fitted \code{gam} object produced by \code{gam()} and plots the 
    component smooth functions that make it up, on the scale of the linear
-   predictor. Optionally produces term plots for parametric model components
-   as well.}
+   predictor. Optionally derivatives of 1-D plots may be plotted. Optionally produces term plots
+   for parametric model components as well.}
 \usage{
 \method{plot}{gam}(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,
          n=100,n2=40,n3=3,theta=30,phi=30,jit=FALSE,xlab=NULL,
@@ -34,13 +34,13 @@ estimates fixed (i.e. the estimates for the term plus the residuals).}
  is <= 10000 and \code{FALSE} otherwise.} 
   
 \item{se}{ when TRUE (default) upper and lower lines are added to the
-  1-d plots at 2 standard errors
-        above and below the estimate of the smooth being plotted while for
-	2-d plots, surfaces at +1 and -1 standard errors are contoured
-	and overlayed on the contour plot for the estimate. If a
-	positive number is supplied then this number is multiplied by
-	the standard errors when calculating standard error curves or
-  surfaces. See also \code{shade}, below. }
+        1-d plots corresponding to 95\% confidence limits.
+        For 2-d plots, surfaces corresponding to lower and upper
+	limits of 68\% confidence intervals are contoured
+	and overlayed on the contour plot for the estimate. If one or more
+        numbers (between 0 and 1) are supplied then these are the confidence
+	level used whatever the dimension. Currently scheme 2 uses 2 levels.
+	Any value 1 or above resets to \code{TRUE}, failing which any value 0 or below rests to \code{FALSE}.  }
 
 \item{pages}{ (default 0) the number of pages over which to spread the output. For example, 
 if \code{pages=1} then all terms will be plotted on one page with the layout performed automatically. 
@@ -84,7 +84,7 @@ interpretation of plots.}
 model components are also plotted, via a call to \code{\link{termplot}}. Only
 terms of order 1 can be plotted in this way. Also see warnings.}
 
-\item{shade.col}{define the color used for shading confidence bands, for schemes that use this.}
+\item{shade.col}{define the color used for shading confidence bands, for schemes that use this. For schemes using 2 colours this should be a 2 element vector of colours to over-ride defaults (\code{\link{rgb}} can be useful).}
 
 \item{shift}{constant to add to each smooth (on the scale of the linear
 predictor) before plotting. Can be useful for some diagnostics, or with \code{trans}.}
@@ -132,16 +132,15 @@ with the covariate name, while the y axis is labelled \code{s(cov,edf) } where \
 is the covariate name, and \code{edf} the estimated (or user defined for regression splines) 
 degrees of freedom of the smooth. \code{scheme == 0} produces a smooth curve with dashed curves 
 indicating 2 standard error bounds. \code{scheme == 1} illustrates the error bounds using a shaded
-region.
+region. \code{scheme == 2} shows 68\% and 95\% confidence regions (levels can be reset by \code{se}). 
 
 For \code{scheme==0}, contour plots are produced for 2-d smooths with the x-axes labelled with the first covariate
 name and the y axis with the second covariate name. The main title of
 the plot is something like \code{s(var1,var2,edf)}, indicating the
 variables of which the term is a function, and the estimated degrees of
 freedom for the term. When \code{se=TRUE}, estimator variability is shown by overlaying
-contour plots at plus and minus 1 s.e. relative to the main
-estimate. If \code{se} is a positive number then contour plots are at plus or minus \code{se} multiplied
-by the s.e. Contour levels are chosen to try and ensure reasonable
+contour plots for 68\% confidence limits. If \code{se} is a positive number in (0,1) then contour plots
+are at the estimate and confidence limits at the giuven level. Contour levels are chosen to try and ensure reasonable
 separation of the contours of the different plots, but this is not
 always easy to achieve. Note that these plots can not be modified to the same extent as the other plot. 
    

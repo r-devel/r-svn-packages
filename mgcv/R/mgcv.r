@@ -3047,9 +3047,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     if (is.null(na.action)) na.act <- NULL 
     else {
       na.txt <- if (is.character(na.action)||is.function(na.action)) get.na.action(na.action) else "na.pass"
-      #if (is.character(na.action))
-      #na.txt <- na.action else ## substitute(na.action) else
-      #if (is.function(na.action)) na.txt <- deparse(substitute(na.action))
       if (na.txt=="na.pass") na.act <- "na.exclude" else
       if (na.txt=="na.exclude") na.act <- "na.omit" else
       na.act <- na.action
@@ -3083,8 +3080,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         # yname <- all.vars(object$terms)[attr(object$terms,"response")] ## redundant
         resp <- get.var(yname,newdata,FALSE)
         naresp <- FALSE
-        #if (!is.null(object$family$predict)&&!is.null(newdata[[yname]])) {
-	if (!is.null(object$family$predict)&&!is.null(resp)) {
+   	if (!is.null(object$family$predict)&&!is.null(resp)) {
           ## response provided, and potentially needed for prediction (e.g. Cox PH family)
           if (!is.null(object$pred.formula)) object$pred.formula <- attr(object$pred.formula,"full")
           response <- TRUE
@@ -3199,6 +3195,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   lpi <- if (is.list(object$formula)) attr(object$formula,"lpi") else NULL
   nlp <- if (is.null(lpi)) 1 else length(lpi)  ## number of linear predictors
   n.smooth<-length(object$smooth)
+  if (is.numeric(se.fit)) {
+    if (se.fit>=1) se.fit <- TRUE
+    if (se.fit<=0) se.fit <- FALSE
+    if (is.numeric(se.fit)) {
+      alpha <- (1-se.fit)/2
+      z.alpha <- -qnorm(alpha)
+      get.ci <- TRUE;se.fit <- FALSE
+    } else get.ci <- FALSE
+  } else get.ci <- FALSE
+  
   if (type=="lpmatrix") {
     H <- matrix(0,np,nb)
   } else if (type=="terms"||type=="iterms") { 
@@ -3208,15 +3214,11 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     n.pterms <- length(term.labels)
     fit <- array(0,c(np,n.pterms+as.numeric(para.only==0)*n.smooth))
     if (se.fit) se <- fit
+    if (get.ci) ll <- ul <- fit
     ColNames <- term.labels
   } else { ## "response" or "link"
-    ## get number of linear predictors, in case it's more than 1...
-    #if (is.list(object$formula)) {
-    #  nlp <- length(lpi) ## number of linear predictors
-    #} else nlp <- 1 
-   
     fit <- if (nlp>1) matrix(0,np,nlp) else array(0,np)
-    if (se.fit) se <- fit
+    if (se.fit) se <- fit; if (get.ci) ll <- ul <- fit
     fit1 <- NULL ## "response" returned by fam$fv can be non-vector 
   }
   stop <- 0
@@ -3240,12 +3242,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   }
 
   ## check if extended family required intercept to be dropped...
-  #drop.intercept <- FALSE 
-  #if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
-  #  drop.intercept <- TRUE;
-  #  ## make sure intercept explicitly included, so it can be cleanly dropped...
-  #  for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 
-  #} 
   drop.intercept <- object$family$drop.intercept
   if (is.null(drop.intercept)) {
     drop.intercept <- rep(FALSE, length(Terms))
@@ -3316,7 +3312,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       }
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
     } ## end of parametric loop
- ##   if (length(offs)==1) offs <- offs[[1]] ## messes up later handling
      
     if (!is.null(drop.ind)) X <- X[,-drop.ind]
 
@@ -3352,15 +3347,19 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           k <- k + 1 ## counts total number of parametric terms
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
           fit[start:stop,k] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
-          if (se.fit) se[start:stop,k] <-
-          sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE])))
+          se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE])))
+	  if (se.fit) se[start:stop,k] <- se0
+	  if (get.ci) {
+            ll[start:stop,k] <- fit[start:stop,k] - z.alpha*se0
+	    ul[start:stop,k] <- fit[start:stop,k] + z.alpha*se0
+          }
         }
       } ## assign list done
       if (n.smooth&&!para.only) {
-        for (k in 1:n.smooth) # work through the smooth terms 
-        { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
+        for (k in 1:n.smooth) { # work through the smooth terms 
+          first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients[first:last] + Xoff[,k]
-          if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
+          if (se.fit||get.ci) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
             if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
               ## some general families, add parameters after cmX created, which are irrelevant to cmX... 
               if (length(object$cmX) < ncol(X)) object$cmX <- c(object$cmX,rep(0,ncol(X)-length(object$cmX)))
@@ -3369,14 +3368,20 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]
-              se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
-            } else se[start:stop,n.pterms+k] <- ## terms strictly centred
-            sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*%
+	      se0 <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
+            } else se0 <- sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*% ## terms strictly centred
                           object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE])))
-          } ## end if (se.fit)
-        } 
+	  
+	    if (se.fit) se[start:stop,n.pterms+k] <- se0
+	    if (get.ci) {
+              ll[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] - z.alpha*se0
+	      ul[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] + z.alpha*se0
+            }
+          } ## end if (se.fit||get.ci)
+        } ## smooth term loop
         colnames(fit) <- ColNames
         if (se.fit) colnames(se) <- ColNames
+	if (get.ci) colnames(ll) <- colnames(ul) <- ColNames
       } else {
         if (para.only&&is.list(object$pterms)) { 
           ## have to use term labels that match original data, or termplot fails 
@@ -3386,6 +3391,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         }
         colnames(fit) <- term.labels
         if (se.fit) colnames(se) <- term.labels
+	if (get.ci) colnames(ll) <- colnames(ul) <- ColNames
         if (para.only) { 
           # retain only terms of order 1 - this is to make termplot work
           order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order")
@@ -3397,6 +3403,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             se <- se[,order==1,drop=FALSE]
             colnames(se) <- term.labels 
           }
+	  if (get.ci) {
+            ll <- ll[,order==1,drop=FALSE]; ul <- ul[,order==1,drop=FALSE]
+            colnames(ll) <- colnames(ul) <- term.labels 
+          }
         } 
       } 
     } else { ## "link" or "response" case
@@ -3405,7 +3415,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       k <- attr(attr(object$model,"terms"),"offset")
       if (nlp>1) { ## multiple linear predictor case
         if (is.null(fam$predict)||type=="link") {
-          ##pstart <- c(pstart,ncol(X)+1)
+      
           ## get index of smooths with an offset...
           off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
           for (j in 1:nlp) { ## looping over the model formulae
@@ -3414,59 +3424,89 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
               if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
             }
-            if (se.fit) se[start:stop,j] <- 
+            if (se.fit||get.ci) se0 <- 
             sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
-            ## model offset only handled for first predictor... fixed
-            ##if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
+            if (se.fit) se[start:stop,j] <- se0
+	    if (get.ci) {
+              ll[start:stop,j] <- fit[start:stop,j] - z.alpha*se0
+	      ul[start:stop,j] <- fit[start:stop,j] + z.alpha*se0
+            }
             if (type=="response") { ## need to transform lp to response scale
               linfo <- object$family$linfo[[j]] ## link information
               if (se.fit) se[start:stop,j] <- se[start:stop,j]*abs(linfo$mu.eta(fit[start:stop,j]))
+	      if (get.ci) {
+                ll[start:stop,j] <- linfo$linkinv(ll[start:stop,j])
+		ul[start:stop,j] <- linfo$linkinv(ul[start:stop,j])
+              } 
               fit[start:stop,j] <- linfo$linkinv(fit[start:stop,j])
             }
           } ## end of lp loop
         } else { ## response case with own predict code
-          #lpi <- list();pst <- c(pstart,ncol(X)+1)
-          #for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
           attr(X,"lpi") <- lpi  
-          ffv <- fam$predict(fam,se.fit,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
+          ffv <- fam$predict(fam,se.fit||get.ci,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
                              X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
           if (is.matrix(fit)&&!is.matrix(ffv[[1]])) {
             fit <- fit[,1]; if (se.fit) se <- se[,1]
+	    if (get.ci) { ll <- ll[,1];ul <- ul[,1] }
           }
           if (is.matrix(ffv[[1]])&&(!is.matrix(fit)||ncol(ffv[[1]])!=ncol(fit))) {
-            fit <- matrix(0,np,ncol(ffv[[1]])); if (se.fit) se <- fit
+            fit <- matrix(0,np,ncol(ffv[[1]])); if (se.fit) se <- fit; if (get.ci) ul <- ll <- fit
           }
           if (is.matrix(fit)) {
             fit[start:stop,] <- ffv[[1]]
             if (se.fit) se[start:stop,] <- ffv[[2]]
+	    if (get.ci) {
+              ll[start:stop,] <- fit[start:stop,] - z.alpha*ffv[[2]]
+	      ul[start:stop,] <- fit[start:stop,] + z.alpha*ffv[[2]]
+            }
           } else {
             fit[start:stop] <- ffv[[1]]
             if (se.fit) se[start:stop] <- ffv[[2]]
+	     if (get.ci) {
+              ll[start:stop] <- fit[start:stop] - z.alpha*ffv[[2]]
+	      ul[start:stop] <- fit[start:stop] + z.alpha*ffv[[2]]
+            }
           }
         } ## end of own response prediction code
       } else { ## single linear predictor
         offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
         fit[start:stop] <- X%*%object$coefficients + offs
-        if (se.fit) se[start:stop] <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
+	if (se.fit||get.ci) se0 <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
+        if (se.fit) se[start:stop] <- se0
+	if (get.ci) {
+	  ll[start:stop] <- fit[start:stop] - z.alpha * se0; ul[start:stop] <- fit[start:stop] + z.alpha * se0
+	}  
         if (type=="response") { # transform    
           linkinv <- fam$linkinv
           if (is.null(fam$predict)) {
             dmu.deta <- fam$mu.eta  
-            if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
+            if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop]))
+	    if (get.ci) {
+              ll[start:stop] <- linkinv(ll[start:stop]); ul[start:stop] <- linkinv(ul[start:stop])
+            }
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
-            ffv <- fam$predict(fam,se.fit,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
+            ffv <- fam$predict(fam,se.fit||get.ci,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
                                X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
               fit1 <- matrix(0,np,ncol(ffv[[1]]))
               if (se.fit) se1 <- fit1
+	      if (get.ci) ul1 <- ll1 <- fit1
             }
             if (is.null(fit1)) {
               fit[start:stop] <- ffv[[1]]
               if (se.fit) se[start:stop] <- ffv[[2]]
+	      if (get.ci) {
+                ll[start:stop] <- fit[start:stop] - z.alpha*ffv[[2]]
+		ul[start:stop] <- fit[start:stop] + z.alpha*ffv[[2]]
+              }
             } else {
               fit1[start:stop,] <- ffv[[1]]
               if (se.fit) se1[start:stop,] <- ffv[[2]]
+	      if (get.ci) {
+                ll1[start:stop] <- fit1[start:stop] - z.alpha*ffv[[2]]
+		ul1[start:stop] <- fit1[start:stop] + z.alpha*ffv[[2]]
+              }
             }
           }
         }
@@ -3484,8 +3524,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         warning("non-existent terms requested - ignoring")
       else { 
         fit <- fit[,terms,drop=FALSE]
-        if (se.fit) {
-           se <- se[,terms,drop=FALSE]
+        if (se.fit) se <- se[,terms,drop=FALSE]
+	if (get.ci) {
+           ll <- ll[,terms,drop=FALSE]
+	   ul <- ul[,terms,drop=FALSE]
         }
       }
     }
@@ -3495,8 +3537,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       else { 
         exclude <- which(cnames%in%exclude) ## convert to numeric column index
         fit <- fit[,-exclude,drop=FALSE]
-        if (se.fit) {
-          se <- se[,-exclude,drop=FALSE]
+        if (se.fit) se <- se[,-exclude,drop=FALSE]
+	if (get.ci) {
+           ll <- ll[,-exclude,drop=FALSE]
+	   ul <- ul[,-exclude,drop=FALSE]
         }
       }
     }
@@ -3514,9 +3558,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       s.offset <- napredict(na.act,s.offset)
       attr(H,"offset") <- s.offset ## term specific offsets...
     }
-    #if (!is.null(attr(attr(object$model,"terms"),"offset"))) {
-    #  attr(H,"model.offset") <- napredict(na.act,model.offset(mf)) 
-    #}
     if (!is.null(offs)) {
       offs <- offs[1:nlp]
       for (i in 1:nlp) offs[[i]] <- napredict(na.act,offs[[i]])
@@ -3524,25 +3565,29 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     }
     H <- napredict(na.act,H)
     if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.
-      #lpi <- list();pst <- c(pstart,ncol(H)+1)
-      #for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)  
       attr(H,"lpi") <- lpi
     }
   } else { 
-    if (se.fit) { 
+    if (se.fit||get.ci) { 
       if (is.null(nrow(fit))) {
-        names(fit) <- rn
-        names(se) <- rn
-        fit <- napredict(na.act,fit)
-        se <- napredict(na.act,se) 
+        names(fit) <- rn; fit <- napredict(na.act,fit)
+        if (se.fit) { names(se) <- rn; se <- napredict(na.act,se)}
+	if (get.ci) {
+          names(ll) <- rn; ll <- napredict(na.act,ll)
+	  names(ul) <- rn; ul <- napredict(na.act,ul)
+        }
       } else { 
-        rownames(fit)<-rn
-        rownames(se)<-rn
-        fit <- napredict(na.act,fit)
-        se <- napredict(na.act,se)
+        rownames(fit) <- rn; fit <- napredict(na.act,fit)
+        if (se.fit) { rownames(se) <- rn; se <- napredict(na.act,se)}
+	if (get.ci) {
+          rownames(ll) <- rn; ll <- napredict(na.act,ll)
+	  rownames(ul) <- rn; ul <- napredict(na.act,ul)
+        }
       }
-      H<-list(fit=fit,se.fit=se) 
-    } else { 
+      H <- list(fit=fit,se.fit=se)
+      if (se.fit) H$se.fit <- se
+      if (get.ci) { H$ll <- ll; H$Ul <- ul }
+    } else { ## no se
       H <- fit
       if (is.null(nrow(H))) names(H) <- rn else
       rownames(H)<-rn

@@ -178,8 +178,6 @@ generalized additive mixed models. Biometrics 62(4):1025-1036 \doi{10.1111/j.154
 Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
 and Hall/CRC Press. \doi{10.1201/9781315370279}
 
-\url{https://www.maths.ed.ac.uk/~swood34/}
-
 }
 
 \seealso{ \code{\link{s}},\code{\link{gam}},\code{\link{gamm}}, 

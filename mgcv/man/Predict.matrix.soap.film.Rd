@@ -35,11 +35,6 @@ The smooth object will be largely what is returned from
 the contribution from any known boundary conditions on the smooth.
 
 }
-\references{
-
-\url{https://www.maths.ed.ac.uk/~swood34/}
-}
-\author{ Simon N. Wood \email{s.wood@bath.ac.uk}} 
 
 \seealso{\code{\link{smooth.construct.so.smooth.spec}}}
 

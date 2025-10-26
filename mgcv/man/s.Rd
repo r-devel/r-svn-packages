@@ -112,9 +112,6 @@ Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
 and Hall/CRC Press.
 
-
-\url{https://www.maths.ed.ac.uk/~swood34/}
-
 }
 
 \seealso{ \code{\link{te}}, \code{\link{gam}}, \code{\link{gamm}}}

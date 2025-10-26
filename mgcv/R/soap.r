@@ -751,7 +751,7 @@ Predict.matrix.sf.wiggly <- function(object,data)
   X
 }
 
-plot.soap.film <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
+plot.soap.film <- function(x,P=NULL,data=NULL,label="",
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
 		     theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,shade.col="gray80",
@@ -763,7 +763,7 @@ plot.soap.film <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
             if (is.null(xlim)) xlim <- c(x$sd$x0,x$sd$x0+ncol(x$sd$G)*x$sd$dx)
             if (is.null(ylim)) ylim <- c(x$sd$y0,x$sd$y0+nrow(x$sd$G)*x$sd$dy)
        
-            P0 <- plot.mgcv.smooth(x=x,P=P,data=data,label=label,se1.mult=se1.mult,se2.mult=se2.mult,
+            P0 <- plot.mgcv.smooth(x=x,P=P,data=data,label=label,
                      partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
                      theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade.col=shade.col,

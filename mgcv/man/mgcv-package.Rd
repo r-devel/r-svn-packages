@@ -90,6 +90,9 @@ Maintainer: Simon Wood <simon.wood@r-project.org>
 Part funded by EPSRC: EP/K005251/1
 }
 \references{
+
+\url{https://webhomes.maths.ed.ac.uk/~swood34/}
+
 These provide details for the underlying mgcv methods, and fuller 
 references to the large literature on which the methods are based.
 

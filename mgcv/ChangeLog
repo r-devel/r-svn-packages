@@ -33,6 +33,8 @@ present, and reparameterization needs checking (also for bam).
 * plot.gam now allows plotting of derivatives of 1-D smooth terms, to give 
   direct analogue of GLM regression coefficients. 
 
+* New scheme 2 for default 1-D plots. 
+
 * bam now returns approx REML/ML for the model itself, rather than for the 
   working linearized model (other smoothness criteria still reported for 
   working model only). 

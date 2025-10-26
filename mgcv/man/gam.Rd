@@ -354,7 +354,7 @@ Wood (2001) mgcv:GAMs and Generalized Ridge Regression for R. R News 1(2):20-25
 Wood and Augustin (2002) GAMs with integrated model selection using penalized regression splines and applications 
 to environmental modelling. Ecological Modelling 157:157-177
 
-\url{https://www.maths.ed.ac.uk/~swood34/}
+\url{https://webhomes.maths.ed.ac.uk/~swood34/}
 }
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
 
@@ -398,6 +398,12 @@ b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat)
 summary(b)
 plot(b,pages=1,residuals=TRUE)  ## show partial residuals
 plot(b,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+
+## plot derivaives of smooths w.r.t. covariates - the
+## direct analogue of linear model regression coefficients
+## - also selecting a more colourful plotting scheme...
+plot(b,pages=1,scale=0,deriv=TRUE,scheme=2)
+
 ## run some basic model checks, including checking
 ## smoothing basis dimensions...
 gam.check(b)
