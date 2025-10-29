@@ -3347,11 +3347,19 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           k <- k + 1 ## counts total number of parametric terms
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
           fit[start:stop,k] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
-          se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE])))
+          se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
 	  if (se.fit) se[start:stop,k] <- se0
 	  if (get.ci) {
-            ll[start:stop,k] <- fit[start:stop,k] - z.alpha*se0
-	    ul[start:stop,k] <- fit[start:stop,k] + z.alpha*se0
+	    if (!is.null(object$bs)) {
+              ff <- X[,ii,drop=FALSE]%*%object$bs[ii,] ## BS rep functions
+	      delta <- if (is.null(attr(object$bs,"svar.only"))||is.null(object$Ve)) 0 else mean(  ## bias correction
+              se0 - sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Ve[ii,ii,drop=FALSE])*X[,ii,drop=FALSE]))))
+              ll[start:stop,k] <- apply(ff,1,quantile,probs=alpha) - delta*z.alpha ## lower sampling + bias limit
+	      ul[start:stop,k] <- apply(ff,1,quantile,probs=1-alpha) + delta*z.alpha ## upper samploing + bias limit
+            } else {
+              ll[start:stop,k] <- fit[start:stop,k] - z.alpha*se0
+	      ul[start:stop,k] <- fit[start:stop,k] + z.alpha*se0
+	    }  
           }
         }
       } ## assign list done
@@ -3360,7 +3368,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients[first:last] + Xoff[,k]
           if (se.fit||get.ci) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
+            if (type=="iterms"&& !is.null(attr(object$smooth[[k]],"nCons")) && attr(object$smooth[[k]],"nCons")>0) {
+	      ## termwise se to "carry the intercept"
               ## some general families, add parameters after cmX created, which are irrelevant to cmX... 
               if (length(object$cmX) < ncol(X)) object$cmX <- c(object$cmX,rep(0,ncol(X)-length(object$cmX)))
               if (!is.null(iterms.type)&&iterms.type==2) object$cmX[-(1:object$nsdf)] <- 0 ## variability of fixed effects mean only
@@ -3374,8 +3383,17 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 	  
 	    if (se.fit) se[start:stop,n.pterms+k] <- se0
 	    if (get.ci) {
-              ll[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] - z.alpha*se0
-	      ul[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] + z.alpha*se0
+	      if (!is.null(object$bs)) {
+	        ii <- first:last
+                ff <- X[,ii,drop=FALSE]%*%object$bs[ii,] ## BS rep functions
+	        delta <- if (is.null(attr(object$bs,"svar.only"))||is.null(object$Ve)) 0 else mean(  ## bias correction
+                se0 - sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Ve[ii,ii,drop=FALSE])*X[,ii,drop=FALSE]))))
+                ll[start:stop,n.pterms+k] <- apply(ff,1,quantile,probs=alpha) - delta*z.alpha ## lower sampling + bias limit
+	        ul[start:stop,n.pterms+k] <- apply(ff,1,quantile,probs=1-alpha) + delta*z.alpha ## upper samploing + bias limit
+              } else {
+                ll[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] - z.alpha*se0
+	        ul[start:stop,n.pterms+k] <- fit[start:stop,n.pterms+k] + z.alpha*se0
+	      }	
             }
           } ## end if (se.fit||get.ci)
         } ## smooth term loop
@@ -3428,8 +3446,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
             if (se.fit) se[start:stop,j] <- se0
 	    if (get.ci) {
-              ll[start:stop,j] <- fit[start:stop,j] - z.alpha*se0
-	      ul[start:stop,j] <- fit[start:stop,j] + z.alpha*se0
+              if (!is.null(object$bs)) {
+                ff <- X[,ind,drop=FALSE]%*%object$bs[ind,] ## BS rep functions
+	        delta <- if (is.null(attr(object$bs,"svar.only"))||is.null(object$Ve)) 0 else mean(  ## bias correction
+                se0 - sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Ve[ind,ind,drop=FALSE])*X[,ind,drop=FALSE]))))
+                ll[start:stop,j] <- apply(ff,1,quantile,probs=alpha) - delta*z.alpha ## lower sampling + bias limit
+	        ul[start:stop,j] <- apply(ff,1,quantile,probs=1-alpha) + delta*z.alpha ## upper samploing + bias limit
+              } else {
+                ll[start:stop,j] <- fit[start:stop,j] - z.alpha*se0
+	        ul[start:stop,j] <- fit[start:stop,j] + z.alpha*se0
+	      }	
             }
             if (type=="response") { ## need to transform lp to response scale
               linfo <- object$family$linfo[[j]] ## link information
@@ -3442,6 +3468,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             }
           } ## end of lp loop
         } else { ## response case with own predict code
+	  if (!is.null(object$bs)&&get.ci) message("note: bs not used for confidence limits")
           attr(X,"lpi") <- lpi  
           ffv <- fam$predict(fam,se.fit||get.ci,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
                              X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
@@ -3474,8 +3501,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 	if (se.fit||get.ci) se0 <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
         if (se.fit) se[start:stop] <- se0
 	if (get.ci) {
-	  ll[start:stop] <- fit[start:stop] - z.alpha * se0; ul[start:stop] <- fit[start:stop] + z.alpha * se0
-	}  
+	  if (!is.null(object$bs)) {
+             ff <- X%*%object$bs + offs ## BS rep functions
+	     delta <- if (is.null(attr(object$bs,"svar.only"))||is.null(object$Ve)) 0 else mean(  ## bias correction
+                se0 - sqrt(pmax(0,rowSums((X%*%object$Ve)*X))))
+             ll[start:stop] <- apply(ff,1,quantile,probs=alpha) - delta*z.alpha ## lower sampling + bias limit
+	     ul[start:stop] <- apply(ff,1,quantile,probs=1-alpha) + delta*z.alpha ## upper samploing + bias limit
+          } else {
+	    ll[start:stop] <- fit[start:stop] - z.alpha * se0; ul[start:stop] <- fit[start:stop] + z.alpha * se0
+          }
+        }  
         if (type=="response") { # transform    
           linkinv <- fam$linkinv
           if (is.null(fam$predict)) {
@@ -3486,6 +3521,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             }
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
+	    if (!is.null(object$bs)&&get.ci) message("note: bs not used for confidence limits")
             ffv <- fam$predict(fam,se.fit||get.ci,y= if (is.matrix(response)) response[start:stop,] else response[start:stop],
                                X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
@@ -3584,9 +3620,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 	  rownames(ul) <- rn; ul <- napredict(na.act,ul)
         }
       }
-      H <- list(fit=fit,se.fit=se)
+      H <- list(fit=fit)
       if (se.fit) H$se.fit <- se
-      if (get.ci) { H$ll <- ll; H$Ul <- ul }
+      if (get.ci) { H$ll <- ll; H$ul <- ul }
     } else { ## no se
       H <- fit
       if (is.null(nrow(H))) names(H) <- rn else

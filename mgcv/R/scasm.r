@@ -236,31 +236,6 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
 } ## scasm
 
 
-smooth.construct.sc.smooth.spec0 <- function(object,data,knots) {
-## basic shape constrained smooth based on bs basis...
-  xt <- object$xt
-  sm <- smooth.construct.bs.smooth.spec(object,data,knots)
-  if (is.null(xt)) return(sm)
-  p <- ncol(sm$X)
-  if (is.list(xt)) { 
-    if (is.character(xt[1]))  con <- xt[[1]] else con <- NULL
-  } else con <- xt
-  Ain <- matrix(0,0,p)
-  Ip <- diag(1,nrow = p)
-  if ("+" %in% con) {
-    Ain <- Ip
-    sm$C <- matrix(0,0,p) ## never makes any sense to use positive constraint unless centering not needed 
-  }  
-  if ("m+" %in% con) Ain <- rbind(Ain,diff(Ip)) else
-        if ("m-" %in% con) Ain <- rbind(Ain,-diff(Ip))
-  if ("c+" %in% con) Ain <- rbind(Ain,diff(Ip,diff=2)) else
-        if ("c-" %in% con) Ain <- rbind(Ain,-diff(Ip,diff=2))	
-  sm$Ain <- Ain; sm$bin <- rep(0,nrow(Ain))
-  sm$bin0 <- rep(0.01,nrow(Ain)) ## threshold for initializing to ensure > not =
-  sm
-} ## smooth.construct.sc.smooth.spec
-
-
 smooth.construct.sc.smooth.spec <- function(object,data,knots) {
 ## basic shape constrained smooth based on bs basis, using the
 ## relationship between difference constraints on B-spline basis
@@ -1302,9 +1277,12 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,bs=0,...) {
      if (inherits(G$family,"extended.family")) G$family$ls(fit$y,G$w,G$family$getTheta(),scale)$ls else
                                                G$family$ls(fit$y,fit$w,fit$n,scale)[1]
   object$laml <- laml
-  if (bs) object$bs <- if (inherits(G$family,"extended.family"))
+  if (bs) {
+    object$bs <- if (inherits(G$family,"extended.family"))
                scasm.newton(G,log(G$sp),start=start,control=control,scale.known=scale.known,bs=bs)$bs else
                scasm.pirls(G,log(G$sp),start=start,control=control,eps=eps,bs=bs)$bs
+    attr(object$bs,"svar.only") <- TRUE ## signal that this covers sampling var, not smoothing bias.
+  }	       
   object$Vp <- z$Vb*scale; object$Vc<- b1%*%Vrho%*%t(b1) + object$Vp ## no active cons
   object$Ve = z$Vb%*%z$H%*%z$Vb*scale; attr(object$Vp,"zob") <- zob; object$St <- z$St
   object 

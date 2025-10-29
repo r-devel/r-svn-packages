@@ -1344,8 +1344,10 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
 #    if (is.numeric(se)) se2.mult <- se1.mult <- se else { se1.mult <- 2;se2.mult <- 1} 
 #    if (se1.mult<0) se1.mult<-0;if (se2.mult < 0) se2.mult <- 0
 #  } else se1.mult <- se2.mult <-1
-  if (is.numeric(se)) if (any(se>=1)) se <- TRUE else if (any(se<=0)) se <- FALSE
-  
+  if (is.numeric(se)) {
+    se <- sort(se,decreasing = TRUE)
+    if (any(se>=1)) se <- TRUE else if (any(se<=0)) se <- FALSE
+  }
 
   if (se[1] && x$Vp[1,1] < 0) ## check that variances are actually available
   { se <- FALSE
@@ -1390,7 +1392,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se[1] && P$se && is.null(x$bs)) { ## get standard errors for fit
         ## test whether mean variability to be added to variability (only for centred terms)
-        if (seWithMean && attr(x$smooth[[i]],"nCons")>0) {
+        if (seWithMean && !is.null( attr(x$smooth[[i]],"nCons")) && attr(x$smooth[[i]],"nCons")>0) {
           if (length(x$cmX) < ncol(x$Vp)) x$cmX <- c(x$cmX,rep(0,ncol(x$Vp)-length(x$cmX)))
           if (seWithMean==2) x$cmX[-(1:x$nsdf)] <- 0 ## variability of fixed effects mean only
           X1 <- matrix(x$cmX,nrow(P$X),ncol(x$Vp),byrow=TRUE)
@@ -1403,8 +1405,10 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
             for (q in 1:length(lpi)) if (any(first:last%in%lpi[[q]])) ii <- c(ii,lpi[[q]])
             se.fit <- sqrt(pmax(0,rowSums(as(X1[,ii]%*%x$Vp[ii,ii],"matrix")*X1[,ii])))
           }
-        } else se.fit <- ## se in centred (or anyway unconstained) space only
-        sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
+	} else { ## se in centred (or anyway unconstained) space only
+	  if (seWithMean && is.null( attr(x$smooth[[i]],"nCons"))) warning("seWithMean unavailable")
+	  se.fit <- sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
+        }
         if (!is.null(P$exclude)) se.fit[P$exclude] <- NA
       } ## standard errors for fit completed
       if (partial.resids) { P$p.resid <- fv.terms[,length(order)+i] + w.resid }
@@ -1412,7 +1416,8 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
         se.mult <- -qnorm((1-P$clev)/2)
 	if (!is.null(x$bs))  {
 	  ff <- P$X%*%x$bs[first:last,]
-	  delta <- mean(sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))-
+	  delta <- if (is.null(attr(x$bs,"svar.only"))) 0 else
+	           mean(sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))-
 	           sqrt(pmax(0,rowSums(as(P$X%*%x$Ve[first:last,first:last,drop=FALSE],"matrix")*P$X))))
 	}
 	P$ll <- P$ul <- matrix(0,length(P$fit),length(P$clev))

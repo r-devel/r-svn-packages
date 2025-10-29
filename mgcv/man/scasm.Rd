@@ -153,11 +153,11 @@ x <- c(rnorm(n*.8,.4,.13),runif(n*.2))
 y <- rep(1e-10,n)
 xp=(1:n-.5)/n
 options(warn=-1)
-## Use an exponential distribution, inverse link and zero pseudoresponse data to
-## get correct likelihood. Use a positive smooth and impose integration to 1
-## via a general linear 'pc' constraint...
-b <- scasm(y~s(x,bs="sc",xt="+",k=15,pc=list(list(x=matrix(xp,1,n),matrix(1/n,1,n),1)))-1,
-      family=Gamma,scale=1,knots=list(x=c(0,1)))
+## Use an exponential distribution, inverse link and zero pseudoresponse
+## data to get correct likelihood. Use a positive smooth and impose
+## integration to 1 via a general linear 'pc' constraint...
+b <- scasm(y ~ s(x,bs="sc",xt="+",k=15,pc=list(list(x=matrix(xp,1,n),
+      matrix(1/n,1,n),1)))-1, family=Gamma,scale=1,knots=list(x=c(0,1)))
 options(warn=0)
 plot(b,scheme=2)
 lines(xp,.2+dnorm(xp,.4,.13)*.8,col=2)
@@ -180,18 +180,44 @@ f <- fs(x0,k=0) + 2*fs(x1,k=3) + fs(x2,k=2) + 10*fs(x3,k=4)
 mu <- exp((f-1)/4)
 y <- rpois(n,mu)
 k <- 10
-b0 <- gam(y~s(x0,bs="bs",k=k)+s(x1,bs="bs",k=k)+s(x2,bs="bs",k=k)+s(x3,bs="bs",k=k),
-          method="REML",family=poisson)
+b0 <- gam(y~s(x0,bs="bs",k=k)+s(x1,bs="bs",k=k)+s(x2,bs="bs",k=k)+
+          s(x3,bs="bs",k=k),method="REML",family=poisson)
 	  
-b1 <- scasm(y~s(x0,bs="bs",k=k)+s(x1,bs="bs",k=k)+s(x2,bs="bs",k=k)+s(x3,bs="bs",k=k),
-            family=poisson)
+b1 <- scasm(y~s(x0,bs="bs",k=k)+s(x1,bs="bs",k=k)+s(x2,bs="bs",k=k)+
+            s(x3,bs="bs",k=k),family=poisson)
 b0;b1 ## note similarity when no constraints	    
 
 plot(b1,pages=1,scheme=2) ## second term not monotonic, so impose this... 
 
-b2 <- scasm(y~s(x0,bs="bs",k=k)+s(x1,bs="sc",xt="m+",k=k)+s(x2,bs="bs",k=k)+s(x3,bs="bs",k=k),
-            family=poisson)
+b2 <- scasm(y~s(x0,bs="bs",k=k)+s(x1,bs="sc",xt="m+",k=k)+
+            s(x2,bs="bs",k=k)+s(x3,bs="bs",k=k),family=poisson)
 plot(b2,pages=1,scheme=2)
+
+## constraint respecting bootstrap CIs...
+
+b3 <- scasm(y~s(x0,bs="bs",k=k)+s(x1,bs="sc",xt="m+",k=k)+
+            s(x2,bs="bs",k=k)+s(x3,bs="bs",k=k),family=poisson,bs=200)
+plot(b3,pages=1,scheme=2)
+fv <- predict(b3,se=TRUE)
+fv1 <- predict(b3,se=.95)
+plot(fv$se*3.92,fv1$ul-fv1$ll) ## compare CI widths
+abline(0,1,col=2)
+
+## gamma distribution location-scale example
+
+## simulate data...
+x0 <- runif(n);x1 <- runif(n);x2 <- runif(n);x3 <- runif(n);
+fac <- factor(sample(1:40,n,replace=TRUE))
+f <- fs(x0,k=0) + 2*fs(x1,k=3) + fs(x2,k=2) #+ 10*fs(x3,k=4)
+mu <- exp((fs(x0,k=0)+ fs(x2,k=2))/5)
+th <- exp((fs(x1,k=1)+ 10*fs(x3,k=4))/2-2)
+y <- rgamma(n,shape=1/th,scale=mu*th)
+
+## fit model
+b <- scasm(list(y~s(x0,bs="sc",xt="c-")+s(x2),~s(x1,bs="sc",xt="m+")
+       +s(x3)),family=gammals,bs=200)
+plot(b,scheme=2,pages=1,scale=0) ## bootstrap CIs
+b$bs <- NULL; plot(b,scheme=2,pages=1,scale=0) ## constraint free CI
 
 ## A survival example...
 
@@ -211,19 +237,19 @@ b0 <- gam(logt~s(age,by=sex)+sex+s(nodes)+perfor+rx+obstruct+adhere,
 plot(b0,pages=1)
 
 ## nodes effect should be increasing...	  
-b <- scasm(logt~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+obstruct+adhere,
-         family=cnorm(),data=col1)
+b <- scasm(logt~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+
+           obstruct+adhere,family=cnorm(),data=col1)
 plot(b,pages=1)
 b 
 
 ## same with logistic distribution...
-b <- scasm(logt~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+obstruct+adhere,
-         family=clog(),data=col1)
+b <- scasm(logt~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+
+           obstruct+adhere,family=clog(),data=col1)
 plot(b,pages=1)
 
 ## and with Cox PH model... 
-b <- scasm(time~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+obstruct+adhere,
-         family=cox.ph(),data=col1,weights=status)
+b <- scasm(time~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+
+           obstruct+adhere,family=cox.ph(),data=col1,weights=status)
 summary(b) 
 plot(b,pages=1) ## plot effects
 

@@ -21,8 +21,6 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
-* efsud Vb every time? Fix bam NCV variance comp, to be as gam.
-
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via
