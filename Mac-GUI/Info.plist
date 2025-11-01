@@ -133,8 +133,8 @@
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>R</string>
-	<key>CFBundleIconName</key>
-	<string>RLogo</string>
+	<key>CFBundleIconFile</key>
+	<string>RLogo.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
