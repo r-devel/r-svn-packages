@@ -137,7 +137,7 @@ by the R core (see \code{\link{glm.fit}} for further credits).
 }
 
 
-\seealso{\code{\link{gam.fit}},  \code{\link{gam}}, \code{\link{magic}}}
+\seealso{\code{\link{gam}}, \code{\link{magic}}}
 
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

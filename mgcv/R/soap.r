@@ -95,14 +95,14 @@ bnd2C <- function(bnd) {
   bnd
 } ## end bnd2C
 
-inSide <- function(bnd,x,y)
+inSide <- function(bnd,x,y,xname=NULL,yname=NULL) {
 ## tests whether each point x[i],y[i] is inside the boundary defined
 ## by bnd$x, bnd$y, or by multiple boundary loops in bnd[[1]]$x,
 ## bnd[[1]]$y, bnd[[2]]$x, ... etc. 
 ## names in bnd must match those of x and y, but do not need to be "x" and "y"
-{ ## match the names up first...
-  xname <- deparse(substitute(x))
-  yname <- deparse(substitute(y))
+  ## match the names up first...
+  if (is.null(xname)) xname <- deparse(substitute(x))
+  if (is.null(yname)) yname <- deparse(substitute(y))
   bnd.name <- names(bnd)
   if (is.null(bnd.name)) for (i in 1:length(bnd)) { 
     bnd.name <- names(bnd[[i]])

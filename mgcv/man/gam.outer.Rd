@@ -31,8 +31,7 @@ gam.outer(lsp,fscale,family,control,method,optimizer,
 
 \item{family}{the model family.}
 
-\item{control}{control argument to pass to \code{\link{gam.fit}} if pure
-finite differencing is being used.}
+\item{control}{control argument to pass to \code{\link{gam.fit3}} etc.}
 
 \item{method}{method argument to \code{\link{gam}} defining the smoothness criterion to use (but depending on whether or not scale known).}
 

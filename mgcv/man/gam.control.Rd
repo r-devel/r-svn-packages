@@ -35,7 +35,7 @@ In such circumstances it is possible to apply a ridge regression penalty to the 
 }
 
 \item{epsilon}{This is used for judging conversion of the GLM IRLS loop in
-\code{\link{gam.fit}} or \code{\link{gam.fit3}}.}
+\code{\link{gam.fit3}}.}
 
 \item{maxit}{Maximum number of IRLS iterations to perform.}
 
@@ -138,7 +138,7 @@ generalized additive models. J. Amer. Statist. Ass.99:673-686.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{\code{\link{gam}}, \code{\link{gam.fit}}, \code{\link{glm.control}} }
+\seealso{\code{\link{gam}}, \code{\link{glm.control}} }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..
 

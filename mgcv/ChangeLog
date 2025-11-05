@@ -5,9 +5,6 @@ Liable to change in future release:
 - method="GCV.Cp" as default in gam. Default will 
   change to "REML". (1.8-24, June 2018) 
 
-Currently deprecated and liable to be removed:
-- gam.fit and full.score (1.9-0)
-
 Issues: 
 
 * openblas 0.3.x x<7 is not thread safe if itself compiled for single thread 
@@ -61,6 +58,13 @@ ignored. Thanks to Brian Montgomery for reporting the problem.
   straightforward.	
 
 * gumbls link change and derivative correction.
+
+* Added option to inSide to allow nmes for x and y to be provided.
+
+* gam.vcomp modified to have a print method, rather than print itself - thanks
+ to Gavin Simpson. 
+
+* long deprecated functions gam.fit and full.score removed. 
 
 1.9-3
 

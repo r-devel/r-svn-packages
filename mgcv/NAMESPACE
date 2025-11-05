@@ -5,12 +5,12 @@ export("%.%",anova.gam, bam, bam.update,bandchol, bcg, betar,
        choldrop,cholup,cpois,clog,cnorm,cox.ph,concurvity, 
        cSplineDes,dDeta,dmvn,d.mvt,dpnorm,dppois,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,feasible,FFdes,
-       formXtViX, full.score, formula.gam,fixDependence,fix.family.link,
+       formXtViX, formula.gam,fixDependence,fix.family.link,
        fix.family.var, fix.family.ls, fix.family.qf,fix.family.rd,   
        fs.test,fs.boundary,gam, gam2derivative, 
        gam2objective,
        gamm, gam.check, gam.control,gam.fit3,
-       gam.fit,gam.fit5.post.proc,
+       gam.fit5.post.proc,
        gamlss.etamu,gamlss.gH,gammals,gam.mh,
        gam.outer,gam.reparam, gam.vcomp, gamSim , 
        gaulss,gam.side,get.var,gevlss,ginla,gfam,gumbls,
@@ -129,10 +129,12 @@ S3method(predict, jam)
 S3method(print, anova.gam)
 S3method(print, gam)
 S3method(print, jam)
+S3method(print, gam.vcomp)
 S3method(print, summary.gam)
 S3method(residuals, gam)
 S3method(summary, gam)
 S3method(vcov,gam)
+S3method(print, anova.gam)
 S3method(vcov,jam)
 
 S3method(coef,pdTens)
