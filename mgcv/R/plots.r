@@ -1432,7 +1432,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
         }
 	## for back compatibility...
 	P$plot.ci <- P$se
-        P$se.mult <- se.mult;P$se <- se.fit*P$se.mult  # Note multiplier
+        if (is.null(x$bs)) { P$se.mult <- se.mult;P$se <- se.fit*P$se.mult[1]}  # Note multiplier
       } else P$plot.ci <- FALSE
       P$X <- NULL
       P$plot.me <- TRUE
