@@ -1040,7 +1040,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",
              main=main,exclude=exclude))
     } ## end of 3/4 D case
   } else { ## produce plot
-    if (P$se) { ## produce CI's
+    if (P$plot.ci) { ## produce CI's
       if (x$dim==1) { 
         #ul <- P$fit + P$se ## upper CL
         #ll <- P$fit - P$se ## lower CL
@@ -1413,15 +1413,15 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
       } ## standard errors for fit completed
       if (partial.resids) { P$p.resid <- fv.terms[,length(order)+i] + w.resid }
       if (se[1] && P$se) {
-        se.mult <- -qnorm((1-P$clev)/2)
+        se.mult <- if (is.null(P$clev)) P$se.mult else -qnorm((1-P$clev)/2)
 	if (!is.null(x$bs))  {
 	  ff <- P$X%*%x$bs[first:last,]
 	  delta <- if (is.null(attr(x$bs,"svar.only"))) 0 else
 	           mean(sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))-
 	           sqrt(pmax(0,rowSums(as(P$X%*%x$Ve[first:last,first:last,drop=FALSE],"matrix")*P$X))))
 	}
-	P$ll <- P$ul <- matrix(0,length(P$fit),length(P$clev))
-	for (j in 1:length(P$clev)) if (is.null(x$bs)) {
+	P$ll <- P$ul <- matrix(0,length(P$fit),length(se.mult))
+	for (j in 1:length(se.mult)) if (is.null(x$bs)) {
            P$ll[,j] <- P$fit - se.fit * se.mult[j]
 	   P$ul[,j] <- P$fit + se.fit * se.mult[j]
         } else {
@@ -1430,8 +1430,10 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
 	   P$ul[,j] <- apply(ff,1,quantile,probs=1-alpha) + delta*se.mult[j]
 	   if  (!is.null(P$exclude)) P$ll[P$exclude,j] <- P$ul[P$exclude,j] <- NA
         }
-        #P$se <- se.fit*P$se.mult  # Note multiplier
-      }
+	## for back compatibility...
+	P$plot.ci <- P$se
+        P$se.mult <- se.mult;P$se <- se.fit*P$se.mult  # Note multiplier
+      } else P$plot.ci <- FALSE
       P$X <- NULL
       P$plot.me <- TRUE
       pd[[i]] <- P;rm(P) 

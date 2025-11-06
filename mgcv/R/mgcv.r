@@ -1405,6 +1405,7 @@ gam.setup <- function(formula,pterms,
       warning("NA's in supplied smoothing parameter vector - ignoring.")
       ok <- FALSE
     }
+    if (length(sp)==0) ok <- FALSE
   } else ok <- FALSE
   G$sp <- if (ok) sp[1:ncol(L)] else rep(-1,ncol(L))
   

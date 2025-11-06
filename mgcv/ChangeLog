@@ -5,6 +5,9 @@ Liable to change in future release:
 - method="GCV.Cp" as default in gam. Default will 
   change to "REML". (1.8-24, June 2018) 
 
+Currently deprecated and liable to be removed:
+- gam.fit (1.9-0, July 2023)
+
 Issues: 
 
 * openblas 0.3.x x<7 is not thread safe if itself compiled for single thread 
@@ -26,7 +29,11 @@ present, and reparameterization needs checking (also for bam).
 * Censored Box-Cox Gaussian, bcg, family introduced. 
 
 * plot.gam now allows plotting of derivatives of 1-D smooth terms, to give 
-  direct analogue of GLM regression coefficients. 
+  direct analogue of GLM regression coefficients, also some re-arrangement to
+	allow use of bootstrap samples for uncertainty bands.
+
+* predict.gam now allows a 'bs' field of simulated replicate parameter vectors,
+  and direct computation of CIs at different levels. 	
 
 * New scheme 2 for default 1-D plots. 
 
@@ -64,7 +71,7 @@ ignored. Thanks to Brian Montgomery for reporting the problem.
 * gam.vcomp modified to have a print method, rather than print itself - thanks
  to Gavin Simpson. 
 
-* long deprecated functions gam.fit and full.score removed. 
+* long deprecated function full.score removed. 
 
 1.9-3
 
