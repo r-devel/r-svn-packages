@@ -21,6 +21,11 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
+1.9-5
+
+* Fix to general constraint documentation for scasm, and handling of general 
+  constraints involving repeated values.
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via

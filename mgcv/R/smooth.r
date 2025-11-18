@@ -3661,12 +3661,14 @@ smooth.construct3 <- function(object,data,knots) {
 	  if (is.matrix(Wb[[1]])) {
 	  W <- Wb[[1]]; d <- Wb[[2]]
 	  } else { W <- Wb[[2]]; d <- Wb[[1]] }
-	  X <- Predict.matrix3(object,a)$X
+	  px <- Predict.matrix3(object,a)
 	  ii <- 1:nrow(W)
-	  C <- X[ii,,drop=FALSE] * W[,1]
+	  C <- if (is.null(px$ind)) px$X[ii,,drop=FALSE] * W[,1] else
+	       px$X[px$ind[ii],,drop=FALSE] * W[,1]
 	  if (ncol(W)>1) for (i in 2:ncol(W)) {
 	    ii <- ii + nrow(W)
-	    C <- C + X[ii,,drop=FALSE] * W[,i] 
+	    C <- C + if (is.null(px$ind))  px$X[ii,,drop=FALSE] * W[,i] else
+	             px$X[px$ind[ii],,drop=FALSE] * W[,i] 
 	  }
 	} else C <- d <- NULL
 	if (j==2) { object$Ain <- C; object$bin <- d }
