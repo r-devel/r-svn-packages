@@ -26,6 +26,9 @@ present, and reparameterization needs checking (also for bam).
 * Fix to general constraint documentation for scasm, and handling of general 
   constraints involving repeated values.
 
+* Fix to NCV handling for extended families when number of points to drop is 
+  not number of data. Thanks to Nicole Augustin for reporting.
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via

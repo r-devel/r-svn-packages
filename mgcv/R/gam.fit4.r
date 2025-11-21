@@ -685,7 +685,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          }
        }
      } else { ## exact NCV
-       dev.cv <- dev.resids(y, mu.cv, weights,theta)
+       dev.cv <- dev.resids(y[nei$d], mu.cv, weights[nei$d],theta)
        NCV <- sum(dev.cv)/(2*scale) - ls0$ls
        DEV <- sum(dev0)/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV

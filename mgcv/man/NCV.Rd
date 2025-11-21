@@ -92,6 +92,33 @@ f <- f - mean(f)
 par(mfrow=c(1,2))
 plot(b0,rug=FALSE,scheme=1);lines(x,f,col=2)
 plot(b1,rug=FALSE,scheme=1);lines(x,f,col=2)
+
+#####################################
+## example using randomly thinned nei
+#####################################
+
+sample.nei <- function(ii,a,ma) {
+## thin down neighbourhood structures, retaining folds in ii
+  m1 <- ma[ii] ## ... neighbourhood ends and starts...
+  m0 <- 1 + if (ii[1]==1) c(0,ma[ii[-1]-1]) else ma[ii-1]
+  lena <- m1-m0+1
+  a <- a[sequence(lena,m0)]
+  ma <- cumsum(lena)
+  list(a=a,ma=ma)
+} 
+ii <- sort(sample(n,200))
+ne1 <- nei
+ne1[c("a","ma")] <- sample.nei(ii,nei$a,nei$ma)
+ne1[c("d","md")] <- sample.nei(ii,nei$d,nei$md)
+b3 <- gam(y~s(x,k=40),method="NCV",nei=ne1,control=gc)
+plot(b0,rug=FALSE,scheme=1);lines(x,f,col=2)
+## note CI's not corrected for correlation in this case
+plot(b3,rug=FALSE,scheme=1);lines(x,f,col=2) 
+
+z <- rpois(n,exp(y+1)) ## other families
+b4 <- gam(z~s(x,k=40),family=poisson,control=gc)
+b5 <- gam(z~s(x,k=40),method="NCV",family=tw,nei=ne1,control=gc)
+
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 
