@@ -3212,7 +3212,9 @@ gumbls <- function(link=list("identity","log"),b=-7) {
 	  startji[!is.finite(startji)] <- 0
 	  start[jj[[1]]] <- startji
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
-	  lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(eta1))^2)/2 - .25)
+	  ymu2 <- (y-family$linfo[[1]]$linkinv(eta1))^2
+	  ymu2 <- pmax(ymu2,0.05*mean(ymu2)) ## take care not to allow this to be too tiny
+	  lres1 <- family$linfo[[2]]$linkfun(log(ymu2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
 	  #lres1 <- family$linfo[[2]]$linkfun(lres1)
 	  R1 <- suppressWarnings(mchol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,
@@ -3243,7 +3245,9 @@ gumbls <- function(link=list("identity","log"),b=-7) {
             startji[!is.finite(startji)] <- 0       
           } else startji <- pen.reg(x1,e1,yt1)
           start[jj[[1]]] <- startji
-          lres1 <- family$linfo[[2]]$linkfun(log((y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]]))^2)/2 - .25)
+	  ymu2 <- (y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]]))^2
+	  ymu2 <- pmax(ymu2,0.05*mean(ymu2)) ## take care not to allow this to be too tiny
+          lres1 <- family$linfo[[2]]$linkfun(log(ymu2)/2 - .25)
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
 	  #lres1 <- family$linfo[[2]]$linkfun(lres1)
           x2 <-  x[,jj[[2]],drop=FALSE];e2 <- E[,jj[[2]],drop=FALSE]

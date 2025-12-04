@@ -29,6 +29,8 @@ present, and reparameterization needs checking (also for bam).
 * Fix to NCV handling for extended families when number of points to drop is 
   not number of data. Thanks to Nicole Augustin for reporting.
 
+* gumbls initialization stabilized a little.
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via
