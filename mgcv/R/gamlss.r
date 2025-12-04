@@ -618,8 +618,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   nbs <- if (deriv<0) abs(deriv)-1 else 0 ## number of bootstrap reps
   if (nbs) lbs <- matrix(0,p,nbs) ## storage for BS reps
   for (r in 1:max(1,nbs)) {
-    #wbs <- if (nbs)  tabulate(sample(nobs,replace=TRUE),nobs) else rep(1,nobs) ## bootstrap weights
-    wbs <- if (nbs)  sample(c(-1,1),nobs,replace=TRUE) else rep(1,nobs) ## bootstrap weights EXPERIMENTAL
+    wbs <- if (nbs)  tabulate(sample(n,replace=TRUE),nobs) else rep(1,n) ## bootstrap weights
+    #wbs <- if (nbs)  sample(c(-1,1),n,replace=TRUE) else rep(1,n) ## bootstrap weights EXPERIMENTAL
     if (is.null(l1map)) { ## all cols of l1 supplied
       for (i in 1:K) { ## first derivative loop
         lb[jj[[i]]] <- lb[jj[[i]]] + if (discrete) XWyd(X$Xd,rep(1,n),wbs*l1[,i],X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[i]]) else
