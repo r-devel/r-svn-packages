@@ -1751,13 +1751,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       n <- length(nei$d)
       nei1 <- if (loocv) nei else list(d=1:n,md=1:n,ma=1:n,a=1:n) ## set up for LOO CV or requested straight jackknife
       nei1$jackknife <- 10 ## signal that cross-validated beta perturbations are required
-    } else nei1 <- nei ## called with another criteria
+    } else nei1 <- nei ## called with another criterion
     b <- gam.fit3(x=G$X, y=G$y, sp=lsp,Eb=G$Eb,UrS=G$UrS,
                  offset = G$offset,U1=G$U1,Mp=G$Mp,family = family,weights=G$w,deriv=0,
                  control=control,gamma=nei$gamma, 
 		 scale=scale,printWarn=FALSE,start=start,scoreType="NCV",null.coef=G$null.coef,
                  pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,nei=nei1,...)
-    object$NCV <- as.numeric(b$NCV)
+    object$NCV <- as.numeric(b$NCV) ## This is LOOCV when main criterion was NCV!
     if (nei$jackknife) { ## need to compute direct cov matrix estimate
       dd <- attr(b$NCV,"dd") ## leave-one-out parameter perturbations
       if (!loocv) { ## need to account for assumed independence structure
@@ -1776,33 +1776,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         }
         rsd1 <- residuals.gam(object) ## CV residuals
 	ii <- !is.finite(rsd1);if (any(ii)) rsd1[ii] <- rsd0[ii]
+	attr(fitted0,"fitted.cv") <- object$fitted.values
+	object$fitted.values <- fitted0 # restore original fitted
 
-        if (FALSE) {
-	## version based on estimating correction factors for Vj. Not as well founded as current version.
-        ## adaptive weighting to avoid underestimating mu error, while accounting for higher variance in
-	## cv mu relative to mu...
-        alpha <- 0.4 ## half way between full shrinkage compensation (.3) and none (.5)  
-      
-	mu.err <- (1-alpha)*(rsd0-rsd1)
-	#rsd <- alpha*rsd0 + (1-alpha)*rsd1
-        object$fitted.values <- fitted0
-
-        V0 <- neicov(dd,nei=nei)    ## direct V (too small)
-	dd0 <- dd*mu.err/rsd0
-	
-        V0 <- V0 - neicov(dd,dd0,nei)-neicov(dd0,dd,nei)
-        #dd0 <- dd*(rsd0-rsd)/rsd0
-        V0 <- V0+neicov(dd0,dd0,nei)
-        Vj <- V0
-	## get nearest +ve def matrix
-        ev <- eigen(Vj)
-        mev <- mean(ev$values)
-        ev$values[ev$values<0] <- 0
-	#if (mev>0) ev$values <- ev$values*mev/mean(ev$values)
-	V0 <- sqrt(ev$values)*t(ev$vectors);
-	Vj <- crossprod(V0) *n/(n-sum(object$edf))
-        }
-	
         Vj <- neicov(dd,nei=nei)*n/(n-sum(object$edf)) ## estimate based on raw residuals
         rat <- rsd1/rsd0; rat[!is.finite(rat)] <- 1
         Vcv <- neicov(dd*rat,nei=nei)*n/(n-sum(object$edf)) ## based on cross validated resdiduals
@@ -1810,14 +1786,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
         trVj <- sum(ev[ev>0]) # trace of closest pdef matrix if Vj not pdef
 	alpha <- max(trVj/sum(diag(object$Ve)),1) ## inverse learning rate (conservative Vj)
 	#alpha1 <- sum(Vj*object$Ve)/sum(object$Ve^2) ## LS version - little difference
-	Vj <- Vcv + (object$Vp-object$Ve)*alpha ## bias correct conservative (too large)
+	Vj <- Vcv + (object$Vp-object$Ve)*alpha ## bias correct 
 	#Vj <- Vj + (object$Vp-object$Ve)*alpha ## bias correct
 	ev <- eigen(Vj,symmetric=TRUE)
 	if (any(ev$values<0)) { ## find closest pdef matrix
 	  ev$values[ev$values<0] <- 0
 	  Vj <- crossprod(sqrt(ev$values)*t(ev$vectors))
 	}
-	#attr(Vj,"Vcv") <- Vcv ## conservative as attribute
       } else { ## LOO or straight jackknife requested
         Vj <- pdef(crossprod(dd)) ## straight jackknife is fine.
 	alpha <- sum(diag(Vj))/sum(diag(object$Ve)) ## inverse learning rate (do not impose lower limit)
@@ -1828,18 +1803,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       object$Vp <- Vj     
     }
   }
-  ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
-  ##       but doesn't change r.e. p-values of course. 
-  #if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
-  #if (!is.null(mv$edf2)) object$edf2 <- mv$edf2
-  #object$Vp <- mv$Vb
-  #object$V.sp <- mv$V.sp
-  #object$hat<-mv$hat
-  #object$Ve <- mv$Ve
-  #object$edf<-mv$edf
-  #object$edf1 <- mv$edf1
-  ##object$F <- mv$F ## DoF matrix --- probably not needed
-  #object$R <- mv$R ## qr.R(sqrt(W)X)
+
   object$aic <- object$aic + 2*sum(object$edf)
   object$nsdf <- G$nsdf
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <- object$dw.drho <-  
@@ -1849,7 +1813,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$sig2 <- object$scale
   
   object
-} ## gam.outer control
+} ## gam.outer
 
 get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
