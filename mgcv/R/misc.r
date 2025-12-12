@@ -257,7 +257,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
     return(XWX) ## note that this is sparse
   } ## sparse case 
   ## block oriented code...
-  if (is.null(lt)&&is.null(lt)) {
+  if (is.null(lt)&&is.null(rt)) {
     # old .C code - can't handle long vector k
     #oo <- .C(C_XWXd0,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
     #       k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
@@ -277,14 +277,15 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
     lpi <- unlist(lpip[lt])
     if (is.null(lt)) { ## note nrs and ncs not used in current code 
       lpi <- rpi
-      nrs <- lt <- 0 ## currently lt == 0 signals nrs = 0 !
-      ncs <- length(rt)
+      #nrs <-
+      lt <- 0 ## currently lt == 0 signals nrs = 0 !
+      #ncs <- length(rt)
     } else {
-      nrs <- length(lt)
+      # nrs <- length(lt)
       if (is.null(rt)) {
-        rt <- ncs <- 0
+        rt <- 0 #; ncs <- 0
 	rpi <- lpi
-      } else ncs <- length(rt)
+      } #else ncs <- length(rt)
     }  
     #oo <- .C(C_XWXd1,XWX =as.double(rep(0,ptfull^2)),X= as.double(unlist(X)),w=as.double(w),
     #       k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
@@ -350,6 +351,7 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
   cy <- if (is.matrix(y)) ncol(y) else 1
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     ## create list for passing to C
+    if (any(qc<0)) stop("sparse method for Kronecker product contrasts not implemented")
     m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
@@ -409,6 +411,7 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
   }
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     ## create list for passing to C
+    if (any(qc<0)) stop("sparse method for Kronecker product contrasts not implemented")
     m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
@@ -463,6 +466,7 @@ workXVXd <- function(X,V,k,k1,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     if (!is.null(k1)) stop("scattered XVX computation not yet implemented") 
     ## create list for passing to C
+    if (any(qc<0)) stop("sparse method for Kronecker product contrasts not implemented")
     m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")

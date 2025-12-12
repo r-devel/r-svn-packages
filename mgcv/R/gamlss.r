@@ -2023,11 +2023,14 @@ gevlss <- function(link=list("identity","identity","logit")) {
     discrete <- is.list(X)
     jj <- attr(X,"lpi") ## extract linear predictor index
     if (is.null(eta)) {
-      eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+      eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else
+                           X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
       if (!is.null(offset[[1]])) eta <- eta + offset[[1]] 
-      etar <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]] ## log sigma
+      etar <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else
+                            X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]] ## log sigma
       if (!is.null(offset[[2]])) etar <- etar + offset[[2]]
-      etax <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[3]]) else X[,jj[[3]],drop=FALSE]%*%coef[jj[[3]]] ## shape parameter
+      etax <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[3]]) else
+                            X[,jj[[3]],drop=FALSE]%*%coef[jj[[3]]] ## shape parameter
       if (!is.null(offset[[3]])) etax <- etax + offset[[3]]
     } else { ## eta supplied
       etar <- eta[,2]
@@ -2059,16 +2062,10 @@ gevlss <- function(link=list("identity","identity","logit")) {
 
     exp1 <- exp(1); ## facilitates lazy auto-translation
     ymu <- y - mu
-    aa0 <- (xi*ymu)/exp1^rho # added
+    aa0 <- (xi*ymu)/exp1^rho
     ind <- which(aa0 <= -1) ## added
-    if (FALSE&&length(ind)>0) { ## all added
-      xii <- xi[ind] ## this idea is really not a good one - messes up derivatives when triggered
-      erho <- exp1^rho[ind]
-      eps1 <- 1-.Machine$double.eps^.25
-      ymu[ind] <- -erho/xii*eps1
-      aa0[ind] <- -eps1
-    }
-    log.aa1 <- log1p(aa0) ## added
+
+    suppressWarnings(log.aa1 <- log1p(aa0)) ## added
     aa1 <- aa0 + 1 # (xi*(y-mu))/exp1^rho+1;
     aa2 <- 1/xi;
     l0  <- (-aa2*(1+xi)*log.aa1)-1/aa1^aa2-rho;
@@ -2083,7 +2080,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
       cc2 <- ymu;
       cc0 <- bb1*xi*cc2 ## added
       
-      log.cc3 <- log1p(cc0) ## added
+      suppressWarnings(log.cc3 <- log1p(cc0)) ## added
       cc3 <- cc0 + 1 ##bb1*xi*cc2+1;
       l1[,2]  <-  (-bb1*cc2*cc3^((-1/xi)-1))+(bb1*(xi+1)*cc2)/cc3-1;
       dd3 <- xi+1;

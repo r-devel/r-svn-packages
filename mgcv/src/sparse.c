@@ -928,10 +928,12 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
     } // i loop  (term block rows)
     /* now run through stc enforcing consistency of block starts */
     k = stc[0];
-    for (i=1;i<nrc;i++) {
+    for (i=0;i<nrc;i++) {
       /* set r_start to correct value for first block on each row (first row always ok)... */
-      b = stc[i-1];k = stc[i];
-      block[k].r_start = block[b].r_start + block[b].r_size;
+      if (i) {
+	b = stc[i-1];k = stc[i];
+        block[k].r_start = block[b].r_start + block[b].r_size;
+      }	
       if (symmetric) j1=i; else j1=ncc-1;
       for (j=0;j<j1;j++) { /* work along cols of row */
         b = stc[i + j * nrc];k = stc[i + (j+1) * nrc];
@@ -941,7 +943,7 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
     }
     /* get total rows and cols of result... */
     rcum = block[k].r_start + block[k].r_size;
-    ccum = block[k].c_start + block[k].c_size;
+    ccum = block[k].c_start + block[k].c_size; 
   } else { /* structure matrix is unchanged */
     stc = str;
   }  

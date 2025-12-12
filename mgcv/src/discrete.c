@@ -2585,7 +2585,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 
 
 */   
-  int *pt, *pd,ri,ci,si,maxp=0,nxwx=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
+  int *pt, *pd,ri,ci,si,maxp=0,nxwx=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,ctot,
     *b,*B,*C,*R,*sb,N,kk,kb,tid=0,*worki,symmetric=1,one=1;
   ptrdiff_t *off,*voff,mmp,q,i,j,qi=0;
   double *work,*ws=NULL,*Cost,*cost,*x0,*x1,*p0,*p1,x;
@@ -2652,7 +2652,8 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
     }	
     i +=  pt[c]; /* where cth term starts in unconstrained param vector */ 
   }
-    
+  ctot = kk; /* colss of computed XWX post constraint */ 
+  
   qi =  6 * *n; /* integer work space */
   worki = (int *)CALLOC((size_t)qi * *nthreads,sizeof(int));
   mmp = maxp;mmp = mmp*mmp;
@@ -2789,8 +2790,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
       }
     } /* ci loop */
   } /* constraint loop */
-
-  if (ptot<nxwx) row_squash(XWX,ptot,nxwx,ptot); /* drop the now redundant trailing rows */
+  if (ptot<nxwx) row_squash(XWX,ptot,nxwx,ctot); /* drop the now redundant trailing rows */
   if (symmetric) up2lo(XWX,ptot); /* copy upper triangle to lower */
   
   FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tpsr);FREE(tpsur);FREE(tpsc);FREE(tpsuc);
