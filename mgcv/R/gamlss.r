@@ -1110,8 +1110,7 @@ multinom <- function(K=1) {
 ## linear predictor. 
 ## 1. get derivatives wrt mu, tau
 ## 2. get required link derivatives and tri indices.
-## 3. transform derivs to derivs wrt eta (gamlss.etamu).
-## 4. get the grad and Hessian etc for the model
+## 3. get the grad and Hessian etc for the model
 ##    via a call to gamlss.gH  
 ## the first derivatives of the log likelihood w.r.t
 ## the first and second parameters...
@@ -3965,14 +3964,14 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
       }
     } else ret <- list()
     ret$l <- l;ret$l0 <- l0; ret
-  } ## end ll
+  } ## end ll shash
 
   sandwich <- function(y,X,coef,wt,family,offset=NULL) {
   ## compute filling for sandwich estimate of cov matrix
     ll(y,X,coef,wt,family,offset=NULL,deriv=1,sandwich=TRUE)$lbb
   }
 
-  initialize <- expression({
+  initialize <- expression({ ## shash
     ## idea is to regress g(y) on model matrix for mean, and then 
     ## to regress the corresponding log absolute residuals on 
     ## the model matrix for log(sigma) - may be called in both
@@ -4022,9 +4021,9 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
       start[jj[[4]]] <- startji
       
       }
-  }) ## initialize 
+  }) ## initialize shash
   
-  rd <- function(mu, wt, scale) { 
+  rd <- function(mu, wt, scale) { ## shash
     mu <- as.matrix(mu)
     if(ncol(mu)==1){ mu <- t(mu) }
     muE <- mu[ , 1, drop = TRUE]
@@ -4038,7 +4037,7 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
     return( .r )
   }
   
-  qf <- function(p, mu, wt, scale) {
+  qf <- function(p, mu, wt, scale) { ## shash
     mu <- as.matrix(mu)
     if(ncol(mu)==1){ mu <- t(mu) }
     muE <- mu[ , 1, drop = TRUE]
@@ -4051,7 +4050,7 @@ shash <- function(link = list("identity", "logeb", "identity", "identity"), b = 
     return( q)
   }
   
-  cdf <- function(q, mu, wt, scale, logp) {
+  cdf <- function(q, mu, wt, scale, logp) { ## shash
     mu <- as.matrix(mu)
     if(ncol(mu)==1){ mu <- t(mu) }
     muE <- mu[ , 1, drop = TRUE]

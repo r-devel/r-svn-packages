@@ -58,19 +58,22 @@
 */
 
 /* For safe memory handling from R... */
-//#define CALLOC R_chk_calloc
-//#define FREE R_chk_free
-//#define REALLOC R_chk_realloc
+#define CALLOC R_chk_calloc
+#define FREE R_chk_free
+#define REALLOC R_chk_realloc
 
 /* BUT, this can mess up valgrinding for memory error checking - problems are 
    sometimes missed because standard allocation is being circumvented. Then errors can 
    corrupt R memory management without detection and trigger nothing until R
    messes up internally because of corruption, which then makes it look as if
    R is generating the problem. Hence better to reset for checking. Also sizing
-   errors in .C often generate no obvious valgrind error.*/
-#define CALLOC calloc
-#define FREE free
-#define REALLOC realloc
+   errors in .C often generate no obvious valgrind error.
+   NOTE that .Call code directly allocating R objects will still use R memory
+   management of course, making errors hard to locate.
+*/
+//#define CALLOC calloc
+//#define FREE free
+//#define REALLOC realloc
 
 void *R_chk_calloc1(size_t nmemb,size_t size);
 
