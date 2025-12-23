@@ -117,8 +117,8 @@ sdiag <- function(A,k=0) {
    j <- 1:p
  }
  if (length(i)>length(j)) i <- i[1:length(j)] else j <- j[1:length(i)]
- ii <- i + (j-1) * n 
- A[ii]
+ ##ii <- i + (j-1) * n; A[ii]
+ A[cbind(i,j)]
 } ## sdiag
 
 "sdiag<-" <- function(A,k=0,value) {
@@ -133,8 +133,8 @@ sdiag <- function(A,k=0) {
    j <- 1:p
  }
  if (length(i)>length(j)) i <- i[1:length(j)] else j <- j[1:length(i)]
- ii <- i + (j-1) * n 
- A[ii] <- value
+ ##ii <- i + (j-1) * n;A[ii] <- value
+ A[cbind(i,j)] <- value
  A
 } ## "sdiag<-"
 

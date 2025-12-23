@@ -269,6 +269,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
         ## Reparameterize so that S has 1's or zero's on diagonal
         ## In new parameterization smooth specific model matrix is X%*%diag(D)
         ## ind indexes penalized parameters from this smooth's set.
+	## Note lack of Di used later to signal diagonal penalty 
 
         D <- diag(Sl[[b]]$S[[1]])
         ind <- D > 0 ## index penalized elements
@@ -281,7 +282,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
           tr <- singleStrans(Sl[[b]]$S[[1]],Sl[[b]]$rank,ldet=!Sl[[b]]$repara)
 	  ind <- rep(FALSE,ncol(tr$D))
 	  ind[1:tr$rank] <- TRUE
-	  Sl[[b]]$D <- tr$D
+	  Sl[[b]]$D <- tr$D ## t(D)%*%S%*%D gives partial identity
 	  Sl[[b]]$Di <- tr$Di
 	  Sl[[b]]$rank <- tr$rank
 	  Sl[[b]]$ldet=tr$ldet
@@ -323,7 +324,18 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
           diag(E)[ind] <- 1; diag(S)[ind] <- 1
 	}  
         lambda <- c(lambda,1) ## record corresponding lambda
-      } else { ## need scaled root penalty in *original* parameterization
+      } else if (is.null(Sl[[b]]$Di)) { ## need scaled root penalty in *original* parameterization
+        ## diagonal penalty branch
+        ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+	D <- 1/Sl[[b]]$D[Sl[[b]]$ind]; D2 <- D^2;D.norm <- sqrt(sum(D2));	
+	if (sparse) {
+	    E$j[[b]] <- E$i[[b]] <- ind; E$x[[b]] <- D/D.norm
+	    S$j[[b]] <- S$i[[b]] <- ind; S$x[[b]] <- D2/D.norm^2
+	} else { ## dense
+            diag(E)[ind] <- D/D.norm; diag(S)[ind] <- D2/D.norm^2
+	}
+	lambda <- c(lambda,1/D.norm^2) ## record corresponding lambda
+      } else { ## non-diagonal penalty branch
         #D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
 	D <- if (is.null(Sl[[b]]$nl.reg)) Sl[[b]]$Di[1:Sl[[b]]$rank,] else
 	        sqrt(Sl[[b]]$ev+Sl[[b]]$nl.reg)*t(Sl[[b]]$U)
@@ -876,7 +888,16 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,Stot=FALSE,repara=TRUE,nt=1,deriv=2
             ## diag(S)[ind] <- exp(rho[k.sp]) ## smoothing param
 	    .Call(C_wdiag,S,ind,rep(exp(rho[k.sp]),length(ind)))
 	  }  
-        } else { ## root has to be in original parameterization...
+        } else  if (is.null(Sl[[b]]$Di)) { ## root has to be in original parameterization...
+          ## diagonal branch
+	  D <- 1/Sl[[b]]$D[Sl[[b]]$ind]^2 * exp(rho[k.sp])
+	  ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+	  if (sparse) {
+	    S$j[[b]] <- S$i[[b]] <- ind; S$x[[b]] <- D
+	  } else {
+            diag(S)[ind] <- D
+          }
+        } else { ## non-diagonal branch
           if (sparse) {
 	    ## dgTMatrix is triplet form, which makes combining easier...
 	    D <- if (is.null(Sl[[b]]$nl.reg)) as(as(as(crossprod(Sl[[b]]$Di[1:Sl[[b]]$rank,]) * exp(rho[k.sp]), "dMatrix"),
@@ -1331,7 +1352,7 @@ d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
 ## P is inverse of R from the QR of the augmented model matrix.
 ## Note that d1[k] is also the EDF suppressed by the kth smoothing penalty,
 ## for linear smoothing parameters.
-  spp <- SPP
+  spp <- SPP ## return SPP?
   SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP' where S_k is derivative in nl case
   ## if PP is sparse over block covered by penalty, implying that it is from the ISA and not a
   ## full inverse, then second order terms like tr(PPdS_jPPdS_k) will not be correct - hence will

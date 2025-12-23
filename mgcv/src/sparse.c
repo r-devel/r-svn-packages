@@ -1948,8 +1948,10 @@ static inline int kij(int *Ap,int *Ai,int i, int j) {
 } /* kij */
 
 
-SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
-/* Parallel version. Fine scale single column parallelization.
+SEXP isa1p0(SEXP L,SEXP S,SEXP NT) {
+/* Stupid implementation: searching is not needed see below! 
+
+   Parallel version. Fine scale single column parallelization.
 
    Inverse subset algorithm adapted from Rue (2005). Idea is to compute the 
    elements of S = (LL')^{-1} on the non-zero Pattern on L+L'. On entry 
@@ -1966,7 +1968,7 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
   int *Lp,*Li,*Sp,*Si,i,j,k,q,*dim,s,k0,k1,l0,l1,n,mm,
     *li0,*li1,s0,s1,s2,m,*ul,*ll,*ul0,*ll0,kk,*ulq,*llq,*llq1,*liq,nt,tid;
   //long long int ops=0; 
-  double *Lx,*Sx,x=0.0,Lii,*lxp;
+  double *Lx,*Sx,x=0.0,Lii,*lxp,sls;
   //global_ops=0;
   /* register the names of the slots in X and XWX */
   p_sym = install("p");
@@ -2095,7 +2097,7 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
       if (ul[kk] <= ll[kk+1]||ul[kk] == ll[kk]+1) kk++; 
     }	/* bracketing interval loop */			       
     /* at this stage we have non overlapping intervals within which to search for the
-       elements of S matching the non-zeores of L[,i], can now finish the matching 
+       elements of S matching the non-zeroes of L[,i], can now finish the matching 
        by simple bisection within each interval. */
     ulq=ul;llq=ll;liq=li0;llq1=ll+m;
     for (x=0.0,lxp=Lx+l0;llq<llq1;llq++,ulq++,liq++,lxp++) { 
@@ -2116,4 +2118,64 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
   REAL(kr)[0] = 0.0;//ops/(double) global_ops;
   UNPROTECT(1);
   return(kr);
-} /* isa1p */
+} /* isa1p0 */
+
+SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
+/* Inverse subset algorithm adapted from Rue (2005). Idea is to compute the 
+   elements of S = (LL')^{-1} on the non-zero Pattern on L+L'. On entry 
+   L and S are of class "dgCMatrix" and S has the non-zero pattern of L+L'.
+   On exit S contains the required elements of the inverse.
+
+   This version works down through the columns of S, which allows the required
+   summations to be efficiently computed via scatter operations, without
+   searching for the matching indices in the summations.
+
+   Recall matrix elements are in L@x, L@p[i] gives start location of col i.
+   L@i gives row corresponding to each element of L@x.
+*/
+  SEXP i_sym,x_sym,dim_sym,p_sym,kr;
+  int *Lp,*Li,*Sp,*Si,i,j,k,q,*dim,n,nt,tid,kjj,ki,kji,*Lip,*Lip1;
+  double *Lx,*Sx,Lii,*Sj,*Sj0,sls,*Lxp;
+  /* register the names of the slots in L and S */
+  p_sym = install("p");
+  dim_sym = install("Dim");
+  i_sym = install("i");
+  x_sym = install("x");
+  nt = asInteger(NT); /* number of threads to use*/
+  /* Get pointers to the relevant slots in L*/ 
+  Lp = INTEGER(R_do_slot(L,p_sym));
+  dim = INTEGER(R_do_slot(L,dim_sym));
+  n=dim[1];
+  Li = INTEGER(R_do_slot(L,i_sym));
+  Lx = REAL(R_do_slot(L,x_sym));
+  /* Now get pointers to slots in S */
+  Sp = INTEGER(R_do_slot(S,p_sym)); /* col j's elements lie between Sp[j] and Sp[j+1]-1 in x*/
+  Si = INTEGER(R_do_slot(S,i_sym)); /* row index corresponding to elements in x*/
+  Sx = REAL(R_do_slot(S,x_sym)); /* non-zero elements */
+
+  Sj0 = (double *)CALLOC((size_t)n*nt,sizeof(double)); /* storage for S[,j] */
+  tid=0;
+  #ifdef _OPENMP
+#pragma omp parallel private(j,tid,Sj,kjj,k,ki,i,Lii,sls,kji,Lip,Lip1,Lxp) num_threads(nt)
+  #endif 
+  for (j=n-1;j>=0;j--) { /* work down through cols of Sj */
+    #ifdef _OPENMP
+    tid = omp_get_thread_num();
+    #endif
+    Sj = Sj0 + tid * n;
+    kjj =  kij(Sp,Si,j,j); /* location of element S[j,j] in S@x */
+    for (k=kjj;k<Sp[j+1];k++) Sj[Si[k]] = Sx[k]; /* fill Sj below row j... */
+    for (ki=kjj;ki>=Sp[j];ki--) { /* work up rows of S[,j] from S[j,j] */
+      i = Si[ki]; /* this is row i of S[,j] */
+      Lii = Lx[Lp[i]]; /* L[i,i] */
+      if (i==j) sls = 1/Lii; else sls = 0; /* delta_{ij}/L[i,i] */
+      //for (k=Lp[i]+1;k<Lp[i+1];k++) sls -= Sj[Li[k]] * Lx[k];
+      for (Lip=Li+Lp[i]+1,Lip1 = Li+Lp[i+1],Lxp=Lx+Lp[i]+1;Lip<Lip1;Lip++,Lxp++) sls -= Sj[*Lip] * *Lxp;
+      kji = kij(Sp,Si,j,i); /* location of S[j,i] in S@x */
+      Sj[i] = Sx[ki] = Sx[kji] = sls/Lii; /* store results */
+    } /* ki loop working up rows */
+    for (k = Sp[j];k<Sp[j+1];k++) Sj[Si[k]] = 0; /* clean Sj for next col down */
+  } /* col j loop */
+  FREE(Sj);
+  return(R_NilValue);
+}  /* isa1p */
