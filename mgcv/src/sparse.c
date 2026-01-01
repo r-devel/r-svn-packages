@@ -2128,13 +2128,15 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
 
    This version works down through the columns of S, which allows the required
    summations to be efficiently computed via scatter operations, without
-   searching for the matching indices in the summations.
+   searching for the matching indices in the summations. No obvious way of
+   parallelizing as col and row ordering is essential in order to define before
+   use. So NT ignored currently. 
 
    Recall matrix elements are in L@x, L@p[i] gives start location of col i.
    L@i gives row corresponding to each element of L@x.
 */
   SEXP i_sym,x_sym,dim_sym,p_sym,kr;
-  int *Lp,*Li,*Sp,*Si,i,j,k,q,*dim,n,nt,tid,kjj,ki,kji,*Lip,*Lip1;
+  int *Lp,*Li,*Sp,*Si,i,j,k,q,*dim,n,nt,tid,kjj,ki,kji,*Lip,*Lip1,nx,*r,*d,*sin;
   double *Lx,*Sx,Lii,*Sj,*Sj0,sls,*Lxp;
   /* register the names of the slots in L and S */
   p_sym = install("p");
@@ -2153,29 +2155,48 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
   Si = INTEGER(R_do_slot(S,i_sym)); /* row index corresponding to elements in x*/
   Sx = REAL(R_do_slot(S,x_sym)); /* non-zero elements */
 
-  Sj0 = (double *)CALLOC((size_t)n*nt,sizeof(double)); /* storage for S[,j] */
-  tid=0;
-  #ifdef _OPENMP
-#pragma omp parallel private(j,tid,Sj,kjj,k,ki,i,Lii,sls,kji,Lip,Lip1,Lxp) num_threads(nt)
-  #endif 
-  for (j=n-1;j>=0;j--) { /* work down through cols of Sj */
-    #ifdef _OPENMP
-    tid = omp_get_thread_num();
-    #endif
-    Sj = Sj0 + tid * n;
-    kjj =  kij(Sp,Si,j,j); /* location of element S[j,j] in S@x */
+  nx = Sp[n]; /* length of S@x */
+  sin = (int *)CALLOC((size_t)nx,sizeof(int)); /* indices of equivalent entry in opposite triangle */
+  r = (int *)CALLOC((size_t)n,sizeof(int)); /* r[j] tracks rows of col j processed so far */
+  d = (int *)CALLOC((size_t)n,sizeof(int)); /* d[j] is index of S[,j,j] */
+
+  for (j=0;j<n;j++) for (i=Sp[j];i<Sp[j+1];i++) {
+    q = Si[i]; /* current row of S[,j] */
+    if (q>=j) {
+      if (q==j) d[j] = i; /* index of S[j,j] in S@x */
+      k = Sp[q] + r[q]; /* index of S[j,q] in S@x */
+      sin[k] = i; sin[i] = k; r[q]++;
+    }  
+  }    
+
+  FREE(r);
+  
+  Sj = (double *)CALLOC((size_t)n*nt,sizeof(double)); /* storage for S[,j] */
+  //  tid=0;
+ 
+  // BUG!!!! algorithm requires working down through columns 
+  //  #ifdef _OPENMP
+  //#pragma omp parallel private(j,tid,Sj,kjj,k,ki,i,Lii,sls,kji,Lip,Lip1,Lxp) num_threads(nt)
+  //#endif
+  /* note that row and column orderings are essential for define before use */
+  for (j=n-1;j>=0;j--) { /* work *down* through cols of Sj */
+    //#ifdef _OPENMP
+    //tid = omp_get_thread_num();
+    //#endif
+    //Sj = Sj0 + tid * n;
+    kjj = d[j]; //kij(Sp,Si,j,j); /* location of element S[j,j] in S@x */
     for (k=kjj;k<Sp[j+1];k++) Sj[Si[k]] = Sx[k]; /* fill Sj below row j... */
-    for (ki=kjj;ki>=Sp[j];ki--) { /* work up rows of S[,j] from S[j,j] */
+    for (ki=kjj;ki>=Sp[j];ki--) { /* work *up* rows of S[,j] from S[j,j] */
       i = Si[ki]; /* this is row i of S[,j] */
       Lii = Lx[Lp[i]]; /* L[i,i] */
       if (i==j) sls = 1/Lii; else sls = 0; /* delta_{ij}/L[i,i] */
       //for (k=Lp[i]+1;k<Lp[i+1];k++) sls -= Sj[Li[k]] * Lx[k];
       for (Lip=Li+Lp[i]+1,Lip1 = Li+Lp[i+1],Lxp=Lx+Lp[i]+1;Lip<Lip1;Lip++,Lxp++) sls -= Sj[*Lip] * *Lxp;
-      kji = kij(Sp,Si,j,i); /* location of S[j,i] in S@x */
+      kji = sin[ki];//kij(Sp,Si,j,i); /* location of S[j,i] in S@x */
       Sj[i] = Sx[ki] = Sx[kji] = sls/Lii; /* store results */
     } /* ki loop working up rows */
     for (k = Sp[j];k<Sp[j+1];k++) Sj[Si[k]] = 0; /* clean Sj for next col down */
   } /* col j loop */
-  FREE(Sj);
+  FREE(Sj);FREE(sin);FREE(d);
   return(R_NilValue);
 }  /* isa1p */

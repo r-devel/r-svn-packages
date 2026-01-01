@@ -108,8 +108,10 @@ importFrom(utils,object.size)
 
 importFrom(nlme,Dim,corMatrix,logDet,pdConstruct,pdFactor,pdMatrix,getGroupsFormula,lme,varFixed,lmeControl)
 
-importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand)
-importFrom(Matrix,Diagonal,sparseMatrix,Matrix,sparse.model.matrix,diag)
+importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand,rcond,
+rowMeans,rowSums,norm,diag)
+importFrom(Matrix,Diagonal,sparseMatrix,Matrix,sparse.model.matrix,condest,
+isDiagonal)
 
 importFrom(methods,cbind2,as)
 importFrom(stats,weighted.mean)

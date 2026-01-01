@@ -179,10 +179,11 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       if (Sl[[b]]$linear) {
         nb <- nrow(Sl[[b]]$S[[1]])      
         sbdiag <- sbStart <- sbStop <- rep(NA,m)
-        ut <- upper.tri(Sl[[b]]$S[[1]],diag=FALSE) 
+        # ut <- upper.tri(Sl[[b]]$S[[1]],diag=FALSE) 
         ## overlap testing requires the block ranges 
         for (j in 1:m) { ## get block range for each S[[j]]
-          sbdiag[j] <- sum(abs(Sl[[b]]$S[[j]][ut]))==0 ## is penalty diagonal??
+         # sbdiag[j] <- sum(abs(Sl[[b]]$S[[j]][ut]))==0 ## is penalty diagonal??
+	  sbdiag[j] <- isDiagonal(Sl[[b]]$S[[j]])
           ir <- range((1:nb)[rowSums(abs(Sl[[b]]$S[[j]]))>0])
           sbStart[j] <- ir[1];sbStop[j] <- ir[2] ## individual ranges
         } 
@@ -265,7 +266,8 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
 	S[ind,ind] <- tmp$St
       }	
     } else if (length(Sl[[b]]$S)==1) { ## then we have a singleton
-      if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
+      #if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
+      if (isDiagonal(Sl[[b]]$S[[1]])) {
         ## Reparameterize so that S has 1's or zero's on diagonal
         ## In new parameterization smooth specific model matrix is X%*%diag(D)
         ## ind indexes penalized parameters from this smooth's set.
@@ -1159,14 +1161,14 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
 	            B[ind] <- Sl[[b]]$lambda*A[ind]
         } else { ## original penalty has to be applied 
           if (Amat) {
-	    B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind,] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,]
+	    B[ind,] <- as.matrix(Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind,]) + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,]
 	  } else {
             B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind]
 	  }  
         }
       } else { ## multi-S block
 	if (Sl[[b]]$repara) ind <- ind[Sl[[b]]$ind]
-        if (Amat) B[ind,] <- Sl[[b]]$St %*% A[ind,] else
+        if (Amat) B[ind,] <- as.matrix(Sl[[b]]$St %*% A[ind,]) else
                   B[ind] <- Sl[[b]]$St %*% A[ind]
       }
     } ## end of block loop
@@ -1193,7 +1195,7 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
               if (full) {
                 B <- A*0
                 if (Amat) {
-		  B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,] 
+		  B[ind,] <- as.matrix(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,]) + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,] 
 		} else {  
                   B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind]
 	        }		  
@@ -1220,7 +1222,7 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
             if (full) { ## return zero answer with all zeroes in place
               B <- A*0
               if (Amat) {
-                B[ind,] <- if (is.null(Sl[[b]]$Srp)||!Sl[[b]]$repara) Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,]) else 
+                B[ind,] <- if (is.null(Sl[[b]]$Srp)||!Sl[[b]]$repara) as.matrix(Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,])) else 
                                                      Sl[[b]]$Srp[[i]]%*%A[ind,]
               } else {
                 B[ind] <- if (is.null(Sl[[b]]$Srp)||!Sl[[b]]$repara) Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind]) else 

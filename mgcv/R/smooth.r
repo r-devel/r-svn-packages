@@ -2580,12 +2580,15 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   ## same levels, or just same number of levels, for example? 
   ## => ruled out
   if (!is.null(object$id)) stop("random effects don't work with ids.")
-  
+
+  sparse <- !is.null(object$xt$sparse) ## signal sparse matrices should be used
+
   form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
   ## following construction avoids silly model.matrix overchecking...
-  object$X <- model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
+  object$X <- if (sparse) Matrix::sparse.model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
+              else model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
   object$bs.dim <- ncol(object$X)
-
+  
   if (inherits(object,"tensor.smooth.spec")) { 
     ## give object margins like a tensor product smooth...
     object$margin <- list()
@@ -2593,7 +2596,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
     for (i in 1:object$dim) {
       form1 <- as.formula(paste("~",object$term[i],"-1"))
       data1 <- if (is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form1)] else data
-      object$margin[[i]] <- list(X=model.matrix(form1,data1),term=object$term[i],form=form1,by="NA")
+      object$margin[[i]] <- list(X= if (sparse) Matrix::sparse.model.matrix(form1,data1) else model.matrix(form1,data1),
+                                 term=object$term[i],form=form1,by="NA")
       class(object$margin[[i]]) <- "random.effect"
       d <- ncol(object$margin[[i]]$X)
       if (d>maxd) {maxi <- i;maxd <- d}
@@ -2613,7 +2617,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 
   ## now construct penalty   
   if (is.null(object$xt$S)) {     
-    object$S <- list(diag(object$bs.dim))  # get penalty
+    object$S <- list(if (sparse) Matrix::Diagonal(object$bs.dim) else diag(object$bs.dim))  # get penalty
     object$rank <- object$bs.dim  # penalty rank 
   } else {
     object$S <- if (is.list(object$xt$S)) object$xt$S else list(object$xt$S)
