@@ -1076,18 +1076,14 @@ gam.setup.list <- function(formula,pterms,
   attr(G$nsdf,"pstart") <- pstart ##unlist(lapply(lpi,min))
 
   ## assemble a global indicator array for non-linear parameters... 
-  G$g.index <- rep(FALSE,ncol(G$X))
   n.sp0 <- 0
   if (length(G$smooth)) for (i in 1:length(G$smooth)) {
-    if (!is.null(G$smooth[[i]]$g.index)) G$g.index[G$smooth[[i]]$first.para:G$smooth[[i]]$last.para] <- G$smooth[[i]]$g.index
     n.sp <- length(G$smooth[[i]]$S)
     if (n.sp) {
       G$smooth[[i]]$first.sp <- n.sp0 + 1
       n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
     }
   }  
-  if (!any(G$g.index)) G$g.index <- NULL  
-
   G
 } ## gam.setup.list
 
@@ -1569,8 +1565,7 @@ gam.setup <- function(formula,pterms,
 
   if (G$nsdf > 0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
   n.smooth <- length(G$smooth)
-  ## create coef names, if smooth has any coefs, and create a global indicator of non-linear parameters
-  ## g.index, if needed
+  ## create coef names, if smooth has any coefs
   n.sp0 <- 0
   if (n.smooth) for (i in 1:n.smooth) {
     k <- 1
@@ -1583,12 +1578,7 @@ gam.setup <- function(formula,pterms,
     if (n.sp) { ## record sp this relates to in full sp vector
       G$smooth[[i]]$first.sp <- n.sp0 + 1
       n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
-    }
-    if (!is.null(G$smooth[[i]]$g.index)) {
-      if (is.null(G$g.index)) G$g.index <- rep(FALSE,n.p)
-      G$g.index[jj] <- G$smooth[[i]]$g.index
-    }
-    
+    }    
   }
   G$term.names <- term.names
 

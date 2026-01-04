@@ -854,11 +854,8 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
     ind <- which(colSums(abs(X))!=0)
     X <- X[,ind]
     if (!is.null(object$g.index)) object$g.index <- object$g.index[ind]
-    #for (i in 1:length(S)) {
-      ## next line is equivalent to setting coefs for deleted to zero! 
-      #S[[i]] <- S[[i]][ind,ind] 
-    #}
-    ## Instead we need to drop the differences involving deleted coefs
+
+    ## drop the differences involving deleted coefs
     for (i in 1:m) { 
       if (is.null(object$margin[[i]]$D)) stop("basis not usable with reduced te")
       Sm[[i]] <- object$margin[[i]]$D ## differences

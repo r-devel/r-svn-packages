@@ -149,10 +149,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
       Sl[[b]]$start <- G$smooth[[i]]$first.para
       Sl[[b]]$stop <- G$smooth[[i]]$last.para
       Sl[[b]]$srank <- G$smooth[[i]]$rank ## original rank of penalty matrix
-      ## if the smooth has a g.index field it indicates non-linear params,
-      ## in which case re-parameterization will usually break the model.
-      ## Or global supression of reparameterization may be requested...
-      # Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE
+   
       Sl[[b]]$repara <- G$smooth[[i]]$repara && !no.repara  
       if (!is.null(G$smooth[[i]]$updateS)) { ## then this block is nonlinear in smoothing parameters
         Sl[[b]]$repara <-FALSE
@@ -213,9 +210,6 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
           Sl[[b]]$rank <- G$smooth[[i]]$rank[j]
 	  Sl[[b]]$lambda <- 1 ## dummy here
           Sl[[b]]$repara <- !no.repara ## signals ok to linearly reparameterize, now check this is really ok...
-          if (!is.null(G$smooth[[i]]$g.index)) { ## then some parameters are non-linear - can't re-param
-            if (any(G$smooth[[i]]$g.index[ind])) Sl[[b]]$repara <- FALSE
-          }
 	  Sl[[b]]$linear <- TRUE ## linear in smoothing params - assumed always true for multi-blocks
           b <- b + 1
         }
