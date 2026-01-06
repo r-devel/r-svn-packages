@@ -1,7 +1,6 @@
 ## routines for very large dataset generalized additive modelling.
 ## (c) Simon N. Wood 2009-2023
 
-
 ls.size <- function(x) {
 ## If `x' is a list, return the size of its elements, in bytes, in a named array
 ## otherwise return the size of the object
@@ -1919,7 +1918,19 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       kb <- kb + 1
     } ## sub block loop  
   }
-
+  ## if any Xd sparse then make all sparse...
+  if (any(sapply(Xd,function(x) inherits(x,"Matrix")))) {
+    Xd <- lapply(Xd,as,"dgCMatrix")
+    r <- kd*0; off <- list()
+    for (j in 1:nrow(ks)) { ## create the reverse indices...
+      nr <- nrow(Xd[[j]]) ## make sure we always tab to final stored row 
+      for (i in ks[j,1]:(ks[j,2]-1)) {
+        r[,i] <- (1:length(kd[,i]))[order(kd[,i])]
+        off[[i]] <- cumsum(c(1,tabulate(kd[,i],nbins=nr)))-1
+      }
+    }
+    attr(Xd,"off") <- off;attr(Xd,"r") <- r
+  } ## dealing with sparse Xd 
   attr(Xd,"lpip") <- object$dinfo$lpip ## list of coef indices for each term
 
   ## end of discrete set up
@@ -2553,6 +2564,19 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 	G$lpid <- lpid
       }	
       if (length(drop>0)) G$drop <- drop ## index of terms to drop as a result of side cons on tensor terms
+      ## if any Xd sparse then make all sparse...
+      if (any(sapply(G$Xd,function(x) inherits(x,"Matrix")))) {
+        G$Xd <- lapply(G$Xd,as,"dgCMatrix")
+	r <- G$kd*0; off <- list()
+        for (j in 1:nrow(ks)) { ## create the reverse indices...
+          nr <- nrow(G$Xd[[j]]) ## make sure we always tab to final stored row 
+          for (i in ks[j,1]:(ks[j,2]-1)) {
+            r[,i] <- (1:length(G$kd[,i]))[order(G$kd[,i])]
+            off[[i]] <- cumsum(c(1,tabulate(G$kd[,i],nbins=nr)))-1
+          }
+        }
+        attr(G$Xd,"off") <- off;attr(G$Xd,"r") <- r
+      }	
       attr(G$Xd,"lpip") <- lpip ## index of coefs by term
       ## ... Xd is the list of discretized model matrices, or marginal model matrices
       ## kd contains indexing vectors, so the ith model matrix or margin is Xd[[i]][kd[i,],]

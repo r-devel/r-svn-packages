@@ -222,7 +222,7 @@ uniquecombs <- function(x,ordered=FALSE) {
                  factor(x[,i],levels=1:length(xoi),labels=xoi)
 	## only copy contrasts if it was really a factor to start with
 	## otherwise following can be very memory and time intensive
-        if (is.factor(xoo[,i])) contrasts(x[,i]) <- contrasts(xo[,i])
+        if (is.factor(xoo[,i])&&!is.null(attr(xo[,i],"contrasts"))) contrasts(x[,i]) <- contrasts(xo[,i])
       }
       if (is.char[i]) x[,i] <- as.character(x[,i])
       if (is.logical(xo[,i])) x[,i] <- as.logical(x[,i])
@@ -2658,7 +2658,9 @@ Predict.matrix.random.effect <- function(object,data) {
   ##X <- model.matrix(object$form,data)
   ## following fixes over zealous checks...
   if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(object$form)]
-  X <- model.matrix(object$form,model.frame(object$form,data,na.action=na.pass))
+  sparse <- !is.null(object$xt$sparse)
+  X <- if (sparse) Matrix::sparse.model.matrix(object$form,model.frame(object$form,data,na.action=na.pass)) else
+                   model.matrix(object$form,model.frame(object$form,data,na.action=na.pass))
   X[!is.finite(X)] <- 0
   X
 } ## Predict.matrix.random.effect

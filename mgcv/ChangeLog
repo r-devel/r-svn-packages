@@ -31,6 +31,9 @@ present, and reparameterization needs checking (also for bam).
 
 * gumbls initialization stabilized a little.
 
+* fixed side-effect that uniquecombs created contrast attribute for factors
+  even when original had no attribute set.
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via
