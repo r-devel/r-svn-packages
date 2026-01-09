@@ -1078,7 +1078,8 @@ gam.setup.list <- function(formula,pterms,
   ## assemble a global indicator array for non-linear parameters... 
   n.sp0 <- 0
   if (length(G$smooth)) for (i in 1:length(G$smooth)) {
-    n.sp <- length(G$smooth[[i]]$S)
+    n.sp <- if (is.null(G$smooth[[i]]$n.sp)) length(G$smooth[[i]]$S) else
+            G$smooth[[i]]$n.sp
     if (n.sp) {
       G$smooth[[i]]$first.sp <- n.sp0 + 1
       n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
@@ -1574,7 +1575,8 @@ gam.setup <- function(formula,pterms,
       term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
       k <- k+1
     }
-    n.sp <- length(G$smooth[[i]]$S)
+    n.sp <- if (is.null(G$smooth[[i]]$n.sp)) length(G$smooth[[i]]$S) else
+            G$smooth[[i]]$n.sp
     if (n.sp) { ## record sp this relates to in full sp vector
       G$smooth[[i]]$first.sp <- n.sp0 + 1
       n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
@@ -3671,14 +3673,8 @@ reTest <- function(b,m) {
 ## Test the mth smooth for equality to zero
 ## and accounting for all random effects in model 
   
-  ## check that smooth penalty matrices are full size.  
-  ## e.g. "fs" type smooths estimated by gamm do not 
-  ## have full sized S matrices, and we can't compute 
-  ## p-values here - actually we can see recov!
-  #if (ncol(b$smooth[[m]]$S[[1]]) != b$smooth[[m]]$last.para-b$smooth[[m]]$first.para+1) {
-  #  return(list(stat=NA,pval=NA,rank=NA)) 
-  #}
 
+  if (is.null(b$Ve)) return(list(stat=NA,pval=NA,rank=NA)) 
   ## find indices of random effects other than m
   rind <- rep(0,0)
   for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)
@@ -4274,8 +4270,8 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     ind <- eh$values>max(eh$values)*.Machine$double.eps^75 ## index of non zero eigenvalues 
     rank <- sum(ind) ## rank of hessian
     iv <- eh$values*0;iv[ind] <- 1/eh$values[ind]
-    V <- eh$vectors%*%(iv*t(eh$vectors)) ## cov matrix for sp's ## log sqrt variances
-    V <- J%*%V%*%t(J) ## cov matrix for log sqrt variance
+    Vsp <- eh$vectors%*%(iv*t(eh$vectors)) ## cov matrix for sp's ## log sqrt variances
+    V <- J%*%Vsp%*%t(J) ## cov matrix for log sqrt variance
     lsd <- log(sqrt(vc)) ## log sqrt variances
     sd.lsd <- sqrt(diag(V))
     if (conf.lev<=0||conf.lev>=1) conf.lev <- 0.95
@@ -4289,12 +4285,58 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     if (!is.null(vc.full)) { 
       res$all <- sqrt(vc.full)
     }
-  } else res <- if (is.null(vc.full)) sqrt(vc) else list(vc=sqrt(vc),all=sqrt(vc.full))
+  } else {
+    Vsp <- NULL
+    res <- if (is.null(vc.full)) sqrt(vc) else list(vc=sqrt(vc),all=sqrt(vc.full))
+  }
+  ## now reset any non-linear terms with own methods... 
+  kk <- which(sapply(x$smooth,function(x) !is.null(x$nlinfo)))
+  if (length(kk)) { ## there are non-linear terms
+    Vse <- V <- list();i <- 0;di <- rep(0,0)
+    for (k in kk) {
+      i <- i + 1
+      ii <- x$smooth[[k]]$first.sp:x$smooth[[k]]$last.sp ## index of smoothing parameters
+      V[[i]] <- chol2inv(x$smooth[[k]]$updateS(log(x$sp[ii]),list())$R)*x$sig2 ## cov matrix
+      di <- c(di,ii) ## terms to now drop from above calc
+      if (!is.null(Vsp)) { ## get sd of  
+        nrep <- 400
+	Va <- V2 <- V[[i]]*0
+        ssp <- rmvn(nrep,log(x$sp[ii]),Vsp[ii,ii,drop=FALSE])
+	for (j in 1:nrep) {
+	  Z <- chol2inv(x$smooth[[k]]$updateS(ssp[j,],list())$R)*x$sig2
+	  V2 <- V2 + Z^2; Va <- Va + Z
+	}
+	V2 <- V2/nrep; Va <- Va/nrep
+	Vse[[i]] <- sqrt(V2-Va^2)
+      }
+    }
+    names(V) <- sapply(x$smooth[kk],function(x) x$label)
+    res$V <- V
+    if (length(Vse)) res$Vse <- Vse
   
+    res$vc <- res$vc[-di,,drop=FALSE]
+    if (!is.null(res$all)) res$all <- res$all[-di] 
+  }
   # return
   class(res) <- c("gam.vcomp", class(res))
   res
 } ## gam.vcomp
+
+printV <- function(V,Vse=NULL,digits=2) {
+  Vr <- format(rbind(V,Vse),digits=digits)
+  p <- ncol(V)
+  if (is.null(Vse)) {
+    for (i in 1:p) {
+      for (j in 1:p) cat(" ",Vr[i,j],sep="")
+      cat("\n")
+    }
+  } else { 
+    for (i in 1:p) {
+      for (j in 1:p) cat(" ",Vr[i,j],"(",Vr[i+p,j],")",sep="")
+      cat("\n")
+    }  
+  }
+} ## printV
 
 print.gam.vcomp <- function(x, ...) {
   cat("\n")
@@ -4303,7 +4345,6 @@ print.gam.vcomp <- function(x, ...) {
   if (x.list && is.array(x$vc)) {
     cat(paste("Standard deviations and", x$conf.lev,"confidence intervals:\n\n"))
     print(x$vc, ...)
-    cat("\nRank: ");cat(x$rank);cat("/");cat(x$rank.hess);cat("\n")
   } else {
     # don't have array so print just the standard deviations
     cat(paste("Standard deviations:\n\n"))
@@ -4317,9 +4358,16 @@ print.gam.vcomp <- function(x, ...) {
       print(x, ...)
     }
   }
+  if (!is.null(x$V)) {
+    cat("\nNon-linear smooth covariance matrices (s.e):\n")
+    for (i in 1:length(x$V)) {
+      cat("\n",names(x$V)[i],"\n");printV(x$V[[i]],x$Vse[[i]])
+    }
+  }  
+  if (x.list && is.array(x$vc)) cat("\nRank: ");cat(x$rank);cat("/");cat(x$rank.hess);cat("\n")
   # if x has components for all smooths, print them
   if (x.list && !is.null(x$all)) {
-    cat("\nAll smooth components:\n")
+    cat("\nLinear smooth components:\n")
     print(x$all, ...)
   }
 }  ## print.gam.vcomp

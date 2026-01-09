@@ -243,7 +243,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE,keepS=FALSE) 
     if (keepS) Sl[[b]]$S0 <- Sl[[b]]$S ## keep untransformed version
     if (!Sl[[b]]$linear) { ## nonlinear term
       ## never re-parameterized, but need contribution to penalty square root, E
-      Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
+      Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]]) ## Sl[[b]]$lambda is dummy: log scale or not irrelevant
       lambda <- c(lambda,Sl[[b]]$lambda)
       tmp <- Sl[[b]]$St(Sl[[b]],2)
       if (sparse) {
@@ -1143,11 +1143,14 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
   Amat <- is.matrix(A) 
   if (k<=0) { ## apply whole penalty
     B <- A*0
+    sparse <- inherits(B,"Matrix")
     for (b in 1:nb) { ## block loop
       ind <- Sl[[b]]$start:Sl[[b]]$stop ## index of coeffs for this bock
       if (!Sl[[b]]$linear) { ## non-linear block
-        if (Amat)  B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl[[b]])) else
-	           B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl[[b]]))
+        if (Amat) {
+	  B[ind,] <- if (sparse) t(Sl[[b]]$AS(t(A[ind,]),Sl[[b]])) else
+	             as.matrix(t(Sl[[b]]$AS(t(A[ind,]),Sl[[b]])))
+	} else B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl[[b]]))
       } else if (length(Sl[[b]]$S)==1) { ## singleton
         if (Sl[[b]]$repara) {
           ind <- ind[Sl[[b]]$ind]
@@ -1203,9 +1206,10 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
               }
             } else { ## non-linear
               if (full) {
-                B <- A*0
-		if (Amat) B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl)) else
-	                  B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl))
+                B <- A*0; sparse <- inherits(B,"Matrix")
+		if (Amat) {
+		  B[ind,] <- if (sparse) t(Sl[[b]]$AS(t(A[ind,]),Sl)) else as.matrix(t(Sl[[b]]$AS(t(A[ind,]),Sl)))
+		} else B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl))
                 A <- B
               } else {
                 A <- if (Amat) t(Sl[[b]]$AS(t(A[ind,]),Sl)) else drop(Sl[[b]]$AS(A[ind],Sl))

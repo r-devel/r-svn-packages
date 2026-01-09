@@ -689,13 +689,13 @@ tensor.prod.model.matrix <- function(X) {
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency, and does work in compiled code.
-  if (inherits(X[[1]],"dgCMatrix")) {
-    if (any(!unlist(lapply(X,inherits,"dgCMatrix"))))
-      stop("matrices must be all class dgCMatrix or all class matrix")
+  #if (inherits(X[[1]],"dgCMatrix")) {
+  if (any(sapply(X,inherits,"Matrix"))) { ## sparse case
+    if (any(!sapply(X,inherits,"dgCMatrix"))) X <- lapply(X,as,"dgCMatrix")
     T <- .Call(C_stmm,X)
   } else {
-    if (any(!unlist(lapply(X,inherits,"matrix"))))
-       stop("matrices must be all class dgCMatrix or all class matrix")
+    if (any(!sapply(X,inherits,"matrix")))
+       stop("matrices must be all class Matrix or class matrix")
     m <- length(X)              ## number to row tensor product
     d <- unlist(lapply(X,ncol)) ## dimensions of each X
     n <- nrow(X[[1]])           ## rows in each X

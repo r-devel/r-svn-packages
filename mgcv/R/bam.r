@@ -1919,7 +1919,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     } ## sub block loop  
   }
   ## if any Xd sparse then make all sparse...
-  if (any(sapply(Xd,function(x) inherits(x,"Matrix")))) {
+  if (any(sapply(Xd,inherits,"Matrix"))) {
     Xd <- lapply(Xd,as,"dgCMatrix")
     r <- kd*0; off <- list()
     for (j in 1:nrow(ks)) { ## create the reverse indices...
@@ -2565,7 +2565,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       }	
       if (length(drop>0)) G$drop <- drop ## index of terms to drop as a result of side cons on tensor terms
       ## if any Xd sparse then make all sparse...
-      if (any(sapply(G$Xd,function(x) inherits(x,"Matrix")))) {
+      if (any(sapply(G$Xd,inherits,"Matrix"))) {
         G$Xd <- lapply(G$Xd,as,"dgCMatrix")
 	r <- G$kd*0; off <- list()
         for (j in 1:nrow(ks)) { ## create the reverse indices...
