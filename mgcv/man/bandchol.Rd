@@ -16,12 +16,12 @@ bandsolve(B,x,trans=FALSE)
 \arguments{
 \item{B}{An n by k matrix containing the diagonals of the matrix \code{A} to be decomposed, or factor \code{R}. First row is leading diagonal, next is first super-diagonal, etc. super-diagonals are zero padded at the end. Alternatively, for \code{bandchol} only, gives \code{A} directly, i.e. a square matrix with 2k-1 non zero diagonals (those from the lower triangle are not accessed).}
 \item{x}{an n-vector or n row matrix to multiply by R (\code{bandmult}) or its inverse (\code{bandsolve}).}
-\item{trans}{if \code{TRUE} then transpose code{R} before multiplication or solving.}
+\item{trans}{if \code{TRUE} then transpose \code{R} before multiplication or solving.}
 }
 
 \value{For \code{bandchol}, let \code{R} be the factor such that \code{t(R)\%*\%R = A}. \code{R} is upper triangular and if the rows of \code{B} contained the diagonals of \code{A} on entry, then what is returned is an n by k matrix containing the diagonals of \code{R}, packed as \code{B} was packed on entry. If \code{B} was square on entry, then \code{R} is returned directly. See examples.
 
-For \code{bandmult} or \code{bandsolve} a vector or matrix of the same dimension as \code{x} containing the required product. 
+For \code{bandmult} or \code{bandsolve} a vector or matrix of the same dimension as \code{x} containing the required result. 
 }
 
 \details{For \code{bandchol} calls \code{dpbtrf} from \code{LAPACK}. The point of this is that it has \eqn{O(k^2n)}{O(k^2n)} computational cost, rather than the \eqn{O(n^3)}{O(n^3)} required by dense matrix methods. \code{bandmult} is implemented in R so could be made a little faster using compiled code. \code{bandsolve} calls \code{dtbtrs} from \code{LAPACK}.
