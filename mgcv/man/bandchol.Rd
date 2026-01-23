@@ -1,22 +1,30 @@
 \name{bandchol}
 \alias{bandchol}
+\alias{bandmult}
+\alias{bandsolve}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Choleski decomposition of a band diagonal matrix}
+\title{Cholesky decomposition of a band diagonal matrix}
 \description{ 
-Computes Choleski decomposition of a (symmetric positive definite) band-diagonal matrix, \code{A}. 
+Computes Cholesky decomposition of a (symmetric positive definite) band-diagonal matrix, \code{A}, or multiplies by corresponding banded Cholesky factor \code{R}.
 }
 \usage{
 bandchol(B)
+bandmult(B,x,trans=FALSE)
+bandsolve(B,x,trans=FALSE)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
-\item{B}{An n by k matrix containing the diagonals of the matrix \code{A} to be decomposed. First row is leading diagonal, next is first sub-diagonal, etc. sub-diagonals are zero padded at the end. Alternatively gives \code{A} directly, i.e. a square matrix with 2k-1 non zero diagonals (those from the lower triangle are not accessed).}
+\item{B}{An n by k matrix containing the diagonals of the matrix \code{A} to be decomposed, or factor \code{R}. First row is leading diagonal, next is first super-diagonal, etc. super-diagonals are zero padded at the end. Alternatively, for \code{bandchol} only, gives \code{A} directly, i.e. a square matrix with 2k-1 non zero diagonals (those from the lower triangle are not accessed).}
+\item{x}{an n-vector or n row matrix to multiply by R (\code{bandmult}) or its inverse (\code{bandsolve}).}
+\item{trans}{if \code{TRUE} then transpose code{R} before multiplication or solving.}
 }
 
-\value{Let \code{R} be the factor such that \code{t(R)\%*\%R = A}. \code{R} is upper triangular and if the rows of \code{B} contained the diagonals of \code{A} on entry, then what is returned is an n by k matrix containing the diagonals of \code{R}, packed as \code{B} was packed on entry. If \code{B} was square on entry, then \code{R} is returned directly. See examples.  
+\value{For \code{bandchol}, let \code{R} be the factor such that \code{t(R)\%*\%R = A}. \code{R} is upper triangular and if the rows of \code{B} contained the diagonals of \code{A} on entry, then what is returned is an n by k matrix containing the diagonals of \code{R}, packed as \code{B} was packed on entry. If \code{B} was square on entry, then \code{R} is returned directly. See examples.
+
+For \code{bandmult} or \code{bandsolve} a vector or matrix of the same dimension as \code{x} containing the required product. 
 }
 
-\details{Calls \code{dpbtrf} from \code{LAPACK}. The point of this is that it has \eqn{O(k^2n)}{O(k^2n)} computational cost, rather than the \eqn{O(n^3)}{O(n^3)} required by dense matrix methods.
+\details{For \code{bandchol} calls \code{dpbtrf} from \code{LAPACK}. The point of this is that it has \eqn{O(k^2n)}{O(k^2n)} computational cost, rather than the \eqn{O(n^3)}{O(n^3)} required by dense matrix methods. \code{bandmult} is implemented in R so could be made a little faster using compiled code. \code{bandsolve} calls \code{dtbtrs} from \code{LAPACK}.
 
 }
  
@@ -38,13 +46,39 @@ A <- crossprod(A)
 
 ## full matrix form...
 bandchol(A)
-chol(A) ## for comparison
+R <- chol(A); R ## for comparison
 
 ## compact storage form...
 B <- matrix(0,3,n)
 B[1,] <- sdiag(A);B[2,1:(n-1)] <- sdiag(A,1)
 B[3,1:(n-2)] <- sdiag(A,2)
-bandchol(B)
+RB <- bandchol(B); RB
+
+## bandmult and bandsolve with a vector...
+x <- runif(n)
+
+drop(R\%*\%x) ## direct
+bandmult(RB,x) ## banded
+drop(t(R)\%*\%x)
+bandmult(RB,x,trans=TRUE)
+
+backsolve(R,x)
+bandsolve(RB,x)
+forwardsolve(t(R),x)
+bandsolve(RB,x,trans=TRUE)
+
+## bandmult and bandsolve with a matrix...
+x <- matrix(runif(2*n),n,2)
+
+drop(R\%*\%x)
+bandmult(RB,x)
+drop(t(R)\%*\%x)
+bandmult(RB,x,trans=TRUE)
+
+backsolve(R,x)
+bandsolve(RB,x)
+forwardsolve(t(R),x)
+bandsolve(RB,x,trans=TRUE)
 
 }
 

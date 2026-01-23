@@ -34,6 +34,9 @@ present, and reparameterization needs checking (also for bam).
 * fixed side-effect that uniquecombs created contrast attribute for factors
   even when original had no attribute set.
 
+* Added bandmult and bandsolve for multiplication and solves with banded 
+  upper triangular factor returned by bandchol. 
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via

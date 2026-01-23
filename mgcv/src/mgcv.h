@@ -205,6 +205,7 @@ void pivoter(double *x,int *r,int *c,int *pivot, int *col, int *reverse);
 void row_squash(double *X,int rnew,int rold,int col);
 void up2lo(double * A, int n);
 void band_chol(double *B,int *n,int *k,int *info);
+void band_solve(double *RB,int *n,int *k,double *B,int *cb,int *info);
 void tri_chol(double *ld,double *sd,int *n,int *info);
 void mgcv_omp(int *a);
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);

@@ -55,6 +55,7 @@ R_CallMethodDef CallMethods[] = {
 
 R_CMethodDef CEntries[] = { 
     {"band_chol",(DL_FUNC) band_chol,4},
+    {"band_solve",(DL_FUNC) band_solve,6},
     {"davies",(DL_FUNC) davies,10},
     {"tri_chol",(DL_FUNC) tri_chol,4},
     {"diagXVXt", (DL_FUNC) &diagXVXt,21},

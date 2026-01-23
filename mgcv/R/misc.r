@@ -165,6 +165,41 @@ bandchol <- function(B) {
   B
 } ## bandchol
 
+bandsolve <- function(B,x,trans=FALSE) {
+  n <- ncol(B);
+  cb <- NCOL(x)
+  oo <- .C(C_band_solve,RB=as.double(B),n=as.integer(n),k=as.integer(nrow(B)),B=as.double(x),
+           cb=as.integer(cb),info=as.integer(trans))
+  if (oo$info==0) { if (cb>1) matrix(oo$B,n,cb) else oo$B } else oo$info	   
+} ## bandsolve
+
+bandmult <- function(B,x,trans=FALSE) {
+## Diagonals of an upper triangular matrix R are stored in rows
+## of B. Leading diagonal first row, all diagonals starting
+## first column - un-needed elements not used (as bandchol).
+## Forms R%*%x if trans=FALSE and t(R)%*%x otherwise.
+  n <- ncol(B)
+  z <- x*0
+  ib <- iz <- ix <- 1:n
+  if (is.matrix(x)) for (i in 1:nrow(B)) {
+    z[iz,] <- z[iz,] + B[i,ib]*x[ix,]
+    if (trans) {
+      ib <- ix <- ix[-(n-i+1)]; iz <- iz[-1]
+    } else {
+      ib <- iz <- iz[-(n-i+1)]; ix <- ix[-1]
+    }  
+  } else for (i in 1:nrow(B)) {
+    z[iz] <- z[iz] + B[i,ib]*x[ix]
+    if (trans) {
+      ib <- ix <- ix[-(n-i+1)]; iz <- iz[-1]
+    } else {
+      ib <- iz <- iz[-(n-i+1)]; ix <- ix[-1]
+    } 
+  }
+  z
+} ## bandmult
+
+
 trichol <- function(ld,sd) {
 ## obtain chol factor R of symm tridiag matrix, A, with leading diag
 ## ld and sub/super diags sd. R'R = A. On exit ld is diag of R and

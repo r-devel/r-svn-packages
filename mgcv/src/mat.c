@@ -2300,7 +2300,23 @@ void band_chol(double *B,int *n,int *k,int *info) {
   kd = *k - 1;  
   F77_CALL(dpbtrf)(&uplo,n,&kd,B,k,info FCONE);
   // DPBTRF( UPLO, N, KD, AB, LDAB, INFO )
-}
+} /* band_chol */
+
+void band_solve(double *RB,int *n,int *k,double *B,int *cb,int *info) {
+/* k by n matrix RB contains k non-zero diagonals of an upper
+   triangular factor R. The leading diagonal is stored in the first row and is of length n.
+   Subsequent diagonal are zero padded at the end, to also be of length n. 
+   Note the unusual `by row' storage.
+   B is a matrix with *n rows and *cb columns
+*/  
+  char uplo='L',diag='N',trans;
+  int kd;
+  if (*info) trans='N'; else trans='T';
+  kd = *k - 1; /* number of super-diagonals, *n is order */
+  F77_CALL(dtbtrs)(&uplo,&trans,&diag,n,&kd,cb,RB,k,B,n,info FCONE FCONE FCONE);
+  
+  // dtbtrs(uplo,trans,diag,n,kd,nrhs,ab,ldab,b,ldb,info)
+} /* band_solve */
 
 void mgcv_tri_diag(double *S,int *n,double *tau)
 /* Reduces symmetric n by n matrix S to tridiagonal form T 
