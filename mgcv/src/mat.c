@@ -2318,6 +2318,16 @@ void band_solve(double *RB,int *n,int *k,double *B,int *cb,int *info) {
   // dtbtrs(uplo,trans,diag,n,kd,nrhs,ab,ldab,b,ldb,info)
 } /* band_solve */
 
+void band_mult(double *RB,int *n,int *k,double *B,int *cb,int *trans) {
+/* as band_solve but for multiplication */
+  char uplo='L',diag='N',tr;
+  int kd,one=1,i;
+  if (*trans) tr='N'; else tr='T';
+  kd = *k - 1; /* number of super-diagonals, *n is order */
+  /* loop over columns of B */
+  for (i=0;i<*cb;i++,B += *n) F77_CALL(dtbmv)(&uplo,&tr,&diag,n,&kd,RB,k,B,&one FCONE FCONE FCONE);
+} /* band_mult */ 
+
 void mgcv_tri_diag(double *S,int *n,double *tau)
 /* Reduces symmetric n by n matrix S to tridiagonal form T 
    by similarity transformation. Q'SQ = T, where Q is an
@@ -4005,3 +4015,130 @@ SEXP dpdev(SEXP a) {
   return(MOD);
 } /* dpdev */
 
+void partial_band_chol0(double *A,double *R,int b,int n) {
+/* On entry A is b+1 by n containig the leading diagonal of
+   PD n by n matrix A' in row 0 and super diagonals in
+   subsequent rows. All diagonals start in col 0 (zero padded
+   at end). The matrix defined by the supplied diagonals need
+   not be PD, but any b+1 by b+1 diagonal block will be.
+   This routine attempts to find the Cholesky factor of the
+   supplied banded approximation to A', but if this is not
+   possible falls back to the Cholesky factor of a block diagonal
+   approximation. The approach is very simple. The Cholesky
+   algorithm is applied until a leading diagonal element of
+   the Cholesky factor would be imaginary. At that point a
+   new block is started (and the already computed elements
+   beyond the previous block are zeroed). The factor is returned in
+   R which has the same structure as A, it is the factor of a block
+   diagonal banded approximation to A' which has either exactly the
+   values in A' or zeroes.
+   It is an example of an incomplete Cholesky factorization,
+   useful for general purpose pre-conditioning.
+   This version useful for understanding partial_band_chol, as algorithm
+   is identical, but indexing is explicit here, with input and factor
+   separated.
+*/
+  int i,k,k1,j,j0,b1;
+  double x,z;
+  b1 = b + 1;
+  for (i=0;i<n;i++) { /* loop down the rows (conceptually) */
+    if (b<i) k1 = b; else k1 = i;
+    x = A[b1*i]; 
+    for (k=1;k<=k1;k++) {
+      z = R[k+(i-k)*b1]; 
+      x -= z*z;
+    }
+    if (x>0) R[b1*i] = sqrt(x); else { /* start new block */
+      R[b1*i] = sqrt(A[b1*i]);
+      for (k=1;k<=b;k++) { /* zero elements beyond previous block */
+        j0 = i-k; if (j0<0) j0 = 0;
+	for (j=j0;j<i;j++) R[k+b1*j] = 0;	
+      }
+    }
+    /* now complete the elements of the ith row of the factor */
+    for (j=1;j<=b;j++) {
+      x = A[j+b1*i];
+      k1 = b-j; if (k1>i) k1 = i;
+      for (k=1;k<=k1;k++) {
+	j0 = k+(i-k)*b1;
+	x -= R[j0] * R[j+j0];
+      }	
+      R[j+b1*i] = x/R[b1*i]; 			    
+    }	  
+  } /* row loop */
+} /* partial_band_chol0 */
+
+void partial_band_chol(double *A,int b,int n) {
+/* On entry A is b+1 by n containig the leading diagonal of
+   PD n by n matrix A' in row 0 and super diagonals in
+   subsequent rows. All diagonals start in col 0 (zero padded
+   at end). The matrix defined by the supplied diagonals need
+   not be PD, but any b+1 by b+1 diagonal block will be.
+   This routine attempts to find the Cholesky factor of the
+   supplied banded approximation to A', but if this is not
+   possible falls back to the Cholesky factor of a block diagonal
+   approximation. The approach is very simple. The Cholesky
+   algorithm is applied until a leading diagonal element of
+   the Cholesky factor would be imaginary. At that point a
+   new block is started (and the already computed elements
+   beyond the previous block are zeroed).
+
+   The factor is returned in A with the same structure, it is
+   the factor of a block diagonal banded approximation to A'
+   which has either exactly the values in A' or zeroes.
+
+   It is an example of an incomplete Cholesky factorization,
+   useful for general purpose pre-conditioning.
+*/
+  int i,k,k1,j,j0,b1;
+  double x,z,*Ap,Rii,*p,*p1;
+  b1 = b + 1;
+  Ap = A;
+  for (i=0;i<n;i++) { /* loop down the rows (conceptually) */
+    if (b<i) k1 = b; else k1 = i;
+    x = *Ap; /* ith diagonal element of input */
+    p = A + 1 + (i-1)*b1;
+    for (k=1;k<=k1;k++,p -= b) { /* sum over ith column of factor */
+      x -= *p * *p; 
+    }
+    /* Get ith diagonal element of factor, starting new block if necessary */ 
+    if (x>0) *Ap = sqrt(x); else { /* start new block */
+      *Ap = sqrt(*Ap); /* ith diagonal element of factor */
+      for (k=1;k<=b;k++) { /* zero elements beyond previous block in factor */
+        j0 = i-k; if (j0<0) j0 = 0;
+	p = A + k + b1 * j0;
+	for (j=j0;j<i;j++,p+=b1) *p = 0;	
+      }
+    }
+    Rii = *Ap; Ap++;
+    /* now complete the elements of the ith row of the factor */
+    for (j=1;j<=b;j++) {
+      x = *Ap; /* next element on ith row of input */
+      k1 = b-j; if (k1>i) k1 = i;
+      p = A + 1 + (i-1)*b1;
+      p1 = p + j;
+      for (k=1;k<=k1;k++,p-=b,p1-=b) {
+	x -= *p * *p1; /* required product of elements of factor columns */
+      }	
+      *Ap = x/Rii; /* corresponding element on ith row of factor */
+      Ap++; 			    
+    }	  
+  } /* row loop */
+} /* partial_band_chol */
+
+SEXP pabchol(SEXP a,SEXP r) {
+/* wrapper for partial_band_chol */
+  int n,b;
+  double *A,*R,*p,*p1;
+  b = nrows(a)-1; /* number of super diagonals */
+  n = ncols(a);
+  a = PROTECT(coerceVector(a,REALSXP));
+  A = REAL(a);
+  r = PROTECT(coerceVector(r,REALSXP));
+  R = REAL(r);
+  for (p=R,p1=R + n*(b+1);p<p1;p++,A++) *p = *A;/* copy A to R */
+  partial_band_chol(R,b,n); /* R over-written with factor */
+  //partial_band_chol0(A,R,b,n);
+  UNPROTECT(2);
+  return(R_NilValue);
+} /* pabchol */

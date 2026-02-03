@@ -35,7 +35,9 @@ present, and reparameterization needs checking (also for bam).
   even when original had no attribute set.
 
 * Added bandmult and bandsolve for multiplication and solves with banded 
-  upper triangular factor returned by bandchol. 
+  upper triangular factor returned by bandchol, and a 'partial' option to
+  bandchol for case when banded matrix is not PD but is constructed from 
+  diagonals of PD matrix. 
 
 1.9-4
 

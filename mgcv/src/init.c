@@ -50,11 +50,13 @@ R_CallMethodDef CallMethods[] = {
   {"wdiag",(DL_FUNC)&wdiag,3},
   {"QRdrop",(DL_FUNC)&QRdrop,3},
   {"QRadd",(DL_FUNC)&QRadd,3},
+  {"pabchol",(DL_FUNC)&pabchol,2},
   {NULL, NULL, 0}
 };
 
 R_CMethodDef CEntries[] = { 
     {"band_chol",(DL_FUNC) band_chol,4},
+    {"band_mult",(DL_FUNC) band_mult,6},
     {"band_solve",(DL_FUNC) band_solve,6},
     {"davies",(DL_FUNC) davies,10},
     {"tri_chol",(DL_FUNC) tri_chol,4},

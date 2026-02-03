@@ -206,6 +206,7 @@ void row_squash(double *X,int rnew,int rold,int col);
 void up2lo(double * A, int n);
 void band_chol(double *B,int *n,int *k,int *info);
 void band_solve(double *RB,int *n,int *k,double *B,int *cb,int *info);
+void band_mult(double *RB,int *n,int *k,double *B,int *cb,int *trans);
 void tri_chol(double *ld,double *sd,int *n,int *info);
 void mgcv_omp(int *a);
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);
@@ -271,7 +272,8 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps);
 void minres(double *R, double *u,double *b, double *x, int *p,int *m,double *work);
 SEXP QRdrop(SEXP q,SEXP r,SEXP K);
 SEXP QRadd(SEXP q,SEXP r,SEXP A);
-
+//void partial_band_chol(double *A,int b,int n);
+SEXP pabchol(SEXP a,SEXP r);
 
 /* sparse matrix routines */
 SEXP isa1p(SEXP L,SEXP S,SEXP NT);

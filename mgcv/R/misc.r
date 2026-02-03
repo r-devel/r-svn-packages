@@ -138,11 +138,11 @@ sdiag <- function(A,k=0) {
  A
 } ## "sdiag<-"
 
-bandchol <- function(B) {
+bandchol <- function(B,partial=FALSE) {
 ## obtain R such that R'R = A. Where A is banded matrix contained in R.
   n <- ncol(B)
   k <- 0
-  if (n==nrow(B)) { ## square matrix. Extract the diagonals
+  if (n==nrow(B)&&all.equal(B,t(B))) { ## square symmetric matrix. Extract the diagonals
     A <- B*0
     for (i in 1:n) {
       b <- sdiag(B,i-1)
@@ -153,10 +153,16 @@ bandchol <- function(B) {
     } 
     B <- A[1:k,]
   }
-  oo <- .C(C_band_chol,B=as.double(B),n=as.integer(n),k=as.integer(nrow(B)),info=as.integer(0))
-  if (oo$info<0) stop("something wrong with inputs to LAPACK routine")
-  if (oo$info>0) stop("not positive definite")
-  B <- matrix(oo$B,nrow(B),n)
+  if (partial) {
+    R <- matrix(0,nrow(B),ncol(B));
+    .Call(C_pabchol,B,R) ## presumably could be re-written to only use B
+    B <- R
+  } else {
+    oo <- .C(C_band_chol,B=as.double(B),n=as.integer(n),k=as.integer(nrow(B)),info=as.integer(0))
+    if (oo$info<0) stop("something wrong with inputs to LAPACK routine")
+    if (oo$info>0) return(NULL) ##stop("not positive definite")
+    B <- matrix(oo$B,nrow(B),n)
+  }  
   if (k>0) { ## was square on entry, so also on exit...
     A <- A * 0
     for (i in 1:k) sdiag(A,i-1) <- B[i,1:(n-i+1)]
@@ -166,7 +172,8 @@ bandchol <- function(B) {
 } ## bandchol
 
 bandsolve <- function(B,x,trans=FALSE) {
-  n <- ncol(B);
+  n <- ncol(B)
+  if (n!=NROW(x)) stop("B and x incompatible")
   cb <- NCOL(x)
   oo <- .C(C_band_solve,RB=as.double(B),n=as.integer(n),k=as.integer(nrow(B)),B=as.double(x),
            cb=as.integer(cb),info=as.integer(trans))
@@ -179,24 +186,11 @@ bandmult <- function(B,x,trans=FALSE) {
 ## first column - un-needed elements not used (as bandchol).
 ## Forms R%*%x if trans=FALSE and t(R)%*%x otherwise.
   n <- ncol(B)
-  z <- x*0
-  ib <- iz <- ix <- 1:n
-  if (is.matrix(x)) for (i in 1:nrow(B)) {
-    z[iz,] <- z[iz,] + B[i,ib]*x[ix,]
-    if (trans) {
-      ib <- ix <- ix[-(n-i+1)]; iz <- iz[-1]
-    } else {
-      ib <- iz <- iz[-(n-i+1)]; ix <- ix[-1]
-    }  
-  } else for (i in 1:nrow(B)) {
-    z[iz] <- z[iz] + B[i,ib]*x[ix]
-    if (trans) {
-      ib <- ix <- ix[-(n-i+1)]; iz <- iz[-1]
-    } else {
-      ib <- iz <- iz[-(n-i+1)]; ix <- ix[-1]
-    } 
-  }
-  z
+  if (n!=NROW(x)) stop("B and x incompatible")
+  cb <- NCOL(x)
+  oo <- .C(C_band_mult,RB=as.double(B),n=as.integer(n),k=as.integer(nrow(B)),B=as.double(x),
+           cb=as.integer(cb),trans=as.integer(trans))
+  if (cb>1) matrix(oo$B,n,cb) else oo$B	   
 } ## bandmult
 
 
