@@ -1,3 +1,7 @@
+2026-02-06  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* tests/anova.gls.R: increase tolerance.
+
 2025-03-31 Brian Ripley
 
 	* DESCRIPTION: Version is 3.1-168
