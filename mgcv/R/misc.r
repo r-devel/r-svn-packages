@@ -209,6 +209,30 @@ trichol <- function(ld,sd) {
   list(ld=ld,sd=sd)
 }
 
+XWXband <- function(X,k,w=rep(1,nrow(X)),B=NULL) {
+## get diagonal bands 0 (leading) to k of X'WW where W = diag(w)
+## returning them in rows of B (each starting at col 1). If matrix
+## B supplied then it is assued to contin already computed bands, and only the
+## required extra bands are computed. X can be of class "matrix" or "dgCMatrix"
+  n <- nrow(X); p <- ncol(X)
+  if (k>p-1) k <- p-1
+  if (length(w)!=n) stop("w wrong length")
+  k <- c(0,k)
+  if (is.matrix(B)) {
+    if (ncol(B)!=p) {
+      warning("B has too few columns - ignored")
+      B <- NULL 
+      k[1] <- 0 ## have to start from leading diagonal
+    } else {
+      k[1] <- nrow(B) ## first new diagonal required
+      if (k[1]>k[2]) return(B[1:(k[2]+1),]) ## already have all needed!
+    }
+  } 
+  D <- matrix(0,diff(k)+1,p)
+  if (inherits(X,"dgCMatrix")) .Call(C_sRXWXband,X,w,D,k) else .Call(C_RXWXband,X,w,D,k)
+  if (is.null(B)) return(D) else return(rbind(B,D))
+} ## XWXband
+
 mgcv.omp <- function() {
 ## does open MP appear to be available?
   oo <- .C(C_mgcv_omp,a=as.integer(-1))
@@ -483,7 +507,7 @@ ijXVXd <- function(i,j,X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
 } ## ijXVXd
 
 workXVXd <- function(X,V,k,k1,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
-## discrete computation of diag(XVX') or scattered elements of XWX'
+## discrete computation of diag(XVX') or scattered elements of XVX'
 
   n <- if (is.matrix(k)) nrow(k) else length(k)
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))

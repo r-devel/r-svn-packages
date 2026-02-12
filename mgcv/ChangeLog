@@ -39,6 +39,9 @@ present, and reparameterization needs checking (also for bam).
   bandchol for case when banded matrix is not PD but is constructed from 
   diagonals of PD matrix. 
 
+* tensor product smooth constructor modified to apply same scaling to 
+  marginal penalties as applied to full term penalties.
+
 1.9-4
 
 *** scasm function provided for shape constrained additive smooth models, via

@@ -822,7 +822,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
     } else XP[[i]] <- NULL
   }
   # scale `nicely' - mostly to avoid problems with lme ...
-  for (i in 1:m)  Sm[[i]] <- Sm[[i]]/eigen(Sm[[i]],symmetric=TRUE,only.values=TRUE)$values[1] 
+  for (i in 1:m)  object$margin[[i]]$S[[1]] <- Sm[[i]] <- Sm[[i]]/eigen(Sm[[i]],symmetric=TRUE,only.values=TRUE)$values[1] 
   max.rank <- prod(d)
   r <- max.rank*r/d # penalty ranks
   X <- tensor.prod.model.matrix(Xm)

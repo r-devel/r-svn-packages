@@ -274,7 +274,8 @@ SEXP QRdrop(SEXP q,SEXP r,SEXP K);
 SEXP QRadd(SEXP q,SEXP r,SEXP A);
 //void partial_band_chol(double *A,int b,int n);
 SEXP pabchol(SEXP a,SEXP r);
-
+SEXP RXWXband(SEXP x,SEXP W,SEXP b,SEXP KK);
+SEXP sRXWXband(SEXP X,SEXP W,SEXP b,SEXP KK);
 /* sparse matrix routines */
 SEXP isa1p(SEXP L,SEXP S,SEXP NT);
 SEXP stmm(SEXP X); /* row Kronecker product */

@@ -51,6 +51,8 @@ R_CallMethodDef CallMethods[] = {
   {"QRdrop",(DL_FUNC)&QRdrop,3},
   {"QRadd",(DL_FUNC)&QRadd,3},
   {"pabchol",(DL_FUNC)&pabchol,2},
+  {"RXWXband",(DL_FUNC)&RXWXband,4},
+  {"sRXWXband",(DL_FUNC)&sRXWXband,4},
   {NULL, NULL, 0}
 };
 

@@ -2200,3 +2200,44 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
   FREE(Sj);FREE(sin);FREE(d);
   return(R_NilValue);
 }  /* isa1p */
+
+SEXP sRXWXband(SEXP X,SEXP W,SEXP b,SEXP KK) {
+/* equivalent of RXWXband for sparse matrices of class dgCMatrix
+   extract diagonal bands kk[0] to kk[1] of X'WX and put them in
+   rows of B, each starting at row start. Diagonal band 0 is
+   the leading diagonal. The first extracted band goes in
+   the first row of B */  
+  SEXP i_sym,x_sym,dim_sym,p_sym;
+  int *dim,n,p,rb,*Xp,*Xi,*kk,i,j,k,kb,xi;
+  double *B,*Xx,*w,*s,x;
+  /* register the names of the slots in L and S */
+  p_sym = install("p");
+  dim_sym = install("Dim");
+  i_sym = install("i");
+  x_sym = install("x");
+  dim = INTEGER(R_do_slot(X,dim_sym));
+  Xp = INTEGER(R_do_slot(X,p_sym));
+  Xi = INTEGER(R_do_slot(X,i_sym));
+  Xx = REAL(R_do_slot(X,x_sym));
+  n =dim[0];p=dim[1];rb = nrows(b);
+  B = REAL(PROTECT(coerceVector(b,REALSXP))); /* dense matrix rb by p */
+  w = REAL(PROTECT(coerceVector(W,REALSXP)));
+  kk = INTEGER(PROTECT(coerceVector(KK,INTSXP)));
+  s =  (double *)CALLOC((size_t)n,sizeof(double)); /* scatter vector */
+  for (j=0;j<p;j++) { /* loop over columns */
+    for (i=Xp[j];i<Xp[j+1];i++) s[Xi[i]] = Xx[i]; /* scatter X[,j] */
+    for (kb=0,k=kk[0];k<=kk[1];k++,kb++) { /* loop over diagonals and rows of B */
+      /* compute X[,j]'*X[,j+k]... */ 
+      if (j+k<p) {
+	for (x=0,i=Xp[j+k];i<Xp[j+k+1];i++) {
+	  xi = Xi[i]; /* current row of X and w */  
+	  if (s[xi]) x += s[xi] * w[xi] * Xx[i];
+        }	  
+        B[kb + j * rb] = x;
+      }	
+    }
+    for (i=Xp[j];i<Xp[j+1];i++) s[Xi[i]] = 0; /* clean up scatter */
+  }
+  FREE(s);UNPROTECT(3);
+  return(R_NilValue);
+} /* sRXWXband */

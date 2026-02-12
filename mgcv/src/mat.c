@@ -4034,9 +4034,10 @@ void partial_band_chol0(double *A,double *R,int b,int n) {
    values in A' or zeroes.
    It is an example of an incomplete Cholesky factorization,
    useful for general purpose pre-conditioning.
+
    This version useful for understanding partial_band_chol, as algorithm
    is identical, but indexing is explicit here, with input and factor
-   separated.
+   separated. DO NOT delete - essentially documentation for version used!
 */
   int i,k,k1,j,j0,b1;
   double x,z;
@@ -4142,3 +4143,39 @@ SEXP pabchol(SEXP a,SEXP r) {
   UNPROTECT(2);
   return(R_NilValue);
 } /* pabchol */
+
+
+void XWXband(double *X,double *w,double *B,int *kk,int *n,int *p,int *rb) {
+/* extract diagonal bands kk[0] to kk[1] of X'WX and put them in
+   rows of B, each starting at row start. Diagonal band 0 is
+   the leading diagonal. The first extracted band goes in
+   the first row of B, which has rb rows. X is n by p. */
+  int i,j,k,kb=0;
+  double *Xi, *Xj, x, *wp;
+  for (k=kk[0];k<=kk[1];k++,kb++) {
+    Xi = X; Xj = X + *n * k;
+    for (j=0;j<*p-k;j++,Xi += *n,Xj += *n) {
+      for (x=0,i=0;i<*n;i++) x += Xi[i] * Xj[i] * w[i]; /* don't 'optimize' indexing out - spoils loop unrolling */
+      B[kb + j * *rb] = x;
+    }
+    /*for (j=0;j<*p-k;j++) { // marginally slower, presumably due to lack of loop unrolling 
+      for (wp=w,x=0,i=0;i<*n;i++,Xi++,Xj++,wp++) x += *Xi * *Xj * *wp;
+      B[kb + j * *rb] = x;
+      }
+    */
+  } /* band k loop */  
+} /* WXWband */
+
+SEXP RXWXband(SEXP x,SEXP W,SEXP b,SEXP KK) {
+/* wrapper for XWXband */
+  int *kk,n,p,rb;
+  double *X,*B,*w;
+  n = nrows(x); p = ncols(x);rb = nrows(b);
+  X = REAL(PROTECT(coerceVector(x,REALSXP)));
+  B = REAL(PROTECT(coerceVector(b,REALSXP)));
+  w = REAL(PROTECT(coerceVector(W,REALSXP)));
+  kk = INTEGER(PROTECT(coerceVector(KK,INTSXP)));
+  XWXband(X,w,B,kk,&n,&p,&rb);
+  UNPROTECT(4);
+  return(R_NilValue);
+} /* RWXWband */
