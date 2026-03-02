@@ -1,6 +1,6 @@
 ### This file is part of the 'foreign' package for R.
 
-# Copyright (c) 2004-2015  R Development Core Team
+# Copyright (c) 2004-2026  R Development Core Team
 # Enhancements Copyright (c) 2006 Stephen Weigand
 
 #  This program is free software; you can redistribute it and/or modify
@@ -132,10 +132,10 @@ writeForeignSAS <- function(df, datafile, codefile, dataname = "rdata",
         file = codefile ,append = TRUE)
 
     cat("INPUT", file = codefile, append = TRUE)
-    for(v in 1L:ncol(df))
+    for(v in 1L:ncol(df)) {
         cat("\n", varnames[v], file = codefile, append = TRUE)
         if(strings[v]) cat(" $ ", file = codefile, append = TRUE)
-
+    }
     cat("\n;\n", file = codefile, append = TRUE)
 
     for(v in 1L:ncol(df))
