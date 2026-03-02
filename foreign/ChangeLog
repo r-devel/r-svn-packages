@@ -1,3 +1,10 @@
+2026-03-02  Martin Maechler <maechler@R-project.org>
+
+	* tests/sas.R: update
+	* R/writeForeignSAS.R (writeForeignSAS): re-add lost braces, fixing
+	PR#19012 thanks to Troy Hernandez.
+	* DESCRIPTION (Version): 0.8-92
+
 2026-01-18  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* tests/spss.R*, tests/stata.R*: update reference output for

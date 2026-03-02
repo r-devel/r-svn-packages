@@ -12,12 +12,24 @@ ti   <- "temp_import.sas"
 write.foreign(dd, datafile = tfSi, codefile = ti, package = "SAS")
 file.show(tfSi) # the NA is shown as <empty>
 writeLines(sasCodes <- readLines(ti))
-## This failed in foreign <= 0.8-71 :
-stopifnot(identical(" name $ 6",
-                    grep(" name ", sasCodes, value=TRUE)))
+## This failed in foreign <= 0.8-71  (and with _both_ 'name $' also in <= 0.8-91)
+stopifnot(identical(
+    paste0(" name $ ", c("6", "")),
+    grep("^ name ", sasCodes, value=TRUE)))
+## PR#19012
+df <- data.frame(a = c("x","y"), b = 1:2, c = c("p","q"))
+write.foreign(df,  datafile = tfSi, codefile = ti, package = "SAS")
+writeLines(sasCode2 <- readLines(ti))
+stopifnot(identical(
+    paste0(" c $ ", c("1", "")),
+    grep("^ c ", sasCode2, value=TRUE)))
 
-## This site was unresponsive in Jan 2014
-if(!nzchar(Sys.getenv("R_FOREIGN_FULL_TEST"))) q("no")
+
+
+
+## This site was unresponsive in Jan 2014 (and March 2026)
+if(!nzchar(Sys.getenv("R_FOREIGN_FULL_TEST")) && !interactive()) q("no")
+##                                                               --
 tfile <- "int1982ag.zip"
 download.file("ftp://cusk.nmfs.noaa.gov/mrfss/intercept/ag/int1982ag.zip",
               tfile, quiet=TRUE, mode="wb")
