@@ -1566,12 +1566,12 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
 
 
 
-exclude.too.far <- function(g1,g2,d1,d2,dist)
+exclude.too.far <- function(g1,g2,d1,d2,dist) {
 # if g1 and g2 are the co-ordinates of grid modes and d1,d2 are co-ordinates of data
 # then this routine returns a vector with TRUE if the grid node is too far from
 # any data and FALSE otherwise. Too far is judged using dist: a positive number indicating
 # distance on the unit square into which the grid is scaled prior to calculation
-{ mig<-min(g1)
+  mig<-min(g1)
   d1<-d1-mig;g1<-g1-mig
   mag<-max(g1)
   d1<-d1/mag;g1<-g1/mag
@@ -1586,7 +1586,7 @@ exclude.too.far <- function(g1,g2,d1,d2,dist)
   if (m!=length(d2)) stop("data vectors are of different lengths")
   if (dist<0) stop("supplied dist negative")
   distance<-array(0,n)
-  o<-.C(C_MinimumSeparation,x=as.double(cbind(g1,g2)),n=as.integer(n), d=as.integer(2),
+  o <- .C(C_MinimumSeparation,x=as.double(cbind(g1,g2)),n=as.integer(n), d=as.integer(2),
                             t=as.double(cbind(d1,d2)),m=as.integer(m),distance=as.double(distance))
  
   res <- rep(FALSE,n)

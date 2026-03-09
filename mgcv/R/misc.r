@@ -151,7 +151,7 @@ bandchol <- function(B,partial=FALSE) {
         A[i,1:length(b)] <- b
       }
     } 
-    B <- A[1:k,]
+    B <- A[1:k,,drop=FALSE]
   }
   if (partial) {
     R <- matrix(0,nrow(B),ncol(B));

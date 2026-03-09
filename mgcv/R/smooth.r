@@ -689,9 +689,9 @@ tensor.prod.model.matrix <- function(X) {
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency, and does work in compiled code.
-  #if (inherits(X[[1]],"dgCMatrix")) {
+  #if (inherits(X[[1]],"CsparseMatrix")) {
   if (any(sapply(X,inherits,"Matrix"))) { ## sparse case
-    if (any(!sapply(X,inherits,"dgCMatrix"))) X <- lapply(X,as,"dgCMatrix")
+    if (any(!sapply(X,inherits,"CsparseMatrix"))) X <- lapply(X,as,"CsparseMatrix")
     T <- .Call(C_stmm,X)
   } else {
     if (any(!sapply(X,inherits,"matrix")))
@@ -1285,20 +1285,10 @@ smooth.construct.tp.smooth.spec <- function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (nu>xtra$max.knots) { ## then there is really a problem
       rngs <- temp.seed(xtra$seed)
-      #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-      #if (inherits(seed,"try-error")) {
-      #    runif(1)
-      #    seed <- get(".Random.seed",envir=.GlobalEnv)
-      #}
-      #kind <- RNGkind(NULL)
-      #RNGkind("default","default")
-      #set.seed(xtra$seed) ## ensure repeatability
       nk <- xtra$max.knots ## going to create nk knots
       ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
       knt <- as.numeric(xu[ind,])  ## ... like this
       temp.seed(rngs)
-      #RNGkind(kind[1],kind[2])
-      #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
     }
   } ## end of large data set handling
   ##if (object$bs.dim[1]<0) object$bs.dim <- 10*3^(object$dim-1) # auto-initialize basis dimension
@@ -1417,9 +1407,9 @@ Predict.matrix.tprs.smooth <- function(object,data)
   X<-matrix(oo$X,n,object$bs.dim)
   if (object$drop.null>0) {
     if (FALSE) { ## nat param
-      X <- (X%*%object$P)[,ind] ## drop null space
+      X <- (X%*%object$P)[,ind,drop=FALSE] ## drop null space
     } else { ## original
-      X <- X[,ind]
+      X <- X[,ind,drop=FALSE]
       X <- sweep(X,2,object$cmX)
     }
   }
@@ -1782,8 +1772,9 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     if (length(k)!=nk+2*m[1]+2) 
     stop(paste("there should be ",nk+2*m[1]+2," supplied knots"))
   }
+  sparse <- !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
   if (is.null(object$deriv)) object$deriv <- 0 
-  object$X <- splines::spline.des(k,x,m[1]+2,x*0+object$deriv)$design # get model matrix
+  object$X <- splines::spline.des(k,x,m[1]+2,x*0+object$deriv,sparse=sparse)$design # get model matrix
   if (!is.null(k)) {
     if (sum(colSums(object$X)==0)>0) warning("there is *no* information about some basis coefficients")
   }  
@@ -1813,11 +1804,9 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     object$rank <- p-2
   } else {
     ## now construct conventional P-spline penalty        
-    object$D <- S <- if (m[2]>0) diff(diag(object$bs.dim),differences=m[2]) else diag(object$bs.dim);
-    ## if (m[2]) for (i in 1:m[2]) S <- diff(S)
-    ##object$S <- list(t(S)%*%S)  # get penalty
-    ##object$S[[1]] <- (object$S[[1]]+t(object$S[[1]]))/2 # exact symmetry
-    object$S <- list(crossprod(S))  
+    S <- if (m[2]>0) diff(diag(object$bs.dim),differences=m[2]) else diag(object$bs.dim);
+    object$D <- if (sparse) as(S,"CsparseMatrix") else S
+    object$S <- list(crossprod(object$D))  
   
     object$rank <- object$bs.dim-m[2]  # penalty rank 
     object$null.space.dim <- m[2]    # dimension of unpenalized space  
@@ -1830,9 +1819,9 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
 
 
 
-Predict.matrix.pspline.smooth <- function(object,data)
-# prediction method function for the p.spline smooth class
-{ ##require(splines)
+Predict.matrix.pspline.smooth <- function(object,data) {
+## prediction method function for the p.spline smooth class
+  ##require(splines)
   m <- object$m[1]+1
   ## find spline basis inner knot range...
   ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]
@@ -1840,16 +1829,17 @@ Predict.matrix.pspline.smooth <- function(object,data)
   x <- data[[object$term]]
   n <- length(x)
   ind <- x<=ul & x>=ll ## data in range
-  if (is.null(object$deriv)) object$deriv <- 0 
+  if (is.null(object$deriv)) object$deriv <- 0
+  sparse <- !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
   if (sum(ind)==n) { ## all in range
-    X <- splines::spline.des(object$knots,x,m,rep(object$deriv,n))$design
+    X <- splines::spline.des(object$knots,x,m,rep(object$deriv,n),sparse=sparse)$design
   } else { ## some extrapolation needed 
     ## matrix mapping coefs to value and slope at end points...
-    D <- splines::spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
-    X <- matrix(0,n,ncol(D)) ## full predict matrix
+    D <- splines::spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1),sparse=sparse)$design
+    X <- if (sparse) Matrix(0,n,ncol(D)) else matrix(0,n,ncol(D)) ## full predict matrix
     nin <- sum(ind)
     if (nin>0) X[ind,] <- 
-         splines::spline.des(object$knots,x[ind],m,rep(object$deriv,nin))$design ## interior rows
+         splines::spline.des(object$knots,x[ind],m,rep(object$deriv,nin),sparse=sparse)$design ## interior rows
     ## Now add rows for linear extrapolation (of smooth itself)...
     if (object$deriv<2) { ## under linear extrapolation higher derivatives vanish.
       ind <- x < ll 
@@ -1906,7 +1896,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     stop(paste("there should be ",nk+2*m[1]," supplied knots"))
   }
   if (is.null(object$deriv)) object$deriv <- 0 
-  object$X <- splines::spline.des(k,x,m[1]+1,x*0+object$deriv)$design # get model matrix
+  object$X <- splines::spline.des(k,x,m[1]+1,x*0+object$deriv,sparse=!is.null(object$xt$sparse))$design # get model matrix
   if (!is.null(k)) {
     if (sum(colSums(object$X)==0)>0) warning("there is *no* information about some basis coefficients")
   }  
@@ -1965,7 +1955,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
         ind <- 1:(nrow(D)-k)
         D1[ind,] <- D1[ind,] + B[k+1,ind] * D[ind+k,]
       }
-      object$D[[i]] <- D1
+      object$D[[i]] <- if (is.null(object$st$sparse)) D1 else as(D1,"CsparseMatrix")
     }
     object$S[[i]] <- crossprod(object$D[[i]])
   }
@@ -2565,14 +2555,14 @@ smooth.info.re.smooth.spec <- function(object) {
   object
 }
 
-smooth.construct.re.smooth.spec <- function(object,data,knots)
+smooth.construct.re.smooth.spec <- function(object,data,knots) {
 ## a simple random effects constructor method function
 ## basic idea is that s(x,f,z,...,bs="re") generates model matrix
 ## corresponding to ~ x:f:z: ... - 1. Corresponding coefficients 
 ## have an identity penalty. If object inherits from "tensor.smooth.spec" 
 ## then terms depending on more than one variable are set up with a te
 ## smooth like structure (used e.g. in bam(...,discrete=TRUE))
-{ 
+
   ## id's with factor variables are problematic - should terms have
   ## same levels, or just same number of levels, for example? 
   ## => ruled out
@@ -4066,12 +4056,12 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       pj <- nrow(sm$Cp)
       qrcp <- qr(t(sm$Cp)) 
       for (i in 1:length(sml)) { ## loop through smooth list
-        sml[[i]]$Xp <- t(qr.qty(qrcp,t(sml[[i]]$X))[(pj+1):k,]) ## form XZ
+        sml[[i]]$Xp <- t(qr.qty(qrcp,t(as.matrix(sml[[i]]$X)))[(pj+1):k,]) ## form XZ
         sml[[i]]$Cp <- NULL 
         if (length(sml[[i]]$S)) { ## gam.side requires penalties in prediction para
           sml[[i]]$Sp <- sml[[i]]$S ## penalties in prediction parameterization
           for (l in 1:length(sml[[i]]$S)) { # some smooths have > 1 penalty 
-            ZSZ <- qr.qty(qrcp,sml[[i]]$S[[l]])[(pj+1):k,]
+            ZSZ <- qr.qty(qrcp,as.matrix(sml[[i]]$S[[l]]))[(pj+1):k,]
             sml[[i]]$Sp[[l]]<-t(qr.qty(qrcp,t(ZSZ))[(pj+1):k,]) ## Z'SZ
           }
         }
@@ -4089,17 +4079,17 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           qrc <- qr(t(sm$C[,indi,drop=FALSE])) ## gives constraint null space for constrained only
           for (i in 1:length(sml)) { ## loop through smooth list
             if (length(sm$S)>0)
-            for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
-            { ZSZ <- sml[[i]]$S[[l]]
-              if (nz>0) ZSZ[indi[1:nz],]<-qr.qty(qrc,sml[[i]]$S[[l]][indi,,drop=FALSE])[(nc+1):nx,] 
+            for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+              ZSZ <- sml[[i]]$S[[l]]
+              if (nz>0) ZSZ[indi[1:nz],]<-qr.qty(qrc,as.matrix(sml[[i]]$S[[l]][indi,,drop=FALSE]))[(nc+1):nx,] 
               ZSZ <- ZSZ[-indi[(nz+1):nx],]   
-              if (nz>0) ZSZ[,indi[1:nz]]<-t(qr.qty(qrc,t(ZSZ[,indi,drop=FALSE]))[(nc+1):nx,])
+              if (nz>0) ZSZ[,indi[1:nz]]<-t(qr.qty(qrc,as.matrix(t(ZSZ[,indi,drop=FALSE])))[(nc+1):nx,])
               sml[[i]]$S[[l]] <- ZSZ[,-indi[(nz+1):nx],drop=FALSE]  ## Z'SZ
 
               ## ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
               ## sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
             }
-            if (nz>0) sml[[i]]$X[,indi[1:nz]]<-t(qr.qty(qrc,t(sml[[i]]$X[,indi,drop=FALSE]))[(nc+1):nx,])
+            if (nz>0) sml[[i]]$X[,indi[1:nz]]<-t(qr.qty(qrc,t(as.matrix(sml[[i]]$X[,indi,drop=FALSE])))[(nc+1):nx,])
             sml[[i]]$X <- sml[[i]]$X[,-indi[(nz+1):nx]]
             ## sml[[i]]$X<-t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
             attr(sml[[i]],"qrc") <- qrc
@@ -4117,10 +4107,10 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
             for (i in 1:length(sml)) { ## loop through smooth list
               if (length(sm$S)>0)
               for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
-                ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+                ZSZ<-qr.qty(qrc,as.matrix(sm$S[[l]]))[(j+1):k,]
                 sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
               }
-              sml[[i]]$X <- t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+              sml[[i]]$X <- t(qr.qty(qrc,t(as.matrix(sml[[i]]$X)))[(j+1):k,]) ## form XZ
             }  
             ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
             ## and qr.qy(attr(sm,"qrc"),rbind(rep(0,length(b)),diag(length(b)))) gives 
@@ -4390,6 +4380,7 @@ PredictMat <- function(object,data,n=nrow(data))
     if (j>0) { ## there were constraints to absorb - need to untransform
       k<-ncol(X)
       if (inherits(qrc,"qr")) {
+        X <- as.matrix(X)
         indi <- attr(object,"indi") ## index of constrained parameters (only with QR constraints!)
         if (is.null(indi)) {
           if (sum(is.na(X))) {
