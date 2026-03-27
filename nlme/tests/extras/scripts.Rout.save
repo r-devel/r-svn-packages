@@ -1,6 +1,6 @@
 
-R version 4.5.2 (2025-10-31) -- "[Not] Part in a Rumble"
-Copyright (C) 2025 The R Foundation for Statistical Computing
+R version 4.6.0 alpha (2026-03-27 r89733)
+Copyright (C) 2026 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -1806,7 +1806,7 @@ Grouped Data: conc ~ time | Subject
  Mean   : 251.486   Mean   :2.36   Mean   :224   Mean   : 6.99  
  3rd Qu.: 171.148   3rd Qu.:2.92   3rd Qu.:249   3rd Qu.: 8.00  
  Max.   :5364.890   Max.   :5.77   Max.   :498   Max.   :12.00  
-                                                 NA's   :29     
+                                                 NAs    :29     
       Age           Height         Weight             Race   
  Min.   :42.0   Min.   :60.0   Min.   : 41.0   Caucasian:91  
  1st Qu.:61.0   1st Qu.:67.0   1st Qu.: 67.8   Latin    :35  
@@ -1832,7 +1832,7 @@ Grouped Data: conc ~ time | Subject
  136    :  32   Mean   : 373   Mean   :2.45   Mean   :225  
  7      :  31   3rd Qu.: 241   3rd Qu.:3.00   3rd Qu.:249  
  76     :  28   Max.   :8096   Max.   :9.40   Max.   :603  
- (Other):1252                  NA's   :1110   NA's   :443  
+ (Other):1252                  NAs    :1110   NAs    :443  
     interval          Age           Height         Weight     
  Min.   : 4.00   Min.   :42.0   Min.   :60.0   Min.   : 41.0  
  1st Qu.: 6.00   1st Qu.:60.0   1st Qu.:67.0   1st Qu.: 69.5  
@@ -1840,7 +1840,7 @@ Grouped Data: conc ~ time | Subject
  Mean   : 7.11   Mean   :66.7   Mean   :69.2   Mean   : 79.7  
  3rd Qu.: 8.00   3rd Qu.:74.0   3rd Qu.:72.0   3rd Qu.: 89.0  
  Max.   :12.00   Max.   :92.0   Max.   :79.0   Max.   :119.0  
- NA's   :1222                                                 
+ NAs    :1222                                                 
         Race     Smoke         Ethanol         Heart    
  Caucasian:968   no :1024   none   :991   No/Mild :598  
  Latin    :384   yes: 447   current:191   Moderate:375  
