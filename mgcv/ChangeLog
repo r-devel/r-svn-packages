@@ -21,10 +21,16 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
+* importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand,rcond,
+rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
+
 1.9-5
 
 * Fix to general constraint documentation for scasm, and handling of general 
   constraints involving repeated values.
+
+* tensor product penalty scaling tweaked to use efficient 'norm' instead of 
+  expensive 'eigen'.
 
 * Fix to NCV handling for extended families when number of points to drop is 
   not number of data. Thanks to Nicole Augustin for reporting.

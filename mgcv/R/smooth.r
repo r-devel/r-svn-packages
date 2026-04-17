@@ -4,7 +4,7 @@
 ##  via constructor methods and prediction matrix methods. There are
 ##  also wrappers for the constructors to automate constraint absorption,
 ##  `by' variable handling and the summation convention used for general
-##  linear functional terms. SmoothCon, PredictMat and the generics are
+##  linear functional terms. smoothCon, PredictMat and the generics are
 ##  at the end of the file.
 
 
@@ -367,6 +367,10 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
   object <- te(...,k=k,bs=bs,m=m,d=d,fx=fx,np=np,xt=xt,id=id,sp=sp,pc=pc)
   object$inter <- TRUE
   object$by <- by.var
+  if (!is.null(mc)&&any(mc>1)) { ## if mc[i]>1 then mc[i]-1 is type of sparse contraint
+    object$sparse.cons <- pmax(0,mc-1)
+    mc <- as.logical(mc)
+  }
   object$mc <- mc
   substr(object$label,2,2) <- "i"
   object
@@ -452,15 +456,20 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
   # Now construct smooth.spec objects for the margins
   j <- 1 # counter for terms
   margin <- list()
-  for (i in 1:n.bases)
-  { j1<-j+d[i]-1
+  ## do point constraints apply to marginals? vector test not right as MD marginal also
+  ## requires vector!
+  #if (!is.list(pc)&&length(pc)==n.bases) { pcm <- pc; pc <- NULL} else pcm <- rep(NA,n.bases)
+  for (i in 1:n.bases) {
+    j1 <- j + d[i] - 1
     if (is.null(xt)) xt1 <- NULL else xt1 <- xtra[[i]] ## ignore codetools
-    stxt<-"s("
-    for (l in j:j1) stxt<-paste(stxt,term[l],",",sep="")
+    ## get margional point constraint text..
+    #pct <- if (is.na(pcm[i])) "" else paste(", pc=",deparse(pcm[i],backtick=TRUE))
+    stxt <- "s("
+    for (l in j:j1) stxt <- paste(stxt,term[l],",",sep="")
     stxt<-paste(stxt,"k=",deparse(k[i],backtick=TRUE),",bs=",deparse(bs[i],backtick=TRUE),
-                ",m=",deparse(m[[i]],backtick=TRUE),",xt=xt1", ")")
-    margin[[i]]<- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
-    j<-j1+1
+                ",m=",deparse(m[[i]],backtick=TRUE),",xt=xt1",")")
+    margin[[i]] <- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
+    j <- j1 + 1
   }
   # assemble term.label 
   #if (mp) mp <- TRUE else mp <- FALSE
@@ -710,7 +719,7 @@ tensor.prod.model.matrix <- function(X) {
   T
 } ## end tensor.prod.model.matrix
 
-tensor.prod.penalties <- function(S)
+tensor.prod.penalties <- function(S) {
 # Given a list S of penalty matrices for the marginal bases of a tensor product smoother
 # this routine produces the resulting penalties for the tensor product basis. 
 # e.g. if S_1, S_2 and S_3 are marginal penalties and I_1, I_2, I_3 are identity matrices 
@@ -718,7 +727,7 @@ tensor.prod.penalties <- function(S)
 #   S_1 %x% I_2 %x% I_3, I_1 %x% S_2 %x% I_3 and I_1 %*% I_2 %*% S_3
 # Note that the penalty list must be in the same order as the model matrix list supplied
 # to tensor.prod.model() when using these together.
-{ m <- length(S)
+  m <- length(S)
   I <- list(); 
   for (i in 1:m) { 
     n <- ncol(S[[i]])
@@ -822,13 +831,25 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
     } else XP[[i]] <- NULL
   }
   # scale `nicely' - mostly to avoid problems with lme ...
-  for (i in 1:m)  object$margin[[i]]$S[[1]] <- Sm[[i]] <- Sm[[i]]/eigen(Sm[[i]],symmetric=TRUE,only.values=TRUE)$values[1] 
+  ## Have the marginals supplied square roots?
+  D.exists <- all(sapply(object$margin,function(x) !is.null(x$D)&&is.list(x$D)&&(inherits(x$D[[1]],c("Matrix","matrix")))))
+  if (D.exists) Dm <- lapply(object$margin,function(x) x$D[[1]])
+  for (i in 1:m) {
+    snorm <- norm(Sm[[i]]) ##eigen(Sm[[i]],symmetric=TRUE,only.values=TRUE)$values[1] ## NOTE: expensive - better to use norm?
+    object$margin[[i]]$S[[1]] <- Sm[[i]] <- Sm[[i]]/snorm
+    if (D.exists) {
+      if (!is.null(object$margin[[i]]$S.scale)) snorm <- snorm * object$margin[[i]]$S.scale
+      object$margin[[i]]$D[[1]] <- Dm[[i]] <- Dm[[i]]/sqrt(snorm)
+    }  
+  }
   max.rank <- prod(d)
   r <- max.rank*r/d # penalty ranks
   X <- tensor.prod.model.matrix(Xm)
   S <- tensor.prod.penalties(Sm)
+  if (D.exists) D <- tensor.prod.penalties(Dm)
   for (i in m:1) if (object$fx[i]) { 
       S[[i]] <- NULL # remove penalties for un-penalized margins
+      if (D.exists) D[[i]] <- NULL
       r <- r[-i]   # remove corresponding rank from list
   }
 
@@ -856,36 +877,41 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
     if (!is.null(object$g.index)) object$g.index <- object$g.index[ind]
 
     ## drop the differences involving deleted coefs
-    for (i in 1:m) { 
+    if (FALSE) for (i in 1:m) { 
       if (is.null(object$margin[[i]]$D)) stop("basis not usable with reduced te")
       Sm[[i]] <- object$margin[[i]]$D ## differences
     }
-    S <- tensor.prod.penalties(Sm) ## tensor prod difference penalties
+    if (!D.exists) stop("basis not usable with reduced te")
+    #S <- tensor.prod.penalties(Sm) ## tensor prod difference penalties
     ## drop rows corresponding to differences that involve a dropped 
     ## basis function, and crossproduct...
     for (i in 1:m) { 
-      D <- S[[i]][rowSums(S[[i]][,-ind,drop=FALSE])==0,ind]
-      r[i] <- nrow(D) ## penalty rank
-      S[[i]] <- crossprod(D)
+      D[[i]] <- D[[i]][rowSums(S[[i]][,-ind,drop=FALSE])==0,ind]
+      r[i] <- nrow(D[[i]]) ## penalty rank
+      S[[i]] <- crossprod(D[[i]])
     }
     object$udrop <- ind
     ## rank r ??
   }
 
   object$X <- X;object$S <- S;
+  if (D.exists) object$D <- D
+  ## no-point setting up with sparse basis and then imposing side constraints - lose
+  ## computational advantage...
+  if (inter && inherits(X,"Matrix")) object$side.constrain <- FALSE
   if (inter) object$C <- matrix(0,0,0) else
   object$C <- C ## really just in case a marginal has implied that no cons are needed
   object$df <- ncol(X)
   object$null.space.dim <- prod(nr) # penalty null space rank 
   object$rank <- r
   object$XP <- XP
-  class(object)<-"tensor.smooth"
+  class(object) <- "tensor.smooth"
   object
 } ## end smooth.construct.tensor.smooth.spec
 
-Predict.matrix.tensor.smooth <- function(object,data)
+Predict.matrix.tensor.smooth <- function(object,data) {
 ## the prediction method for a tensor product smooth
-{ m <- length(object$margin)
+  m <- length(object$margin)
   X <- list()
   for (i in 1:m) { 
     term <- object$margin[[i]]$term
@@ -899,7 +925,7 @@ Predict.matrix.tensor.smooth <- function(object,data)
   for (i in 1:mxp) if (!is.null(object$XP[[i]])) X[[i]] <- X[[i]]%*%object$XP[[i]]
   T <- tensor.prod.model.matrix(X)
   if (is.null(object$udrop)) T else T[,object$udrop]
-}## end Predict.matrix.tensor.smooth
+} ## end Predict.matrix.tensor.smooth
 
 #########################################################################
 ## Type 2 tensor product methods start here - separate identity penalties
@@ -1772,7 +1798,7 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     if (length(k)!=nk+2*m[1]+2) 
     stop(paste("there should be ",nk+2*m[1]+2," supplied knots"))
   }
-  sparse <- !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
   if (is.null(object$deriv)) object$deriv <- 0 
   object$X <- splines::spline.des(k,x,m[1]+2,x*0+object$deriv,sparse=sparse)$design # get model matrix
   if (!is.null(k)) {
@@ -1812,7 +1838,11 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     object$null.space.dim <- m[2]    # dimension of unpenalized space  
   }
   object$knots <- k; object$m <- m      # store p-spline specific info.
-
+  ## orthogonal basis for penalty null space...
+  if (object$null.space.dim > 0) {
+    object$N <- if (object$null.space.dim==1) matrix(1,object$bs.dim,1) else
+             cbind(1/sqrt(object$bs.dim),poly(1:object$bs.dim,degree=object$null.space.dim-1))
+  }
   class(object)<-"pspline.smooth"  # Give object a class
   object
 } ### end of p-spline constructor
@@ -1830,7 +1860,7 @@ Predict.matrix.pspline.smooth <- function(object,data) {
   n <- length(x)
   ind <- x<=ul & x>=ll ## data in range
   if (is.null(object$deriv)) object$deriv <- 0
-  sparse <- !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse) && (is.null(object$mono)||object$mono==0)
   if (sum(ind)==n) { ## all in range
     X <- splines::spline.des(object$knots,x,m,rep(object$deriv,n),sparse=sparse)$design
   } else { ## some extrapolation needed 
@@ -1895,8 +1925,9 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     if (length(k)!=nk+2*m[1]) 
     stop(paste("there should be ",nk+2*m[1]," supplied knots"))
   }
-  if (is.null(object$deriv)) object$deriv <- 0 
-  object$X <- splines::spline.des(k,x,m[1]+1,x*0+object$deriv,sparse=!is.null(object$xt$sparse))$design # get model matrix
+  if (is.null(object$deriv)) object$deriv <- 0
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
+  object$X <- splines::spline.des(k,x,m[1]+1,x*0+object$deriv,sparse=sparse)$design # get model matrix
   if (!is.null(k)) {
     if (sum(colSums(object$X)==0)>0) warning("there is *no* information about some basis coefficients")
   }  
@@ -1960,8 +1991,12 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     object$S[[i]] <- crossprod(object$D[[i]])
   }
   object$rank <- object$bs.dim-m2  # penalty rank 
-  object$null.space.dim <- min(m2)    # dimension of unpenalized space 
- 
+  object$null.space.dim <- min(m2)    # dimension of unpenalized space
+  ## orthoronal basis for penalty null space...
+  if (object$null.space.dim > 0) {
+    object$N <- if (object$null.space.dim==1) matrix(1,object$bs.dim,1) else
+             cbind(1/sqrt(object$bs.dim),poly(1:object$bs.dim,degree=object$null.space.dim-1))
+  }
   object
 } ### end of B-spline constructor
 
@@ -2568,7 +2603,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots) {
   ## => ruled out
   if (!is.null(object$id)) stop("random effects don't work with ids.")
 
-  sparse <- !is.null(object$xt$sparse) ## signal sparse matrices should be used
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse) ## signal sparse matrices should be used
 
   form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
   ## following construction avoids silly model.matrix overchecking...
@@ -2648,7 +2683,7 @@ Predict.matrix.random.effect <- function(object,data) {
   ##X <- model.matrix(object$form,data)
   ## following fixes over zealous checks...
   if (is.list(data)) data <- data[all.vars(reformulate(names(data)))%in%all.vars(object$form)]
-  sparse <- !is.null(object$xt$sparse)
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
   X <- if (sparse) Matrix::sparse.model.matrix(object$form,model.frame(object$form,data,na.action=na.pass)) else
                    model.matrix(object$form,model.frame(object$form,data,na.action=na.pass))
   X[!is.finite(X)] <- 0
@@ -2739,7 +2774,7 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
   x <- as.factor(data[[object$term]])
   k <- knots[[object$term]]
   if (is.null(k)) {
-    k <- as.factor(levels(x)) # default knots = all regions in the data
+    k <- factor(levels(x), levels = levels(x)) # default knots = all regions in the data
   }
   else k <- as.factor(k)
   
@@ -3825,7 +3860,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
         drop <- min((1:length(vcol))[vcol==min(vcol)])
       }
     } else if (sparse.cons>0) { ## use sparse constraints for sparse terms
-      if (sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
+      if (TRUE||sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
         if (sparse.cons==1) {
           xsd <- apply(sm$X,2,FUN=sd)
           if (sum(xsd==0)) ## are any columns constant?
@@ -3939,6 +3974,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
     }
   } ## end of initial setup of by variables
 
+  ## check if smooth has square root penalty provided...
+  D.exists  <- !is.null(sm$D)&&is.list(sm$D)&&length(sm$D)==length(sm$S)
+
   if (absorb.cons&&drop>0&&nrow(sm$C)>0) { ## sweep and drop constraints have to be applied before by variables
      if (!is.null(sm$by.done)) warning("sweep and drop constraints unlikely to work well with self handling of by vars")
      qrc <- c(drop,as.numeric(sm$C)[-drop])
@@ -3947,6 +3985,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
      if (length(sm$S)>0)
      for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
         sm$S[[l]]<-sm$S[[l]][-drop,-drop]
+     }
+     if (D.exists) for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+        sm$D[[l]]<-sm$D[[l]][,-drop] ## S = D'D
      }
      attr(sm,"qrc") <- qrc
      attr(sm,"nCons") <- 1
@@ -4154,6 +4195,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
             sml[[i]]$S[[l]] <- sml[[i]]$S[[l]][-sm$C,-sm$C]
           }
+	  if (D.exists) for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+            sml[[i]]$D[[l]] <- sml[[i]]$D[[l]][,-sm$C] ## S = D'D
+          }
           sml[[i]]$X <- sml[[i]]$X[,-sm$C]
           attr(sml[[i]],"qrc") <- sm$C
           attr(sml[[i]],"nCons") <- 1;
@@ -4168,6 +4212,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           if (length(sm$S)>0)
           for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
             sml[[i]]$S[[l]] <- diff(t(diff(sml[[i]]$S[[l]])))
+          }
+	  if (D.exists) for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+            sml[[i]]$D[[l]] <- t(diff(t(sml[[i]]$D[[l]]))) ## S = D'D
           }
           sml[[i]]$X <- t(diff(t(sml[[i]]$X)))
           attr(sml[[i]],"qrc") <- sm$C
