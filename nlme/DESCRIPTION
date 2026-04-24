@@ -17,7 +17,7 @@ Contact: see 'MailingList'
 Description: Fit and compare Gaussian linear and nonlinear mixed-effects models.
 Depends: R (>= 3.6.0)
 Imports: graphics, stats, utils, lattice
-Suggests: MASS, SASmixed
+Suggests: MASS
 LazyData: yes
 Encoding: UTF-8
 License: GPL (>= 2)
