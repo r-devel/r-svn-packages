@@ -1027,6 +1027,8 @@ gam.setup.list <- function(formula,pterms,
     if (M) for (j in 1:M) {
       ks <- ks + 1
       G$S[[ks]] <- um$S[[j]]
+      if (!is.null(um$N)) attr(G$S[[ks]],"N") <- um$N
+      if (!is.null(um$D[[j]])) attr(G$S[[ks]],"D") <- um$D[[j]]
     }
  
     G$m <- G$m + um$m ## number of smooths
@@ -1475,6 +1477,8 @@ gam.setup <- function(formula,pterms,
       k.sp <- k.sp+1
       G$off[k.sp] <- sm$first.para 
       G$S[[k.sp]] <- sm$S[[j]]
+      if (!is.null(sm$N)) attr(G$S[[k.sp]],"N") <- sm$N
+      if (!is.null(sm$D[[j]])) attr(G$S[[k.sp]],"D") <- sm$D[[j]]
       if (!is.null(sm$C)) attr(G$S[[k.sp]],"C") <- sm$C 
       G$rank[k.sp]<-sm$rank[j]
       if (!is.null(min.sp)) {
