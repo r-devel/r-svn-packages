@@ -62,7 +62,7 @@ penalized out of the model? See \code{gamma} to increase penalization.  Has the 
 }
 
 \item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
-scale paraemter is unknown. 0 signals that the scale parameter is 1  for Poisson and binomial and unknown otherwise. 
+scale parameter is unknown. 0 signals that the scale parameter is 1  for Poisson and binomial and unknown otherwise. 
 Note that (RE)ML methods can only work with scale parameter 1 for the Poisson and binomial cases.    
 } 
 
