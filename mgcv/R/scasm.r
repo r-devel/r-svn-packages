@@ -1210,7 +1210,7 @@ scasm.fit <- function(G,control=gam.control(),gamma=1,bs=0,...) {
     sedf <- drop(t(L)%*%(v$sedf*G$sp)) ## suppressed EDF per sp 
     ii <- redf > .05; lsp1 <- lsp
     dlsp0 <- dlsp;
-    dlsp <- log(scale) + log(redf) - log(drop(t(L)%*%(v$pSp*G$sp)))
+    dlsp <- log(scale*gamma) + log(redf) - log(drop(t(L)%*%(v$pSp*G$sp)))
     maxstep <- max(abs(dlsp))
     if (i==1 && maxstep > 8)  dlsp <- 8*dlsp/maxstep
     if (i>2 && maxstep > 4) dlsp <- 4*dlsp/maxstep ## avoid overly long steps

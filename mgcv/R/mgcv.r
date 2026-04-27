@@ -1655,12 +1655,12 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     ##warning("efs is still experimental!")
     if (inherits(family,"general.family")) {
       object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offset,family=family,
-                     control=control,Mp=G$Mp,start=start)
+                     control=control,gamma=gamma,Mp=G$Mp,start=start)
     } else {
       family <- fix.family.ls(family)
       object <- efsudr(x=G$X,y=G$y,lsp=lsp,Eb=G$Eb,UrS=G$UrS,weights=G$w,family=family,offset=G$offset,
                        start=start,
-                       U1=G$U1, intercept = TRUE,scale=scale,Mp=G$Mp,control=control,n.true=G$n.true,...)
+                       U1=G$U1, intercept = TRUE,scale=scale,gamma=gamma,Mp=G$Mp,control=control,n.true=G$n.true,...)
     }
     object$gcv.ubre <- object$REML
   } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method 

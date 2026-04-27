@@ -820,7 +820,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
 
 efsudr <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NULL,mustart=NULL,
-                   U1=diag(ncol(x)), intercept = TRUE,scale=1,Mp=-1,control=gam.control(),n.true=-1,...) {
+                   U1=diag(ncol(x)), intercept = TRUE,scale=1,gamma=1,Mp=-1,control=gam.control(),n.true=-1,...) {
 ## Extended Fellner-Schall method for regular and extended families,
 ## with PIRLS performed by gam.fit3/4.
 ## tr(S^-S_j) is returned by ldetS1, rV %*% t(rV)*scale is 
@@ -869,9 +869,9 @@ efsudr <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NU
       fit$scale <- fit$scale*n/(n-edf) ## correct for edf.
     }
 
-    a <- pmax(0,fit$ldetS1*exp(-lsp[spind]) - trVS) ## NOTE: double check scaling here
+    a <- pmax(0,fit$ldetS1*exp(-lsp[spind]) - trVS) 
     phi <- if (estimate.scale) fit$scale else scale
-    r <- a/pmax(0,bSb)*phi
+    r <- gamma*a/pmax(0,bSb)*phi
     r[a==0&bSb==0] <- 1
     r[!is.finite(r)] <- 1e6
     lsp1 <- lsp
@@ -1477,7 +1477,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
 } ## end of gam.fit5 
 
 efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
-                     control=gam.control(),Mp=-1,start=NULL) {
+                     control=gam.control(),gamma=gamma,Mp=-1,start=NULL) {
 ## Extended Fellner-Schall method for general families
 ## tr(S^-S_j) is returned by ldetS as ldet1 - S1 from gam.fit5
 ## b'S_jb is computed as d1bSb in gam.fit5
@@ -1518,7 +1518,7 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
     }
    
     a <- pmax(tiny,fit$S1*exp(-lsp) - trVS)
-    r <- a/pmax(tiny,bSb)
+    r <- gamma*a/pmax(tiny,bSb)
     r[a==0&bSb==0] <- 1
     r[!is.finite(r)] <- 1e6
     lsp1 <- pmin(lsp + log(r)*mult,control$efs.lspmax)

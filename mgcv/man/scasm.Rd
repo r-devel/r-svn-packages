@@ -4,7 +4,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Shape constrained additive smooth models}
 
-\description{ Fits a generalized additive model (GAM, GAMM, GAMLSS) subject to shape constriants on the components, using quadratic and linear programming and the extended Fellner-Schall method for smoothness estimation. Usable with all the families listed in \code{\link{family.mgcv}}.
+\description{ Fits a generalized additive model (GAM, GAMM, GAMLSS) subject to shape constraints on the components, using quadratic and linear programming and the extended Fellner-Schall method for smoothness estimation. Usable with all the families listed in \code{\link{family.mgcv}}.
 }
 \usage{
 
@@ -26,15 +26,14 @@ and \code{\link{t2}}, can be added to the right hand side to specify that the li
 This is a family object specifying the distribution and link to use in
 fitting etc (see \code{\link{glm}} and \code{\link{family}}). See 
 \code{\link{family.mgcv}} for a full list of what is available, which goes well beyond exponential family.
-Note that \code{quasi} families actually result in the use of extended quasi-likelihood 
-if \code{method} is set to a RE/ML method (McCullagh and Nelder, 1989, 9.6).
+Note that \code{quasi} families actually result in the use of extended quasi-likelihood (McCullagh and Nelder, 1989, 9.6).
 } 
 
 
 \item{data}{ A data frame or list containing the model response variable and 
 covariates required by the formula. By default the variables are taken 
 from \code{environment(formula)}: typically the environment from 
-which \code{gam} is called.} 
+which \code{scasm} is called.} 
 
 \item{weights}{  prior weights on the contribution of the data to the log likelihood. Note that a weight of 2, for example, 
                 is equivalent to having made exactly the same observation twice. If you want to reweight the contributions 
@@ -67,7 +66,7 @@ scale paraemter is unknown. 0 signals that the scale parameter is 1  for Poisson
 Note that (RE)ML methods can only work with scale parameter 1 for the Poisson and binomial cases.    
 } 
 
-\item{gamma}{Increase above 1 to force smoother fits. \code{gamma} is used to multiply the effective degrees of freedom in the GCV/UBRE/AIC score (so \code{log(n)/2} is BIC like). \code{n/gamma} can be viewed as an effective sample size, which allows it to play a similar role for RE/ML smoothing parameter estimation.} 
+\item{gamma}{Increase above 1 to force smoother fits. Effectively optimizes estimate of what REML would have been for sample size \code{n/gamma}. This is equivalent to simply multiplying the EFS ratio by \code{gamma}.} 
 
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
@@ -125,7 +124,7 @@ Note that \code{pc} constraints replace the usual sum to zero identifiability co
 
 
 \references{
-Wood, S.N. (2026) Shape Constrained Additive Smooth Models. Statistical Modelling. 
+Wood, S.N. (2026) Shape constrained additive smooth models (with discussion). Statistical Modelling. 
 
 Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing
 parameter optimization with application to Tweedie location, scale and shape models.
@@ -138,7 +137,7 @@ Biometrics 73 (4), 1071-1081 \doi{10.1111/biom.12666}
 }
 
 \section{WARNINGS }{
-This is generally slower than gam, and can only use EFS soothness estimation
+This is generally slower than \code{gam}, and can only use EFS soothness estimation
 } 
 
 \seealso{
