@@ -1388,7 +1388,7 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
       p <- x$coefficients[first:last]   ## relevent coefficients 
       offset <- attr(P$X,"offset")      ## any term specific offset
       ## get fitted values ....
-      if (is.null(offset)) P$fit <- P$X%*%p else P$fit <- P$X%*%p + offset 
+      P$fit <- if (is.null(offset)) as.numeric(P$X%*%p) else as.numeric(P$X%*%p) + offset 
       if (!is.null(P$exclude)) P$fit[P$exclude] <- NA
       if (se[1] && P$se && is.null(x$bs)) { ## get standard errors for fit
         ## test whether mean variability to be added to variability (only for centred terms)
