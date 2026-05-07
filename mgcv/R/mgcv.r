@@ -2197,7 +2197,8 @@ onei <- function(nb,cbase=FALSE) {
 ## don't be tempted to change to control=list(...) --- messes up passing on other stuff via ...
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
-                method="GCV.Cp",optimizer=c("outer","newton"),control=list(),#gam.control(),
+                method=getOption("mgcv.gam.method","GCV.Cp"),optimizer=getOption("mgcv.gam.optimizer",
+		c("outer","newton")),control=list(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
                 paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,
 		nei=NULL,discrete=FALSE,...) {
@@ -2688,6 +2689,23 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 #                       dropping
 # if GC is TRUE then gc() is called after each block is processed
 
+  getse <- function(X,V,ii=NULL) {
+  ## forms diag(X[,ii]V[ii,ii]X[,ii]') efficiently where A may be sparse or dense
+  ## and V may be a matrix or a 2 item list defining a matrix multiplication VA
+  ## via V$V(A,V$arg). If ii is null then whole matrices are used. Note that
+  ## sub setting is not assued to be handeled by V$V.
+    if (is.list(V)) {
+      if (inherits(X,"Matrix")) {
+        Xt <- t(X); if (!is.null(ii)) { Xt@i <- Xt@i + as.integer(ii[1]-1); Xt@Dim[1] <- ncol(X)}
+      } else {
+        if (is.null(ii)) Xt <- t(X) else { Xt <- matrix(0,ncol(X),nrow(X)); Xt[ii,] <- t(X) }  
+      }
+      se <- sqrt(pmax(0,colSums(V$V(Xt,V$arg)*Xt)))
+    } else se <- if (is.null(ii)) sqrt(pmax(0,rowSums((X%*%V)*X))) else
+	   sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%V[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
+    se		 
+  } ## getse
+  
   ## para acts by adding all smooths to the exclude list. 
   ## it also causes any lp matrix to be smaller than it would otherwise have been.
   #if (para) exclude <- c(exclude,unlist(lapply(object$smooth,function(x) x$label)))
@@ -3010,16 +3028,20 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     }
 
     # Now have prediction matrix, X, for this block, need to do something with it...
+
     if (sparse && type!="lpmatrix") X <- sparseMatrix(i=X$i,j=X$j,x=X$x,dims=c(nrow(data),nb)) ## convert X to actual sparse matrix 
+
+    if (is.list(object$Vp)) {
+      if (type=="iterms") { type <- "terms";warning("iterms reset to terms")}
+    }
 
     if (type=="lpmatrix") {
       if (sparse) {
-        H$i <- c(H$i,X$i+start); H$j <- c(H$j,X$j); H$x <- c(H$x,X$x)
+        H$i <- c(H$i,X$i+start-1); H$j <- c(H$j,X$j); H$x <- c(H$x,X$x)
       } else H[start:stop,] <- X
       if (any.soff) s.offset <- rbind(s.offset,Xoff)
     } else if (type=="terms"||type=="iterms") { ## split results into terms
       lass <- if (is.list(object$assign)) object$assign else list(object$assign)
-      #if (sparse) X <- sparseMatrix(i=X$i,j=X$j,x=X$x,dims=c(nrow(data),nb)) ## convert X to actual sparse matrix 
       k <- 0
       for (j in 1:length(lass)) if (length(lass[[j]])) { ## work through assign list
         ind <- 1:length(lass[[j]]) ## index vector for coefs involved
@@ -3028,7 +3050,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           k <- k + 1 ## counts total number of parametric terms
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
           fit[start:stop,k] <- as.numeric(X[,ii,drop=FALSE]%*%object$coefficients[ii])
-          se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
+	  se0 <- getse(X,object$Vp,ii)
+          #se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
 	  if (se.fit) se[start:stop,k] <- se0
 	  if (get.ci) {
 	    if (!is.null(object$bs)) {
@@ -3058,9 +3081,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]
-	      se0 <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
-            } else se0 <- sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*% ## terms strictly centred
-                          object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE])))
+	      se0 <- getse(X1,object$Vp)
+	      #se0 <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
+            } else se0 <- getse(X,object$Vp,first:last)
+
+            #se0 <- sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*% ## terms strictly centred
+            #       object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE])))
 	  
 	    if (se.fit) se[start:stop,n.pterms+k] <- se0
 	    if (get.ci) {
@@ -3123,8 +3149,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
               if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
             }
-            if (se.fit||get.ci) se0 <- 
-            sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
+            if (se.fit||get.ci) se0 <- getse(X,object$Vp,ind)
+	    #se0 <- sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
             if (se.fit) se[start:stop,j] <- se0
 	    if (get.ci) {
               if (!is.null(object$bs)) {
@@ -3179,7 +3205,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       } else { ## single linear predictor
         offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
         fit[start:stop] <- as.numeric(X%*%object$coefficients) + offs
-	if (se.fit||get.ci) se0 <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
+	if (se.fit||get.ci) se0 <- getse(X,object$Vp)
+	#se0 <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
         if (se.fit) se[start:stop] <- se0
 	if (get.ci) {
 	  if (!is.null(object$bs)) {
@@ -3270,7 +3297,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 
   rn <- rownames(newdata)
   if (type=="lpmatrix") {
-    if (sparse) H <- sparseMatrix(i=H$i,j=H$j,x=HSx,dims=c(np,nb))
+    if (sparse) H <- sparseMatrix(i=H$i,j=H$j,x=H$x,dims=c(np,nb))
     colnames(H) <- names(object$coefficients);rownames(H)<-rn
     if (!is.null(s.offset)) { 
       s.offset <- napredict(na.act,s.offset)

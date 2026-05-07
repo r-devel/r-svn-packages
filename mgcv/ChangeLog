@@ -26,6 +26,9 @@ rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
 
 1.9-5
 
+* Added ability to control a number of defaults using 'options'. See 
+  ?options.mgcv. 
+
 * Fix to general constraint documentation for scasm, and handling of general 
   constraints involving repeated values.
 

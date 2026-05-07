@@ -356,7 +356,8 @@ get.var <- function(txt,data,vecMat = TRUE)
 ## functions for use in `gam(m)' formulae ......
 ################################################
 
-ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NULL,sp=NULL,mc=NULL,pc=NULL) {
+ti <- function(..., k=NA,bs=getOption("mgcv.te.bs","cr"),m=NA,d=NA,by=NA,fx=FALSE,np=getOption("mgcv.te.np",TRUE),
+               xt=getOption("mgcv.xt",NULL),id=NULL,sp=NULL,mc=getOption("mgcv.ti.mc",NULL),pc=NULL) {
 ## function to use in gam formula to specify a te type tensor product interaction term
 ## ti(x) + ti(y) + ti(x,y) is *much* preferable to te(x) + te(y) + te(x,y), as ti(x,y)
 ## automatically excludes ti(x) + ti(y). Uses general fact about interactions that 
@@ -364,7 +365,10 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
 ## of main effects gives identifiable interaction...
 ## mc allows selection of which marginals to apply constraints to. Default is all.
   by.var <- deparse(substitute(by),backtick=TRUE) #getting the name of the by variable
+ 
   object <- te(...,k=k,bs=bs,m=m,d=d,fx=fx,np=np,xt=xt,id=id,sp=sp,pc=pc)
+  nm <- length(object$margin)
+  if (!is.null(mc) && length(mc)!=nm) mc <- rep(mc[1],nm) 
   object$inter <- TRUE
   object$by <- by.var
   if (!is.null(mc)&&any(mc>1)) { ## if mc[i]>1 then mc[i]-1 is type of sparse contraint
@@ -376,7 +380,8 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
   object
 } ## ti
 
-te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NULL,sp=NULL,pc=NULL)
+te <- function(..., k=NA,bs=getOption("mgcv.te.bs","cr"),m=NA,d=NA,by=NA,fx=FALSE,np=getOption("mgcv.te.np",TRUE),
+      xt=getOption("mgcv.xt",NULL),id=NULL,sp=NULL,pc=NULL)
 # function for use in gam formulae to specify a tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -620,7 +625,8 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
 
 
 
-s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL,pc=NULL)
+s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs",c("tp","tp")),m=NA,by=NA,
+               xt=getOption("mgcv.xt",NULL),id=NULL,sp=NULL,pc=NULL)
 # function for use in gam formulae to specify smooth term, e.g. s(x0,x1,x2,k=40,m=3,by=x3) specifies 
 # a rank 40 thin plate regression spline of x0,x1 and x2 with a third order penalty, to be multiplied by
 # covariate x3, when it enters the model.
@@ -631,14 +637,14 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL,pc=
 { vars <- as.list(substitute(list(...)))[-1] # gets terms to be smoothed without evaluation
 
   d <- length(vars) # dimension of smoother
+  if (length(bs)>1) bs <- if (d>1) bs[2] else bs[1]
 # term<-deparse(vars[[d]],backtick=TRUE,width.cutoff=500) # last term in the ... arguments
   by.var <- deparse(substitute(by),backtick=TRUE,width.cutoff=500) #getting the name of the by variable
   if (by.var==".") stop("by=. not allowed")
   term <- deparse(vars[[1]],backtick=TRUE,width.cutoff=500) # first covariate
   if (term[1]==".") stop("s(.) not supported.")
-  if (d>1) # then deal with further covariates
-  for (i in 2:d)
-  { term[i]<-deparse(vars[[i]],backtick=TRUE,width.cutoff=500)
+  if (d>1) for (i in 2:d) { # then deal with further covariates
+    term[i]<-deparse(vars[[i]],backtick=TRUE,width.cutoff=500)
     if (term[i]==".") stop("s(.) not yet supported.")
   }
   for (i in 1:d) term[i] <- attr(terms(reformulate(term[i])),"term.labels")

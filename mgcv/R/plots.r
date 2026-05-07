@@ -1271,7 +1271,7 @@ md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
 plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,n3=3,
                      theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,
 		     too.far=0.1,all.terms=FALSE,shade.col="gray80",shift=0,trans=I,seWithMean=FALSE,
-		     unconditional=FALSE,by.resids=FALSE,scheme=0,deriv=FALSE,...)
+		     unconditional=FALSE,by.resids=FALSE,scheme=getOption("mgcv.plot.scheme",0),deriv=FALSE,...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object
@@ -1349,8 +1349,8 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
     if (any(se>=1)) se <- TRUE else if (any(se<=0)) se <- FALSE
   }
 
-  if (se[1] && x$Vp[1,1] < 0) ## check that variances are actually available
-  { se <- FALSE
+  if (se[1] && !is.list(x$Vp) && x$Vp[1,1] < 0) { ## check that variances are actually available
+    se <- FALSE
     warning("No variance estimates available")
   }
 
@@ -1366,6 +1366,17 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
 
   pd <- list(); ## plot data list
   i <- 1 # needs a value if no smooths, but parametric terms ...
+
+  if (is.list(x$Vp)) {
+    if (!is.null(x$bs)) {
+      x$bs <- NULL;warning("bootstrap intervals not available")
+    }
+    if (seWithMean) {
+      seWithMean <- FALSE; warning("seWithMean not available")
+    }   
+  }
+
+  np <- length(x$coefficients)
 
   ##################################################
   ## First the loop to get the data for the plots...
@@ -1407,7 +1418,14 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
           }
 	} else { ## se in centred (or anyway unconstained) space only
 	  if (seWithMean && is.null( attr(x$smooth[[i]],"nCons"))) warning("seWithMean unavailable")
-	  se.fit <- sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
+	  if (is.list(x$Vp)) {
+	    if (inherits(P$X,"Matrix")) {
+	      Xt <- t(P$X);Xt@i <- Xt@i + as.integer(first-1);Xt@Dim[1] <- as.integer(np)
+            } else {
+              Xt <- matrix(0,np,nrow(P$X));Xt[first:last,] <- t(P$X)
+            }
+	    se.fit <- sqrt(pmax(0,colSums(x$Vp$V(Xt,x$Vp$arg)*Xt)))
+          } else se.fit <- sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
         }
         if (!is.null(P$exclude)) se.fit[P$exclude] <- NA
       } ## standard errors for fit completed
