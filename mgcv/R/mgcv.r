@@ -2697,10 +2697,13 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     if (is.list(V)) {
       if (inherits(X,"Matrix")) {
         Xt <- t(X); if (!is.null(ii)) { Xt@i <- Xt@i + as.integer(ii[1]-1); Xt@Dim[1] <- ncol(X)}
+	xsparse <- TRUE
       } else {
+        xsparse <- FALSE
         if (is.null(ii)) Xt <- t(X) else { Xt <- matrix(0,ncol(X),nrow(X)); Xt[ii,] <- t(X) }  
       }
-      se <- sqrt(pmax(0,colSums(V$V(Xt,V$arg)*Xt)))
+      se <- if (!xsparse) sqrt(pmax(0,colSums(V$V(Xt,V$arg)*Xt))) else
+      blockit(Xt,f=function(Xt,arg) sqrt(pmax(0,colSums(arg$V(Xt,arg$arg)*Xt))),arg=V,bsize=200,rows = FALSE)
     } else se <- if (is.null(ii)) sqrt(pmax(0,rowSums((X%*%V)*X))) else
 	   sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%V[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
     se		 

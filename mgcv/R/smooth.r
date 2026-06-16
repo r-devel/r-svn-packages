@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2019
+##  R routines for the package mgcv (c) Simon Wood 2000-2026
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -2646,6 +2646,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots) {
   ## now construct penalty   
   if (is.null(object$xt$S)) {     
     object$S <- list(if (sparse) Matrix::Diagonal(object$bs.dim) else diag(object$bs.dim))  # get penalty
+    if (sparse) object$D <- object$S ## S=D'D but S is identity
     object$rank <- object$bs.dim  # penalty rank 
   } else {
     object$S <- if (is.list(object$xt$S)) object$xt$S else list(object$xt$S)

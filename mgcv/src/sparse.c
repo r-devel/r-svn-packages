@@ -2241,3 +2241,5 @@ SEXP sRXWXband(SEXP X,SEXP W,SEXP b,SEXP KK) {
   FREE(s);UNPROTECT(3);
   return(R_NilValue);
 } /* sRXWXband */
+
+

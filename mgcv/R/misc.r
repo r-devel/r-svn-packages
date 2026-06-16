@@ -603,6 +603,30 @@ cholup <- function(R,u,up=TRUE) {
   R1
 } ## cholup
 
+RSGup <- function(R,u) {
+## Wrapper for C routine RSGup. We have a Matrix A + uu' and the sparse Cholesky
+## A = R'R. This finds sequence of Given rotations to transform [R',u]' to upper
+## triangular factor P of A + uu'. R and P are of course pivoted, but u is not
+## on entry, so is pivoted appropriately here.
+  if (!is.matrix(u)) u <- as.matrix(u)
+  m <- ncol(u);p <- ncol(R)
+  Gij <- matrix(0L,m*p,2);Gcs <- matrix(0.0,m*p,2)
+  if (!inherits(R,"Matrix")) stop("R not sparse, call pointless")
+  piv <- attr(R,"pivot")
+  .Call(C_RSGup,R,u[piv,,drop=FALSE],Gcs,Gij)
+  list(Gcs=Gcs,Gij=Gij)
+} ## RSGup
+
+SGap <- function(G,x,trans=FALSE) {
+## Wrapper for C function SGap to apply the Givens rotations
+## returned by RSGup to a matrix x. G$Gij is a two col matrix of rows
+## i < j Givens applied to (constructed from zeroing jth row). G$Gcs
+## is 2 col matrix of c and s defining rotation. 
+  if (!is.matrix(x)) x <- as.matrix(x)
+  trans <- as.integer(trans)
+  .Call(C_SGap,G$Gij,G$Gcs,x,trans)
+  drop(x)
+} ## SGap
 
 vcorr <- function(dR,Vr,trans=TRUE) {
 ## Suppose b = sum_k op(dR[[k]])%*%z*r_k, z ~ N(0,Ip), r ~ N(0,Vr). vcorr returns cov(b).
@@ -801,7 +825,7 @@ treig <- function(ld,sd,vec=FALSE,descend=FALSE) {
 } ## treig
 
 
-lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
+Mlanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
 ## Apply M steps of Lanczos starting at v0 for n by n +ve semi definite matrix A.
 ## Av is a function forming the product of matrix A with vector v.
 ## A can be a matrix, in which case the default Av applies, or
@@ -841,7 +865,7 @@ lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
   ## tau^2 is jump size, eta is CDF at theta
   ## lam.ub is upper bound on larget eigenvalue
   list(theta=theta,tau=tau,eta=eta,err=err,vAv=vAv)
-} ## lanczos
+} ## Mlanczos
 
 eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed=1) {
 ## get the approximate eigenvalues of n by n +ve semi def matrix A. Av is
@@ -864,7 +888,7 @@ eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed
    tol <- .Machine$double.eps^.5
    for (r in 1:n.rep) {
      v0 <- rnorm(n)
-     lz <- lanczos(A,v0,M=M,Av=Av,n=n)
+     lz <- Mlanczos(A,v0,M=M,Av=Av,n=n)
      trA[r] <- lz$vAv
      ## following is suggested in Appendix C of LSY, and is quite important
      ## to avoid slight downward bias...

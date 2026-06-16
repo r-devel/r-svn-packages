@@ -800,6 +800,32 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",
   }
 } ## end plot.fs.interaction
 
+blockit <- function(X,f=function(X,arg) colSums(X),arg=NULL,bsize=10,rows = FALSE) {
+## f is a vector valued function of the rows or columns of X, so if rows is TRUE
+## and i an integer then f(X[i,]) is a scalar, for example. This function simply
+## breaks up the computation, operating sequentially on subsets of the rows/cols.
+## This is useful to control memory usage when X is sparse, but the intermediate
+## quantities computed in f need not be.  
+  n <- if (rows) nrow(X) else ncol(X)
+  if (!n) return
+  nb <- floor(n/bsize) ## number of full size blocks
+  bsfinal <- n - nb*bsize ## size of final block
+  z <- numeric(n) ## vector to hold result
+  if (nb) {
+    ii <- 1:bsize ## indices for first block
+    for (i in 1:nb) {
+      z[ii] <- if (rows) f(X[ii,],arg) else f(X[,ii],arg)
+      ii <- ii + bsize
+    }
+  }  
+  if (bsfinal) {
+    ii <- (nb*bsfinal+1):n ## indices for last block
+    z[ii] <- if (rows) f(X[ii,],arg) else f(X[,ii],arg)
+  }
+  z
+} ## blockit
+
+
 plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,n3=3,
                      theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
@@ -1421,10 +1447,13 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
 	  if (is.list(x$Vp)) {
 	    if (inherits(P$X,"Matrix")) {
 	      Xt <- t(P$X);Xt@i <- Xt@i + as.integer(first-1);Xt@Dim[1] <- as.integer(np)
+	      xsparse <- TRUE
             } else {
-              Xt <- matrix(0,np,nrow(P$X));Xt[first:last,] <- t(P$X)
+              Xt <- matrix(0,np,nrow(P$X));Xt[first:last,] <- t(P$X); xsparse <- FALSE
             }
-	    se.fit <- sqrt(pmax(0,colSums(x$Vp$V(Xt,x$Vp$arg)*Xt)))
+	    #se.fit <- x$Vp$V(Xt,x$Vp$arg) ## experimental: assumes Vp for forming se directly
+	    se.fit <- if (!xsparse) sqrt(pmax(0,colSums(x$Vp$V(Xt,x$Vp$arg)*Xt))) else
+	    blockit(Xt,f=function(Xt,arg) sqrt(pmax(0,colSums(arg$V(Xt,arg$arg)*Xt))),arg=x$Vp,bsize=200,rows = FALSE)
           } else se.fit <- sqrt(pmax(0,rowSums(as(P$X%*%x$Vp[first:last,first:last,drop=FALSE],"matrix")*P$X)))
         }
         if (!is.null(P$exclude)) se.fit[P$exclude] <- NA

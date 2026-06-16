@@ -216,6 +216,7 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
   names(object$coefficients) <- G$term.names
   object$call <- G$cl # needed for update() to work
   class(object) <- c("gam","glm","lm")
+  object$y <- G$y;object$prior.weights <- G$w
   if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
   object$gcv.ubre <- -object$laml
   names(object$gcv.ubre) <- "REML"
@@ -224,7 +225,6 @@ scasm <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL
   object$nsdf <- G$nsdf
   object$sig2 <- object$scale
   !object$scale.known -> object$scale.estimated
-  object$y <- G$y;object$prior.weights <- G$w
   ## The following lines avoid potentially very large objects in hidden environments being stored
   ## with fitted gam objects. The downside is that functions like 'termplot' that rely on searching in
   ## the environment of the formula can fail...

@@ -249,6 +249,8 @@ void dchol(double *dA, double *R, double *dR,int *p);
 void chol_down(double *R,double *Rup,int *n,int *k,int *ut);
 SEXP mgcv_chol_down(SEXP r,SEXP ru,SEXP N,SEXP K, SEXP UT);
 SEXP mgcv_chol_up(SEXP r,SEXP U,SEXP N,SEXP UP,SEXP EPS);
+SEXP RSGup(SEXP R,SEXP U,SEXP Gcs,SEXP Gij);
+SEXP SGap(SEXP Gij, SEXP Gcs,SEXP X,SEXP TR);
 void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M);
 SEXP mgcv_Rpforwardsolve(SEXP R, SEXP B,SEXP NT);
 SEXP mgcv_Rpbacksolve(SEXP R, SEXP B,SEXP NT);

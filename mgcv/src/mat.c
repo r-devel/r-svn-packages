@@ -2032,7 +2032,111 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps) {
  /* now zero c and s storage */
   c = R + 2;s = R + *n + 2;
   for (x = c + *n - 2;c<x;c++,s++) *c = *s = 0.0;
-} /* chol_up */  
+} /* chol_up */
+
+SEXP RSGup(SEXP R,SEXP U,SEXP Gcs,SEXP Gij) {
+/* R is sparse upper triangular p by p. U is dense p by m.
+   This routine computes the sequence of p*m Givens rotations
+   needed to transform [R',U]' to upper triangular matrix P
+   where P'P = R'R + UU'. In so doing it does not modifiy R.
+   The point of this is that P is generally dense, but computation
+   with it can instead be efficiently accomplished using sparse
+   solves with R and the Givens rotations.
+
+   Gcs and Gij are p*m by 2 matrices. The first col of
+   Gcs is c and the second is s in the Givens rotation
+   based on zeroing an element into the index in the
+   first col of Gij from the second col of Gij where the
+   second col index is larger than the first, so that the
+   the relevent rotation has the form
+   [c  s]
+   [-s c]
+
+*/
+  SEXP i_sym,x_sym,dim_sym,p_sym;
+  int *Rp,*Ri,p,m,*gij,*Rif,i,j,k,ng=0,ipk,pm,*dim;
+  double *Rx,*u,*gcs,x,Rkk,c0,s0,Rkj;
+  p_sym = install("p");
+  dim_sym = install("Dim");
+  i_sym = install("i");
+  x_sym = install("x");
+  dim = INTEGER(R_do_slot(R,dim_sym));
+  Rp = INTEGER(R_do_slot(R,p_sym));
+  Ri = INTEGER(R_do_slot(R,i_sym));
+  Rx = REAL(R_do_slot(R,x_sym));
+  p = dim[1];m = ncols(U);pm = p*m;
+  u = REAL(U);
+  gcs = REAL(Gcs);
+  gij = INTEGER(Gij);  
+  Rif = (int *)CALLOC((size_t)p,sizeof(int));
+  for (i=0;i<p;i++) Rif[i] = Rp[i]; /* current first (next) non-zero row in ith col */
+  for (k=0;k<p;k++) { /* loop over cols of R */
+    for (i=m-1;i>0;i--) { /* rotate U'[1:(m-1),k] to U'[0,k] */
+      ipk = i*p+k; /* element to zero */
+      x = hypote(u[ipk],u[ipk-p]);
+      c0 = u[ipk-p]/x;s0 = u[ipk]/x;
+      for (j=k;j<p;j++) { /* apply this Givens to U' */ 
+        ipk = i*p+j;
+	x = u[ipk-p];
+	u[ipk-p] = c0 * x + s0 * u[ipk];
+	u[ipk] = -s0 * x + c0 * u[ipk];
+      }
+      /* store this rotation */
+      gij[ng] = i + p -1 ; gij[ng+pm] = i + p;
+      gcs[ng] = c0; gcs[ng+pm] = s0; ng++;
+    }
+    /* now elements of U'[,k] below U'[0,k] are all zero,
+       so next step is to zero U'[0,k] into R[k,k]...  */
+    if (Ri[Rif[k]] != k) Rif[k]++; /* make sure Rif[k] pointing to R[k,k] */
+    Rkk = Rx[Rif[k]]; /* R[k,k] */
+    //Rprintf("Rkk=%g  u[k] = %g\n",Rkk,u[k]);
+    x = hypote(Rkk,u[k]);
+    c0 = Rkk/x; s0 = u[k]/x;
+    for (j=k;j<p;j++) { /* update U' by application of this rotation, but not R */
+      if (Ri[Rif[j]]>k) Rkj = 0; else {
+        Rkj = Rx[Rif[j]]; Rif[j]++;
+      }
+      u[j] = -s0 * Rkj + c0 * u[j];
+    }
+    gij[ng] = k; gij[ng+pm] = p;
+    gcs[ng] = c0; gcs[ng+pm] = s0; ng++;
+  } /* R col loop */
+  return(R_NilValue);
+} /* RSGup */  
+
+
+SEXP SGap(SEXP Gij, SEXP Gcs,SEXP X,SEXP TR) {
+/* Apply the sequence of Givens rotations returned by RSGup or their
+   transpose to matrix x. All matrices are dense here. */
+  int *gij,p,trans,m,*r0,*r1,n,i,j;
+  double *gcs,*x,*x0,*x1,*c,*s,c0,s0,xx;
+  gcs = REAL(Gcs);
+  gij = INTEGER(Gij);
+  x = REAL(X);trans = asInteger(TR);
+  p = nrows(X); m = nrows(Gcs); n = ncols(X);
+  r0 = gij; r1 = gij + m; c = gcs; s = gcs + m;
+  //Rprintf("m=%d n=%d p=%d\n",m,n,p);
+  if (trans) for (i=m-1;i>=0;i--) {
+     x0 = x + r0[i]; x1 = x + r1[i];
+     c0 = c[i]; s0 = s[i];
+     for (j=0;j<n;j++,x0+=p,x1+=p) {
+       xx = *x0;
+       *x0 = c0 * xx - s0 * *x1;
+       *x1 = s0 * xx + c0 * *x1;
+     }  
+  } else for (i=0;i<m;i++) {
+      //Rprintf("\n i = %d ",i);
+     x0 = x + r0[i]; x1 = x + r1[i];
+     c0 = c[i]; s0 = s[i];
+     for (j=0;j<n;j++,x0+=p,x1+=p) {
+       //Rprintf("j = %d ",j);
+       xx = *x0;
+       *x0 = c0 * xx + s0 * *x1;
+       *x1 = -s0 * xx + c0 * *x1;
+     }  
+  }
+  return(R_NilValue);
+} /* SGap */  
 
 SEXP mgcv_chol_up(SEXP r,SEXP U,SEXP N,SEXP UP,SEXP EPS) {
 /* wrapper for calling chol_down using .Call */
@@ -2089,7 +2193,7 @@ void mroot(double *A,int *rank,int *n)
   pivot=(int *)CALLOC((size_t)*n,sizeof(int));
   mgcv_chol(A,pivot,n,&erank);
   if (*rank<=0) *rank = erank;
-  /* unscramble the returned choleski factor */ 
+ /* unscramble the returned choleski factor */ 
   B=CALLOC((size_t)(*n * *n),sizeof(double));
   /* copy A to B and zero A */
   for (p0=A,p1=B,i=0;i< *n;i++,p0+= *n,p1+= *n)
@@ -2517,6 +2621,7 @@ SEXP mgcv_Rpbsi(SEXP A, SEXP NT) {
   mgcv_pbsi1(R,&r,&nt);
   return(R_NilValue);
 } /* mgcv_Rpbsi */
+
 
 void mgcv_PPt1(double *A,double *R,int *r,int *nt) {
 /* Computes A=RR', where R is r by r upper triangular. BLAS version.
