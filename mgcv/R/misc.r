@@ -614,7 +614,9 @@ RSGup <- function(R,u) {
   if (!inherits(R,"Matrix")) stop("R not sparse, call pointless")
   piv <- attr(R,"pivot")
   .Call(C_RSGup,R,u[piv,,drop=FALSE],Gcs,Gij)
-  list(Gcs=Gcs,Gij=Gij)
+  list(Gcs=Gcs, ## first col is Givens c, second Givens s
+       Gij=Gij, ## cols are elements being rotated, first < second
+       u=u[piv,,drop=FALSE]) ## pivoted u matrix needed for forming Px, P'x
 } ## RSGup
 
 SGap <- function(G,x,trans=FALSE) {
@@ -625,7 +627,7 @@ SGap <- function(G,x,trans=FALSE) {
   if (!is.matrix(x)) x <- as.matrix(x)
   trans <- as.integer(trans)
   .Call(C_SGap,G$Gij,G$Gcs,x,trans)
-  drop(x)
+  x
 } ## SGap
 
 vcorr <- function(dR,Vr,trans=TRUE) {
