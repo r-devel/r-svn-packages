@@ -2195,7 +2195,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
 ## parametric terms.
 ## This is a modification of `gam' designed to build the QR decomposition of the model matrix 
-## up in chunks, to keep memory costs down.
+## up in chunks, to keep memory costs down, or to use the discrete methods.
 ## If cluster is a parallel package cluster uses parallel QR build on cluster. 
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
@@ -2406,11 +2406,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     if (control$trace) t1 <- proc.time()
     reset <- TRUE
+    absorb.cons <- if (length(fit)>1) fit[2] else TRUE
+    scale.penalty <- if (length(fit)>2) fit[3] else control$scalePenalty
     while (reset) {
      G <- do.call(gsname,list(formula=gp,pterms=pterms,
                   data=mf0,knots=knots,sp=sp,min.sp=min.sp,
-                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=select,
-                  idLinksBases=!discretize,scale.penalty=control$scalePenalty,
+                  H=NULL,absorb.cons=absorb.cons,sparse.cons=sparse.cons,select=select,
+                  idLinksBases=!discretize,scale.penalty=scale.penalty,
                   paraPen=paraPen,apply.by=!discretize,drop.intercept=drop.intercept,modCon=2))
 
     if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
@@ -2525,7 +2527,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 		qc[kb] <- -1 
               } else { 
                 v[[kb]] <- rep(0,0) ##
-                if (!inherits(qrc,"character")||qrc!="no constraints") warning("unknown tensor constraint type")
+                if (absorb.cons&&(!inherits(qrc,"character")||qrc!="no constraints")) warning("unknown tensor constraint type")
               }
 	    } else { ## sb==1 once per smooth stuff
               qc <- c(qc,0) ## extend
@@ -2666,7 +2668,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
   } ## end of G setup 
 
-  if (!fit) {
+  if (!fit[1]) {
     G$efam <- efam
     G$scale <- scale
     G$mf <- mf;G$na.action <- na.action;G$gp <- gp

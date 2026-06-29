@@ -293,7 +293,7 @@ uniquecombs0 <- function(x,ordered=FALSE) {
   x
 } ## uniquecombs0
 
-cSplineDes <- function (x, knots, ord = 4,derivs=0)
+cSplineDes <- function (x, knots, ord = 4,derivs=0,sparse=FALSE)
 { ## cyclic version of spline design...
   ##require(splines)
   nk <- length(knots)
@@ -306,11 +306,15 @@ cSplineDes <- function (x, knots, ord = 4,derivs=0)
   ## copy end intervals to start, for wrapping purposes...
   knots <- c(k1-(knots[nk]-knots[(nk-ord+1):(nk-1)]),knots)
   ind <- x>xc ## index for x values where wrapping is needed
-  X1 <- splines::splineDesign(knots,x,ord,outer.ok=TRUE,derivs=derivs)
+  X1 <- splines::splineDesign(knots,x,ord,outer.ok=TRUE,derivs=derivs,sparse=sparse)
   x[ind] <- x[ind] - max(knots) + k1
   if (sum(ind)) { ## wrapping part...
-    X2 <- splines::splineDesign(knots,x[ind],ord,outer.ok=TRUE,derivs=derivs) 
-    X1[ind,] <- X1[ind,] + X2
+    X2 <- splines::splineDesign(knots,x[ind],ord,outer.ok=TRUE,derivs=derivs,sparse=sparse)
+    if (sparse) {
+      ind <- which(ind)
+      M <- sparseMatrix(i=ind,j=1:length(ind),x=1,dims=c(nrow(X1),length(ind)))
+      X1 <- X1 + M %*% X2 ## X1[ind,] <- dreadful for sparse
+    } else X1[ind,] <- X1[ind,] + X2
   }
   X1 ## final model matrix
 } ## cSplineDes
@@ -1716,6 +1720,7 @@ smooth.construct.cp.smooth.spec <- function(object,data,knots)
   else m <- object$p.order  ## m[1] - basis order, m[2] - penalty order
   m[is.na(m)] <- 2 ## default
   object$p.order <- m
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
   if (object$bs.dim<0) object$bs.dim <- max(10,m[1]) ## default
   nk <- object$bs.dim +1  ## number of interior knots
   if (nk<=m[1]) stop("basis dimension too small for b-spline order")
@@ -1737,7 +1742,7 @@ smooth.construct.cp.smooth.spec <- function(object,data,knots)
 
   if (length(k)!=nk) stop(paste("there should be",nk,"knots supplied"))
 
-  object$X <- cSplineDes(x,k,ord=m[1]+2)  ## model matrix
+  object$X <- cSplineDes(x,k,ord=m[1]+2,sparse=sparse)  ## model matrix
 
   if (!is.null(k)) {
     if (sum(colSums(object$X)==0)>0) warning("knot range is so wide that there is *no* information about some basis coefficients")
@@ -1748,13 +1753,13 @@ smooth.construct.cp.smooth.spec <- function(object,data,knots)
   p.ord <- m[2]
   np <- ncol(object$X)
   if (p.ord>np-1) stop("penalty order too high for basis dimension")
-  De <- diag(np + p.ord)
+  De <- if (sparse) Matrix::Diagonal(np+p.ord,x=1) else diag(np+p.ord)
   if (p.ord>0) { 
     for (i in 1:p.ord) De <- diff(De)
     D <- De[,-(1:p.ord)]
     D[,(np-p.ord+1):np] <-  D[,(np-p.ord+1):np] + De[,1:p.ord]
   } else D <- De
-  object$S <- list(t(D)%*%D)  # get penalty
+  object$S <- list(crossprod(D))  # get penalty
 
   ## other stuff...
   object$rank <- np-1  # penalty rank
@@ -1769,7 +1774,8 @@ Predict.matrix.cpspline.smooth <- function(object,data)
 { x <- data[[object$term]] 
   k0 <- min(object$knots);k1 <- max(object$knots) 
   if (min(x)<k0||max(x)>k1) x <- cwrap(k0,k1,x)
-  X <- cSplineDes(x,object$knots,object$m[1]+2)
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
+  X <- cSplineDes(x,object$knots,object$m[1]+2,sparse=sparse)
   X
 } ## Predict.matrix.cpspline.smooth
 
@@ -1835,9 +1841,9 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     object$B <- B
     object$rank <- p-2
   } else {
-    ## now construct conventional P-spline penalty        
-    S <- if (m[2]>0) diff(diag(object$bs.dim),differences=m[2]) else diag(object$bs.dim);
-    object$D <- if (sparse) as(S,"CsparseMatrix") else S
+    ## now construct conventional P-spline penalty
+    Id <- if (sparse) Matrix::Diagonal(object$bs.dim,x=1) else diag(object$bs.dim)
+    object$D <- if (m[2]>0) diff(Id,differences=m[2]) else Id;
     object$S <- list(crossprod(object$D))  
   
     object$rank <- object$bs.dim-m[2]  # penalty rank 

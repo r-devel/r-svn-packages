@@ -124,7 +124,8 @@ Note that \code{pc} constraints replace the usual sum to zero identifiability co
 
 
 \references{
-Wood, S.N. (2026) Shape constrained additive smooth models (with discussion). Statistical Modelling. 
+Wood, S.N. (2026) Shape constrained additive smooth models (with discussion). Statistical Modelling.
+\doi{10.1177/1471082X261436505}
 
 Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing
 parameter optimization with application to Tweedie location, scale and shape models.
@@ -137,7 +138,7 @@ Biometrics 73 (4), 1071-1081 \doi{10.1111/biom.12666}
 }
 
 \section{WARNINGS }{
-This is generally slower than \code{gam}, and can only use EFS soothness estimation
+This is generally slower than \code{gam}, and can only use EFS smoothness estimation
 } 
 
 \seealso{

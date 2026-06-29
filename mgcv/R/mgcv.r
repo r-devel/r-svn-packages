@@ -2693,14 +2693,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   ## forms diag(X[,ii]V[ii,ii]X[,ii]') efficiently where A may be sparse or dense
   ## and V may be a matrix or a 2 item list defining a matrix multiplication VA
   ## via V$V(A,V$arg). If ii is null then whole matrices are used. Note that
-  ## sub setting is not assued to be handeled by V$V.
+  ## sub setting is not assumed to be handled by V$V.
     if (is.list(V)) {
       if (inherits(X,"Matrix")) {
-        Xt <- t(X); if (!is.null(ii)) { Xt@i <- Xt@i + as.integer(ii[1]-1); Xt@Dim[1] <- ncol(X)}
+        if (is.null(ii)) Xt <- t(X) else {
+	  Xt <- t(X[,ii]); Xt@i <- Xt@i + as.integer(ii[1]-1); Xt@Dim[1] <- ncol(X)
+	} 
 	xsparse <- TRUE
       } else {
         xsparse <- FALSE
-        if (is.null(ii)) Xt <- t(X) else { Xt <- matrix(0,ncol(X),nrow(X)); Xt[ii,] <- t(X) }  
+        if (is.null(ii)) Xt <- t(X) else { Xt <- matrix(0,ncol(X),nrow(X)); Xt[ii,] <- t(X[,ii]) }  
       }
       se <- if (!xsparse) sqrt(pmax(0,colSums(V$V(Xt,V$arg)*Xt))) else
       blockit(Xt,f=function(Xt,arg) sqrt(pmax(0,colSums(arg$V(Xt,arg$arg)*Xt))),arg=V,bsize=200,rows = FALSE)
