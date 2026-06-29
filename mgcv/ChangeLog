@@ -29,6 +29,9 @@ rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
 * Added ability to control a number of defaults using 'options'. See 
   ?options.mgcv. 
 
+* fix to offset handling for exponential and extended families with NCV 
+  - thanks to Max Goplerud for reporting.
+
 * Fix to general constraint documentation for scasm, and handling of general 
   constraints involving repeated values.
 

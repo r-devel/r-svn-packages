@@ -659,7 +659,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	pdef.fails <- .Call(C_Rncv,x,R,w1,w2,db.drho,dw.drho,rS,nei$d-1,nei$md,nei$ma,nei$a-1,oo$beta,exp(sp),eta.cv,
 	                    deta.cv, dth, deriv1,.Machine$double.eps,control$ncv.threads);
 	if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
-     }   
+     }
+
+     eta.cv <- eta.cv + offset[nei$d]
+
      mu.cv <- linkinv(eta.cv)
      nt <- family$n.theta
      ## if some elements of theta are fixed, figure out which derivatives will be needed...

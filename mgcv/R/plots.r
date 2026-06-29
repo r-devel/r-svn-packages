@@ -807,7 +807,7 @@ blockit <- function(X,f=function(X,arg) colSums(X),arg=NULL,bsize=10,rows = FALS
 ## This is useful to control memory usage when X is sparse, but the intermediate
 ## quantities computed in f need not be.  
   n <- if (rows) nrow(X) else ncol(X)
-  if (!n) return
+  if (!n) return()
   nb <- floor(n/bsize) ## number of full size blocks
   bsfinal <- n - nb*bsize ## size of final block
   z <- numeric(n) ## vector to hold result

@@ -692,7 +692,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	                         dd, deriv1,.Machine$double.eps,control$ncv.threads);
 	     if (pdef.fails) warn[[length(warn)+1]] <- "some NCV updates not positive definite"
 	   }
-	  
+	   
+           eta.cv <- eta.cv + offset[nei$d] 
+ 
 	   if (family$qapprox) {
              NCV <- sum(wdr[nei$d]) + gamma*sum(-2*ww[nei$d]*(eta.cv-eta[nei$d]) + w1[nei$d]*(eta.cv-eta[nei$d])^2)
              if (deriv) {
