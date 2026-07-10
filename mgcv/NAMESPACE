@@ -28,6 +28,7 @@ export("%.%",anova.gam, bam, bam.update,bandchol,bandmult,bandsolve, bcg,
        print.gam,print.summary.gam,predict.gam,predict.bam,
        PredictMat,Predict.matrix,Predict.matrix2,
        Predict.matrix.Bspline.smooth,
+       Predict.matrix.b.tensor,
        Predict.matrix.cr.smooth,
        Predict.matrix.duchon.spline,
        Predict.matrix.cs.smooth,
@@ -54,6 +55,7 @@ export("%.%",anova.gam, bam, bam.update,bandchol,bandmult,bandsolve, bcg,
        smooth.construct.ad.smooth.spec,
        smooth.construct.ad.smooth.spec,
        smooth.construct.bs.smooth.spec,
+       smooth.construct.bt.smooth.spec,
        smooth.construct.cc.smooth.spec,
        smooth.construct.cp.smooth.spec,
        smooth.construct.cr.smooth.spec,
@@ -90,7 +92,7 @@ importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
            polygon,rect,strheight,strwidth,text,title)
 importFrom(utils, setTxtProgressBar, txtProgressBar)
 
-importFrom(splines,interpSpline)
+importFrom(splines,interpSpline,splineDesign,spline.des)
 
 importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
 binomial,coef,contrasts,"contrasts<-",cooks.distance,cor,cov,
@@ -164,6 +166,7 @@ S3method(smooth.info,sz.smooth.spec)
 S3method(smooth.info,default)
 S3method(smooth.construct,ad.smooth.spec)
 S3method(smooth.construct,bs.smooth.spec)
+S3method(smooth.construct,bt.smooth.spec)
 S3method(smooth.construct, cc.smooth.spec)
 S3method(smooth.construct,cp.smooth.spec)
 S3method(smooth.construct, cr.smooth.spec)
@@ -187,6 +190,7 @@ S3method(smooth.construct, t2.smooth.spec)
 S3method(smooth.construct, ts.smooth.spec)
 
 S3method(Predict.matrix,Bspline.smooth)
+S3method(Predict.matrix,b.tensor)
 S3method(Predict.matrix,cr.smooth)
 S3method(Predict.matrix,cs.smooth)
 S3method(Predict.matrix,cyclic.smooth)

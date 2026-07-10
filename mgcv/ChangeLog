@@ -26,6 +26,9 @@ rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
 
 1.9-5
 
+** 'bt' smooth class - tensor products of B-splines with general derivative
+  based penalties. 
+
 * Added ability to control a number of defaults using 'options'. See 
   ?options.mgcv. 
 

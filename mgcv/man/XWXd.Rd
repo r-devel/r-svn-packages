@@ -11,7 +11,7 @@
 \usage{
 XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,
      lt=NULL,rt=NULL)
-XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL)
+XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,alt=TRUE)
 Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
 diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
 ijXVXd(i,j,X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
@@ -37,6 +37,7 @@ ijXVXd(i,j,X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
 \item{ar.w}{weight by these weights, and sum up according to \code{ar.stop}. Used to implement AR models.}
 \item{lt}{use only columns of X corresponding to these model matrix terms (for left hand \code{X} in \code{XWXd}). If \code{NULL} set to \code{rt}.}
 \item{rt}{as \code{lt} for right hand \code{X}. If \code{NULL} set to \code{lt}. If \code{lt} and \code{rt} are \code{NULL} use all columns.}
+\item{alt}{whether to use faster alternative algorithm in dense case.}
 \item{V}{Coefficient covariance matrix.}
 \item{i}{vector of rows of \eqn{XVX^T}{XVX'} at which to evaluate.}
 \item{j}{vector of corresponding columns.}

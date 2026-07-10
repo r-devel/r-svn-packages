@@ -3635,6 +3635,431 @@ Predict.matrix.gp.smooth <- function(object,data)
   X 
 } ## end of Predict.matrix.gp.smooth
 
+######################################
+# general tensor products of B-splines
+######################################
+
+tb.grid <- function(k,m,X=NULL,P=NULL,x0=NULL,p0=NULL,regular=TRUE) {
+## Sets up a d=length(k) dimensional grid on which to define a
+## tensor product B-spline basis.
+## k[i] is the basis dimension required for dimension i.
+## m[i] is the order of B spline for dimension i (3 is cubic)
+## X is a d column matrix of fit data.
+## P is a d column matrix of prediction data
+## x0 is a 2 by d matrix of fit grid limits
+## p0 is a 2 by d matrix of predict grid limits.
+## At least one of X and x0 must be provided.
+## On exit returns a list with elements:
+## * x - a list of grid points/interior knots for each dimension
+## * m - as on entry
+## * P - if P or X were non-null on entry then a matrix whose rows are the
+##       grid cells containing data. e.g. in 3D case then if a row
+##       of P is 2,1,3 then the cell defined by interval 2 of dimension 1
+##       and intervals 1 and 3 of dimensions 2 and 3 contains data.
+## Note that one interval is placed between the edge of the fit box x0
+## and the edge of the prediction box p0, with even spacing within the
+## fit box. If you want even spacing within the prediction box then combine
+## the fit and prediction data for setup purposes.  
+  if (is.null(x0)) {
+    if (is.null(X)) stop("At least one of X and x0 required")
+    if (!is.matrix(X)) X <- as.matrix(X)
+    x0 <- as.matrix(apply(X,2,range)) ## create x0 from X
+  } else {
+    x0 <-  as.matrix(apply(as.matrix(x0),2,sort)) ## make sure x0 correctly ordered
+    if (!is.null(X)) { ## check X within box defined by x0
+      x00 <- as.matrix(apply(X,2,range))
+      if (any(x00[1,]<x0[1,])||any(x00[2,]>x0[2,])) {
+        warning ("some elements of X outside x0, resetting x0")
+	x0 <- x00
+      }
+    }  
+  } ## x0/X processing done.
+  if (is.null(p0)) {
+    if (!is.null(P))
+    if (!is.matrix(P)) P <- as.matrix(P)
+    p0 <- as.matrix(apply(rbind(P,x0),2,range)) ## create p0 from X & P
+  } else {
+    p0 <- as.matrix(apply(p0,2,sort)) ## make sure p0 correctly ordered
+    ## check P,x0 within box defined by p0
+    p00 <- as.matrix(apply(rbind(x0,P),2,range))
+    if (any(p00[1,]<p0[1,])||any(p00[2,]>p0[2,])) {
+      warning ("p0 does not contain fit region and prediction data, resetting")
+      p0 <- p00
+    }
+  } ## p0/P processing done.
+  D <- length(k) ## grid dimension
+  ## now work through the dimensions...
+  x <- list() ## knot list
+  for (d in 1:D) {
+    kd <- k[d] - m[d] + 1 ## the number of knots requested
+    if (kd<2) stop("basis dimension too small given spline order")
+    if (kd<4) {
+      x[[d]] <- if (is.null(p0)) seq(x0[1,d],x0[2,d],length=kd) else seq(p0[1,d],p0[2,d],length=kd)
+    } else {
+      if (!is.null(p0)) {
+        xd0 <- if (p0[1,d]<x0[1,d]) c(p0[1,d],x0[1,d]) else p0[1,d]
+	xd1 <- if (p0[2,d]>x0[2,d]) c(x0[2,d],p0[2,d]) else p0[2,d]
+	n=kd-length(xd0)-length(xd1)+2
+	xd <- c(xd0,seq(x0[1,d],x0[2,d],length=n)[-c(1,n)],xd1)
+	## reset if the outer (prediction) intervals are shorter than the internal
+	## or a regular grid is requested...
+        if (regular||(xd[2]-xd[1]<xd[3]-xd[2] && xd[kd]-xd[kd-1]<xd[kd-1]-xd[kd-2])) {
+          xd <- seq(xd[1],xd[kd],length=kd)
+        } else if (xd[2]-xd[1]<xd[3]-xd[2]) {
+          xd[1:(kd-1)] <- seq(xd[1],xd[kd-1],length=kd-1)
+        } else if (xd[kd]-xd[kd-1]<xd[kd-1]-xd[kd-2])  xd[2:kd] <- seq(xd[2],xd[kd],length=kd-1)
+        x[[d]] <- xd
+      } else x[[d]] <- seq(x0[1,d],x0[2,d],length=kd)
+    }  
+  } ## dimension loop
+  B.XP <- NULL
+  if (!is.null(P)) { ## find which boxes contain prediction data
+    B.P <- P ## prediction data data
+    ## need to replace elements of B.P with interval membership
+    for (d in 1:D) { ## loop over dimensions
+      xk <- x[[d]]; nk <- length(xk);n <- nrow(B.P)
+      xk[1] <- xk[1] - (xk[2]-xk[1]) ## avoid missing a point on first boundary
+      X0 <- matrix(xk[-nk],n,nk-1,byrow=TRUE) ## lower limits
+      X1 <- matrix(xk[-1],n,nk-1,byrow=TRUE) ## upper limits
+      p <- B.P[,d]
+      B.P[,d] <- matrix(1:(nk-1),nk-1,n)[t(p>X0&p<=X1)]
+    } ## rows of P now indicate interval membership
+    B.XP <- B.P <- uniquecombs(B.P) ## all the cells containing data (order arbitrary)
+  } else B.P <- NULL
+  if (!is.null(X)) { ## find which boxes contain prediction data
+    B.X <- X ## prediction data data
+    ## need to replace elements of B.P with interval membership
+    for (d in 1:D) { ## loop over dimensions
+      xk <- x[[d]]; nk <- length(xk);n <- nrow(B.X)
+      xk[1] <- xk[1] - (xk[2]-xk[1]) ## avoid missing a point on first boundary
+      X0 <- matrix(xk[-nk],n,nk-1,byrow=TRUE) ## lower limits
+      X1 <- matrix(xk[-1],n,nk-1,byrow=TRUE) ## upper limits
+      p <- B.X[,d]
+      B.X[,d] <- matrix(1:(nk-1),nk-1,n)[t(p>X0&p<=X1)]
+    } ## rows of P now indicate interval membership
+    B.X <- uniquecombs(B.X) ## all the cells containing data (order arbitrary)
+    B.XP <- if (is.null(B.P)) B.X else uniquecombs(rbind(B.X,B.P))
+  } else B.X <- NULL
+  ## create full box index set
+  nk <- unlist(lapply(x,length))-1
+  B.all <- matrix(0,prod(nk),length(nk))
+  for (i in 1:length(nk)) {
+    r <- if (i>1) prod(nk[1:(i-1)]) else 1
+    z <- rep(1:nk[i],r)
+    r <- if (i<length(nk)) prod(nk[(i+1):length(nk)]) else 1
+    z <- rep(z,each=r)
+    B.all[,i] <- z
+  }
+  list(x=x,B.P=B.P,B.XP=B.XP,B.X=B.X,B.all=B.all,m=m)
+} ## tb.grid
+
+knot2b <- function(x,m=3) {
+## Let x be the `inner' knots of a B-spline of order m (where m=3 is cubic).
+## This routine pads the knots out with outer knots to allow basis specification.
+## The basis dimension will be length(x)+m-1.
+## Example:
+## xk <- 2:6;m <- 2;x <- seq(2,6,length=50);X <- splineDesign(knot2b(xk,m),x,m+1)
+## plot(x,X[,3],type="l");for (i in 1:(4+m)) lines(x,X[,i],col=i)
+  x <- sort(x)
+  if (m<1) return(x)
+  dx <- mean(diff(x))
+  c(x[1] - m:1*dx,x,max(x)+1:m*dx)
+} ## knot2b
+
+penalty.factory <- function(gr,g) {
+## gr (see tb.grid) defines a grid on which a b-spline basis is defined, with the elements
+## * x a list of interior knots for each dimension.
+## * m an array giving the spline order required for each dimension
+## * P a matrix each row of which indexes a grid cell over which to integrate the penalty
+## g defines the order of derivative in the penalty. It has an entry per dimension,
+##   0 meaning not differentiated, 1 first order in that dimension, etc.
+  g <- round(g)
+  D <- length(gr$x)
+  if (length(g) != D) stop("g has to contain a derivative for each dimension")
+  if (any(g<0)||any(g>gr$m)) stop("0 <= g <= spline order required")
+  bi <- S <- list()
+  pt <- 1
+  for (d in 1:D) { ## compute the pair integrals
+    pord <- gr$m[d] - g[d]  ## number of evaluation points needed per interval
+    nk <- length(gr$x[[d]])
+    ## get the points at which to evaluate the gradient of the basis
+    ## functions
+    xg <- if (pord==0) approx(1:nk,gr$x[[d]],xout=2:nk-.5)$y else
+                    approx(1:nk,gr$x[[d]],xout=seq(1,nk,by=1/pord))$y
+    G <- splineDesign(knot2b(gr$x[[d]],gr$m[d]),xg,gr$m[d]+1,derivs=g[d])
+    P <- solve(matrix(rep(seq(-1, 1, length = pord + 1), pord + 1)^rep(0:pord, each = pord + 1),
+               pord + 1, pord + 1))
+    i1 <- rep(1:(pord + 1), pord + 1) + rep(1:(pord + 1), each = pord + 1)
+    H <- matrix((1 + (-1)^(i1 - 2))/(i1 - 1), pord + 1, pord + 1)
+    PHP <- t(P) %*% H %*% P
+    h <- diff(gr$x[[d]])/2
+    ind <- 1:(pord+1) ## grad eval point indices
+    m1 <- gr$m[d] + 1
+    ii <- 1:m1 ## basis fuction indices
+    S[[d]] <- matrix(0,m1,(nk-1)*m1) ## the pair integral matrices
+    bi[[d]] <- matrix(0,m1,nk-1) ## the active basis function indices
+    for (i in 1:(nk-1)) {
+      ## pair integral matrix for interval i of dimension d...
+      S[[d]][,1:m1+(i-1)*m1] <- t(G[ind,ii,drop=FALSE]) %*% PHP %*% G[ind,ii,drop=FALSE] * h[i]
+      ind <- ind + max(pord,1)
+      bi[[d]][,i] <- ii ## record active (!=0) basis function indices for this interval
+      ii <- ii + 1
+    }
+    pt <- pt * ncol(G) ## total number of parameters
+  } ## pair integral loop
+  ## now work through the grid cells/boxes computing the pair integral products for each
+  ## and accumulating them into the total penalty...
+  St <- matrix(0,pt,pt)
+  nk <- unlist(lapply(gr$x,"length")) + gr$m - 1 ## coefs per dimension
+  for (b in 1:nrow(gr$P)) {
+    Sp <- 1
+    for (d in 1:D) { ## dimension loop
+      m1 <- gr$m[d] + 1
+      i <- gr$P[b,d] ## current interval
+      ind <- (i-1)*m1 + 1:m1
+      Sp <- Sp %x% S[[d]][,ind]
+      R <- matrix(bi[[d]][,i],m1,m1)
+      if (d<D) for (i in (d+1):D) R <- R %x% matrix(1,gr$m[i]+1,gr$m[i]+1)
+      if (d>1) for (i in (d-1):1) R <- matrix(1,gr$m[i]+1,gr$m[i]+1) %x% R
+      Rp <- if (d==1) R else Rp <- (Rp-1)*nk[d] + R
+    }
+    ## now place Sp in correct place in St...
+    St[Rp+(t(Rp)-1)*pt] <- St[Rp+(t(Rp)-1)*pt] + Sp
+  } ## work through grid boxes
+  St
+} ## penalty.factory
+
+
+basis.factory <-  function(X,gr,g=NULL,sparse=FALSE) {
+## creates a model matrix from covariates in cols of X and grid object in D.
+## optionally margins may be differentiated w.r.t. covariate for that dimension
+  D <- length(gr$x)
+  if (ncol(X)!=D) stop("Number of cols of X does not match grid object")
+  if (is.null(g)) g <- rep(0,D)
+  if (length(g)!=D) stop("g must be null or same length as cols of X")
+  M <- list() 
+  for (d in 1:D) {
+    M[[d]] <- splineDesign(knot2b(gr$x[[d]],gr$m[d]),X[,d],gr$m[d]+1,derivs=g[d],sparse=sparse)
+  } ## dimension loop
+  tensor.prod.model.matrix(M)
+} ## basis.factory
+
+Predict.matrix.b.tensor <- function(object,data) {
+## prediction method function for the `matern' smooth class
+  D <- length(object$term)
+  X <- data[[object$term[[1]]]]
+  X <- matrix(X,length(X),D)
+  if (D>1) for (i in 2:D) X[,i] <- data[[object$term[[i]]]]
+  X <- basis.factory(X,object$gr,sparse=object$sparse)
+  if (length(object$drop.ind)) X <- X[,-object$drop.ind] # return the prediction matrix
+  X
+} ## Predict.matrix.b.tensor
+
+tps.dord <- function(d,m,dim=0) {
+## get orders of differentiation of d dimensional TPS penalty based
+## on order m derivatives. dim=0 queries number of terms, otherwise
+## it should supply the number of terms. Returns number of terms or
+## a matrix whose cols give differentiation orders and multipliers.
+  ord <- rep(0,d)
+  if (dim>0) M <- matrix(0,d+1,dim)
+  Gm <- gamma(m+1)
+  j <- 1
+  repeat {
+    ord[d] <- m-sum(ord[-d])
+    if (dim>0) M[,j] <- c(ord,Gm/prod(gamma(ord+1)))
+    if (ord[1]==m) break
+    k <- d-1
+    if (ord[d]==0) {
+      ok <- 0
+      while(!ok) {
+        ord[k] <- 0;k <- k - 1 ;ord[k] <- ord[k] + 1
+        ok <- (sum(ord[1:k])<=m) 
+      }
+    } else ord[k] <- ord[k] + 1
+    j <- j  + 1
+  }
+  if (dim) return(M) else return(j)
+} ## tps.dord
+
+smooth.construct.bt.smooth.spec <- function(object,data,knots) {
+## A tensor product of b-splines with user defined derivative penalties.
+## designed to be called with something like s(x,z,m=M,bs="bt") where
+## M controls the penalty setup. There are several alternatives:
+## * if M is a single integer it is the B-spline order to use
+##   for all margins and there will be one penalty for each
+##   covariate direction, with order m-1 derivatives.
+## * if M is a single number x.z then an order x B-spline tensor
+##   product basis is required with an order z thin plate spline
+##   penalty. z < x.
+## * If M is a vector it specifies the B-spline order for each margin
+##   and the penalty for the ith margin will be M[i]-1.
+## * If M is a two column matrix then M[i,1] is the basis order
+##   and M[i,2] the penalty order.
+## * If M is a list then M[[1]] is a vector of basis orders
+##   for each margin and the remaining list elements specify
+##   penalties. The jth column of M[[i]] (i>1) gives the
+##   order of derivatives for the jth component of this penalty.
+##   If the column has one more element than there are margins then
+##   the final element specifies a constant by which to multiply
+##   the penalty. For example, in a 2D case a matrix 
+##   matrix(c(2,0,1,0,2,1,1,1,2),3,3) specifies the usual
+##   TPS penalty \int f_xx^2 + 2 f_xz^2 + f_zz^2 dxdz, while
+##   matrix(c(2,0,0,2,1,1),2,3) would have specified
+##   \int f_xx^2 + f_xz^2 + f_zz^2 dxdz as the weight row is
+##   left off.
+##   Smoothing parameters can be linked on the log scale via
+##   a matrix L. lsp = L %*% lsp0 where there are fewer
+##   lsp0 log smoothing parameters than lsp. L is supplied as
+##   a *named* element of M.
+## In this routine object$p.order contains whatever was passed to m. 
+## knots either gives co-ordinates, p0, of prediction box, or
+## a set of points covering the region where predictions will
+## be required. In former case penalty is computed over whole
+## grid defined by p0. In latter case, or with no knots, the
+## penalty is only evaluated over grid boxes with data or prediction data.
+## NOTE: all penelties currently via dense, even if object$xt$sparse
+##       defined.
+ 
+  D <- object$dim
+  m <- object$p.order ## number, vector, matrix or list
+  sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
+  A <- NULL
+  if (is.list(m)) {
+    ## first check for an L matrix linking smoothing parameters and remove it
+    ## from the list after copying and checking it... 
+    iL <- which(names(m)=="L")
+    if (length(iL)) {
+      object$L <- m[[iL]]
+      m[[iL]] <- NULL
+    }
+    iA <- which(names(m)=="A")
+    if (length(iA)) {
+      A <- m[[iA]]   ## defines where to integrate penalty "f"it or "p"rediction, "a"ll (f+p) or "g"rid (whole)
+      m[[iA]] <- NULL
+    } 
+    if (length(iA)) {
+      if (length(A)!=length(m)-1) stop("Length of A must match number of penalties defined")
+    }
+    if (length(iL)) {
+      if (!is.matrix(object$L)) stop("L must be a matrix")
+      if (nrow(object$L)!=length(m)-1) stop("Number of L matrix rows does not match number of penalties defined")
+    }
+    
+    if (length(m[[1]])==1) m[[1]] <- rep(m[[1]],D)
+    if (length(m[[1]])!=D) stop("m[[1]] wrong length")
+  } else {
+    tps <- FALSE
+    if (!is.matrix(m)) {
+      if (length(m)==1 && is.na(m)) m <- 3
+      if (length(m)==1 && m-floor(m)>1e-7) tps <- TRUE else m <- matrix(m,nrow=D,ncol=1)
+    }
+    if (tps) { ## thin plate spline penalty required
+      mb <- floor(m)
+      md <- floor((m-mb)*10)
+      if (md > mb-1) {
+        md <- mb-1;warning("TPS penalty order reset")
+      }
+      M <- list(rep(mb,D)) ## basis orders
+      M[[2]] <- tps.dord(D,md,tps.dord(D,md)) 
+    } else {
+      if (ncol(m)==1) m <- cbind(m,pmax(0,m-1)) ## by default deriv order one less than basis order
+      M <- list(m=m[,1]) ## convert to list form
+      for (i in 1:D) { M[[i+1]] <- matrix(0,D,1); M[[i+1]][i] <- m[i,2] } ## create derivative order matrices
+    }
+    m <- M  
+  }
+  if (length(object$bs.dim)==1) object$bs.dim <- rep(object$bs.dim,D)
+  ind <- object$bs.dim<0
+  if (sum(ind)) object$bs.dim[ind] <- 8 + m[[1]][ind] -1 ## default
+  ## collect the predictors...
+  X <- data[[object$term[1]]]
+  n <- length(X)
+  X <- matrix(X,n,D)
+  if (D>1) for (i in 2:D) X[,i] <- data[[object$term[i]]] 
+  ## now deal with knots for setting up any bounding boxes
+  P <- NULL
+  if (is.null(knots)||length(knots)==0) {
+    x0 <- p0 <- NULL ## no prediction box provided, drop cells with no X data
+  } else {
+    P <- knots[[object$term[[1]]]]
+    P <- matrix(P,length(P),D)
+    if (D>1) for (i in 2:D) {
+      P[,i] <- knots[[object$term[[i]]]]
+    }
+    if (nrow(P)==2) { ## prediction box - use whole grid
+      p0 <- P; P <- NULL
+      x0 <- apply(X,2,range)
+    } else { ## drop grid cells with no P or X data
+      x0 <- p0 <- NULL
+    }
+  }
+  ## Set up the grid defining the B-spline tensor product
+
+  gr <- if (is.null(x0)) tb.grid(object$bs.dim,m[[1]],X=X,P=P,p0=p0) else
+                         tb.grid(object$bs.dim,m[[1]],P=P,x0=x0,p0=p0)
+
+  gr$P <- if (is.null(gr$B.XP)) gr$B.all else gr$B.XP
+
+  ## The model matrix...
+  object$X <- basis.factory(X,gr,sparse=sparse)
+  St <- matrix(0,ncol(object$X),ncol(object$X))
+  ## now setup the penalties...
+  object$S <- list()
+  if (length(m)>1) {
+    for (i in 2:length(m)) {
+      G <- m[[i]]
+      if (nrow(G)>D) {
+        mult <- G[D+1,]
+        G <- G[1:D,,drop=FALSE]
+      } else mult <- rep(1,ncol(G))
+      if (!is.null(A)) {
+        if (A[i-1] == "f") { gr$P <- if (is.null(gr$B.X)) gr$B.all else gr$B.X } else
+	if (A[i-1] == "p") { gr$P <- if (is.null(gr$B.X)) gr$B.all else gr$B.X } else  
+	if (A[i-1] == "a") { gr$P <- if (is.null(gr$B.XP)) gr$B.all else gr$B.XP } else
+	if (A[i-1] == "g") gr$P <- gr$B.all
+      }
+      S <- penalty.factory(gr,G[,1])*mult[1]
+      if (ncol(G)>1) for (j in 2:ncol(G)) S <- S + penalty.factory(gr,G[,j])*mult[j]
+      object$S[[i-1]] <- S
+      St <- St + S ## summed penalty for testing
+    }
+  }  
+
+  object$gr <- gr ## store the grid object
+  object$sparse <- sparse
+ 
+  object$m <- m[[1]] ## marginal B-spline orders
+
+
+  ## now drop the unidentified coefficients (those with corresponding zeroes in
+  ## the model matrix and all penalties)...
+  
+  drop.ind <- which(colSums(abs(object$X))==0 & colSums(abs(St))==0)
+  
+  if (length(drop.ind)>0) {
+    object$X <- object$X[,-drop.ind]
+    St <- St[-drop.ind,-drop.ind]
+    if (length(object$S)) for (i in 1:length(object$S)) object$S[[i]] <- object$S[[i]][-drop.ind,-drop.ind]
+  }
+  object$drop.ind <- drop.ind
+
+  ## Sort out ranks etc...
+  g <- ncol(object$X)
+  object$df <- g  ## basis dimension
+  if (length(object$S)>0) {
+    object$null.space.dim <- g - Rrank(suppressWarnings(chol(S,pivot=TRUE)))
+    for (i in 1:length(object$S))
+      object$rank[i] <- Rrank(suppressWarnings(chol(object$S[[i]],pivot=TRUE)))
+  } else {
+    object$rank <- rep(0,0)
+    object$null.space.dim <- 0
+  }
+
+  if (sparse) for (i in 1:length(object$S)) object$S[[i]] <- as(object$S[[i]],"dgCMatrix")
+
+  class(object)<-"b.tensor"  # Give object a class
+  object
+} ## smooth.construct.bt.smooth.spec
 
 
 ###################################
