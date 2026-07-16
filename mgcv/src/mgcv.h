@@ -150,7 +150,8 @@ SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SE
 	    SEXP rsr, SEXP csr);
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int *p, ptrdiff_t *n,int *cy, 
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
-          int *ar_stop,int *ar_row,double *ar_weights,int *cs,int *ncs,int *alt);
+          int *ar_stop,int *ar_row,double *ar_weights,int *cs,int *ncs,int *alt,int *iwork,ptrdiff_t *pwork, double *dwork);
+void XWydspace(ptrdiff_t *space,int *nx, int *nt, int *n, int *m, int *dt,int *p);
 SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP cyr, SEXP tsr,
 	   SEXP dtr,SEXP vr,SEXP qcr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,SEXP csr,SEXP alti);
 void Xbdspace0(ptrdiff_t *space,int *m,int *p, ptrdiff_t *n, int *nx, int *dt, int *nt);
@@ -161,10 +162,13 @@ void Xbd0(double *f,double *beta,double *X,int *k, int *ks, int *m,int *p, ptrdi
 void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, 
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs,
 	  int *iwork, ptrdiff_t *pwork,double *dwork);
+void Xbdp(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, 
+	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs,
+	  int *iwork, ptrdiff_t *pwork,double *dwork,int *nthreads, ptrdiff_t *space,int *pk);
 SEXP CXbd0(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
 	  SEXP tsr, SEXP dtr,SEXP vr,SEXP qcr,SEXP bcr,SEXP csr);
 SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
-	   SEXP tsr, SEXP dtr,SEXP vr,SEXP qcr,SEXP bcr,SEXP csr);
+	  SEXP tsr, SEXP dtr,SEXP vr,SEXP qcr,SEXP bcr,SEXP csr,SEXP nth);
 void diagXVXt(double *diag,double *V,double *X,int *k1,int *k2,int *ks,int *m,int *p, ptrdiff_t *n, 
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,int *cs,int *ncs,int *rs,int *nrs);
 void idiagXLLtXt(double *diag,double *L,double *X,int *k,int *ks,int *m,int *p, int *n, 

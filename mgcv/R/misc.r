@@ -437,7 +437,7 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
   XWy
 } ## XWyd 
 
-Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
+Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL,nthreads=1) {
 ## note that drop may contain the index of columns of X to drop before multiplying by beta.
 ## equivalently we can insert zero elements into beta in the appropriate places.
 ## if lt if not NULL then it lists the discrete terms to include (from X)
@@ -485,7 +485,8 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
     #Xb <- if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
     f <- numeric(n*bc)
     .Call(C_CXbd,f,beta,as.double(unlist(X)),k-1L, as.integer(ks-1L),as.integer(m),as.integer(p),
-          as.integer(ts-1L),as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(bc), as.integer(lt-1L))
+          as.integer(ts-1L),as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(bc), as.integer(lt-1L),
+	  as.integer(nthreads))
     Xb <- if (is.matrix(beta)) matrix(f,n,bc) else f	  
   }
   return(Xb)
