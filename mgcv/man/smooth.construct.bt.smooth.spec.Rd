@@ -1,5 +1,5 @@
-\name{smooth.construct.bs.smooth.spec}
-\alias{smooth.construct.bs.smooth.spec}
+\name{smooth.construct.bt.smooth.spec}
+\alias{smooth.construct.bt.smooth.spec}
 \alias{Predict.matrix.b.tensor}
 \alias{b.spline tensor}
 %- Also NEED an `\alias' for EACH other topic documented here.
@@ -82,7 +82,7 @@ Wood, S.N. (2017) P-splines with derivative based penalties and tensor product s
   y <- f + rnorm(n)*.2
   plot(v,x)
 
-  par(mfrow=c(2,2))
+  par(mfrow=c(2,2)); method <- "REML"
   ## list specifying tensor product of cubic B-splines
   ## and 2nd order TPS penalty
   M = list(rep(3,2),matrix(c(2,0,1,0,2,1,1,1,2),3,3))

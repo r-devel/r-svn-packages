@@ -499,7 +499,7 @@ void tensorXb0(double *f,double *X, double *C,double *work, double *beta,
 void tensorXb(double *f,double *X, double *C,double *work,int *worki, double *beta,
               int *m, int *p,int *dt,int *k, ptrdiff_t *n,double *v,int *qc,
               int *kstart, int *kstop) {
-/* for X* beta where X* is a tensor product term with nt marginal model matrices
+/* form X* beta where X* is a tensor product term with nt marginal model matrices
    stored in X. ith such is m[i] by p[i]. 
    work is an n vector. C is an m[d] by pb working matrix.  
    v is a vector such that if Q=I-vv' and Z is Q with the first column dropped then 
@@ -1357,7 +1357,7 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
 
 SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP cyr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,
-	   SEXP csr,SEXP alti) {
+	   SEXP csr,SEXP alti,SEXP nth) {
 /* .Call wrapper for XWyd allowing R long vector storage for k. Note that 
   this does not allow more than maxint data - that would require re-writting R code 
   to avoid storing k in a matrix (which is only allowed maxint rows).
@@ -1366,7 +1366,7 @@ SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEX
   ncs and nrs are length of cs/rs.
 */
   double *XWy,*X,*v,*w,*ar_weights,*y,*dwork;
-  int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*cy,*alt,*iwork;
+  int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*cy,*alt,*iwork,*nthreads;
   ptrdiff_t n,space[3],*pwork;
   alt = INTEGER(alti);
   n = (ptrdiff_t) nrows(kr); XWy = REAL(XWyr);
@@ -1379,11 +1379,12 @@ SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEX
   ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
   v = REAL(vr);qc = INTEGER(qcr);
   cs = INTEGER(csr);  ncs = length(csr);
+  nthreads = INTEGER(nth);
   XWydspace(space,&nx,&nt,&n,m,dt,p); /* memory needed by XWyd */
   // BUGGY - valgrind finds errors - allocation wrong
-  iwork = (int *) CALLOC((size_t)space[0],sizeof(int));
-  pwork = (ptrdiff_t *) CALLOC((size_t)space[1],sizeof(ptrdiff_t));
-  dwork = (double *) CALLOC((size_t)space[2],sizeof(double));
+  iwork = (int *) CALLOC((size_t)space[0] * *nthreads,sizeof(int));
+  pwork = (ptrdiff_t *) CALLOC((size_t)space[1] * *nthreads,sizeof(ptrdiff_t));
+  dwork = (double *) CALLOC((size_t)space[2] * *nthreads,sizeof(double));
   XWyd(XWy,y,X,w,k,ks,m,p,&n,cy,&nx,ts,dt,&nt,v,qc,ar_stop,ar_row,ar_weights,cs,&ncs,alt,iwork,pwork,dwork);
   FREE(dwork);FREE(pwork);FREE(iwork);
   return(R_NilValue);
@@ -1420,7 +1421,7 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
   }
   /* obtain various indices */
   //pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
-  pt = iwork; iwork += *nx+1;
+  pt = iwork; iwork += *nt;
   //off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
   off = pwork; pwork += *nx+1;
   //voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */

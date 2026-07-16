@@ -32,7 +32,7 @@ R_CallMethodDef CallMethods[] = {
   {"sXbd",(DL_FUNC)&sXbd,3},
   {"CXbd",(DL_FUNC)&CXbd,14},
   {"sXyd",(DL_FUNC)&sXyd,3},
-  {"CXWyd",(DL_FUNC)&CXWyd,18},
+  {"CXWyd",(DL_FUNC)&CXWyd,19},
   {"sdiagXVXt",(DL_FUNC)&sdiagXVXt,4},
   {"CdiagXVXt",(DL_FUNC)&CdiagXVXt,14},
   {"CijXVXt",(DL_FUNC)&CijXVXt,15},

@@ -384,7 +384,7 @@ XVXd <- function(X,e,k,ks,ts,dt,v,qc,nthreads=1,a,ma) {
 } ## XVXd
 
 
-XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,alt=TRUE) {
+XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,alt=TRUE,nthreads=1) {
 ## X'Wy...
 ## if lt if not NULL then it lists the discrete terms to include (from X)
 ## returned vector/matrix only includes rows for selected terms
@@ -427,9 +427,10 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
     #if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
     #XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop]
     XWy <- numeric(pt*cy)
+    if (nthreads<1) nthreads <- 1;
     .Call(C_CXWyd,XWy,as.double(y),as.double(unlist(X)),as.double(w),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
           as.integer(cy),as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(ar.stop-1L),
-	  as.integer(ar.row-1L),as.double(ar.w),as.integer(lt-1L),as.integer(alt))
+	  as.integer(ar.row-1L),as.double(ar.w),as.integer(lt-1L),as.integer(alt),as.integer(nthreads))
     if (cy>1) { XWy <- if (is.null(drop)) matrix(XWy,pt,cy) else matrix(XWy,pt,cy)[-drop,] } else {
       XWy <- if (is.null(drop)) XWy else XWy[-drop]
     }
