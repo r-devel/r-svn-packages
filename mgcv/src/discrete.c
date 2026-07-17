@@ -610,7 +610,7 @@ SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
 */
   double *f,*X,*v,*beta,*dwork;
   int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*bc,*iwork,*nthreads,pk;
-  ptrdiff_t n,space[4],*pwork;
+  ptrdiff_t n,space[4],*pwork,nb,i;
   n = (ptrdiff_t) nrows(kr); pk = ncols(kr);
   f = REAL(fr);
   beta = REAL(betar);
@@ -622,7 +622,10 @@ SEXP CXbd(SEXP fr, SEXP betar, SEXP Xr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr,
   v = REAL(vr);qc = INTEGER(qcr);
   bc = INTEGER(bcr);nthreads = INTEGER(nth);
   cs = INTEGER(csr);ncs = length(csr);
-  Xbdspace(space,m,p,&n, &nx,dt,&nt);
+  nb = n / *nthreads;
+  i = n - nb * (*nthreads-1);
+  if (nb<i) nb=i; /* maximum block size */  
+  Xbdspace(space,m,p,&nb, &nx,dt,&nt);
   iwork = (int *) CALLOC((size_t) space[0] * *nthreads,sizeof(int));
   pwork = (ptrdiff_t *) CALLOC((size_t)space[1] * *nthreads,sizeof(ptrdiff_t));
   dwork = (double *)CALLOC((size_t)space[2] * *nthreads,sizeof(double));
@@ -658,8 +661,9 @@ void Xbdspace0(ptrdiff_t *space,int *m,int *p, ptrdiff_t *n, int *nx, int *dt, i
 
 void Xbdspace(ptrdiff_t *space,int *m,int *p, ptrdiff_t *n, int *nx, int *dt, int *nt) {
   /* computes space needed by Xbd returning in 3 vector space [int,ptrdiff_t,double,*double] */
-  int i,q,j,c1,dC=0,maxrow=0,maxp=0,pti=0,maxdt=0;
+  int nb,i,q,j,c1,dC=0,maxrow=0,maxp=0,pti=0,maxdt=0;
   ptrdiff_t ii;
+  
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       if (maxrow<m[q]) maxrow=m[q];
@@ -677,7 +681,6 @@ void Xbdspace(ptrdiff_t *space,int *m,int *p, ptrdiff_t *n, int *nx, int *dt, in
   ii = *n * maxdt; if (ii<3*maxp) ii= (ptrdiff_t) 3*maxp; if (ii<maxrow) ii=(ptrdiff_t)maxrow;
   if (!dC) dC=1; /* avoid pointing to unallocated */
   space[2] = ii + *n  + dC; /* double */
-  // space[3] = *n * maxdt; /* *double */
 } /* Xbdspace */
 
 
@@ -690,9 +693,11 @@ void Xbdp(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdif
    Make a copy of k re-arranged into blocks. Requires *n > *nthreads;   
 */
   int j,*kd,*kdp,b,jn,i;
+  double *fd,*fdp;
   ptrdiff_t *N,nb,bof;
   N = (ptrdiff_t *)CALLOC((size_t) *nthreads,sizeof(ptrdiff_t)); /* block specific sample sizes */
   kd = (int *)CALLOC((size_t) *pk * *n,sizeof(int)); /* re-ordered k copy */
+  if (*bc>1) fd = (double *)CALLOC((size_t) *bc * *n,sizeof(double)); else fd=f;
   nb = *n / *nthreads;
   for (i=0;i<*nthreads-1;i++) N[i] = nb;
   N[*nthreads-1] = *n - (*nthreads-1) *nb;
@@ -705,10 +710,12 @@ void Xbdp(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdif
        is the bth dense matrix in kd... */
     for (kdp=kd + bof * *pk,jn=bof,j=0;j<*pk;j++,jn += *n) for (i=0;i<N[b];i++,kdp++) *kdp= k[i+jn];
     /* call Xbd on this block's subset... */
-    Xbd(f+bof,beta,X,kd + bof * *pk,ks, m,p,N+b,nx,ts,dt,nt,v,qc,bc,cs,ncs,
+    Xbd(fd+bof * *bc,beta,X,kd + bof * *pk,ks, m,p,N+b,nx,ts,dt,nt,v,qc,bc,cs,ncs,
 	iwork+space[0]*b, pwork+space[1]*b,dwork+space[2]*b);
+    /* now unpack fd into f, if f and beta are matrices */
+    if (*bc>1) for (fdp=fd+bof * *bc,jn=bof,j=0;j < *bc;j++,jn += *n) for (i=0;i<N[b];i++,fdp++) f[i + jn] = *fdp; 
   }  
-  FREE(kd);FREE(N);
+  FREE(kd);FREE(N);if (*bc>1) FREE(fd);
 } /* Xbdp */
 
 void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, 
@@ -1365,15 +1372,16 @@ SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEX
   n is number of rows of k, nx is length of m or p, nt is the length of ts or dt, 
   ncs and nrs are length of cs/rs.
 */
-  double *XWy,*X,*v,*w,*ar_weights,*y,*dwork;
-  int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*cy,*alt,*iwork,*nthreads;
-  ptrdiff_t n,space[3],*pwork;
+  double *XWy,*X,*v,*w,*ar_weights,*y,*dwork,*Wy,*rw,*p0,*p1,*p2,*work;
+  int *k,*ks,*m,*p,*ts,*dt,*qc,*cs,nx,nt,ncs,*ar_stop,*ar_row,*cy,*alt,*iwork,*nthreads,nXWy,zero=0,one=1,pk,i,j;
+  ptrdiff_t n,space[4],*pwork;
   alt = INTEGER(alti);
-  n = (ptrdiff_t) nrows(kr); XWy = REAL(XWyr);
+  n = (ptrdiff_t) nrows(kr); XWy = REAL(XWyr);pk = ncols(kr);
   X = REAL(Xr);w = REAL(wr);y = REAL(yr);
   k = INTEGER(kr); ks = INTEGER(ksr);
   m = INTEGER(mr); nx = length(mr);
   p = INTEGER(pr);cy=INTEGER(cyr);
+  nXWy = length(XWyr) / *cy;
   ar_stop = INTEGER(ar_stopr); ar_row = INTEGER(ar_rowr);
   ar_weights = REAL(ar_weightsr);
   ts = INTEGER(tsr); dt = INTEGER(dtr); nt = length(tsr);
@@ -1381,17 +1389,30 @@ SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEX
   cs = INTEGER(csr);  ncs = length(csr);
   nthreads = INTEGER(nth);
   XWydspace(space,&nx,&nt,&n,m,dt,p); /* memory needed by XWyd */
-  // BUGGY - valgrind finds errors - allocation wrong
   iwork = (int *) CALLOC((size_t)space[0] * *nthreads,sizeof(int));
   pwork = (ptrdiff_t *) CALLOC((size_t)space[1] * *nthreads,sizeof(ptrdiff_t));
-  dwork = (double *) CALLOC((size_t)space[2] * *nthreads,sizeof(double));
-  XWyd(XWy,y,X,w,k,ks,m,p,&n,cy,&nx,ts,dt,&nt,v,qc,ar_stop,ar_row,ar_weights,cs,&ncs,alt,iwork,pwork,dwork);
-  FREE(dwork);FREE(pwork);FREE(iwork);
+  dwork = (double *) CALLOC((size_t)space[2] * *nthreads + space[3] * n,sizeof(double));
+  Wy = (double *) CALLOC((size_t) n * *cy,sizeof(double));
+  if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
+    work = (double *) CALLOC((size_t) n * *cy,sizeof(double));
+    rw = dwork; for (i=0;i<n;i++) rw[i] = sqrt(w[i]);
+    for (p0=Wy,j=0;j<*cy;j++) for (p1=rw,p2=rw + n;p1<p2;p0++,y++,p1++) *p0 = *y * *p1; /* apply root W to y */
+    rwMatrix(ar_stop,ar_row,ar_weights,Wy,(int *) &n,cy,&zero,work);
+    rwMatrix(ar_stop,ar_row,ar_weights,Wy,(int *) &n,cy,&one,work); /* transpose of transform applied */
+    for (p0=Wy,j=0;j<*cy;j++) for (p1=rw,p2=rw + n;p1<p2;p0++,p1++) *p0 *= *p1; /* apply root W to Wy */
+    FREE(work);
+  } else for (p0=Wy,j=0;j<*cy;j++) for (p1=w,p2=w + n;p1<p2;p0++,y++,p1++) *p0 = *y * *p1; /* apply W to y */
+  
+  if (*nthreads > 1 && *nthreads < n)
+    XWydp(XWy,Wy,X,k,ks,m,p,&n,cy,&nx,ts,dt,&nt,v,qc,cs,&ncs,alt,iwork,pwork,dwork,nthreads,space,&pk,nXWy);
+  else  
+    XWyd(XWy,Wy,X,k,ks,m,p,&n,cy,&nx,ts,dt,&nt,v,qc,cs,&ncs,alt,iwork,pwork,dwork);
+  FREE(dwork);FREE(pwork);FREE(iwork);FREE(Wy);
   return(R_NilValue);
 } /*  CXWyd */
 
 void XWydspace(ptrdiff_t *space,int *nx, int *nt,ptrdiff_t  *n, int *m, int *dt,int *p) {
-/* compute the space needed by one instance of XWyd space = (int pointer double) */
+/* compute the space needed by one instance of XWyd space = (int pointer double double n multiplier) */
 
   int i,j,q,pti,maxm=0,maxdt=0,maxp=0;
   for (q=i=0;i< *nt; i++) { /* work through the terms */
@@ -1402,32 +1423,63 @@ void XWydspace(ptrdiff_t *space,int *nx, int *nt,ptrdiff_t  *n, int *m, int *dt,
     } 
     if (maxp < pti) maxp=pti;
   }
-  space[0] = 2 * *nt + 1 + 2 * maxdt;
-  space[1] = *nx + *nt + 2;
-  space[2] = *n * maxdt + 2 * maxm + 3 * maxp;
+  space[0] = 2 * *nt + 1 + 2 * maxdt; /* int */
+  space[1] = *nx + *nt + 2; /* pointer */
+  space[2] = 2 * maxm + 3 * maxp; /* double storage */
+  space[3] = maxdt-1; /* *n * space[3] double storage  */
 
 } /* XWydspace */
 
-void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *cy,
+void XWydp(double *XWy,double *Wy,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *cy,
+           int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *cs, int *ncs,int *alt,
+	   int *iwork, ptrdiff_t *pwork, double *dwork,int *nthreads, ptrdiff_t *space,int *pk,int nXWy) {
+/* calls XWyd in parallel based on index splitting */
+  int j,*kd,*kdp,b,jn,i;
+  double *XWy2,*Wyd,*p0;
+  ptrdiff_t *N,nb,bof;
+  N = (ptrdiff_t *)CALLOC((size_t) *nthreads,sizeof(ptrdiff_t)); /* block specific sample sizes */
+  kd = (int *)CALLOC((size_t) *pk * *n,sizeof(int)); /* re-ordered k copy */
+  XWy2 = (double *)CALLOC((size_t) *cy * nXWy * *nthreads,sizeof(double)); /* need a copy for each thread to sum at end */
+  if (*cy>1) Wyd = (double *)CALLOC((size_t) *cy * *n,sizeof(double)); else Wyd = Wy; /* need a copy for re-ordering into blocks */ 
+  nb = *n / *nthreads;
+  for (i=0;i<*nthreads-1;i++) N[i] = nb;
+  N[*nthreads-1] = *n - (*nthreads-1) *nb;
+  #ifdef OPENMP_ON
+  #pragma omp parallel for private(b,bof,jn,kdp,i,j,p0) num_threads(*nthreads)
+  #endif  
+  for (b=0;b<*nthreads;b++) {
+    bof = b * nb;
+    /* re-rorder the index rows so that if ii is row indices for bth block then k[ii,]
+       is the bth dense matrix in kd... */
+    for (kdp=kd + bof * *pk,jn=bof,j=0;j<*pk;j++,jn += *n) for (i=0;i<N[b];i++,kdp++) *kdp= k[i+jn];
+    /* if Wy matrix, copy this block's rows of Wy to dense N[b] by * *cy matrix at Wyd + bof * *cy... */ 
+    if (*cy>1) for (p0=Wyd + bof * *cy,jn=bof,j=0;j<*cy;j++,jn += *n) for (i=0;i<N[b];i++,p0++) *p0 = Wy[i+jn];
+    /* call XWyd on this block's subset... */
+    XWyd(XWy2 + nXWy * *cy * b,Wyd + bof * *cy,X,kd + bof * *pk,ks,m,p,N+b,cy,
+         nx,ts,dt,nt,v,qc,cs, ncs,alt,iwork+space[0]*b,pwork+space[1]*b,dwork+space[2]*b+space[3]* b * nb);
+  }
+  /* now sum up contributions from the threads... */
+  for (i=0;i < nXWy * *cy;i++) XWy[i] = XWy2[i];
+  for (b=1;b<*nthreads;b++) for (p0=XWy2 + nXWy * *cy * b,i=0;i < nXWy * *cy;i++) XWy[i] += p0[i]; 
+  
+  FREE(kd);FREE(N);FREE(XWy2); if (*cy>1) FREE(Wyd);
+  
+}  
+
+void XWyd(double *XWy,double *Wy,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *cy,
          int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
-	  int *ar_stop,int *ar_row,double *ar_weights,int *cs, int *ncs,int *alt,int *iwork, ptrdiff_t *pwork, double *dwork) {
+	 int *cs, int *ncs,int *alt,int *iwork, ptrdiff_t *pwork, double *dwork) {
 /* Thread safe. 
    If ncs > 0 then cs contains the subset of terms (blocks of model matrix columns) to include.   */
-  double *Wy,*p0,*p1,*p2,*Xy0,*work,*work1,*work2;
+  double *p0,*p1,*p2,*Xy0,*work,*work1,*work2;
   ptrdiff_t i,j,*off,*voff;
   int *tps,maxm=0,maxp=0,one=1,zero=0,*pt,add,q,kk,n_XWy,maxdt=0;//,*iwork;
-  if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
-    for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
-  }
+  
   /* obtain various indices */
-  //pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
-  pt = iwork; iwork += *nt;
-  //off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
-  off = pwork; pwork += *nx+1;
-  //voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */
-  voff = pwork; pwork += *nt+1;
-  //tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
-  tps = iwork; iwork += *nt + 1; 
+  pt = iwork; iwork += *nt; /* the term dimensions */
+  off = pwork; pwork += *nx+1; /* offsets for X submatrix starts */
+  voff = pwork; pwork += *nt+1; /* offsets for v subvector starts */
+  tps = iwork; iwork += *nt + 1;  /* the term starts in param vector or XWy */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q]*m[q]; /* submatrix start offsets */
@@ -1456,30 +1508,16 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
   } /* kk is number of rows of XWy, at this point */
 
   n_XWy = kk;
-  // iwork = (int *)CALLOC((size_t) 2*maxdt,sizeof(double)); // wasn't
-  // Xy0 =  (double *) CALLOC((size_t)maxp,sizeof(double));
   Xy0 = dwork; dwork += maxp;
-  //work =  (double *) CALLOC((size_t)*n * (maxdt-1) + maxm,sizeof(double)); // was *n
   work = dwork; dwork += *n * (maxdt-1) + maxm;
-  //work1 = (double *) CALLOC((size_t)maxm,sizeof(double));
   work1 = dwork; dwork += maxm;
-  //work2 = (double *) CALLOC((size_t)maxp * 2,sizeof(double));
   work2 = dwork; dwork += 2 * maxp;
-  //Wy = (double *) CALLOC((size_t)*n,sizeof(double)); /* Wy */
-  Wy = dwork; dwork += *n;
-  for (j=0;j<*cy;j++) { /* loop over columns of y */
-    for (p0=Wy,p1=Wy + *n,p2=w;p0<p1;p0++,y++,p2++) *p0 = *y * *p2; /* apply W to y */
-    if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
-      rwMatrix(ar_stop,ar_row,ar_weights,Wy,(int *) n,&one,&zero,work);
-      rwMatrix(ar_stop,ar_row,ar_weights,Wy,(int *) n,&one,&one,work); /* transpose of transform applied */
-      for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* square weights again */
-    }
+  for (j=0;j<*cy;j++,Wy += *n) { /* loop over columns of y */
     /* now loop through terms applying the components of X'...*/
     for (kk=0;kk<*ncs;kk++) {
       i = cs[kk]; /* term to deal with now */ 
       add=0; 
       if (dt[i]>1) { /* it's a tensor */
-        //tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k+ts[i] * (ptrdiff_t) *n,n);
         for (q=0;q<ks[ts[i] + *nx]-ks[ts[i]];q++) {  /* loop through index columns */
           if (*alt) tensorXty2(Xy0,work,work1,iwork,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k,n,&add,ks+ts[i],&q);
 	  else tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k,n,&add,ks+ts[i],&q);
@@ -1492,7 +1530,6 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
           for (p0=Xy0,p1=p0+pt[i],p2=XWy+tps[i];p0<p1;p0++,p2++) *p2 = *p0;
         }
       } else { /* it's a singleton */
-        //singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k+ts[i] * (ptrdiff_t) *n,n);
         for (q=ks[ts[i]];q<ks[ts[i] + *nx];q++) { /* loop through index columns */  
           singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k + q *  *n,n,&add);
           add=1;
@@ -1501,8 +1538,6 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
     } /* term loop */
     XWy += n_XWy; /* moving on to next column */
   }  
-  //FREE(Wy); FREE(Xy0); FREE(work); FREE(work1); FREE(work2);FREE(iwork);
-  //FREE(pt); FREE(off); FREE(voff); FREE(tps);
 } /* XWy */
 
 void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *nx, int *ts, 

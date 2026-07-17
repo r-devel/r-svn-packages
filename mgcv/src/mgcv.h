@@ -148,9 +148,12 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
 SEXP CXWXd1(SEXP XWXr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP tsr, SEXP dtr,
 	    SEXP vr,SEXP qcr, SEXP nthreadsr, SEXP ar_stopr, SEXP ar_weightsr,
 	    SEXP rsr, SEXP csr);
-void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int *p, ptrdiff_t *n,int *cy, 
+void XWydp(double *XWy,double *Wy,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *cy,
+           int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *cs, int *ncs,int *alt,
+	   int *iwork, ptrdiff_t *pwork, double *dwork,int *nthreads, ptrdiff_t *space,int *pk,int nXWy);
+void XWyd(double *XWy,double *Wy,double *X,int *k, int *ks, int *m,int *p, ptrdiff_t *n,int *cy, 
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
-          int *ar_stop,int *ar_row,double *ar_weights,int *cs,int *ncs,int *alt,int *iwork,ptrdiff_t *pwork, double *dwork);
+          int *cs,int *ncs,int *alt,int *iwork,ptrdiff_t *pwork, double *dwork);
 void XWydspace(ptrdiff_t *space,int *nx, int *nt, ptrdiff_t *n, int *m, int *dt,int *p);
 SEXP CXWyd(SEXP XWyr, SEXP yr, SEXP Xr, SEXP wr, SEXP kr, SEXP ksr, SEXP mr, SEXP pr, SEXP cyr, SEXP tsr,
 	   SEXP dtr,SEXP vr,SEXP qcr, SEXP ar_stopr, SEXP ar_rowr, SEXP ar_weightsr,SEXP csr,SEXP alti,SEXP nth);
