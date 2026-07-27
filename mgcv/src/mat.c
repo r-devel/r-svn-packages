@@ -2073,14 +2073,16 @@ SEXP RSGup(SEXP R,SEXP U,SEXP Gcs,SEXP Gij) {
   for (k=0;k<p;k++) { /* loop over cols of R */
     for (i=m-1;i>0;i--) { /* rotate U'[1:(m-1),k] to U'[0,k] */
       ipk = i*p+k; /* element to zero */
-      x = hypote(u[ipk],u[ipk-p]);
-      c0 = u[ipk-p]/x;s0 = u[ipk]/x;
-      for (j=k;j<p;j++) { /* apply this Givens to U' */ 
-        ipk = i*p+j;
-	x = u[ipk-p];
-	u[ipk-p] = c0 * x + s0 * u[ipk];
-	u[ipk] = -s0 * x + c0 * u[ipk];
-      }
+      if (u[ipk]) {
+        x = hypote(u[ipk],u[ipk-p]);
+        c0 = u[ipk-p]/x;s0 = u[ipk]/x;
+        for (j=k;j<p;j++) { /* apply this Givens to U' */ 
+          ipk = i*p+j;
+	  x = u[ipk-p];
+	  u[ipk-p] = c0 * x + s0 * u[ipk];
+	  u[ipk] = -s0 * x + c0 * u[ipk];
+        }
+      } else {c0=1.0;s0=0.0;} /* already zeroed */
       /* store this rotation */
       gij[ng] = i + p -1 ; gij[ng+pm] = i + p;
       gcs[ng] = c0; gcs[ng+pm] = s0; ng++;
@@ -2119,7 +2121,7 @@ SEXP SGap(SEXP Gij, SEXP Gcs,SEXP X,SEXP TR) {
   if (trans) for (i=m-1;i>=0;i--) {
      x0 = x + r0[i]; x1 = x + r1[i];
      c0 = c[i]; s0 = s[i];
-     for (j=0;j<n;j++,x0+=p,x1+=p) {
+     if (s0) for (j=0;j<n;j++,x0+=p,x1+=p) {
        xx = *x0;
        *x0 = c0 * xx - s0 * *x1;
        *x1 = s0 * xx + c0 * *x1;
@@ -2128,7 +2130,7 @@ SEXP SGap(SEXP Gij, SEXP Gcs,SEXP X,SEXP TR) {
       //Rprintf("\n i = %d ",i);
      x0 = x + r0[i]; x1 = x + r1[i];
      c0 = c[i]; s0 = s[i];
-     for (j=0;j<n;j++,x0+=p,x1+=p) {
+     if (s0) for (j=0;j<n;j++,x0+=p,x1+=p) {
        //Rprintf("j = %d ",j);
        xx = *x0;
        *x0 = c0 * xx + s0 * *x1;

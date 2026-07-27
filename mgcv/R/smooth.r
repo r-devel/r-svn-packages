@@ -681,7 +681,7 @@ s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs",c("tp","tp")),m=NA,by
     ret$point.con <- pc
   }
   class(ret)<-paste(bs,".smooth.spec",sep="")
-  ret
+  smooth.info(ret)
 } ## end of s
 
 #############################################################
@@ -3881,6 +3881,15 @@ tps.dord <- function(d,m,dim=0) {
   if (dim) return(M) else return(j)
 } ## tps.dord
 
+smooth.info.bt.smooth.spec <- function(object) {
+  ## need to adjust bs.dim to get correct placement in bam te terms
+  D <- object$dim ## number of variables
+  object$bs.dim0 <- object$bs.dim ## store what is supplied
+  if (length(object$bs.dim)==1) object$bs.dim <- rep(object$bs.dim,D)
+  object$bs.dim <- prod(object$bs.dim) ## total basis size before dropping 
+  object
+}
+
 smooth.construct.bt.smooth.spec <- function(object,data,knots) {
 ## A tensor product of b-splines with user defined derivative penalties.
 ## designed to be called with something like s(x,z,m=M,bs="bt") where
@@ -3919,7 +3928,8 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
 ## penalty is only evaluated over grid boxes with data or prediction data.
 ## NOTE: all penelties currently via dense, even if object$xt$sparse
 ##       defined.
- 
+
+  object$bs.dim <- object$bs.dim0
   D <- object$dim
   m <- object$p.order ## number, vector, matrix or list
   sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
@@ -4056,7 +4066,7 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
   }
 
   if (sparse) for (i in 1:length(object$S)) object$S[[i]] <- as(object$S[[i]],"dgCMatrix")
-
+  object$bs.dim <- ncol(object$X)
   class(object)<-"b.tensor"  # Give object a class
   object
 } ## smooth.construct.bt.smooth.spec
@@ -4069,6 +4079,9 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
 ############################
 ## The generics and wrappers
 ############################
+
+## allow modification of smooth specification object immediately after first
+## setup in interpret.gam...
 
 smooth.info <- function(object) UseMethod("smooth.info")
 

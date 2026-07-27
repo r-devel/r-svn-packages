@@ -960,10 +960,11 @@ mat.rowsum <- function(X,m,k) {
 isa <- function(R,nt=1) {
 ## Finds the elements of (R'R)^{-1} on NZP(R+R').
   if (!inherits(R,c("dgCMatrix","dtCMatrix"))) stop("isa requires a dg/tCMatrix")
-  nt <- round(nt)
-  if (nt<1) nt = 1
+  nt <- as.integer(round(nt))
+  if (nt<1) nt = 1L
   Hpi <- R + t(R)
-  .Call(C_isa1p,t(R),Hpi,nt)
+  if (nt==1) .Call(C_isa1p,t(R),Hpi) else
+  .Call(C_isa2p,t(R),Hpi,nt)
   Hpi
 } ## isa
 

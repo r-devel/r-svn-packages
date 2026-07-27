@@ -372,7 +372,8 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
                     substr(st$label,start=pos,stop=nchar(st$label)),sep="")
       }
-      smooth.spec[[k]] <- smooth.info(st) ## smooth.info supplies any extra specification info for class
+      smooth.spec[[k]] <- st
+      ## smooth.spec[[k]] <- smooth.info(st) ## smooth.info supplies any extra specification info for class
       if (ks<=len.sp&&sp[ks]==i) ks <- ks + 1 else # counts s() terms
       if (kt<=len.tp&&tp[kt]==i) kt <- kt + 1 else # counts te() terms
       if (kti<=len.tip&&tip[kti]==i) kti <- kti + 1 else # counts ti() terms
@@ -3055,9 +3056,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           k <- k + 1 ## counts total number of parametric terms
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
           fit[start:stop,k] <- as.numeric(X[,ii,drop=FALSE]%*%object$coefficients[ii])
-	  se0 <- getse(X,object$Vp,ii)
+	  #se0 <- getse(X,object$Vp,ii)
           #se0 <- sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii,drop=FALSE])*X[,ii,drop=FALSE])))
-	  if (se.fit) se[start:stop,k] <- se0
+	  if (se.fit) {
+	    se0 <- getse(X,object$Vp,ii)
+	    se[start:stop,k] <- se0
+	  }  
 	  if (get.ci) {
 	    if (!is.null(object$bs)) {
               ff <- X[,ii,drop=FALSE]%*%object$bs[ii,] ## BS rep functions

@@ -292,7 +292,8 @@ SEXP pabchol(SEXP a,SEXP r);
 SEXP RXWXband(SEXP x,SEXP W,SEXP b,SEXP KK);
 SEXP sRXWXband(SEXP X,SEXP W,SEXP b,SEXP KK);
 /* sparse matrix routines */
-SEXP isa1p(SEXP L,SEXP S,SEXP NT);
+SEXP isa1p(SEXP L,SEXP S);
+SEXP isa2p(SEXP L,SEXP S,SEXP NT);
 SEXP stmm(SEXP X); /* row Kronecker product */
 SEXP sdiagXVXt(SEXP X, SEXP V, SEXP LT, SEXP RT);
 SEXP sXbd(SEXP X,SEXP BETA,SEXP LT);
