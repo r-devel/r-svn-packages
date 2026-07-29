@@ -32,7 +32,14 @@ rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
 * Added ability to control a number of defaults using 'options'. See 
   ?options.mgcv. 
 
-* fix to offset handling for exponential and extended families with NCV 
+* bam NCV fix - sub-sampling error fix and bug in working storage computation
+  which could lead to massive over-allocation of working storage. Thanks to 
+  Xavier Giroux-Bougard for reporting.
+  
+* bam NCV memory error with by variable fix. Thnaks to 
+
+* Fix to offset handling for exponential and extended families with NCV + a
+  memory error with by variables for NCV with bam. 
   - thanks to Max Goplerud for reporting.
 
 * Fix to general constraint documentation for scasm, and handling of general 

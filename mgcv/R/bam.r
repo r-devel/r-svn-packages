@@ -450,7 +450,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     }
     nei$af <- nei$a; nei$maf <- nei$ma ## for use in cov matrix computation
     if (!is.null(nei$sample)) { ## only a sub-sample of points used in optimization NCV
-      if (length(nei$sample)==1) nei$sample <- sample(nei$ma,nei$sample)
+      if (length(nei$sample)==1) nei$sample <- sample(length(nei$ma),nei$sample)
       m1 <- nei$ma[nei$sample]; m0 <- c(0,nei$ma)[nei$sample]
       nei$a <- nei$a[sequence(m1-m0,m0+1L,1L)]
       nei$ma <- cumsum(m1-m0)-1L
@@ -2348,7 +2348,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (method=="NCV") { ## pre-process the neighbourhood structure 'nei'
       n <- nrow(mf)
       if (is.null(nei)||is.null(nei$a)||is.null(nei$ma)) {
-        nei <- list(a=1:n,ma=1:n,d=1:n,md=1:n) ## LOOCV  
+        nei <- list(a=1:n,ma=1:n,d=1:n,md=1:n,sample=nei$sample) ## LOOCV  
       } else if (is.null(nei$d)||is.null(nei$md)) {
         if (length(nei$ma)!=n) stop("nei$d and nei$md must be supplied if number of neighbourhoods is not number of data")
 	nei$d <- 1:n; nei$md <- 1:n

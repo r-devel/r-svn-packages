@@ -2124,9 +2124,9 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   score <- b[[sname]];grad <- t(L)%*%b[[sname1]];
 
   if (!is.null(b$Vg)) {
-    M <- ncol(b$db.drho)
-    b$Vg <- (B%*%t(L)%*%b$Vg%*%L%*%B)[1:M,1:M] ## sandwich estimate of 
-    db.drho <- b$db.drho%*%L[1:M,1:M,drop=FALSE]
+    M <- ncol(b$db.drho);P <- nrow(B)
+    b$Vg <- (B%*%t(L[1:M,1:P,drop=FALSE])%*%b$Vg%*%L[1:M,1:P,drop=FALSE]%*%B) ## sandwich estimate of 
+    db.drho <- b$db.drho%*%L[1:M,1:P,drop=FALSE]
     b$Vc <- db.drho %*% b$Vg %*% t(db.drho) ## correction term for cov matrices
   }
   b$dVkk <- NULL

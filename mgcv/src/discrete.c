@@ -1236,14 +1236,14 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
 	      int *ri,int *ci,ptrdiff_t *nrc,int *nthreads) {
 /* Extracts elements indexed by ri and ci of X(LU'+UL')X'. So on exit diag[i] = (X(LU'+UL')X')[ri[i],ci[i]];
 
-   L and U are pl by cl matrices. ri and ci are nrc vectors. X is packed in standard disrete form, other arguments 
+   L and U are pl by cl matrices. ri and ci are nrc vectors. X is packed in standard discrete form, other arguments 
    relating to this.
    
    Parallelization is by splitting the columns of L into nthreads subsets.
 
    Basic algorithm is to compute XL and XU then the row sums of XL.XU. 
  
-   In practice this is done by computing one column of XLand XU  at a time, and only the required rows 
+   In practice this is done by computing one column of XL and XU  at a time, and only the required rows 
    are computed.
 
    To test from R it is easiest to create a calling wrapper to deal with the ptrdiff_t *n and defined 
@@ -1327,6 +1327,7 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
   
   xl = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XL */
   xu = (double *) CALLOC((size_t) *nthreads * nu,sizeof(double)); /* storage for cols of XU */
+  //Rprintf("nthreads = %d nrc = %ld ",*nthreads,*nrc);
   dc = (double *) CALLOC((size_t) *nthreads * *nrc,sizeof(double)); /* storage for components of required elements */
   cs = (int *)CALLOC((size_t) *nt,sizeof(int));
   ncs = *nt; for (i=0;i<ncs;i++) cs[i] = i; /* avoid resetting in Xbd in parallel section */
@@ -1355,7 +1356,8 @@ void diagXLUtXt(double *diag,double *L,double *U,double *X,int *k,int *ks,int *m
     } 
   } /* parallel loop end */
   /* sum the contributions from the different threads into diag... */
-  for (p0=diag,p1=p0+ *nrc,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
+  //Rprintf(" nrc1 = %ld ",*nrc);
+  if (*nthreads) for (p0=diag,p1=p0+ *nrc,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
   for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *nrc;p0<p1;p0++,p2++) *p0 += *p2;
   FREE(xu);FREE(xl);FREE(dc);FREE(cs);FREE(iu);FREE(ii);if (nu<*n) FREE(ku);
   FREE(iwork);FREE(pwork);FREE(dwork);
@@ -3422,7 +3424,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	U2[l][r] = U2[r][l] = (double *)CALLOC(*pg * j,sizeof(double));
 	F77_CALL(dgemm)(&ntrans,&ntrans,pg,&j,sr+r,&one,G+soff[r] * *pg,pg,U,&i,&zero,U2[l][r],pg FCONE FCONE);
       }
-      l2c[r][l]=l2c[l][r] = j;
+      l2c[r][l]=l2c[l][r] = j; /* number of cols of L2 */
       
       beta2[r][l] = beta2[l][r] =  (double *)CALLOC(*pg,sizeof(double));
       /* get d2beta/drho_l drho_r */
@@ -3452,8 +3454,8 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   }
 
   /* get total storage requirements for all CV residuals + largest A_aa */
-  for (M=nb=j=kk=i=0;i<*nn;i++) {
-    dum = mk[i]-kk+1; kk = mk[i]+1; if (j<dum) j = dum; /* largest A_aa */
+  for (M=nb=jj=j=kk=i=0;i<*nn;i++) {
+    dum = mk[i]-kk+1; kk = mk[i]+1; if (jj<dum) jj = dum; /* largest A_aa - why stored? */
     dum = (int)(sqrt(8*dum+1)-1)/2;
     if (j<dum) j = dum; /* largest dimension of A_aa */
     nb += dum; /* total storage for adjusted residuals - but must be ma[*nn]+1 */
@@ -3476,7 +3478,7 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   max_chunk = 0; /* largest chunk of split up nk-vectors */
   for (j=1,ii=-1,i=0;i<*nn;i++) { /* loop to split nk-vectors indexed by mk */ 
     if (mk[i]-ii>target_nk) { /* start a new chunk */
-      if (mk[i-1]!=ii&&i>0) { /* aim for under target */
+      if (i>0&&mk[i-1]!=ii) { /* aim for under target */
 	if (mk[i-1]-ii>max_chunk) max_chunk = mk[i-1]-ii; /* record maximum chunk size */
 	ii = mk[i-1]; j++;
       } else { /* neighbourhood so large we have to be over target */
@@ -3491,19 +3493,19 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
   max_nb=0;
   for (j=0,jj=ii=-1,i=0;i<*nn;i++) { /* determine elements of mk indexing chunk ends */
     if (mk[i]-ii>target_nk) { /* start a new chunk */
-      if (mk[i-1]!=ii&&i>0) { /* aim for under target */
+      if (i>0&&mk[i-1]!=ii) { /* aim for under target */
 	ii = mk[i-1];
 	if (ma[i-1]-jj>max_nb) max_nb = ma[i-1]-jj;
 	jj = ma[i-1];
 	ichunk[j] = i-1; j++;
       } else { /* chunk so large we have to be over target */
-	ii = mk[i];ichunk[j]=i; j++;
+	ii = mk[i];ichunk[j]=i;  if (i < *nn-1) j++; // ????
 	if (ma[i]-jj>max_nb) max_nb = ma[i]-jj;
 	jj = ma[i];
       }	
     }  
   }
-  ichunk[j] = *nn-1;
+  ichunk[j] = *nn-1; /* BUG: can write over array end!! */
   if (nchunk==1) max_nb = ma[*nn-1]+1;
   /* now mk[ichunk[j]] is end of jth chunk and max_nb is largest storage needed for
      CV residuals by a chunk. max_chunk is the largest vector needed to index
@@ -3690,9 +3692,10 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
         }
        
       } /* neighbourhood i loop */
-    
+       
       /* The second derivative loop... */
-      for (r=0;r<=l;r++) {   
+      for (r=0;r<=l;r++) {
+	//Rprintf("nu = %ld (%d,%d) ",nu,r,l);
         ncs=0;
         Xbd(mu2,beta2[l][r],X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&ione,cs,&ncs,xbiwork,xbpwork,xbdwork); /* d2mu/drho_l drho_r note limited thread safety */
 	

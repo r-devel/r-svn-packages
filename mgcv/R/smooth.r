@@ -3845,7 +3845,7 @@ basis.factory <-  function(X,gr,g=NULL,sparse=FALSE) {
 } ## basis.factory
 
 Predict.matrix.b.tensor <- function(object,data) {
-## prediction method function for the `matern' smooth class
+## prediction method function for the `b.tensor' smooth class
   D <- length(object$term)
   X <- data[[object$term[[1]]]]
   X <- matrix(X,length(X),D)
@@ -3969,6 +3969,7 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
       if (md > mb-1) {
         md <- mb-1;warning("TPS penalty order reset")
       }
+      null.space.dim <- choose(md+D-1,D)
       M <- list(rep(mb,D)) ## basis orders
       M[[2]] <- tps.dord(D,md,tps.dord(D,md)) 
     } else {
@@ -4057,9 +4058,14 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
   g <- ncol(object$X)
   object$df <- g  ## basis dimension
   if (length(object$S)>0) {
-    object$null.space.dim <- g - Rrank(suppressWarnings(chol(S,pivot=TRUE)))
-    for (i in 1:length(object$S))
-      object$rank[i] <- Rrank(suppressWarnings(chol(object$S[[i]],pivot=TRUE)))
+    if (tps) {
+      object$null.space.dim <- null.space.dim
+      object$rank <- g - null.space.dim
+    } else { ## potentially very costly - better to work out analytically
+      object$null.space.dim <- g - Rrank(suppressWarnings(chol(St,pivot=TRUE)),.Machine$double.eps^.7)
+      for (i in 1:length(object$S))
+        object$rank[i] <- Rrank(suppressWarnings(chol(object$S[[i]],pivot=TRUE)),.Machine$double.eps^.7)
+    } 
   } else {
     object$rank <- rep(0,0)
     object$null.space.dim <- 0
