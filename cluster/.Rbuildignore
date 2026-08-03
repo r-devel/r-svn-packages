@@ -1,7 +1,7 @@
 ## -*-sh-*-  using reg.exp (==> no initial or final '.*' ), *but* case is ignored!
 
 \.rsync
-^MM-
+^MM[_-]
 -MM$
 -todo
 /.*-MM

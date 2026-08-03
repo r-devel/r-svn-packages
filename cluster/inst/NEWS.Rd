@@ -13,7 +13,7 @@
       % already  cluster 2.1.7 is  10--25 % slower  (but that's "nothing"
       % compared with the slow down to 2.1.9 which uses dys_2(.)
 
-\section{Changes in version 2.1.9 (2025-10-04, svn r8549)}{
+\section{Changes in version 2.1.9 (2026-..-.., svn r86....)}{% not yet ok
   \subsection{Bug Fixes}{
      \itemize{
        \item The default method of \code{silhouette(x, dist)} did not check
@@ -40,6 +40,37 @@
       the distances (which is an allocation waste for largish \code{n}).
 
       \item updated messages (for translation) from source.
+    }
+  }
+}
+
+\section{Changes in version 2.1.8.3 (2026-07-28, svn r8619)}{
+  \subsection{Misc}{
+    \itemize{
+      \item \code{pam()} no longer uses the newly deprecated \code{structure(.Names = *)}.
+    }
+  }
+}
+
+\section{Changes in version 2.1.8.2 (2026-02-03, svn r8503)}{
+  \subsection{Misc}{
+    \itemize{
+      \item Patch \file{../tests/clara-NAs.R} and \file{../tests/mona.R}
+      and their \file{*.Rout.save} to adapt to R-devel (to be R 4.6.0)'s
+      different \code{summary()} using \code{"NAs"} instead of \code{"NA's"}.
+      To get these working in both R \eqn{\le 4.5.x} and R \eqn{\ge 4.6.0},
+      also need to adapt the print width \code{options(width = *)}.
+    }
+  }
+}
+
+\section{Changes in version 2.1.8.1 (2025-03-11, svn r8502)}{
+  \subsection{Misc}{
+    \itemize{
+      \item use complete argument names in most cases to satisfy lovers of
+      \code{options(warnPartialMatch* = TRUE)}.
+
+      \item using \code{\(.)} would need R >= 4.1.0.
     }
   }
 }
