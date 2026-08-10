@@ -4419,13 +4419,13 @@ print.gam.vcomp <- function(x, ...) {
       print(x, ...)
     }
   }
-  if (!is.null(x$V)) {
+  if (x.list&&!is.null(x$V)) {
     cat("\nNon-linear smooth covariance matrices (s.e):\n")
     for (i in 1:length(x$V)) {
       cat("\n",names(x$V)[i],"\n");printV(x$V[[i]],x$Vse[[i]])
     }
   }  
-  if (x.list && is.array(x$vc)) cat("\nRank: ");cat(x$rank);cat("/");cat(x$rank.hess);cat("\n")
+  if (x.list && is.array(x$vc)) { cat("\nRank: ");cat(x$rank);cat("/");cat(x$rank.hess);cat("\n")}
   # if x has components for all smooths, print them
   if (x.list && !is.null(x$all)) {
     cat("\nLinear smooth components:\n")
