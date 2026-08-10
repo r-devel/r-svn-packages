@@ -4890,11 +4890,20 @@ print.mgcv.version <- function()
   packageStartupMessage(hello)
 }
 
-set.mgcv.options <- function()
-## function used to set optional value used in notLog
-## and notExp...
+set.mgcv.options <- function(vc.logrange=25,s.bs=NULL,xt=NULL,te.bs=NULL,te.np=NULL,
+  ti.mc=NULL,gam.method=NULL,gam.optimizer=NULL,bam.discrete=NULL,plot.scheme=NULL)
+## function used to set optional values for mgcv
 { ##runif(1) ## ensure there is a seed (can be removed by user!)
-  options(mgcv.vc.logrange=25)
+  options(mgcv.vc.logrange=vc.logrange, ## used in notLog and notExp
+          mgcv.s.bs=s.bs,
+	  mgcv.xt=xt,
+	  mgcv.te.bs=te.bs,
+	  mgcv.te.np=te.np,
+	  mgcv.ti.mc=ti.mc,
+	  mgcv.gam.method=gam.method,
+	  mgcv.gam.optimizer=gam.optimizer,
+	  mgcv.bam.discrete=bam.discrete,
+	  mgcv.plot.scheme=plot.scheme)
 }
 
 .onLoad <- function(...) {
