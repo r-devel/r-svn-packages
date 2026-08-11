@@ -3933,7 +3933,7 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
   D <- object$dim
   m <- object$p.order ## number, vector, matrix or list
   sparse <- is.list(object$xt) && !is.null(object$xt$sparse)
-  A <- NULL
+  A <- NULL;tps <- FALSE
   if (is.list(m)) {
     ## first check for an L matrix linking smoothing parameters and remove it
     ## from the list after copying and checking it... 
@@ -3958,7 +3958,6 @@ smooth.construct.bt.smooth.spec <- function(object,data,knots) {
     if (length(m[[1]])==1) m[[1]] <- rep(m[[1]],D)
     if (length(m[[1]])!=D) stop("m[[1]] wrong length")
   } else {
-    tps <- FALSE
     if (!is.matrix(m)) {
       if (length(m)==1 && is.na(m)) m <- 3
       if (length(m)==1 && m-floor(m)>1e-7) tps <- TRUE else m <- matrix(m,nrow=D,ncol=1)
