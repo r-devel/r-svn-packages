@@ -2520,14 +2520,14 @@ mgcv.find.theta<-function(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,tol)
     T.hi<-min(T.hi,T.max)
     scale<-mgcv.get.scale(T.hi,weights,good,mu,mu.eta.val,G)
   } 
-  if (all.equal(T.hi,T.max)==TRUE && scale<1) return(T.hi)
+  if (isTRUE(all.equal(T.hi,T.max)) && scale<1) return(T.hi)
   T.low<-T.hi
   while (scale>=1&&T.low>T.min)
   { T.low<-T.low/2 
     T.low<-max(T.low,T.min)
     scale<-mgcv.get.scale(T.low,weights,good,mu,mu.eta.val,G)
   } 
-  if (all.equal(T.low,T.min)==TRUE && scale>1) return(T.low)
+  if (isTRUE(all.equal(T.low,T.min)) && scale>1) return(T.low)
   # (T.low,T.hi) now brackets scale=1. 
   while (abs(scale-1)>tol)
   { Theta<-(T.low+T.hi)/2

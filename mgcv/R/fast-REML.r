@@ -1372,7 +1372,8 @@ d.detXXS <- function(Sl,PP,nt=1,deriv=2,SPP=FALSE) {
         indj <- attr(SPP[[j]],"ind")
 	## following is correct if only one term is sparse (involves incomplete portion of inverse Hessian PP),
 	## but not both. Use as approximation if i and j are for same block, but zero otherwise
-        xx <- if (sparse[i]&&sparse[j]&&!all.equal(indj,indi)) 0 else -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])  
+        xx <- if (sparse[i]&&sparse[j]&&!isTRUE(all.equal(indj,indi))) 0 else
+	      -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])  
         if (b && b == nli[2,j]) { ## non-linear second derivative needed
 	  k0 <- nli[1,i] - 1 ## where sps start in overall sp vector - 1
 	  ind <- Sl[[b]]$start:Sl[[b]]$stop

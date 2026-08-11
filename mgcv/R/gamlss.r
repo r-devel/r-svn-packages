@@ -1841,7 +1841,7 @@ ziplss <-  function(link=list("identity","identity")) {
   ## which is basically penalizing something different here.
   ## best we can do here is to use E only as a regularizer.
       n <- rep(1, nobs)
-      if (all.equal(y,round(y))!=TRUE) {
+      if (!isTRUE(all.equal(y,round(y)))) {
           stop("Non-integer response variables are not allowed with ziplss ")
       }
       if ((min(y)==0&&max(y)==1)) stop("Using ziplss for binary data makes no sense")

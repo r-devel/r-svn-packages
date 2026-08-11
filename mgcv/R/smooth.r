@@ -229,7 +229,7 @@ uniquecombs <- function(x,ordered=FALSE) {
     }
   }
   if (recheck) {
-    if (all.equal(xoo,x[ind,],check.attributes=FALSE)!=TRUE) warning("uniquecombs has not worked properly")
+    if (!isTRUE(all.equal(xoo,x[ind,],check.attributes=FALSE))) warning("uniquecombs has not worked properly")
   }
   attr(x,"index") <- ind
   x
@@ -655,7 +655,7 @@ s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs",c("tp","tp")),m=NA,by
   # term now contains the names of the covariates for this model term
   # now evaluate all the other 
   k.new <- round(k) # in case user has supplied non-integer basis dimension
-  if (all.equal(k.new,k)!=TRUE) {warning("argument k of s() should be integer and has been rounded")}
+  if (!isTRUE(all.equal(k.new,k))) {warning("argument k of s() should be integer and has been rounded")}
   k <- k.new
   # check for repeated variables in function argument list
   if (length(unique(term))!=d) stop("Repeated variables as arguments of a smooth are not permitted")
@@ -2843,7 +2843,7 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
 
     ## now have a neighbour list
     a.name <- names(object$xt$nb)
-    if (all.equal(sort(a.name),sort(levels(k)))!=TRUE) 
+    if (!isTRUE(all.equal(sort(a.name),sort(levels(k))))) 
        stop("mismatch between nb/polys supplied area names and data area names")
     np <- ncol(object$X)
     S <- matrix(0,np,np)
@@ -2862,10 +2862,10 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     if (ncol(object$S[[1]])!=ncol(object$X)) stop("supplied penalty wrong dimension!")
     if (!is.null(colnames(object$S[[1]]))) {
       a.name <- colnames(object$S[[1]])
-      if (all.equal(levels(k),sort(a.name))!=TRUE) {
+      if (!isTRUE(all.equal(levels(k),sort(a.name)))) {
         stop("penalty column names don't match supplied area names!") 
       } else {
-        if (all.equal(sort(a.name),a.name)!=TRUE) { ## re-order penalty to match object$X
+        if (!isTRUE(all.equal(sort(a.name),a.name))) { ## re-order penalty to match object$X
           object$S[[1]] <- object$S[[1]][levels(k),]
           object$S[[1]] <- object$S[[1]][,levels(k)]
         }

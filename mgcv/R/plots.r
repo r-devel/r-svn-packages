@@ -41,7 +41,7 @@ fix.family.qf <- function(fam) {
     }
   } else if (family=="binomial") {
     fam$qf <- function(p,mu,wt,scale) {
-      if (all.equal(wt,ceiling(wt))!=TRUE) {
+      if (!isTRUE(all.equal(wt,ceiling(wt)))) {
         wt <- ceiling(wt)
 	warning("non-integer binomial denominator: quantiles incorrect")
       }
@@ -606,7 +606,7 @@ polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) {
     nz <- names(z)
     npc <- names(pc)
     if (!is.null(nz)&&!is.null(npc)) { ## may have to re-order z into pc order.
-      if (all.equal(sort(nz),sort(npc))!=TRUE) stop("names of z and pc must match")
+      if (!isTRUE(all.equal(sort(nz),sort(npc)))) stop("names of z and pc must match")
       z <- z[npc]
     } 
 

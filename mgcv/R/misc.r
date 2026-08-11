@@ -142,7 +142,7 @@ bandchol <- function(B,partial=FALSE) {
 ## obtain R such that R'R = A. Where A is banded matrix contained in R.
   n <- ncol(B)
   k <- 0
-  if (n==nrow(B)&&all.equal(B,t(B))) { ## square symmetric matrix. Extract the diagonals
+  if (n==nrow(B)&&isTRUE(all.equal(B,t(B)))) { ## square symmetric matrix. Extract the diagonals
     A <- B*0
     for (i in 1:n) {
       b <- sdiag(B,i-1)

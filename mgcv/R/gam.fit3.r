@@ -2748,7 +2748,7 @@ ldTweedie0 <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 
   if (p == 1) { ## It's Poisson like
     ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
-    if (all.equal(y/phi,round(y/phi))!=TRUE) stop("y must be an integer multiple of phi for Tweedie(p=1)")
+    if (!isTRUE(all.equal(y/phi,round(y/phi)))) stop("y must be an integer multiple of phi for Tweedie(p=1)")
     ind <- (y!=0)|(mu!=0) ## take care to deal with y log(mu) when y=mu=0
     bkt <- y*0
     bkt[ind] <- (y[ind]*log(mu[ind]/phi) - mu[ind])
@@ -2901,7 +2901,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.der
   ind <- p == 1
   if (sum(ind)) { ## It's Poisson like
     ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
-    if (all.equal(y[ind]/phi[ind],round(y[ind]/phi[ind]))!=TRUE) stop("y must be an integer multiple of phi for Tweedie(p=1)")
+    if (!isTRUE(all.equal(y[ind]/phi[ind],round(y[ind]/phi[ind])))) stop("y must be an integer multiple of phi for Tweedie(p=1)")
     indi <- (y[ind]!=0)|(mu[ind]!=0) ## take care to deal with y log(mu) when y=mu=0
     bkt <- y[ind]*0
     bkt[indi] <- ((y[ind])[indi]*log((mu[ind]/phi[ind])[indi]) - (mu[ind])[indi])

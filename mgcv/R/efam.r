@@ -47,7 +47,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
   if (scale>=0&&family$n.theta==0) stop("erroneous call to estimate.theta - no free parameters")
   n.theta <- length(theta) ## dimension of theta vector (family$n.theta==0 => all fixed)
   del.ind <- 1:n.theta
-  if (scale<0) theta <- c(theta,if (all.equal(y,mu)==TRUE) log(var(y)*.1) else
+  if (scale<0) theta <- c(theta,if (isTRUE(all.equal(y,mu))) log(var(y)*.1) else
                           log(mean((y-mu)^2/family$variance(mu))))
   nll <- nlogl(theta,family,y,mu,scale,wt,2)
   g <- if (family$n.theta==0) nll$g[-del.ind] else nll$g
@@ -3969,7 +3969,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
 
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
-        if (all.equal(y,round(y))!=TRUE) {
+        if (!isTRUE(all.equal(y,round(y)))) {
           stop("Non-integer response variables are not allowed with ziP ")
         }
         if ((min(y)==0&&max(y)==1)) stop("Using ziP for binary data makes no sense")

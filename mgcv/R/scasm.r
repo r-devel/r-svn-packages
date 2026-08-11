@@ -594,7 +594,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
   } else {
     coef <- as.numeric(start)
     feasible <- ((is.null(G$Ain)||!nrow(G$Ain)||min(G$Ain%*%coef - G$bin) >= -.Machine$double.eps^.5) &&
-                   (is.null(G$C)||!nrow(G$C)||all.equal(G$C%*%coef,G$C%*%G$beta0)==TRUE))	   
+                   (is.null(G$C)||!nrow(G$C)||isTRUE(all.equal(G$C%*%coef,G$C%*%G$beta0))))	   
   }
 
   if (!feasible) { ## start not feasible so use G$beta0 as initial feasible point 
@@ -650,7 +650,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
 	if (!is.null(coef) && (!is.finite(pdev) || (iter>1 && feasible && pdev - pdev0 > tol * abs(pdev)))) {
           start <- (start + coef)/2
 	  if (efam) mu <- G$family$linkinv(as.numeric(G$X %*% start + G$offset))
-	  if (all.equal(as.numeric(start),as.numeric(coef),tol=.Machine$double.eps^.75*mean(abs(coef))) == TRUE) {
+	  if (isTRUE(all.equal(as.numeric(start),as.numeric(coef),tol=.Machine$double.eps^.75*mean(abs(coef))))) {
             warning("step failure")
 	    start <- coef
 	    pdev <- pdev0
@@ -694,7 +694,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
     
     if ((!feasible||iter<=ucstart) && iter > 1) { ## check whether coef vector feasible yet 
       feasible <- ((is.null(G$Ain)||!nrow(G$Ain)||min(G$Ain%*%coef - G$bin) >= -.Machine$double.eps^.5) &&
-                   (is.null(G$C)||!nrow(G$C)||all.equal(G$C%*%coef,G$C%*%G$beta0)))
+                   (is.null(G$C)||!nrow(G$C)||isTRUE(all.equal(G$C%*%coef,G$C%*%G$beta0))))
     }
     ## get the gradient and Hessian of the deviance
     if (efam) {

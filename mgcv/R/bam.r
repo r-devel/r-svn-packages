@@ -2816,7 +2816,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(object$y,object$prior.weights),object$prior.weights))
   if (!is.null(object$full.sp)) {
     if (length(object$full.sp)==length(object$sp)&&
-        all.equal(object$sp,object$full.sp)==TRUE) object$full.sp <- NULL
+        isTRUE(all.equal(object$sp,object$full.sp))) object$full.sp <- NULL
   }
   environment(object$formula) <- environment(object$pred.formula) <-
   environment(object$terms) <- environment(object$pterms) <- 
