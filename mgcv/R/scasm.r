@@ -567,7 +567,7 @@ gH2ls <- function(b,g,R,eta=NULL,WX=NULL) {
 
 scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
 ## Newton sequential QP fitting of shape constrained models for extended and general families
-  warn <- list()
+  warn <- rep("",0)
   y <- G$y; nobs <- length(G$w); family <- G$family; weights <- G$w
   mustart <- etastart <- NULL
   if (inherits(G$family,"general.family")) { ## general family initialization
@@ -651,7 +651,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
           start <- (start + coef)/2
 	  if (efam) mu <- G$family$linkinv(as.numeric(G$X %*% start + G$offset))
 	  if (isTRUE(all.equal(as.numeric(start),as.numeric(coef),tol=.Machine$double.eps^.75*mean(abs(coef))))) {
-            warning("step failure")
+            warn[length(warn)+1] <- "step failure"
 	    start <- coef
 	    pdev <- pdev0
 	    not.ok <- FALSE
@@ -734,7 +734,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
     rsd <- NULL
   }
   if (!feasible) stop("failed to find feasible starting values")
-  if (iter==control$maxit) warning("scasm.newton failed to converge")
+  if (iter==control$maxit) warn[length(warn)+1] <- "scasm.newton failed to converge"
   aic.model <- if (inherits(G$family,"general.family")) dev else G$family$aic(y,mu,theta,G$w,scale*sum(G$w))
 
   bsr <- matrix(0,length(start),bs)

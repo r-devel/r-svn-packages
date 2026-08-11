@@ -3063,6 +3063,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 	    se[start:stop,k] <- se0
 	  }  
 	  if (get.ci) {
+	    se0 <- getse(X,object$Vp,ii)
 	    if (!is.null(object$bs)) {
               ff <- X[,ii,drop=FALSE]%*%object$bs[ii,] ## BS rep functions
 	      delta <- if (is.null(attr(object$bs,"svar.only"))||is.null(object$Ve)) 0 else mean(  ## bias correction
