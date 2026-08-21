@@ -48,6 +48,8 @@ rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
 * gam and scasm modified so that gamma parameter works with EFS smoothness 
   estimation.
 
+* ti terms modified to never trigger numerical side constraints.
+
 * tensor product penalty scaling tweaked to use efficient 'norm' instead of 
   expensive 'eigen'.
 

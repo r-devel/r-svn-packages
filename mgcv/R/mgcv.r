@@ -3018,6 +3018,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         Xfrag <- PredictMat(object$smooth[[k]],data)
 	jj <- object$smooth[[k]]$first.para:object$smooth[[k]]$last.para
 	if (sparse) {
+	  if (!inherits(Xfrag,"sparseMatrix")) Xfrag <- as(Xfrag,"CsparseMatrix")
           X$i <- c(X$i,Xfrag@i+1); X$x <- c(X$x,Xfrag@x)
 	  X$j <- c(X$j,rep(jj,diff(Xfrag@p)))
         } else X[,jj] <- Xfrag
@@ -3731,7 +3732,7 @@ recov <- function(b,re=rep(0,0),m=0) {
 } ## end of recov
 
 
-reTest <- function(b,m) {
+reTest0 <- function(b,m) {
 ## Test the mth smooth for equality to zero
 ## and accounting for all random effects in model 
   
@@ -3764,7 +3765,7 @@ reTest <- function(b,m) {
     pval <- psum.chisq(stat,ev) 
   }
   list(stat=stat,pval=pval,rank=rank)
-} ## end reTest
+} ## end reTest0
 
 
 
@@ -3864,10 +3865,385 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   list(stat=d,pval=min(1,pval),rank=rank)
 } ## end of testStat
 
-
-
-
 summary.gam <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE, ...) {
+  ## summary method for gam object - provides approximate p values 
+  ## for terms + other diagnostics
+  ## Improved by Henric Nilsson
+  ## * freq determines whether a frequentist or Bayesian cov matrix is 
+  ##   used for parametric terms. Usually the default TRUE will result
+  ##   in reasonable results with paraPen.
+  ## If a smooth has a field 'random' and it is set to TRUE then 
+  ## it is treated as a random effect for some p-value dist calcs
+  ## modified by Claudia Collarin 
+  
+  pinv <- function(V,M,rank.tol=1e-6) {
+    ## a local pseudoinverse function
+    D <- eigen(V,symmetric=TRUE)
+    M1<-length(D$values[D$values>rank.tol*D$values[1]])
+    if (M>M1) M<-M1 # avoid problems with zero eigen-values
+    
+    if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-1
+    D$values<- 1/D$values
+    if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-0
+    res <- D$vectors%*%(D$values*t(D$vectors))  ##D$u%*%diag(D$d)%*%D$v
+    attr(res,"rank") <- M
+    res
+  } ## pinv
+  
+  sparse <- is.list(object$Vp); discrete <- sparse && is.list(object$Vp$arg$G$Xd)
+  p.table <- pTerms.table <- s.table <- NULL
+  
+  covmat <- if (freq) object$Ve else object$Vp
+  # next line is needed at line 74 
+  
+  name <- names(object$edf)
+  est.disp <- object$scale.estimated
+  
+  if (!sparse) { ## dense case
+    if (is.null(object$R)) { ## Factor from QR decomp of sqrt(W)X
+      warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
+      useR <- FALSE
+    } else useR <- TRUE
+    
+    dimnames(covmat) <- list(name, name)
+    covmat.unscaled <- covmat/object$sig2
+    if (!is.null(dispersion)) { 
+      covmat <- dispersion * covmat.unscaled
+      object$Ve <- object$Ve*dispersion/object$sig2 ## freq
+      object$Vp <- object$Vp*dispersion/object$sig2 ## Bayes
+      est.disp <- FALSE
+    } else dispersion <- object$sig2
+  } else { ## sparse case
+    useR <- FALSE
+    covmat.unscaled <- function(...) covmat(...)/object$sig2
+    if (!is.null(dispersion)) { 
+      covmat <- function(...) covmat(...)*dispersion
+      #!!! functions must have the same signature as in spasm
+      object$Ve$V <- function(X,arg,...) object$V$Ve(X,arg,...)*dispersion/object$sig2 ## freq
+      object$Vp$V <- function(x,arg) object$Vp$V(x,arg)*dispersion/object$sig2 ## Bayes
+      est.disp <- FALSE
+    } else dispersion <- object$sig2
+  } ## sparse case
+  
+  ## Now the individual parameteric coefficient p-values...
+  residual.df<-length(object$y)-sum(object$edf)
+  se <- if (sparse) rep(NA,length(coef(object))) else diag(covmat)^0.5
+  if (sum(object$nsdf) > 0) { # individual parameters
+    if (length(object$nsdf)>1) { ## several linear predictors 
+      pstart <- attr(object$nsdf,"pstart")
+      ind <- rep(0,0)
+      for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) ind <- 
+        c(ind,pstart[i]:(pstart[i]+object$nsdf[i]-1))
+    } else { pstart <- 1;ind <- 1:object$nsdf} ## only one lp
+    p.coeff <- object$coefficients[ind]
+    
+    #se <- if(!sparse) diag(covmat)^0.5 else{
+    #  Xg <- diag(1,nrow = length(coef(object)), ncol=length(ind))
+    #  diag(covmat$V(Xg, arg=covmat$arg))^0.5
+    #} ## buggy 
+    if (sparse) {
+       Xg <- matrix(0,nrow = length(coef(object)), ncol=length(ind))
+       Xg[cbind(ind,1:length(ind))] <- 1
+       se[ind] <- covmat$V(Xg, arg=covmat$arg)[cbind(ind,1:length(ind))]^.5
+    }
+    p.se <- se[ind]
+    p.t<-p.coeff/p.se
+    if (!est.disp) {
+      p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
+      p.table <- cbind(p.coeff, p.se, p.t, p.pv)   
+      dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))
+    } else {
+      p.pv <- 2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
+      p.table <- cbind(p.coeff, p.se, p.t, p.pv)
+      dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
+    }    
+  } else {p.coeff <- p.t <- p.pv <- array(0,0)}
+  
+  ## Next the p-values for parametric terms, so that factors are treated whole... 
+  
+  pterms <- if (is.list(object$pterms)) object$pterms else list(object$pterms)
+  if (!is.list(object$assign)) object$assign <- list(object$assign)
+  npt <- length(unlist(lapply(pterms,attr,"term.labels")))
+  if (npt>0)  pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0,npt)
+  term.labels <- rep("",0)
+  k <- 0 ## total term counter
+  for (j in 1:length(pterms)) {
+    tlj <- attr(pterms[[j]],"term.labels") 
+    nt <- length(tlj)
+    if (j>1 && nt>0) tlj <- paste(tlj,j-1,sep=".")
+    term.labels <- c(term.labels,tlj)
+    if (nt>0) { # individual parametric terms
+      np <- length(object$assign[[j]])
+      ind <- pstart[j] - 1 + 1:np 
+      
+      Vb <- if(!sparse) covmat[ind,ind,drop=FALSE] else{
+        Xg <- diag(1,nrow = length(coef(object)), ncol=max(ind))
+        covmat$V(Xg, arg=covmat$arg)[ind,ind,drop=FALSE]
+      }
+      bp <- array(object$coefficients[ind],np)
+      
+      for (i in 1:nt) { 
+        k <- k + 1
+        ind <- object$assign[[j]]==i
+        b <- bp[ind];V <- Vb[ind,ind]
+        ## pseudo-inverse needed in case of truncation of parametric space 
+        if (length(b)==1) { 
+          V <- 1/V 
+          pTerms.df[k] <- nb <- 1      
+          pTerms.chi.sq[k] <- V*b*b
+        } else {
+          V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
+          pTerms.df[k] <- nb <- attr(V,"rank")      
+          pTerms.chi.sq[k] <- t(b)%*%V%*%b
+        }
+        if (!est.disp)
+          pTerms.pv[k] <- pchisq(pTerms.chi.sq[k],df=nb,lower.tail=FALSE)
+        else
+          pTerms.pv[k] <- pf(pTerms.chi.sq[k]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
+      } ## for (i in 1:nt)
+    } ## if (nt>0)
+  }
+  
+  if (npt) {
+    attr(pTerms.pv,"names") <- term.labels
+    if (!est.disp) {      
+      pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
+      dimnames(pTerms.table) <- list(term.labels, c("df", "Chi.sq", "p-value"))
+    } else {
+      pTerms.table <- cbind(pTerms.df, pTerms.chi.sq/pTerms.df, pTerms.pv)   
+      dimnames(pTerms.table) <- list(term.labels, c("df", "F", "p-value"))
+    }
+  } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}
+  
+  ## Now deal with the smooth terms....
+  
+  m <- length(object$smooth) # number of smooth terms
+  
+  df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
+  if (m>0) { # form test statistics for each smooth
+    ## Bayesian p-values required 
+    if (useR)  X <- object$R else if(discrete){X <- NULL # not needed in practice, everything is stored in object$Vp$arg$G
+    } else {
+      sub.samp <- max(1000,2*length(object$coefficients)) 
+      if (nrow(object$model)>sub.samp && !discrete) { ## subsample to get X for p-values calc.
+        kind <- temp.seed(11)
+        ind <- sample(1:nrow(object$model),sub.samp,replace=FALSE)  ## sample these rows from X
+        X <- predict(object,object$model[ind,],type="lpmatrix")
+        temp.seed(kind)
+      } else {X <- model.matrix(object)}  ## don't need to subsample 
+      X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)    
+    } ## end if (m>0)
+    
+    ii <- 0
+    cons <- if(sparse) sapply(object$Vp$arg$R[-1], \(rr) !is.null(attr(rr, "Givens"))) else NULL
+    for (i in 1:m) { ## loop through smooths
+      start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
+      p <- object$coefficients[start:stop]  # params for smooth
+      edf1i <- edfi <- sum(object$edf[start:stop]) # edf for this smooth
+      ## extract alternative edf estimate for this smooth, if possible...
+      if (!is.null(object$edf1)) edf1i <-  sum(object$edf1[start:stop])
+      Xt <- if(!discrete) X[,start:stop,drop=FALSE] else NULL
+      lt <- if(discrete) match(object$smooth[[i]]$label , names(object$Vp$arg$G$ts)) else NULL
+      
+      V <- if(sparse) object$Vp else object$Vp[start:stop,start:stop,drop=FALSE] ## Bayesian
+      
+      H <- if (sparse) {
+        # 2 item list to compute hessian matrix
+        if(!discrete){ list(H = function(arg) crossprod(arg), arg = Xt) }else{
+          list(H = function(arg){
+            G <- arg$G; w <- rep(1, length(G$W))
+            XWXd(G$Xd,w=w,k=G$kd,ks=G$ks,ts=G$ts,dt=G$dt,v=G$v,qc=G$qc,lt=arg$lt)
+          }, arg = list(G = object$Vp$arg$G, lt = lt)) ## i+1 because first element is the parametric term
+        }                                                # double check it
+      } else NULL
+      
+      fx <- if (inherits(object$smooth[[i]],"tensor.smooth")&&
+                !is.null(object$smooth[[i]]$fx)) all(object$smooth[[i]]$fx) else object$smooth[[i]]$fixed
+      if ((!fx&&object$smooth[[i]]$null.space.dim==0&&!is.null(object$R))||
+          (!fx&&object$smooth[[i]]$null.space.dim==0&&sparse&&!cons[i])|| # bs="re" doesn't have constraints so null.space.dim=0
+          (!fx&&object$smooth[[i]]$null.space.dim==1&&sparse&&cons[i])) { # fully penalized term, for spasm null.space.dim is +1 compared to the one from gam due to penalty-based constraints 
+        res <- if (re.test) reTest(object,m = i,lt=lt, Xi = Xt, H=H, discrete = discrete) else NULL
+      } else { ## Inverted Nychka interval statistics
+        if (est.disp) rdf <- residual.df else rdf <- -1
+        res <- if(sparse){
+          testStatSp(p=p,X=Xt,V=V,H = H,ind=start:stop,np=ncol(X),b=object,m = i,lt=lt, discrete = discrete)
+        } else testStat(p,Xt,V,min(ncol(Xt),edf1i),type=0,res.df = rdf)
+      }
+      if (!is.null(res)) {
+        ii <- ii + 1
+        df[ii] <- res$rank
+        chi.sq[ii] <- res$stat
+        s.pv[ii] <- res$pval 
+        edf1[ii] <- edf1i 
+        edf[ii] <- edfi 
+        names(chi.sq)[ii]<- object$smooth[[i]]$label
+      }
+    } 
+    if (ii==0) df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, 0) else {
+      df <- df[1:ii];chi.sq <- chi.sq[1:ii];edf1 <- edf1[1:ii]
+      edf <- edf[1:ii];s.pv <- s.pv[1:ii]
+    }
+    if (!est.disp) {
+      s.table <- cbind(edf, df, chi.sq, s.pv)      
+      dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
+    } else {
+      s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+      dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
+    }
+  }
+  w <- as.numeric(object$prior.weights)
+  mean.y <- sum(w*object$y)/sum(w)
+  w <- sqrt(w)
+  nobs <- nrow(object$model)
+  r.sq <- if (inherits(object$family,"general.family")||!is.null(object$family$no.r.sq)) NULL else  
+    1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df) 
+  dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
+  if (object$method%in%c("REML","ML")) object$method <- paste("-",object$method,sep="")
+  ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
+            s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
+            dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
+            pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
+            pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
+            rank=object$rank,np=length(object$coefficients))
+  
+  class(ret)<-"summary.gam"
+  ret
+} ## end summary.gam
+
+reTest <- function(b,m,lt=NULL, H = NULL, Xi=NULL, discrete=FALSE) {
+  ## Test the mth smooth for equality to zero
+  ## and accounting for all random effects in model 
+  ## b is the gamObject
+  ## m is the index of the smooth to be tested
+  ## lt is the index of the smooth in the G$ts list, if discrete
+  ## Xt is the model matrix for the smooth to be tested, if not provided and ! discrete it will be computed
+  ## H is a 2 item list to compute H
+  ## discrete indicates whether discrete methods of wood 2017 have been used or not
+  
+  sparse <- is.list(b$Ve)
+  if (is.null(b$Ve)) return(list(stat=NA,pval=NA,rank=NA)) 
+  ## find indices of random effects other than m
+  rind <- rep(0,0)
+  for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)
+  
+  ind <- b$smooth[[m]]$first.para:b$smooth[[m]]$last.para
+  b.hat <- if(discrete) coef(b) else coef(b)[ind]
+  if(discrete) G <- b$Vp$arg$G
+  
+  ## get frequentist cov matrix of effects treating smooth terms in rind as random
+  if(sparse){
+    np <- length(coef(b)); M <- 20 # lanczos steps
+    Xi <- if(is.null(Xi) && !discrete) predict(b, type="lpmatrix")[, ind] else Xi
+    
+    # compute test statistic
+    d <- if(discrete) Xbd(X = G$Xdd,beta=b.hat,k=G$kd,ks=G$ks,ts=G$ts,dt=G$dt,v=G$v,qc=G$qc,nthreads=6, lt = lt) else (Xi %*% b.hat)
+    stat <- sum(d^2)
+    
+    # Compute the cholesky decomposition of X'X (+ regularizing term)
+    # Note XVX' and DVD' with D the cholesky factor have the same eigenvalues, 
+    # so we can compute the eigenvalues of the smaller matrix DVD'
+    V <- b$Ve
+    H0 <- H$H(H$arg); reg <- max(abs(H0@x))*.Machine$double.eps^.8
+    Ieps <- Diagonal(length(ind),reg)
+    D <- mchol(H0+Ieps); piv <- attr(D, "pivot"); opiv <- order(piv)
+    D <- D[,opiv]
+    
+    if(is.null(ind)) ind <- 1:np
+    
+    # compute eigenvalues of DVD' using partially converged lanczos
+    Atz <- matrix(0, np, 1)
+    AVAtz <- function(A, z) {
+      Atz[ind,] <- 0
+      Atz[ind,] <- as.matrix(crossprod(A,z))
+      VAtz <- V$V(Atz, V$arg, k=m, pval=TRUE)[ind, ]
+      as.numeric(A %*% VAtz)
+    }
+    
+    ev <- eigen.approx(A = D, Av = AVAtz, n = length(ind), M = min(length(ind), M))
+    ev <- ev[ev>0]
+  } else {
+    rc <- recov(b,rind,m) 
+    Ve <- rc$Ve
+    B <- mroot(Ve[ind,ind,drop=FALSE]) ## BB'=Ve
+    
+    Rm <- rc$Rm
+    
+    d <- Rm%*%b.hat
+    stat <- sum(d^2)/b$sig2
+    ev <- eigen(crossprod(Rm%*%B)/b$sig2,symmetric=TRUE,only.values=TRUE)$values
+  }
+  ev[ev<0] <- 0
+  rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
+  
+  if (b$scale.estimated) {
+    #pval <- simf(stat,ev,b$df.residual)
+    k <- max(1,round(b$df.residual))
+    pval <- psum.chisq(0,c(ev,-stat/k),df=c(rep(1,length(ev)),k))
+  } else { 
+    #pval <- liu2(stat,ev)
+    pval <- psum.chisq(stat,ev) 
+  }
+  list(stat=stat,pval=pmax(0,pval),rank=rank)
+} ## reTest
+
+testStatSp <- function(p,X,V,H,ind=NULL,np,b,m,lt=NULL, discrete=FALSE){
+  # function to compute p values for non-fully penalized smooths in sparse model
+  # p are the regression parameters for the smooth
+  # X is the model matrix 
+  # V is the list to compute multiplication of covariance matrix by a vector (Vp)
+  # H is a 2 item list to compute H
+  # ind are the indices of the parameters in the full model
+  # np is the number of parameters in the full model
+  # b is the fitted model object
+  # m is the index of the smooth to be tested
+  # lt is the index of the smooth in the G$ts list, if discrete
+  #  discrete indicates whether discrete methods of wood 2017 have been used or not
+  #  
+  
+  # compute test statistic
+  if(discrete){ p <- b$coefficients; G <- b$Vp$arg$G; np <- length(p)}
+  d <- if(discrete) Xbd(X = G$Xdd,beta=p,k=G$kd,ks=G$ks,ts=G$ts,dt=G$dt,v=G$v,qc=G$qc,nthreads=6, lt = lt) else (X %*% p)
+  stat <- sum(d^2) 
+  
+  M <- 20 # number of lanczos steps
+  
+  # Compute the cholesky decomposition of X'X (+ regularizing term)
+  # Note XVX' and DVD' with D the cholesky factor have the same eigenvalues, 
+  # so we can compute the eigenvalues of the smaller matrix DVD'
+  H0 <- H$H(H$arg)
+  reg <- max(abs(H0@x))*.Machine$double.eps^.8
+  Ieps <- Diagonal(length(ind),reg)
+  D <- mchol(H0+Ieps); piv <- attr(D, "pivot"); opiv <- order(piv)
+  D <- D[,opiv]
+  
+  if (is.null(ind)) ind <- 1:np
+  
+  # compute eigenvalues of DVD' using partially converged lanczos
+  Atz <- matrix(0, np, 1)
+  AVAtz <- function(A, z) {
+    Atz[ind,] <- 0
+    Atz[ind,] <- as.matrix(crossprod(A,z))
+    VAtz <- V$V(Atz, V$arg)[ind, ]
+    as.numeric(A %*% VAtz)
+  }
+  
+  ev <- eigen.approx(A = D, Av = AVAtz, n = length(ind), M = min(length(ind), M))
+  ev <- ev[ev>0]
+  rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
+  
+  if (b$scale.estimated) {
+    k <- max(1,round(b$df.residual))
+    pval <- psum.chisq(0,c(ev,-stat/k),df=c(rep(1,length(ev)),k))
+  } else { 
+    pval <- psum.chisq(stat,ev) 
+  }
+  list(stat=stat,pval=pmax(0,pval),rank=rank)
+} ## testStatSp
+
+
+
+
+summary.gam0 <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -4077,7 +4453,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE,
  
   class(ret)<-"summary.gam"
   ret
-} ## end summary.gam
+} ## end summary.gam0
 
 print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3), 
                               signif.stars = getOption("show.signif.stars"), ...)
@@ -4108,7 +4484,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
  
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
-} ## print.summary.gam
+} ## print.summary.gam0
 
 
 anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)

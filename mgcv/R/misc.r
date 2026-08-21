@@ -11,8 +11,12 @@ mchol <- function(A) {
     R <- -1;attr(R,"rank") <- -1 ## signal rank deficient
   } else { 
     R <- Matrix::triu(Matrix::expand1(cha,"L."))
-    p <- ncol(A);
-    attr(R,"pivot") <- if (length(cha@perm)==0) 1:p else cha@perm+1
+    p <- ncol(A)
+    if (length(cha@perm)==0) pivot <- 1:p else {
+    ## Matrix::Cholesky pivot convention differs between sparse and dense! 
+      pivot <- cha@perm + if (min(cha@perm)==0) 1 else 0
+    }  
+    attr(R,"pivot") <- pivot 
     attr(R,"rank") <- p
   }  
   R ## R'R = H[pivot,pivot]

@@ -908,7 +908,8 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
   if (D.exists) object$D <- D
   ## no-point setting up with sparse basis and then imposing side constraints - lose
   ## computational advantage...
-  if (inter && inherits(X,"Matrix")) object$side.constrain <- FALSE
+  #if (inter && inherits(X,"Matrix")) object$side.constrain <- FALSE
+  object$side.constrain <- !inter ## should never need side cons for ti term
   if (inter) object$C <- matrix(0,0,0) else
   object$C <- C ## really just in case a marginal has implied that no cons are needed
   object$df <- ncol(X)
