@@ -2467,11 +2467,11 @@ D2 <- function(ni=5,nj=5) {
                 cc.ci=cc.ci,cr.ri=cr.ri,cr.ci=cr.ci,rmt=rmt,cmt=cmt)
 } ## D2
 
-smooth.construct.ad.smooth.spec <- function(object,data,knots)
+smooth.construct.ad.smooth.spec <- function(object,data,knots) {
 ## an adaptive p-spline constructor method function
 ## This is the simplifies and more efficient version...
-
-{ bs <- object$xt$bs
+  sparse <- !is.null(object$xt$sparse) ## sparse construction
+  bs <- object$xt$bs
   if (length(bs)>1) bs <- bs[1]
   if (is.null(bs)) { ## use default bases  
     bs <- "ps"
@@ -2510,18 +2510,19 @@ smooth.construct.ad.smooth.spec <- function(object,data,knots)
         ps2 <- smooth.construct(s(x,k=k,bs=bsp,m=m,fx=TRUE),data=data.frame(x=x),knots=NULL)
         V <- ps2$X
       }
-      Db<-diff(diff(diag(nk))) ## base difference matrix
+      Db <- if (sparse) diff(diff(Diagonal(nk,1))) else diff(diff(diag(nk))) ## base difference matrix
       ##D <- list()
      # for (i in 1:k) D[[i]] <- as.numeric(V[,i])*Db
      # L <- matrix(0,k*(k+1)/2,k)
-      S <- list()
+      D <- S <- list()
       for (i in 1:k) {
-        S[[i]] <- t(Db)%*%(as.numeric(V[,i])*Db)
+        D[[i]] <- as.numeric(sqrt(V[,i]))*Db
+        S[[i]] <- crossprod(D[[i]]) ## t(Db)%*%(as.numeric(V[,i])*Db)
         ind <- rowSums(abs(S[[i]]))>0
         ev <- eigen(S[[i]][ind,ind],symmetric=TRUE,only.values=TRUE)$values
         pspl$rank[i] <- sum(ev>max(ev)*.Machine$double.eps^.9)
       }
-      pspl$S <- S
+      pspl$S <- S; pspl$D <- D
     }
   } else if (object$dim==2){ ## 2D case 
     ## first task is to obtain a tensor product basis
@@ -2584,7 +2585,7 @@ smooth.construct.ad.smooth.spec <- function(object,data,knots)
           pspl$rank[i] <- sum(ev>max(ev)*.Machine$double.eps*10)
         }
 
-        pspl$S <- S
+        pspl$S <- S; pspl$D <- NULL
         pspl$pen.smooth <- ps2 ## the penalty smooth object
       } ## adaptive penalty finished
     } ## penalized case finished
