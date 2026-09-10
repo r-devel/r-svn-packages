@@ -1,3 +1,8 @@
+2026-09-10  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* tests/spss.R, tests/spss.Rout.save: use C collation to
+	avoid locale-specific output (factor levels).
+
 2026-03-02  Martin Maechler <maechler@R-project.org>
 
 	* tests/sas.R: update
@@ -21,8 +26,8 @@
 
 2025-03-15  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
-	* tests/spss.R: do not change the locale (unnecessarily);
-	 tests added below change gave platform-dependent output.
+	* tests/spss.R: do not switch to the C locale;
+	 tests added below gave platform-dependent output.
 
 2025-01-10 Uwe Ligges
 

@@ -1,5 +1,8 @@
 library(foreign)
 
+## avoid output diffs from locale-specific sorting of factor levels:
+invisible(Sys.setlocale("LC_COLLATE", "C"))
+
 sample100 <- read.spss("sample100.sav",FALSE)
 summary(sample100)
 str(sample100)
@@ -47,7 +50,6 @@ stopifnot(identical(electric.s,      electric.p),
 ## after "long label patch":
 ## (from <https://stat.ethz.ch/pipermail/r-devel/2008-July/050165.html>)
 
-##invisible(Sys.setlocale (locale="C")) ## to resolve locale problem  # ??
 ldat <- read.spss("spss_long.sav", to.data.frame=TRUE)
 ldat
 nnms <- nms <- names(ldat)
