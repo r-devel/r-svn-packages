@@ -430,7 +430,7 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
     # 	   cs=as.integer(lt-1),ncs=as.integer(length(lt)))
     #if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
     #XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop]
-    XWy <- numeric(pt*cy)
+    XWy <- numeric(pt*as.numeric(cy))
     if (nthreads<1) nthreads <- 1;
     .Call(C_CXWyd,XWy,as.double(y),as.double(unlist(X)),as.double(w),k-1L,as.integer(ks-1L),as.integer(m),as.integer(p),
           as.integer(cy),as.integer(ts-1L), as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(ar.stop-1L),
@@ -488,7 +488,7 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL,nthreads=1) {
     #       m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
     #       as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(bc),as.integer(lt-1),as.integer(length(lt)))
     #Xb <- if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
-    f <- numeric(n*bc)
+    f <- numeric(n*as.numeric(bc))
     .Call(C_CXbd,f,beta,as.double(unlist(X)),k-1L, as.integer(ks-1L),as.integer(m),as.integer(p),
           as.integer(ts-1L),as.integer(dt),as.double(unlist(v)),as.integer(qc),as.integer(bc), as.integer(lt-1L),
 	  as.integer(nthreads))

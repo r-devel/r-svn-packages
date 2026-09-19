@@ -4035,7 +4035,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE,
     } ## end if (m>0)
     
     ii <- 0
-    cons <- if(sparse) sapply(object$Vp$arg$R[-1], \(rr) !is.null(attr(rr, "Givens"))) else NULL
+    cons <- if (sparse) object$Ve$arg$cons else NULL ## which terms are constrained
     for (i in 1:m) { ## loop through smooths
       start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
       p <- object$coefficients[start:stop]  # params for smooth
