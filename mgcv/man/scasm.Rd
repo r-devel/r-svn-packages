@@ -108,7 +108,7 @@ An object of class \code{"gam"} as described in \code{\link{gamObject}}.
 }
 
 
-\details{Operates much as \code{\link{gam}}, but allows linear constraints on smooths to facilitate shape constraints. Smoothness selection uses the extended Fellner-Schall method of Wood and Fasiolo (2017). Model coefficient estimation uses linear programming to find initial feasible coefficients, and then sequential quadratic programming to maximize the penalized likelihood given smooting parameters.
+\details{Operates much as \code{\link{gam}}, but allows linear constraints on smooths to facilitate shape constraints. Smoothness selection uses the extended Fellner-Schall method of Wood and Fasiolo (2017). Model coefficient estimation uses linear programming to find initial feasible coefficients, and then sequential quadratic programming to maximize the penalized likelihood given smoothing parameters.
 
 For simple shape constraints on univariate smooths (and hence tensor product smooths) see \code{\link{smooth.construct.sc.smooth.spec}}. General linear constraints can be imposed on any smooth term via the \code{pc} argument to \code{\link{s}} etc. To do this \code{pc} is provided as a list of two lists. The first list component specifies the linear equality constraints, and the second, if present specifies linear inequality constraints.
 
@@ -124,7 +124,7 @@ Note that \code{pc} constraints replace the usual sum to zero identifiability co
 
 
 \references{
-Wood, S.N. (2026) Shape constrained additive smooth models (with discussion). Statistical Modelling.
+Wood, S.N. (2026) Shape constrained additive smooth models (with discussion). Statistical Modelling. 26(4):382-409
 \doi{10.1177/1471082X261436505}
 
 Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing

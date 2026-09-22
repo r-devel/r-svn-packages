@@ -3480,15 +3480,17 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
     if (mk[i]-ii>target_nk) { /* start a new chunk */
       if (i>0&&mk[i-1]!=ii) { /* aim for under target */
 	if (mk[i-1]-ii>max_chunk) max_chunk = mk[i-1]-ii; /* record maximum chunk size */
-	ii = mk[i-1]; j++;
+	ii = mk[i-1]; /* end of previous chunk */
+	j++; /* chunk counter */
       } else { /* neighbourhood so large we have to be over target */
 	if (mk[i]-ii>max_chunk) max_chunk = mk[i]-ii; /* record maximum chunk size */
 	ii=mk[i]; if (i < *nn-1) j++; /* only a new chunk if not at end */
       }	
     }  
   } /* j is number of chunks */
-  nchunk = j;
-  if (nchunk==1) max_chunk = mk[*nn-1]+1;
+  nchunk = j; j = mk[*nn-1] - ii; /* final chunk size */
+  if (j > max_chunk) max_chunk = j; 
+  //if (nchunk==1) max_chunk = mk[*nn-1]+1;
   ichunk = (int *)CALLOC(nchunk,sizeof(int));
   max_nb=0;
   for (j=0,jj=ii=-1,i=0;i<*nn;i++) { /* determine elements of mk indexing chunk ends */
@@ -3499,14 +3501,16 @@ void ncvd(double *NCV,double *NCV1,double *NCV2,double *beta,double *db, double 
 	jj = ma[i-1];
 	ichunk[j] = i-1; j++;
       } else { /* chunk so large we have to be over target */
-	ii = mk[i];ichunk[j]=i;  if (i < *nn-1) j++; // ????
+	ii = mk[i];ichunk[j]=i;  if (i < *nn-1) j++; 
 	if (ma[i]-jj>max_nb) max_nb = ma[i]-jj;
 	jj = ma[i];
       }	
     }  
   }
-  ichunk[j] = *nn-1; /* BUG: can write over array end!! */
-  if (nchunk==1) max_nb = ma[*nn-1]+1;
+  ichunk[j] = *nn-1;
+  j = ma[*nn-1] - jj;
+  if (j > max_nb) max_nb = j;
+  // if (nchunk==1) max_nb = ma[*nn-1]+1;
   /* now mk[ichunk[j]] is end of jth chunk and max_nb is largest storage needed for
      CV residuals by a chunk. max_chunk is the largest vector needed to index
      the required elements A_ij for a chunk. ichunk[j] indexes the last neighbourhood in
