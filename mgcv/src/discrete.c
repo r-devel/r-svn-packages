@@ -692,9 +692,9 @@ void Xbdp(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, ptrdif
    those sizes (int, ptrdiff_t, double).
    Make a copy of k re-arranged into blocks. Requires *n > *nthreads;   
 */
-  int j,*kd,*kdp,b,jn,i;
+  int j,*kd,*kdp,b;
   double *fd,*fdp;
-  ptrdiff_t *N,nb,bof;
+  ptrdiff_t *N,nb,bof,jn,i;
   N = (ptrdiff_t *)CALLOC((size_t) *nthreads,sizeof(ptrdiff_t)); /* block specific sample sizes */
   kd = (int *)CALLOC((size_t) *pk * *n,sizeof(int)); /* re-ordered k copy */
   if (*bc>1) fd = (double *)CALLOC((size_t) *bc * *n,sizeof(double)); else fd=f;
@@ -1436,9 +1436,9 @@ void XWydp(double *XWy,double *Wy,double *X,int *k,int *ks, int *m,int *p, ptrdi
            int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *cs, int *ncs,int *alt,
 	   int *iwork, ptrdiff_t *pwork, double *dwork,int *nthreads, ptrdiff_t *space,int *pk,int nXWy) {
 /* calls XWyd in parallel based on index splitting */
-  int j,*kd,*kdp,b,jn,i;
+  int j,*kd,*kdp,b;
   double *XWy2,*Wyd,*p0;
-  ptrdiff_t *N,nb,bof;
+  ptrdiff_t *N,nb,bof,jn,i;
   N = (ptrdiff_t *)CALLOC((size_t) *nthreads,sizeof(ptrdiff_t)); /* block specific sample sizes */
   kd = (int *)CALLOC((size_t) *pk * *n,sizeof(int)); /* re-ordered k copy */
   XWy2 = (double *)CALLOC((size_t) *cy * nXWy * *nthreads,sizeof(double)); /* need a copy for each thread to sum at end */
