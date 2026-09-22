@@ -448,15 +448,17 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     if (rho!=0) {
       warning("rho ignored with NCV"); rho <- 0
     }
+    ## note that nei indices are zero based at this point...
     nei$af <- nei$a; nei$maf <- nei$ma ## for use in cov matrix computation
     if (!is.null(nei$sample)) { ## only a sub-sample of points used in optimization NCV
       if (length(nei$sample)==1) nei$sample <- sample(length(nei$ma),nei$sample)
-      m1 <- nei$ma[nei$sample]; m0 <- c(0,nei$ma)[nei$sample]
-      nei$a <- nei$a[sequence(m1-m0,m0+1L,1L)]
-      nei$ma <- cumsum(m1-m0)-1L
-      m1 <- nei$md[nei$sample]; m0 <- c(0,nei$md)[nei$sample]
-      nei$d <- nei$d[sequence(m1-m0,m0+1L,1L)]
-      nei$md <- cumsum(m1-m0)-1L
+      m1 <- nei$ma[nei$sample] ## end of sampled block
+      m0 <- c(-1L,nei$ma)[nei$sample] ## end of previous block to that sampled
+      nei$a <- nei$a[sequence(m1-m0,m0+2L,1L)] ## note +2L to get back to 1 based sequencing
+      nei$ma <- cumsum(m1-m0) -1L
+      m1 <- nei$md[nei$sample];m0 <- c(-1L,nei$md)[nei$sample]
+      nei$d <- nei$d[sequence(m1-m0,m0+2L,1L)]
+      nei$md <- cumsum(m1-m0) -1L
     }
   }
   

@@ -1732,8 +1732,9 @@ void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdiff
 
 
 
-ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,int nt, int tri) {
-/*  computes working memory requirement of XWXijs for given block - called by XWXspace below
+ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int nx,int n,int *ts,
+		     int *dt,int nt, int tri,int xvx) {
+/*  computes working memory requirement of XWXijs/XVXijs (xvx=0/1) for given block - called by XWXspace below
 */
   int si,sj,//ri,rj,
     jm,im,ddtj,
@@ -1746,7 +1747,7 @@ ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int
   nwork += 2*n;
   if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense  */
     // no allocation
-  } else if (!tri && i==j && si==1) {/* simplest setup - just accumulate diagonal */ 
+  } else if (!xvx && !tri && i==j && si==1) {/* simplest setup - just accumulate diagonal */ 
     /* Allocate space for wb(m[im]), wbs and wbl*/
     nwork += mim;		  
   } else { /* general case */
@@ -1770,9 +1771,10 @@ ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int
       if (mim == n) rfac = 0; else if (mjm == n) rfac = 1; /* make absolutely sure we do not form n by p*m product */
      
     } /* end of accumulation storage allocation */
-    
-    if (rfac) {
-      /* Allocate storge for C mim by p[jm] */
+    if (xvx) { /* XVXijs choice of C/D logic slightly different, this plays it safe and allocates space for larger */
+      if (mim * p[jm] > mjm * p[im]) nwork += mim * p[jm]; else nwork += mjm * p[im];
+    } else if (rfac) {
+      /* Allocate storage for C mim by p[jm] */
       nwork +=  mim * p[jm];
     } else {
       /* Allocate storage for D mjm by p[im] */
@@ -1786,8 +1788,8 @@ ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int
 } /* XWXijspace */  
 
 ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, int *m, int *p,int *pt,int *pd,int nx,ptrdiff_t n,
-		   int *ts, int *dt,int nt, int tri) {
-/* Tedious routine to evaluate workspace requirment of XWXijs. Basically does a dummy run through the 
+		   int *ts, int *dt,int nt, int tri,int xvx) {
+/* Tedious routine to evaluate workspace requirment of XWXijs/XVXijs (xvx=0/1). Basically does a dummy run through the 
    blocks computing the memory requirement for each and recording the maximum used.
    Avoids over allocating. 
 */
@@ -1806,7 +1808,7 @@ ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, in
       r = i / ct;
       c = i % ct;
     }
-    nn = XWXijspace(rb,cb,r,c,k,ks,m,p,nx,n,ts, dt,nt,tri);
+    nn = XWXijspace(rb,cb,r,c,k,ks,m,p,nx,n,ts, dt,nt,tri,xvx);
     if (nmax<nn) nmax=nn;
   }
   return(nmax);
@@ -2548,7 +2550,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
     B[i] = kb; 
   }  
   revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
-  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri); /* compute the maximum workspace required per thread */
+  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri,0); /* compute the maximum workspace required per thread */
   work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double)); /* allocate it */
   /* In what follows rb and cb are the whole term row column indices. r and c are the sub blocks within 
      the cross-product between two terms. The sub blocks arise when we have tensor product terms. The cleaner 
@@ -2743,7 +2745,7 @@ void XVXd0(double *XWX,double *X,double *e,int *k,int *ks, int *m,int *p, ptrdif
   }  
   revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
   i=0;
-  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,i); /* compute the maximum workspace required per thread */
+  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,i,1); /* compute the maximum workspace required per thread */
   work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double)); /* allocate it */
   /* In what follows rb and cb are the whole term row column indices. r and c are the sub blocks within 
      the cross-product between two terms. The sub blocks arise when we have tensor product terms. The cleaner 
@@ -3070,7 +3072,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, ptrdif
     B[i] = kb; /* record the main block we are in */
   }  
   revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
-  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri); /* compute the maximum workspace required per thread */
+  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri,0); /* compute the maximum workspace required per thread */
   work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double)); /* allocate it */
   /* In what follows rb and cb are the whole term row column indices. r and c are the sub blocks within 
      the cross-product between two terms. The sub blocks arise when we have tensor product terms. The cleaner 
