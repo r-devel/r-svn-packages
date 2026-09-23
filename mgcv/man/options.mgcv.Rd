@@ -18,7 +18,7 @@ The following options control \code{\link{gam}} and \code{\link{bam}} methods.
 \itemize{
 \item \code{mgcv.gam.method} gives the default \code{method} argument for \code{\link{gam}}. \code{"GCV.Cp"} by default (historical, \code{"REML"} usually better).
 \item \code{mgcv.gam.optimizer} gives the default \code{optimizer} argument for \code{\link{gam}}. \code{c("outer","newton")} by default.
-\item \item \code{mgcv.bam.discrete} gives the default \code{discrete} argument for \code{\link{bam}}. \code{FALSE} by default (historical, \code{TRUE} usually better).
+\item \code{mgcv.bam.discrete} gives the default \code{discrete} argument for \code{\link{bam}}. \code{FALSE} by default (historical, \code{TRUE} usually better).
 }
 
 The following controls plotting defaults.

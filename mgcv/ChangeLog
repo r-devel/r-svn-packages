@@ -21,9 +21,6 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
-* importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand,rcond,
-rowMeans,rowSums,norm,diag) - not needed in NAMESPACE!
-
 1.9-5
 
 ** 'bt' smooth class - tensor products of B-splines with general derivative

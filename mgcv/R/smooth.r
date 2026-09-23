@@ -2619,20 +2619,33 @@ smooth.construct.re.smooth.spec <- function(object,data,knots) {
 
   sparse <- is.list(object$xt) && !is.null(object$xt$sparse) ## signal sparse matrices should be used
 
-  form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
-  ## following construction avoids silly model.matrix overchecking...
-  object$X <- if (sparse) Matrix::sparse.model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
-              else model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
+  #form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
+  ## what is supplied in data will have transforms of variables already applied. e.g. a
+  ## column "log(x)" instead of "x". This means that the formulae constructed below
+  ## need to backtick terms like "log(x)" so that they are treated as names of
+  ## variables in the formula. 
+  form <- as.formula(paste("~",paste("`",object$term,"`",collapse=":",sep=""),"-1"))
+
+  ## model.matrix checks the dimensions of elements of 'data' that it does not actually use. This is a
+  ## problem for the handling of the summation convention, since repeat rows of matrices are deliberately
+  ## not evaluated, so that e.g. the by variable and evaluated variables may have different dimensions here.
+  ## Hence the stripping of variables not in the formula... 
+  #object$X <- if (sparse) Matrix::sparse.model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
+  #            else model.matrix(form, data = if(is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form)] else data)
+  object$X <- if (sparse) Matrix::sparse.model.matrix(form, data =  if(is.list(data)) data[names(data)%in%all.vars(form)] else data)
+              else model.matrix(form, data =  if(is.list(data)) data[names(data)%in%all.vars(form)] else data)
+  
   object$bs.dim <- ncol(object$X)
   
   if (inherits(object,"tensor.smooth.spec")) { 
-    ## give object margins like a tensor product smooth...
+    ## give object margins, like a tensor product smooth...
     object$margin <- list()
     maxd <- maxi <- 0
     for (i in 1:object$dim) {
-      form1 <- as.formula(paste("~",object$term[i],"-1"))
-      data1 <- if (is.list(data)) data[all.vars(reformulate(names(data)))%in%all.vars(form1)] else data
-      object$margin[[i]] <- list(X= if (sparse) Matrix::sparse.model.matrix(form1,data1) else model.matrix(form1,data1),
+      #form1 <- as.formula(paste("~",object$term[i],"-1"))
+      form1 <- as.formula(paste("~ `",object$term[i],"` -1",sep=""))
+      data1 <- if (is.list(data)) data[names(data)%in%all.vars(form1)] else data ## see above comment on model.matrix
+      object$margin[[i]] <- list(X= if (sparse) Matrix::sparse.model.matrix(form1,data) else model.matrix(form1,data),
                                  term=object$term[i],form=form1,by="NA")
       class(object$margin[[i]]) <- "random.effect"
       d <- ncol(object$margin[[i]]$X)
