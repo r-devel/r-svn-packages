@@ -1429,7 +1429,7 @@ void XWydspace(ptrdiff_t *space,int *nx, int *nt,ptrdiff_t  *n, int *m, int *dt,
   space[1] = *nx + *nt + 2; /* pointer */
   space[2] = 2 * maxm + 3 * maxp; /* double storage */
   space[3] = maxdt-1; /* *n * space[3] double storage  */
-
+  if (space[3]<1) space[3] = 1; /* otherwise can fail with AR1 */
 } /* XWydspace */
 
 void XWydp(double *XWy,double *Wy,double *X,int *k,int *ks, int *m,int *p, ptrdiff_t *n, int *cy,
