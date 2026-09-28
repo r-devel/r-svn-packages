@@ -21,6 +21,12 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
+1.9-6
+
+* Bug in cnorm censored evaluation which could cause fit failure. Thanks to
+	Gavin Simpson. 	
+
+	
 1.9-5
 
 ** 'bt' smooth class - tensor products of B-splines with general derivative
