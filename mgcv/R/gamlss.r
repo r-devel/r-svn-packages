@@ -174,15 +174,18 @@ gamlss.ncv <- function(X,y,wt,nei,beta,family,llf,H=NULL,Hi=NULL,R=NULL,offset=N
       kk <- 0;jj <- 0
       for (j in 1:nlp) for (k in j:nlp) {
         kk <- kk  + 1
-	rowk <- 1:nm+(k-1)*nm
+	### BUG: deta appears sometimes to be incorrectly indexed here: unless C functions are repacking it then
+	### the appropriate dimension is n not nm and it needs further subsetting by nei$d - BUT
+	### rowk and rowj appear correct for indexing deta.cv
+	rowk <- 1:nm+(k-1)*nm  
 	rowj <- 1:nm+(j-1)*nm
 	#ncv1 <- ncv1 - colSums(llf$l2[nei$d,kk]*((deta[1:nm+(k-1)*nm,] + deta.cv[1:nm+(k-1)*nm,])*(eta.cv[,j]-eta[nei$d,j]) + 
 	#                   (eta.cv[,k]-eta[nei$d,k])*(deta.cv[1:nm+(j-1)*nm,] - deta[nei$d+(j-1)*n,])))*gamma*.5
-        ncv1 <- ncv1 - llf$l2[nei$d,kk]*((deta[rowk,] + deta.cv[rowk,])*(eta.cv[,j]-eta[nei$d,j]) +
+        ncv1 <- ncv1 - llf$l2[nei$d,kk]*((deta[nei$d+(k-1)*n,] + deta.cv[rowk,])*(eta.cv[,j]-eta[nei$d,j]) +
 	                       (eta.cv[,k]-eta[nei$d,k])*(deta.cv[rowj,] - deta[nei$d+(j-1)*n,]))*gamma*.5
         #if (j!=k) ncv1 <- ncv1 - colSums(llf$l2[nei$d,kk]*((deta[1:nm+(j-1)*nm,] + deta.cv[1:nm+(j-1)*nm,])*(eta.cv[,k]-eta[nei$d,k]) + 
 	#                   (eta.cv[,j]-eta[nei$d,j])*(deta.cv[1:nm+(k-1)*nm,] - deta[nei$d+(k-1)*n,])))*gamma*.5		  
-        if (j!=k) ncv1 <- ncv1 - llf$l2[nei$d,kk]*((deta[rowj,] + deta.cv[rowj,])*(eta.cv[,k]-eta[nei$d,k]) +
+        if (j!=k) ncv1 <- ncv1 - llf$l2[nei$d,kk]*((deta[nei$d+(j-1)*n,] + deta.cv[rowj,])*(eta.cv[,k]-eta[nei$d,k]) +
 	          (eta.cv[,j]-eta[nei$d,j])*(deta.cv[rowk,] - deta[nei$d+(k-1)*n,]))*gamma*.5
         for (l in k:nlp) {
           jj <- jj + 1
