@@ -1,3 +1,7 @@
+2026-10-17  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
+
+	* DESCRIPTION: New release.
+
 2026-09-10  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* tests/spss.R, tests/spss.Rout.save: use C collation to
