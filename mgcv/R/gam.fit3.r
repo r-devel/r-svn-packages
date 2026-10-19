@@ -1054,7 +1054,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object,gamma) {
     ## END EXPERIMENTAL
   } else V.sp <- edf2 <- Vc <- NULL
   ret <- list(Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
-  if (is.null(object$Vc)) ret$Vc <- Vc
+  ret$Vc <- if (is.null(object$Vc))  Vc else Vb + object$Vc
   ret
 } ## gam.fit3.post.proc
 

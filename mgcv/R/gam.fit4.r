@@ -667,9 +667,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      nt <- family$n.theta
      ## if some elements of theta are fixed, figure out which derivatives will be needed...
      if (deriv) keep <- if (length(theta)>nt) (length(theta)+1):(ncol(db.drho)+!scale.known) else 1:(ncol(db.drho)+!scale.known)
-   
-     dev0 <- dev.resids(y[nei$d], mu[nei$d], weights[nei$d],theta)
-     ls0 <- family$ls(y[nei$d],weights[nei$d],theta,scale)
+     ysub <- if (is.null(family$subsety)) y[nei$d] else family$subsety(y,nei$d)
+     dev0 <- dev.resids(ysub, mu[nei$d], weights[nei$d],theta)
+     ls0 <- family$ls(ysub,weights[nei$d],theta,scale)
      if (family$qapprox) { ## quadratic approximation to NCV
        qdev <- dev0 + gamma*dd$Deta[nei$d]*(eta.cv-eta[nei$d]) + 0.5*gamma*dd$Deta2[nei$d]*(eta.cv-eta[nei$d])^2
        NCV <- sum(qdev)/(2*scale) - ls0$ls
@@ -688,12 +688,12 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          }
        }
      } else { ## exact NCV
-       dev.cv <- dev.resids(y[nei$d], mu.cv, weights[nei$d],theta)
+       dev.cv <- dev.resids(ysub, mu.cv, weights[nei$d],theta)
        NCV <- sum(dev.cv)/(2*scale) - ls0$ls
        DEV <- sum(dev0)/(2*scale) - ls0$ls 
        if (gamma!=1) NCV <- gamma*NCV - (gamma-1)*DEV
        if (deriv) {
-         dd.cv <- dDeta(y[nei$d],mu.cv,weights[nei$d],theta,family,1) 
+         dd.cv <- dDeta(ysub,mu.cv,weights[nei$d],theta,family,1) 
 	 ncv1 <- dd.cv$Deta*deta.cv/(2*scale)
 	 if (gamma!=1) dev1 <- (dd$Deta*(x%*%db.drho))[nei$d,,drop=FALSE]/(2*scale)
          if (nt>0) {
@@ -1338,7 +1338,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,scoreTyp
       dd <- attr(ret$NCV,"deta.cv")
       #dd <-jkw*t(dd)%*%t(T)
       dd <- Sl.repa(rp$rp,t(dd),l=-1) ## undo repara
-      dd <- Sl.inirep(Sl,dd,l=1) ## undo initial repara
+      if (length(Sl)) dd <- Sl.inirep(Sl,dd,l=1) ## undo initial repara
       #Vj <- tcrossprod(dd) ## jackknife cov matrix
       #attr(NCV,"Vj") <- Vj
       attr(NCV,"dd") <- jkw*t(dd)

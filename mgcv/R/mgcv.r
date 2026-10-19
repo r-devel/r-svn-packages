@@ -1797,6 +1797,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       }
       attr(object$Ve,"Vp") <- object$Vp ## keep original
       attr(object$Ve,"inv.learn") <- alpha
+      if (!is.null(object$Vc)) object$Vc <- object$Vc - object$Vp + Vj
       object$Vp <- Vj     
     }
   }
@@ -2166,11 +2167,11 @@ nanei <- function(nb,k) {
   mdi <- which(diff(c(0,m))==0) ## identify zero length folds to omit entirely
 
   
-  if (length(mdi)) nb$ma <- m[-mdi] ## omit zero length folds
+  nb$ma <- if (length(mdi)) m[-mdi] else m ## omit zero length folds and/or correct lengths
   nb$a <- nb$a[-kk] ## omit the elements of k
   nb$a <- nb$a - findInterval(nb$a,sort(k)) ## and shift indices to account for omitted
 
-  if (length(midi)) nb$md <- mi[-midi] ## omit zero length folds
+  nb$md <- if (length(midi)) mi[-midi] else mi ## omit zero length folds and/or correct lengths
   nb$d <- nb$d[-ii] ## omit the elements of i
   nb$d <- nb$d - findInterval(nb$d,sort(k)) ## and shift indices to account for omitted
   nb 

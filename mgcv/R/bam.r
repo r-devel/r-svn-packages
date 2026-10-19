@@ -87,7 +87,7 @@ qr_up <- function(arg) {
     rownames(X) <- NULL
     if (is.null(arg$coef)) eta1 <- arg$eta[ind] else eta[ind] <- eta1 <- drop(X%*%arg$coef) + arg$offset[ind]
     mu <- arg$linkinv(eta1) 
-    y <- arg$G$y[ind] ## arg$G$model[[arg$response]] 
+    y <- if (is.null(arg$family$subset)) arg$G$y[ind] else arg$family$subset(arg$G$y,ind) ## arg$G$model[[arg$response]] 
     weights <- arg$G$w[ind]
     if (efam) { ## extended family case
        dd <- dDeta(y,mu,weights,theta=arg$theta,arg$family,0)
@@ -837,8 +837,9 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
   object$Vp <- PP * scale
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt[1]) ## F%*%object$Vp
 
-  if (method=="NCV"&& max(diff(nei$ma))>1 && max(diff(nei$md))==1) { ## replace Vp with NCV estimate 
+  if (method=="NCV"&& max(diff(nei$ma))>1 && max(diff(nei$md))==1 && length(nei$maf)==length(w)) { ## replace Vp with NCV estimate 
     e <- if (additive) w*(y-object$fitted.values) else (z-eta)*w ## weighted residuals
+    if (length(prop$rsd)==length(e)) e <- prop$rsd ## can use cv resids directly
     XVX <- XVXd(G$Xd,e,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nthreads=1,a=nei$af,ma=nei$maf)
     ## debug check of XVX
     debug <- FALSE
@@ -854,8 +855,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     }  
     ## debug end
     ## note: prop$rsd contains weighted cross validated residuals
-    inflate <- max(1,1 + .6*(mad(prop$rsd)/mad(e)-1))
-    #inflate <- max(1,(prop$NCV/sum(e[nei$d]^2/w[nei$d])-1)/2+1)
+    ##inflate <- max(1,1 + .6*(mad(prop$rsd)/mad(e)-1))
+    inflate <- max(1,mad(prop$rsd)/mad(e[nei$d])) ## 1 if e and prop$rsd identical
     V1 <- PP %*% XVX %*% PP *inflate^2
     object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
     ## NOTE: generally we will not have cross validated residuals for all data points.
@@ -1361,7 +1362,8 @@ ar.qr_up <- function(arg) {
   if (arg$rho!=0) { ## AR1 error model
      ld <- 1/sqrt(1 - arg$rho^2) ## leading diagonal of root inverse correlation
      sd <- -arg$rho * ld         ## sub diagonal
-  } 
+  }
+  if (!is.null(arg$family$subset)) stop("unsuitable family for AR1 working model")
   yX.last <- NULL
   qrx <- list(R=NULL,f=array(0,0),y.norm2=0) ## initial empty qr object
   for (i in 1:arg$n.block) {
