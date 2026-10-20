@@ -1832,11 +1832,11 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ind <- 1:family$n.theta
     nind <- ncol(L) - family$n.theta - if (family$n.theta + nrow(b$dVkk)<nrow(L)) 1 else 0 
     spind <- if (nind>0) family$n.theta+1:nind else rep(0,0)
-    rspind <- family$n.theta + 1:nrow(b$dVkk)
+    rspind <- if (nrow(b$dVkk)) family$n.theta + 1:nrow(b$dVkk) else rep(0,0)
   } else {
     nind <- ncol(L) - if (nrow(b$dVkk)<nrow(L)) 1 else 0 
     spind <- if (nind>0) 1:nind else rep(0,0) ## index of smooth parameters
-    rspind <- 1:nrow(b$dVkk)
+    rspind <-if (nrow(b$dVkk)) 1:nrow(b$dVkk) else rep(0,0)
   }  
   L0 <- L[rspind,spind] ##if (nrow(L)!=nrow(b$dVkk)) L[spind,spind] else L
   

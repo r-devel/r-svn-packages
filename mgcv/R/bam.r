@@ -856,7 +856,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     ## debug end
     ## note: prop$rsd contains weighted cross validated residuals
     ##inflate <- max(1,1 + .6*(mad(prop$rsd)/mad(e)-1))
-    inflate <- max(1,mad(prop$rsd)/mad(e[nei$d])) ## 1 if e and prop$rsd identical
+    inflate <- max(1,mad(prop$rsd)/mad(e)) ## 1 if e and prop$rsd identical
     V1 <- PP %*% XVX %*% PP *inflate^2
     object$Vp <- sum(diag(V1))/sum(diag(object$Ve))*(object$Vp-object$Ve) + V1
     ## NOTE: generally we will not have cross validated residuals for all data points.
@@ -2263,6 +2263,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       if (ok) {
         warning("no smooths, ignoring `discrete=TRUE'")
         discretize <- FALSE
+	if (method == "NCV") method <- "fREML"
       }	
     }
     if (discretize) { 

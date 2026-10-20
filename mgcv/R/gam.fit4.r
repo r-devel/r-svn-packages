@@ -306,7 +306,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       T <- diag(q); 
       St <- matrix(0,q,q) 
       rSncol <- rows.E <- Eb <- Sr <- 0   
-      rS <- list(0)
+      rS <- list() ## PROBLEM - used in Rncv as number of penalties!!
       rp <- list(det=0,det1 = 0,det2 = 0,fixed.penalty=FALSE)
   }
 
