@@ -2443,7 +2443,7 @@ tw.null.fit <- function(y,a=1.001,b=1.999) {
 
 twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
 ## General family for Tweedie location scale model...
-## so mu is mu1, rho = log(sigma) is mu2 and transformed p is mu3
+## so mu is mu1,transformed p is mu2 and rho = log(sigma) is mu3
 ## Need to redo ldTweedie to allow vector p and phi
 ## -- advantage is that there is no point buffering
 ## 1. get derivatives wrt mu, rho and p.

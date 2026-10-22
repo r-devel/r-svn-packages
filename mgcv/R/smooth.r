@@ -2104,7 +2104,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
   ## copy range penalty and create null space penalties...
   null.d <- ncol(object$X) - object$rank ## null space dim
   object$S[[1]] <- diag(c(rp$D,rep(0,null.d))) ## range space penalty
-  for (i in 1:null.d) { ## create null space element penalties
+  if (null.d>0) for (i in 1:null.d) { ## create null space element penalties
     object$S[[i+1]] <- object$S[[1]]*0
     object$S[[i+1]][object$rank+i,object$rank+i] <- 1  
   }
@@ -2143,7 +2143,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
     ## now penalties...
     #object$S <- fullS
     object$S[[1]] <- diag(rep(c(rp$D,rep(0,null.d)),nf)) ## range space penalties
-    for (i in 1:null.d) { ## null space penalties
+    if (null.d>0) for (i in 1:null.d) { ## null space penalties
       um <- rep(0,ncol(rp$X));um[object$rank+i] <- 1
       object$S[[i+1]] <- diag(rep(um,nf))
     }
