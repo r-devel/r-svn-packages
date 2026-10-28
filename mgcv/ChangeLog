@@ -26,6 +26,9 @@ present, and reparameterization needs checking (also for bam).
 * Bug in cnorm censored evaluation which could cause fit failure. Thanks to
 	Gavin Simpson. 	
 
+* p>n allocation bug in gdi.c:gdiPK that could cause crash. Fixed thanks to
+  Xinhui Wang. 
+
 	
 1.9-5
 
