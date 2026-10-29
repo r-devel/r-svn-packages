@@ -4,9 +4,9 @@
 @settitle R for macOS FAQ
 @setchapternewpage on
 @set FAQ-YEAR 2026
-@set FAQ-VERSION 4.6.1 @value{FAQ-YEAR}-06-24
-@set REL-VERSION 4.6.1
-@set GUI-VERSION 1.83
+@set FAQ-VERSION 4.6.2 @value{FAQ-YEAR}-10-29
+@set REL-VERSION 4.6.2
+@set GUI-VERSION 1.84
 @documentlanguage en
 @documentencoding ISO-8859-1
 @c %**end of header
