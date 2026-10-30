@@ -2990,7 +2990,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       }
       offi <- attr(Terms[[i]],"offset")
       if (is.null(offi)) offs[[i]] <- 0 else { ## extract offset
-        offs[[i]] <- mf[[names(attr(Terms[[i]],"dataClasses"))[offi+1]]]
+        offs[[i]] <- mf[[names(attr(Terms[[i]],"dataClasses"))[offi]]]
       }
       if (drop.intercept[i]) { 
         xat <- attributes(Xp);ind <- xat$assign>0 
@@ -5286,7 +5286,20 @@ set.mgcv.options <- function(vc.logrange=25,s.bs=NULL,xt=NULL,te.bs=NULL,te.np=N
 
 .onLoad <- function(...) {
   set.mgcv.options()
-}
+  if (length(attr(delete.response(terms(model.frame(y ~ 1, data.frame(y = 0)))), "dataClasses"))) {
+    ## stats::delete.response does not delete dataClasses[response]
+    ## in this version of R.  Once R version x.y is patched, the test
+    ## can be changed to 'if (getRversion() < "x.y")', for speed.
+    assign("delete.response",
+           function (termobj) {
+             ans <- stats::delete.response(termobj)
+             if (r <- attr(termobj, "response"))
+               attr(ans, "dataClasses") <- attr(termobj, "dataClasses")[-r]
+             ans
+           },
+           parent.env(environment()))
+  }
+} ## .onLoad
 
 .onAttach <- function(...) { 
   print.mgcv.version()

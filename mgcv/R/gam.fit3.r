@@ -1796,6 +1796,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     return(NULL) ## failed
   } ## end zoom
 
+  conv.tol0 <- conv.tol
   if (control$epsilon>conv.tol/100) control$epsilon <- conv.tol/100
 
   reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
@@ -2043,6 +2044,15 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         ## Note that Wolfe 2 guarantees that rho>0 and updated B is 
         ## +ve definite (left as an exercise for the reader)...
         B <- B - rho*(B%*%yg)%*%t(step) + rho*step%*%t(step)
+      }
+
+      #if (i%%20==0) { ## add a regularizer every now and then if B too close to indefinite
+      #  R <- suppressWarnings(chol(B, pivot = TRUE, tol = 1e-6))
+      #	if (attr(R, "rank")<ncol(B)) B <- B + norm(B)*1e-6*diag(ncol(B)) 
+      #}
+
+      if (i>20) {
+        conv.tol <- if (kappa(B)*.Machine$double.eps>conv.tol0) kappa(B)*.Machine$double.eps else conv.tol0
       }
 
       score.hist[i+1] <- trial$score

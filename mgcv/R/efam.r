@@ -222,7 +222,7 @@ nb <- function (theta = NULL, link = "log") {
         r$Dmuth <- 2 * wt * theta * (1 - yth/muth)/muth
         r$Dmu3 <- 4 * wt * (yth/muth^3 - y/mu^3)
         r$Dmu2th <- 2 * wt * theta * (2*yth/muth - 1)/muth^2
-	r$EDmu2th <- 2 * wt / muth^2
+	r$EDmu2th <- 2 * wt * theta / muth^2
       } 
       if (level>1) { ## whole damn lot
         r$Dmu4 <- 2 * wt * (6*y/mu^4 - 6*yth/muth^4)

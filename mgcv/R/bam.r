@@ -5,7 +5,6 @@ ls.size <- function(x) {
 ## If `x' is a list, return the size of its elements, in bytes, in a named array
 ## otherwise return the size of the object
  if (is.list(x)==FALSE) return(object.size(x))
-
  xn <- names(x)
  n <- length(x)
  sz <- rep(-1,n)
@@ -560,7 +559,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     c.iter <- 1 # Used later on to indicate whether to perform step-halving after 1st or...
   } else c.iter <- 2 # ... 2nd iteration 
 
-
+  phi.fixed <- scale > 0; if (phi.fixed) log.phi <- log(scale)
+  #####################################################
   for (iter in 1L:control$maxit) { ## main fitting loop 
     devold <- dev
     dev <- 0
@@ -615,14 +615,15 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
       if (efam) { ## extended family
 	if (iter>1) { ## estimate theta
           #if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
-	  if (family$n.theta>0||(scale<0&&iter<5&&method!="NCV")) {
+	  if (family$n.theta>0||(scale<0&&iter<100&&method!="NCV")) {
 	    ## optimize log lik wrt scale here early on, but then switch to avoid possibility of cycles...
-	    scale1 <- if (scale<0&&iter<5&&method!="NCV") scale else exp(log.phi) 
+	    scale1 <- if (scale<0&&iter<100&&method!="NCV") scale else exp(log.phi) 
 	    theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
           }
           #if (!is.null(family$scale) && scale1<0) {
-	  if (!is.null(family$scale) && scale<0 && iter<5&&method!="NCV") {
+	  if (!is.null(family$scale) && scale<0 && iter<100&&method!="NCV") {
 	    #scale <- exp(theta[family$n.theta+1])
+	    phi.fixed <- TRUE ## signal not to re-estimate this
 	    lsp0[n.sp+1] <- log.phi <- theta[family$n.theta+1] ## overwrite current scale estimate with better at iter=2
 	    Nstep[n.sp+1] <- 0 ## and don't use Newton step this time!
 	    theta <- theta[1:family$n.theta]
@@ -676,7 +677,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     if (!is.finite(dev)) stop("Non-finite deviance")
 
     ## preparation for working model fit is ready, but need to test for convergence first
-    if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon && (scale>0 || method=="NCV" || abs(Nstep[n.sp+1])<control$epsilon*(abs(log.phi)+1))) {
+    if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon && (scale>0 ||
+        method=="NCV" || abs(Nstep[n.sp+1])<control$epsilon*(abs(log.phi)+1))) {
       conv <- TRUE
       break
     }
@@ -714,7 +716,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         #        phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(crit)*.Machine$double.eps^.5,gamma=gamma)
         prop <- Sl.ncv(z,G$Xd,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,nei=nei,Sl=Sl,XX=qrx$XX,w=w,f=qrx$Xy,rho=lsp[1:n.sp],
 	               nt=npt,L=G$L,rho0=G$lsp0,drop=G$drop,tol=abs(crit)*.Machine$double.eps^.5,nthreads=npt[1])
-	if (scale<=0) log.phi = log(sum((z-eta)^2*w)/nobs) ## not really needed		 
+	if (!phi.fixed) log.phi = log(sum((z-eta)^2*w)/nobs) ## not really needed		 
         deriv.check <- FALSE
         if (deriv.check) { ## for debug derivative testing
           Hd <- prop$hess; eps <- 1e-7 ;fd <- prop$grad
@@ -732,7 +734,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
       } else { ## method is REML
         if (scale<=0) log.phi <- lsp[n.sp+1]
         prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
-                phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(crit)*.Machine$double.eps^.5,gamma=gamma)
+                phi.fixed=phi.fixed,nobs=nobs,Mp=Mp,nt=npt,tol=abs(crit)*.Machine$double.eps^.5,gamma=gamma)
         deriv.check <- FALSE
         if (deriv.check) { ## for debug derivative testing
           Hd <- prop$hess; eps <- 1e-7
@@ -751,7 +753,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
         Nstep <- prop$step;lsp0 <- lsp;
         break 
       } else { ## step length control
-        if (sum(prop$grad*Nstep)>dev*1e-7) Nstep <- Nstep/2 else {
+        if (sum(prop$grad*Nstep[1:length(prop$grad)])>dev*1e-7) Nstep <- Nstep/2 else {
           Nstep <- prop$step;lsp0 <- lsp;break;
         }
       }
@@ -767,6 +769,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL, etastart = NULL,
     }
     crit <- if (method=="NCV") prop$NCV else (dev/(exp(log.phi)*gamma) - prop$ldetS + prop$ldetXXS)/2
   } ## end fitting iteration
+  ###################################################################################################
 
   if (!conv) warning("algorithm did not converge")
    
@@ -1051,7 +1054,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     if (method=="fREML") Sl <- Sl.setup(G) ## setup block diagonal penalty object
 
     if (efam) theta <- family$getTheta()
-
+    phi.fixed <- scale > 0
+    if (phi.fixed) log.phi <- log(scale)
     for (iter in 1L:control$maxit) { ## main fitting loop
        ## accumulate the QR decomposition of the weighted model matrix
        devold <- dev
@@ -1205,14 +1209,15 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
       if (efam && iter>1) { ## estimate theta
         #if (family$n.theta>0||scale1<0) theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
-	if (family$n.theta>0||(scale<0&&iter<5)) {
-	  ## optimize log lik wrt scale here early on, but then switch to avoid possibility of cycles...
-	  scale1 <- if (scale<0&&iter<5) scale else object$scale 
+	if (family$n.theta>0||(scale<0&&iter<100)) {
+	  ## optimize log lik wrt scale here, but eventually switch to avoid possibility of cycles...
+	  scale1 <- if (scale<0&&iter<100) scale else object$scale 
 	  theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
         }
         #if (!is.null(family$scale) && scale1<0) {
-	if (!is.null(family$scale) && scale<0 && iter<5) {
+	if (!is.null(family$scale) && scale<0 && iter<100) {
 	   object$scale <- exp(theta[family$n.theta+1]) ## overwrite current scale estimate with better at iter=2
+	   phi.fixed <- TRUE;log.phi <- theta[family$n.theta+1] ## ensure fast.REML actually uses this
 	   theta <- theta[1:family$n.theta]
 	}  
         family$putTheta(theta)
@@ -1240,7 +1245,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
           }
         }
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
-                             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
+                             log.phi=log.phi,phi.fixed=phi.fixed,rss.extra=rss.extra,
                              nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt,gamma=gamma)
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE,L=G$L,nt=npt)
 	attr(fit$reml,"ml.pen") <- fit$reml.pen  
@@ -1250,14 +1255,14 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
                        Ve=NULL,scale.estimated = scale<=0,outer.info=fit$outer.info,
                         optimizer=c("perf","newton"))
  
-        if (scale<=0) { ## get sp's and scale estimate
+        if (!phi.fixed) { ## get sp's and scale estimate
           nsp <- length(fit$rho)
           object$sig2 <- object$scale <- exp(fit$rho[nsp])
           object$sp <- exp(fit$rho[-nsp]) 
           nsp <- length(fit$rho.full)
           object$full.sp <- exp(fit$rho.full[-nsp])
         } else { ## get sp's
-          object$sig2 <- object$scale <- scale  
+          object$sig2 <- object$scale <- exp(log.phi)
           object$sp <- exp(fit$rho)
           object$full.sp <- exp(fit$rho.full)
         }
@@ -1272,7 +1277,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         G$dev.extra <- rss.extra
         G$pearson.extra <- rss.extra
         G$n.true <- nobs+nobs.extra
-        object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
+	if (phi.fixed) exp(log.phi) else scale 
+        object <- gam(G=G,method=method,gamma=gamma,scale=if (phi.fixed) exp(log.phi) else scale,control=gam.control(nthreads=npt))
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
 	object$deviance <- object$family <- object$null.deviance <- object$fitted.values <- NULL
       }

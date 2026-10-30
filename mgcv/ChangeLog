@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 * p>n allocation bug in gdi.c:gdiPK that could cause crash. Fixed thanks to
   Xinhui Wang. 
 
+* Further adjustment of bam efam handling of scale parameter (tw basically) 
+  to avoid low count and convergence problems.
+
 	
 1.9-5
 
