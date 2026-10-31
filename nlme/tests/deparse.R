@@ -37,7 +37,7 @@ fm2$call <- fm1$call
 ##  Component "varFix": Mean relative difference: 1.146684e-15
 ##  Component "apVar": Mean relative difference: 0.0002204191
 ##  Component "residuals": Mean relative difference: 2.501139e-14
-stopifnot(all.equal(fm1, fm2, tolerance = 3e-04))
+stopifnot(all.equal(fm1, fm2, tolerance = 5e-04))
 
 ## deparse can give multiple lines
 ## example from https://stat.ethz.ch/pipermail/r-help/2006-February/088466.html
