@@ -67,14 +67,14 @@ Wood, S.N. (2017) P-splines with derivative based penalties and tensor product s
 
 \examples{
   require(mgcv)
-  set.seed(5)
+  set.seed(1)
   ff <- function(x, z, sx = 0.3, sz = 0.4) {
             (pi^sx * sz) * (1.2 * exp(-(x - 0.2)^2/sx^2 - (z - 
                 0.3)^2/sz^2) + 0.8 * exp(-(x - 0.7)^2/sx^2 - 
                 (z - 0.8)^2/sz^2))
   }
 
-  n <- 2000
+  n <- 800
   x <- runif(n)
   z <- runif(n)
   f <- ff(x,z)

@@ -629,7 +629,7 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
 
 
 
-s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs",c("tp","tp")),m=NA,by=NA,
+s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs","tp"),m=NA,by=NA,
                xt=getOption("mgcv.xt",NULL),id=NULL,sp=NULL,pc=NULL)
 # function for use in gam formulae to specify smooth term, e.g. s(x0,x1,x2,k=40,m=3,by=x3) specifies 
 # a rank 40 thin plate regression spline of x0,x1 and x2 with a third order penalty, to be multiplied by
@@ -641,7 +641,7 @@ s <- function (..., k=-1,fx=FALSE,bs=getOption("mgcv.s.bs",c("tp","tp")),m=NA,by
 { vars <- as.list(substitute(list(...)))[-1] # gets terms to be smoothed without evaluation
 
   d <- length(vars) # dimension of smoother
-  if (length(bs)>1) bs <- if (d>1) bs[2] else bs[1]
+  if (is.matrix(bs) && length(bs)>1) bs <- if (d>1) bs[2] else bs[1]
 # term<-deparse(vars[[d]],backtick=TRUE,width.cutoff=500) # last term in the ... arguments
   by.var <- deparse(substitute(by),backtick=TRUE,width.cutoff=500) #getting the name of the by variable
   if (by.var==".") stop("by=. not allowed")
@@ -2877,7 +2877,7 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     if (ncol(object$S[[1]])!=ncol(object$X)) stop("supplied penalty wrong dimension!")
     if (!is.null(colnames(object$S[[1]]))) {
       a.name <- colnames(object$S[[1]])
-      if (!isTRUE(all.equal(levels(k),sort(a.name)))) {
+      if (!isTRUE(all.equal(sort(levels(k)),sort(a.name)))) {
         stop("penalty column names don't match supplied area names!") 
       } else {
         if (!isTRUE(all.equal(sort(a.name),a.name))) { ## re-order penalty to match object$X

@@ -21,7 +21,10 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) has no option to use the identical
 	discretizaton to that used in fitting when predicting
 
-1.9-6
+1.9-5
+
+** 'bt' smooth class - tensor products of B-splines with general derivative
+  based penalties. 
 
 * Bug in cnorm censored evaluation which could cause fit failure. Thanks to
 	Gavin Simpson. 	
@@ -32,11 +35,7 @@ present, and reparameterization needs checking (also for bam).
 * Further adjustment of bam efam handling of scale parameter (tw basically) 
   to avoid low count and convergence problems.
 
-	
-1.9-5
-
-** 'bt' smooth class - tensor products of B-splines with general derivative
-  based penalties. 
+* Various NCV fixes thanks to Fabian Scheipl and Gavind Simpson.1.9-5
 
 * Added ability to control a number of defaults using 'options'. See 
   ?options.mgcv. 
