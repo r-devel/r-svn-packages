@@ -3,7 +3,7 @@
 \alias{grouped families}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Grouped families}
-\description{Family for use with \code{\link{gam}} or \code{\link{bam}} allowing a univariate response vector to be made up of variables from several different distributions. The response variable is supplied as a 2 column matrix, where the first column contains the response observations and the second column indexes the distribution (family) from which it comes. \code{gfam} takes a list of families as its single argument.
+\description{Family for use with \code{\link{gam}}, \code{\link{scasm}} or \code{\link{bam}} allowing a univariate response vector to be made up of variables from several different distributions. The response variable is supplied as a 2 column matrix, where the first column contains the response observations and the second column indexes the distribution (family) from which it comes. \code{gfam} takes a list of families as its single argument.
 
 Useful for modelling data from different sources that are linked by a model sharing some components. Smooth model components that are not shared are usually handled with \code{by} variables (see \code{\link{gam.models}}).  
 }
@@ -104,7 +104,40 @@ plot(b,pages=1)
 dat$id1 <- as.numeric(dat$y[,2]==1)
 b1 <- gam(y~s(x0,by=id1)+s(x1)+s(x2)+s(x3),
          family=gfam(list(binomial,tw,gaussian)),data=dat)
-plot(b1,pages=1) ## note the CI width increase	 
+plot(b1,pages=1) ## note the CI width increase
+
+## estimation from observations of a function and its derivatives
+## with different unknown variances...
+
+fc <- function(x,deriv=FALSE) {
+## test function
+  eta <- exp((x-.2)^2+1)
+  if (deriv) 2*eta*(x-.2) else eta
+}
+n <- 50
+x0 <- runif(n)*2-1;y0 <- fc(x0)+rnorm(n)*4 ## obs
+x1 <- runif(n)*2-1;y1 <- fc(x1,deriv=TRUE) + rnorm(n)*1 ## deriv
+y <- cbind(c(y0,y1),c(rep(1,n),rep(2,n))) ## gfam response
+
+## Now set up linear functional terms (see help) to evaluate
+## smooth or its derivative, as appropriate...
+X <- matrix(0,2*n,2);L <- matrix(0,2*n,2) 
+X[1:n,1] <- x0;L[1:n,1] <- 1 ## evaluate smooth
+ii <- 1:n+n; eps <- 1e-7 ## evaluate derivatives...
+X[ii,1] <- x1+eps;X[ii,2] <- x1-eps;L[ii,1] <- .5/eps;L[ii,2] <- -.5/eps
+
+## Fit model - here imposing convexity... 
+bc <- scasm(y~s(X,by=L,k=30,bs="sc",xt="c+"),
+            family=gfam(list(gaussian,gaussian)))
+
+## Smooth not orthogonal to intercept, so best to plot based on
+## whole model, with intercept...
+x <- seq(-1,1,length=200);
+fv <- predict(bc,data.frame(X=x,L=rep(1,200)),se=TRUE)
+plot(x,fv$fit,ylim=range(c(fv$fit+2*fv$se.fit,fv$fit-2*fv$se.fit)),
+     type="l", xlab="s(x)")
+lines(x,fv$fit+2*fv$se.fit,lty=2);lines(x,fv$fit-2*fv$se.fit,lty=2)
+exp(bc$family$getTheta()) ## estimated variances
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

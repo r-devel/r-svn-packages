@@ -536,7 +536,7 @@ SEXP Rncv(SEXP x, SEXP r, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP IND,
       *wxp = xx*w2ki; /* wXi matrix holding w2[k[i]]*X[k[i],] */
       *dp = xx*alpha;
     }
-    if (alpha<0) j=1; else j=0; /* update or downdate ? */
+    if (w2ki<0) j=1; else j=0; /* update or downdate ? */
     chol_up(R0+p2*tid,d+tid*p,&p,&j,&eps);
     if (*(R0+p2*tid+1) < -0.5) { /* is update positive definite? */
       pdef=0;*(R0+p2*tid+1)=0.0; 

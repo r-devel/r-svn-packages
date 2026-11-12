@@ -20,8 +20,8 @@ the log smoothing parameters, if this has been obtained as part of fitting.
 }
 
 \value{ A matrix corresponding to the estimated covariance matrix of the log smoothing parameter estimators,
-if this can be extracted, otherwise \code{NULL}. If the scale parameter has been (RE)ML estimated (i.e. if the method was \code{"ML"} or \code{"REML"} and the scale parameter was unknown) then the 
-last row and column relate to the log scale parameter. If \code{edge.correct=TRUE} and this was used in fitting then the edge corrected smoothing parameters are in attribute \code{lsp} of the returned matrix.  
+if this can be extracted, otherwise \code{NULL}. If the scale parameter has been (RE)ML estimated (i.e. if the \code{gam} method was \code{"ML"} or \code{"REML"} and the scale parameter was unknown) then the 
+last row and column relate to the log scale parameter (\code{bam} estimates the scale differently). If \code{edge.correct=TRUE} and this was used in fitting then the edge corrected smoothing parameters are in attribute \code{lsp} of the returned matrix.  
 }
 
 \author{Simon N. Wood \email{simon.wood@r-project.org}

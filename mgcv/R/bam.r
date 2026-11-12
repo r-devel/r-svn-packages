@@ -1315,7 +1315,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     if (!is.null(family$setInd)) family$setInd(NULL) ## reset family to state before indexing
 
     if (method=="fREML") { ## do expensive cov matrix cal only at end
-      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale,L=G$L,nt=npt)
+      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=object$scale,L=G$L,nt=npt)
       object$edf <- res$edf
       object$edf1 <- res$edf1
       object$edf2 <- res$edf2

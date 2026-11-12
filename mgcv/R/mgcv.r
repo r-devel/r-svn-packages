@@ -4729,7 +4729,7 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     res <- if (is.null(vc.full)) sqrt(vc) else list(vc=sqrt(vc),all=sqrt(vc.full))
   }
   ## now reset any non-linear terms with own methods... 
-  kk <- which(sapply(x$smooth,function(x) !is.null(x$nlinfo)))
+  kk <- if (length(x$smooth)) which(sapply(x$smooth,function(x) !is.null(x$nlinfo))) else integer(0)
   if (length(kk)) { ## there are non-linear terms
     Vse <- V <- list();i <- 0;di <- rep(0,0)
     for (k in kk) {

@@ -257,6 +257,10 @@ b <- scasm(time~s(age,by=sex)+sex+s(nodes,bs="sc",xt="m+")+perfor+rx+
 summary(b) 
 plot(b,pages=1) ## plot effects
 
+## see ?gfam for example using gfam and linear functional terms to
+## estimate shape constrained function from observations of values
+## and derivatives, with different uncertainty
+
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..

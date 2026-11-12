@@ -713,7 +713,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
    } else for (i in 1:K) for (j in i:K) { ## lp block loop
       Hpi <- fh[jj[[i]],jj[[j]]] ## correct component of inverse Hessian
       d1hc <- rep(0,m)
-      a <- rowSums((X[,jj[[i]]] %*% Hpi) * X[,jj[[j]]])
+      a <- rowSums((X[,jj[[i]],drop=FALSE] %*% Hpi) * X[,jj[[j]],drop=FALSE])
       for (l in 1:m) { ## sp loop
         v <- rep(0,n);ind <- 1:n
         for (q in 1:K) { ## diagonal accumulation loop

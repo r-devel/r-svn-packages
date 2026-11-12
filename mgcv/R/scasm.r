@@ -1,5 +1,5 @@
 ## shape constrained additive modelling code 
-## (c) Simon N. Wood 2025
+## (c) Simon N. Wood 2025/6
 
 ucon <- function(A,b) {
 ## finds unique constraints for a constraint set A x = b or Ax >= b.
@@ -516,6 +516,7 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,
     if (iter == nstep || abs(pdev - pdevold)/(0.1 + abs(pdev)) < eps || gausid) {
        conv <- TRUE
        coef <- start
+       dev <- sum(dev.resids(y, mu, weights))
        break
     }
 
@@ -537,6 +538,7 @@ scasm.pirls <- function(G,lsp,control,start=NULL,etastart=NULL,mustart=NULL,
     etaold <- eta
     
   } ## main iteration
+  
   if (!conv) warn[length(warn)+1] <- "scasm.pirls not converged"
   bsr <- matrix(0,length(start),bs)
   ng <- length(w)
@@ -716,7 +718,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
 
   if (!conv) warn[length(warn)+1] <- "scasm.newton not converged"  
   if (efam) {
-    eta <- G$family$linkfun(mu); rsd <- dev.resids(y, mu, G$w,theta)
+    eta <- G$family$linkfun(mu); rsd <- dev.resids(y, mu, G$w,theta); dev <- sum(rsd)
   } else { ## general family
     lpi <- attr(G$X,"lpi")
     if (is.null(lpi)) { ## only one...
@@ -732,6 +734,7 @@ scasm.newton <- function(G,lsp,control,start=NULL,scale.known=TRUE,bs=0) {
       }
     }
     rsd <- NULL
+    dev <- -2*llf(y,G$X,coef,G$w,G$family,offset=G$offset,deriv=0)$l
   }
   if (!feasible) stop("failed to find feasible starting values")
   if (iter==control$maxit) warn[length(warn)+1] <- "scasm.newton failed to converge"
