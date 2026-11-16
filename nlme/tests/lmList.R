@@ -44,3 +44,14 @@ lms2 <- lmList(pixel ~ Dog + day | Side, data = Pixel,
 coef(lms2) # failed in nlme <= 3.1-155 with
 ## Error in `[<-`(`*tmp*`, i, names(coefs[[i]]), value = if (is.null(coefs[[i]])) { : 
 ##   subscript out of bounds
+
+
+## pool=FALSE
+fms <- lmList(distance ~ age | Subject, data = Orthodont, pool = FALSE)
+cis <- intervals(fms) # failed in nlme <= 3.1-172 with
+## Error in qf(level, 1, smry$df.residual) : 
+##   Non-numeric argument to mathematical function
+stopifnot(all.equal(
+    cis[,c("lower","upper"),"age"],
+    t(vapply(fms, confint, c(lower = 0, upper = 0), parm = "age"))
+))

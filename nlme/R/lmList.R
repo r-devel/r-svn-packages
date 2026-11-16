@@ -1,6 +1,6 @@
 ###                  Create a list of lm objects
 ###
-### Copyright 2005-2022  The R Core team
+### Copyright 2005-2026  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -308,7 +308,7 @@ intervals.lmList <-
       dn[[2]] <- c("lower", "est.", "upper")
       dn
     }
-  mult <- sqrt(qf(level, 1, smry$df.residual))
+  mult <- sqrt(qf(level, 1, if (pool) smry$df.residual else smry$df[,2L]))
   out[ , "est.", ] <- coeff[ , "Estimate",  ]
   out[ , "lower", ] <- out[ , "est.", ] - mult * coeff[ , "Std. Error", ]
   out[ , "upper", ] <- out[ , "est.", ] + mult * coeff[ , "Std. Error", ]

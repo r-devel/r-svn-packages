@@ -1,3 +1,11 @@
+2026-11-16  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/lmList.R (intervals.lmList): failed for pool=FALSE,
+	as reported by Kevin Hayes on R-help.
+	* man/summary.lmList.Rd: clarify that 'df.residual' is
+	only returned if pool=TRUE.
+	* tests/lmList.R: add test for pool=FALSE.
+
 2026-10-31 Brian Ripley
 
 	* DESCRIPTION (Version, Date): 3.1-172.
