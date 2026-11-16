@@ -1,5 +1,14 @@
 NEWS for R.app GUI for Mac OS X
 
+
+Last-update: 2026-11-17
+
+*	All NSLog messages from the process are now filtered out and
+	sent to stderr since the number of buggy Apple frameworks is
+	so high that flitering them out individually is just not
+	feasible.
+
+
 -- Release Version 1.84 (8658) - supplied with R 4.6.2 --
 
 Last-update: 2026-09-24
