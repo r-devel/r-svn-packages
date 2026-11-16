@@ -111,6 +111,10 @@ extern int RGUI_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplSt
 #import <unistd.h>
 #import <sys/fcntl.h>
 
+/* duplicate of the original stderr before it is redirected to the console (-1 if none)
+   used to pass-through NSLog messages to original stderr instead of the R console */
+static int orig_stderr_fd = -1;
+
 static RController* sharedRController;
 
 static inline const char* NSStringUTF8String(NSString* self) 
@@ -595,6 +599,8 @@ static int R_SetOptionWidth(int width) {
 		pipe(pfd);
 #ifndef PLAIN_STDERR
 		if ([Preferences flagForKey:@"Ignore stderr"] != YES) {
+			orig_stderr_fd = dup(STDERR_FILENO);
+			if (orig_stderr_fd != -1) fcntl(orig_stderr_fd, F_SETFD, FD_CLOEXEC);
 			dup2(pfd[1], STDERR_FILENO);
 			close(pfd[1]);
 		}
@@ -2123,22 +2129,39 @@ issuing the newline.
 }
 */
 
-/* A bad hack to remove output from the stream - it is used to remove
-   stderr output caused by buggy Apple code that we have no control over.
-   It is assumed that s is allocated so if a replacement is necessary,
-   it will be released and a new string allocated.
+/* Removes Cocoa log messages of this process from stderr output. macOS
+   frameworks keep logging warnings caused by their own bugs (IMKClient,
+   CATransaction, IsMenuKeyEvent, NSPopoverTouchBarItemButton, ...) - they
+   are not R output. NSLog/CFLog write them as complete lines of the form
+   "YYYY-MM-DD hh:mm:ss.mmm <process>[<pid>:<tid>] message", so any line
+   with our own process name and pid is moved to the original stderr.
+   Output of child processes has a different pid and is left alone.
+   s is retained; if anything is removed it is released and a new
+   retained string is returned.
  */
-static NSString *fixBuggyOutput(NSString *s, NSString *regExp) {
-	NSRange r = [s rangeOfString:regExp options:NSRegularExpressionSearch];
-	if (r.location != NSNotFound) {
-		NSString *os = s;
-		NSUInteger start, end;
-		[s getLineStart:&start end:&end contentsEnd:0 forRange:r];
-		s = [os stringByReplacingCharactersInRange:NSMakeRange(start, end-start) withString:@""];
-		[s retain];
-		[os release];
-        }
-	return s;
+static NSString *removeOwnLogLines(NSString *s) {
+	static NSString *marker;
+	static NSRegularExpression *re;
+	static dispatch_once_t once;
+	dispatch_once(&once, ^{
+		NSString *name = [[NSProcessInfo processInfo] processName];
+		marker = [[NSString alloc] initWithFormat:@"%@[%d:", name, (int) getpid()];
+		NSString *pat = [NSString stringWithFormat:@"^\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3} %@[^\\n]*(\\n|$)",
+						 [NSRegularExpression escapedPatternForString:marker]];
+		re = [[NSRegularExpression alloc] initWithPattern:pat options:NSRegularExpressionAnchorsMatchLines error:NULL];
+	});
+	if (!re || [s rangeOfString:marker].location == NSNotFound) return s;
+	NSRange all = NSMakeRange(0, [s length]);
+	if (orig_stderr_fd != -1)
+		for (NSTextCheckingResult *m in [re matchesInString:s options:0 range:all]) {
+			const char *line = [[s substringWithRange:[m range]] UTF8String];
+			if (line) write(orig_stderr_fd, line, strlen(line));
+		}
+	NSString *ns = [re stringByReplacingMatchesInString:s options:0 range:all withTemplate:@""];
+	if ([ns length] == [s length]) return s;
+	[ns retain];
+	[s release];
+	return ns;
 }
 
 /* This function is used by two threads to write  stderr and/or stdout to the console
@@ -2150,18 +2173,8 @@ outputType: 0 = stdout, 1 = stderr, 2 = stdout/err as root
 	NSColor *color=(outputType==0)?[consoleColors objectAtIndex:iStdoutColor]:((outputType==1)?[consoleColors objectAtIndex:iStderrColor]:[consoleColors objectAtIndex:iRootColor]);
 	if (len>=0 && buf[len]!=0) buf[len]=0; /* this MAY be dangerous ... */
 	NSString *s = [[NSString alloc] initWithUTF8String:buf];
-	if (outputType == 1) {
-		// FIXME horrible, horrible hack - this warning seems to be a macOS bug, because
-		// we never create NSPopoverTouchBarItemButton, so we suppress it in the console
-		// by removing a line with that content
-		s = fixBuggyOutput(s, @"Warning: Expected min height of view: .* to be less than or equal to ");
-		/* bug in Monterey and up */
-		s = fixBuggyOutput(s, @"IsMenuKeyEvent: found no unichar data in event; retranslated without deadkeys to produce");
-		/* bug in Sequoia(?) and up (note: we don't use one regex since fixBuggyOutput
-		   only removes one line at a time so we don't want to risk getting both in one s) */
-		s = fixBuggyOutput(s, @"\\[IMKClient subclass\\]: chose ");
-		s = fixBuggyOutput(s, @"\\[IMKInputSession subclass\\]: chose ");
-	}
+	if (outputType == 1 && s)
+		s = removeOwnLogLines(s);
 	[self flushROutput];
 	[self writeConsoleDirectly:s withColor:color];
 	[s release];
