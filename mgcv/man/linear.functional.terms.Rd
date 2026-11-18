@@ -26,7 +26,7 @@ then it must be a matrix, L,say, of the same dimension as F (and the covariate m
 and it contains the weights \eqn{L_{ij}}{L_ij} in the summation given above. 
 So in this case the contribution to the  linear predictor is \code{rowSums(L*F)}. 
 
-Note that if a \eqn{{\bf L1}}{L1} (i.e. \code{rowSums(L)}) is a constant vector, or there is no \code{by} 
+Note that if \eqn{{\bf L1}}{L1} (i.e. \code{rowSums(L)}) is a constant vector, or there is no \code{by} 
 variable then the smooth will automatically be centred in order to ensure identifiability. Otherwise it 
 will not be. Note also that for centred smooths it can be worth replacing the constant term in the model with \code{rowSums(L)} 
 in order to ensure that predictions are automatically on the right scale.
